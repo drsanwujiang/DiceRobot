@@ -47,7 +47,7 @@ const HTTP_API_URL = array(
     "setGroupLeave" => "localhost:" . HTTP_API_PORT . "/set_group_leave"
 );
 
-const CUSTOM_API_PATH = "api.bj2.drsanwujiang.com/dicerobot";
+const CUSTOM_API_PATH = "https://api.drsanwujiang.com/dicerobot";
 
 /** URL of custom API. */
 const CUSTOM_API_URL = array(
