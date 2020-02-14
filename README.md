@@ -40,4 +40,4 @@ DiceRobot 的开发初衷是解决 [溯洄w4123](https://github.com/w4123) 大�
 
 DiceRobot is licensed under the MIT license, do whatever you want~
 
-See [License File](https://github.com/drsanwujiang/DiceRobot/LICENSE) for more information.
+See [License File](https://github.com/drsanwujiang/DiceRobot/blob/master/LICENSE) for more information.
