@@ -27,7 +27,7 @@ const CUSTOM_REPLY = array(
     ),
 
     /** Customized reply, modify as you wish~ */
-    "checkDiceAttributeOverRange" => "宁这是正常调查员的属性吗[CQ:face,id=32]",
+    "checkDiceAttributeOverRange" => "宁这属性连克总也挡不住啊[CQ:face,id=32]",
     "checkDiceBPNumberOverRange" => "奖惩骰数量越界啦！",
     "checkDicePrivateChatPrivateCheck" => "咦？为什么要在私聊的时候暗检定",
     "checkDicePrivateCheck" => "{&1}悄悄进行了一次检定……",
