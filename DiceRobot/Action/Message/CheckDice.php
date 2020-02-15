@@ -30,7 +30,7 @@ class CheckDice extends AbstractAction
         preg_match("/[1-9][0-9]*$/", $order, $attribute);
         $attribute = intval($attribute[0]);
 
-        if ($attribute < 1 || $attribute > 100)
+        if ($attribute < 1 || $attribute > Customization::getCustomSetting("maxAttribute"))
         {
             $this->reply = Customization::getCustomReply("checkDiceAttributeOverRange");
             return;

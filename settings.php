@@ -15,6 +15,9 @@ define("CUSTOM_SETTINGS", array(
     /** Dice surface number when it's undefined in specific chat, default value is 100.*/
     "defaultSurfaceNumber" => 100,
 
+    /** Maximum of character's attribute, default value is 1000.*/
+    "maxAttribute" => 1000,
+
     /** Maximum count of COC or DND character card generation, default value is 20.*/
     "maxCharacterCardGenerateCount" => 20,
 
