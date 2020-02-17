@@ -20,16 +20,16 @@ class CheckDice extends AbstractAction
     {
         $order = preg_replace("/^\.ra[\s]*/i", "", $this->message, 1);
 
-        if (!preg_match("/^(h[\s]*)?([bp][\s]*([1-9][0-9]*[\s]*)?)?[1-9][0-9]*([\s]*[+-][1-9][0-9]*)*$/i",
+        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?[1-9][0-9]*([\s]*[+-][1-9][0-9]*)*$/i",
             $order))
         {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new OrderErrorException;
         }
 
-        preg_match("/^(h[\s]*)?([bp][\s]*([1-9][0-9]*)?)?/", $order, $optionalOrder);
+        preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?/", $order, $optionalOrder);
         $optionalOrder = $optionalOrder[0];
-        $order = preg_replace("/^(h[\s]*)?([bp][\s]*([1-9][0-9]*[\s]*)?)?/",
+        $order = preg_replace("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?/",
             "", $order, 1);
         preg_match("/^[1-9][0-9]*/", $order, $attribute);
         $attribute = intval($attribute[0]);
