@@ -1,6 +1,6 @@
 <?php
 /**
- * DiceRobot 1.0.0
+ * DiceRobot 1.0.1
  * ©2019-2020 Drsanwujiang
  *
  * A TRPG dice robot based on CoolQ HTTP API plugin.
