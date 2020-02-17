@@ -75,4 +75,4 @@ const DICEROBOT_HELLO_TEMPLATE_PATH = REFERENCE_DIR_PATH . "HelloTemplate.json";
 const DICEROBOT_HELP_TEMPLATE_PATH = REFERENCE_DIR_PATH . "HelpTemplate.json";
 
 /** DiceRobot version. */
-const DICEROBOT_VERSION = "1.0.0";
+const DICEROBOT_VERSION = "1.0.1";
