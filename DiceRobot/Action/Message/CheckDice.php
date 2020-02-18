@@ -92,8 +92,9 @@ final class CheckDice extends AbstractAction
                 join(" ", $diceOperation->bpResult) . "]" . $additional . "=" .
                 $diceOperation->rollResult . $additional . ($additional == "" ? "" : "=" . $checkResult);
 
-        $this->reply = Customization::getCustomReply("checkDiceResult", $checkValueName ?? "",
-            $this->userNickname, $rollingResultString, $checkValue, $this->checkDiceLevel($checkResult, $checkValue));
+        $this->reply = Customization::getCustomReply("checkDiceResult",
+            $this->userNickname, $checkValueName ?? "", $rollingResultString, $checkValue,
+            $this->checkDiceLevel($checkResult, $checkValue));
 
         if ($diceOperation->vType === "H")
         {
