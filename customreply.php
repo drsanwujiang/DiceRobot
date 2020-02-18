@@ -35,6 +35,7 @@ const CUSTOM_REPLY = array(
     "bindCardUnbind" => "人物卡解绑成功",
     "characterCardLost" => "人物卡文件丢失了！Σ(っ°Д°;)っ",
     "checkDiceBPNumberOverRange" => "奖惩骰数量越界啦！",
+    "checkDiceCharacterCardNotBound" => "你还没有绑定人物卡，不能这样检定哦~",
     "checkDicePrivateChatPrivateCheck" => "咦？为什么要在私聊的时候暗检定",
     "checkDicePrivateCheck" => "{&1}悄悄进行了一次检定……",
     "checkDicePrivateCheckFromDiscuss" => "在讨论组({&1})中，",

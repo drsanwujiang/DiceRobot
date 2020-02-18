@@ -37,7 +37,15 @@ final class CheckDice extends AbstractAction
         elseif (preg_match("/^([\x{4e00}-\x{9fa5}]|[a-z])+/ui", $order, $checkValueName))
         {
             $checkValueName = strtoupper($checkValueName[0]);
-            $characterCard = new CharacterCard(RobotSettings::getCharacterCard($this->userId));
+            $cardId = RobotSettings::getCharacterCard($this->userId);
+
+            if (is_null($cardId))
+            {
+                $this->reply = Customization::getCustomReply("checkDiceCharacterCardNotBound");
+                return;
+            }
+
+            $characterCard = new CharacterCard($cardId);
             $characterCard->load();
             $checkValue = $characterCard->get($checkValueName);
 
