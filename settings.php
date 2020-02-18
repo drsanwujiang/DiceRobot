@@ -4,6 +4,9 @@
  * conditions, the other should NOT be modified generally.
  */
 
+/** Port of HTTP API. */
+const HTTP_API_PORT = 5700;
+
 /** Custom settings. */
 define("CUSTOM_SETTINGS", array(
     /** Maximum of dice number, default value is 100 */
@@ -27,9 +30,6 @@ define("CUSTOM_SETTINGS", array(
     /** Seed of .jrrp, default value is the timestamp of 00:00:00 today */
     "jrrpRandomSeed" => strtotime(date("Y-m-d"))
 ));
-
-/** Port of HTTP API. */
-const HTTP_API_PORT = 5700;
 
 /**
  * In general, you should stop modifying and save this file now. Enjoy your TRPG time~
