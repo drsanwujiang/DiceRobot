@@ -61,6 +61,7 @@ final class BindCard extends AbstractAction
         elseif ($result["code"] != 0)
         {
             $this->reply = Customization::getCustomReply("bindCardInternalError");
+            return;
         }
 
         $characterCard = new CharacterCard($cardId);
@@ -74,6 +75,6 @@ final class BindCard extends AbstractAction
         $characterCard->save();
         RobotSettings::setCharacterCard($this->userId, $cardId);
 
-        $this->reply = Customization::getCustomReply("人物卡绑定完成啦~");
+        $this->reply = Customization::getCustomReply("bindCardSuccess");
     }
 }
