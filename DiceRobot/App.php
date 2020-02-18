@@ -21,6 +21,7 @@ final class App extends RouteCollector
             $rc->add(".dnd", "DiceRobot\Action\Message\DND");
             $rc->add(".jrrp", "DiceRobot\Action\Message\JRRP");
             $rc->add(".orz", "DiceRobot\Action\Message\Kowtow");
+            $rc->add(".card", "DiceRobot\Action\Message\BindCard");
             $rc->add(".nn", "DiceRobot\Action\Message\Nickname");
             $rc->add(".setcoc", "DiceRobot\Action\Message\SetCOC");
             $rc->add(".set", "DiceRobot\Action\Message\Set");

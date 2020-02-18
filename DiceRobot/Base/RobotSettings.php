@@ -21,7 +21,8 @@ final class RobotSettings
 
     public static function loadSettings(): void
     {
-        if (!file_exists(self::$currentConfigDir)) mkdir(self::$currentConfigDir, 0755, true);
+        if (!file_exists(self::$currentConfigDir))
+            mkdir(self::$currentConfigDir, 0755, true);
 
         if (file_exists(self::$configFilePath))
         {
@@ -61,6 +62,19 @@ final class RobotSettings
     {
         if (is_null($nickname)) unset(self::$robotSettings["nicknames"][$userId]);
         else self::$robotSettings["nicknames"][$userId] = $nickname;
+
+        self::saveSettings();
+    }
+
+    public static function getCharacterCard(string $userId): ?int
+    {
+        return self::$robotSettings["characterCards"][$userId] ?? NULL;
+    }
+
+    public static function setCharacterCard(string $userId, ?int $cardId): void
+    {
+        if (is_null($cardId)) unset(self::$robotSettings["characterCards"][$userId]);
+        else self::$robotSettings["characterCards"][$userId] = $cardId;
 
         self::saveSettings();
     }

@@ -10,6 +10,7 @@ $map = array(
     "DiceRobot\RouteCollector" => __DIR__ . "/DiceRobot/RouteCollector.php",
 
     /** Action classes. Remember to add you class below, or it may be failed to find your class. */
+    "DiceRobot\Action\Message\BindCard" => __DIR__ . "/DiceRobot/Action/Message/BindCard.php",
     "DiceRobot\Action\Message\CheckDice" => __DIR__ . "/DiceRobot/Action/Message/CheckDice.php",
     "DiceRobot\Action\Message\COC" => __DIR__ . "/DiceRobot/Action/Message/COC.php",
     "DiceRobot\Action\Message\Dice" => __DIR__ . "/DiceRobot/Action/Message/Dice.php",
@@ -36,6 +37,7 @@ $map = array(
     /* Base and exception classes. */
     "DiceRobot\Base\AbstractAction" => __DIR__ . "/DiceRobot/Base/AbstractAction.php",
     "DiceRobot\Base\API" => __DIR__ . "/DiceRobot/Base/API.php",
+    "DiceRobot\Base\CharacterCard" => __DIR__ . "/DiceRobot/Base/CharacterCard.php",
     "DiceRobot\Base\CheckDiceRule" => __DIR__ . "/DiceRobot/Base/CheckDiceRule.php",
     "DiceRobot\Base\Customization" => __DIR__ . "/DiceRobot/Base/Customization.php",
     "DiceRobot\Base\DiceOperation" => __DIR__ . "/DiceRobot/Base/DiceOperation.php",
@@ -43,6 +45,8 @@ $map = array(
     "DiceRobot\Base\RobotCommandAction" => __DIR__ . "/DiceRobot/Base/RobotCommandAction.php",
     "DiceRobot\Base\RobotSettings" => __DIR__ . "/DiceRobot/Base/RobotSettings.php",
     "DiceRobot\Base\Rolling" => __DIR__ . "/DiceRobot/Base/Rolling.php",
+    "DiceRobot\Exception\CharacterCardLostException" =>
+        __DIR__ . "/DiceRobot/Exception/CharacterCardLostException.php",
     "DiceRobot\Exception\FileLostException" => __DIR__ . "/DiceRobot/Exception/FileLostException.php",
     "DiceRobot\Exception\InformativeException" => __DIR__ . "/DiceRobot/Exception/InformativeException.php",
     "DiceRobot\Exception\JSONDecodeException" => __DIR__ . "/DiceRobot/Exception/JSONDecodeException.php",

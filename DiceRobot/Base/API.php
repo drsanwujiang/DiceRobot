@@ -38,6 +38,19 @@ final class API
         return json_decode(self::curlPost($url, $data), true);
     }
 
+    public static function getCharacterCard(int $userId, int $cardId, string $credential): array
+    {
+        /*
+         * Get character card data.
+         * Please DO NOT query through this API factitious.
+         */
+
+        $url = CUSTOM_API_URL["getCharacterCard"];
+        $data = json_encode(array("user_id" => $userId, "card_id" => $cardId, "credential" => $credential));
+
+        return json_decode(self::curlPost($url, $data), true);
+    }
+
     public static function getGroupInfo(int $groupId, bool $noCache = false): array
     {
         $url = HTTP_API_URL["getGroupInfo"];
@@ -78,6 +91,14 @@ final class API
     public static function sendDiscussMessage(int $discussId, string $message, bool $autoEscape = false): void
     {
         $url = HTTP_API_URL["sendDiscussMessage"];
+        $data = json_encode(array("discuss_id" => $discussId, "message" => $message, "auto_escape" => $autoEscape));
+
+        self::curlPost($url, $data);
+    }
+
+    public static function sendDiscussMessageAsync(int $discussId, string $message, bool $autoEscape = false): void
+    {
+        $url = HTTP_API_URL["sendDiscussMessage"] . "_async";
         $data = json_encode(array("discuss_id" => $discussId, "message" => $message, "auto_escape" => $autoEscape));
 
         self::curlPost($url, $data);

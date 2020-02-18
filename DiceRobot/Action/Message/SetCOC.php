@@ -12,7 +12,7 @@ use DiceRobot\Base\RobotSettings;
  *
  * Action class of order ".setcoc". Show description of current rule, or set default rule of COC check dice.
  */
-class SetCOC extends AbstractAction
+final class SetCOC extends AbstractAction
 {
     /** @noinspection PhpUnhandledExceptionInspection */
     public function __invoke(): void

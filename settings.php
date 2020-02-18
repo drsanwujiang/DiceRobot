@@ -54,15 +54,17 @@ const CUSTOM_API_PATH = "https://api.drsanwujiang.com/dicerobot";
 
 /** URL of custom API. */
 const CUSTOM_API_URL = array(
-    "queryDelinquentGroup" => CUSTOM_API_PATH . "/query_banned_group",
-    "submitDelinquentGroup" => CUSTOM_API_PATH . "/add_banned_group",
+    "getAPICredential" => CUSTOM_API_PATH . "/get_credential",
+    "getCharacterCard" => CUSTOM_API_PATH . "/get_character_card",
     "heartbeatReport" => CUSTOM_API_PATH . "/heartbeat_report",
-    "getAPICredential" => CUSTOM_API_PATH . "/get_credential"
+    "queryDelinquentGroup" => CUSTOM_API_PATH . "/query_banned_group",
+    "submitDelinquentGroup" => CUSTOM_API_PATH . "/add_banned_group"
 );
 
 /** Path of config files folder. */
 const CONFIG_DIR_PATH = __DIR__ . "/config/";
-
+/** Path of character cards folder. */
+const CHARACTER_CARD_DIR_PATH = __DIR__ . "/card/";
 /** Path of reference files folder. */
 const REFERENCE_DIR_PATH = __DIR__ . "/Reference/";
 
