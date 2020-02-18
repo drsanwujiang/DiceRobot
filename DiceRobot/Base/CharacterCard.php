@@ -86,7 +86,7 @@ final class CharacterCard
         $skillNames[9] = "计算机使用";
         $skillNames[16] = "电子学";
 
-        for ($i = 0; $i <= 63; $i++)
+        for ($i = 0; $i < count($skillNames); $i++)
         {
             $skillName = trim($skillNames[$i]);
 
