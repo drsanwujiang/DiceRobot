@@ -3,6 +3,7 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Base\AbstractAction;
 use DiceRobot\Base\API;
+use DiceRobot\Base\CharacterCard;
 use DiceRobot\Base\CheckDiceRule;
 use DiceRobot\Base\Customization;
 use DiceRobot\Base\DiceOperation;
@@ -14,30 +15,53 @@ use DiceRobot\Exception\OrderErrorException;
  *
  * Action class of order ".ra". Roll a check dice to investigator's attribute or skill.
  */
-class CheckDice extends AbstractAction
+final class CheckDice extends AbstractAction
 {
+    /** @noinspection PhpUnhandledExceptionInspection */
     public function __invoke(): void
     {
         $order = preg_replace("/^\.ra[\s]*/i", "", $this->message, 1);
 
-        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?[1-9][0-9]*([\s]*[+-][1-9][0-9]*)*$/i",
+        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}]+|[a-z]+|[1-9][0-9]*)([\s]*[+-][1-9][0-9]*)*$/ui",
             $order))
-        {
-            /** @noinspection PhpUnhandledExceptionInspection */
             throw new OrderErrorException;
-        }
 
         preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?/", $order, $optionalOrder);
         $optionalOrder = $optionalOrder[0];
         $order = preg_replace("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?/",
             "", $order, 1);
-        preg_match("/^[1-9][0-9]*/", $order, $attribute);
-        $attribute = intval($attribute[0]);
-        $additional = preg_replace("/^[1-9][0-9]*[\s]*/", "", $order, 1);
 
-        if ($attribute < 1 || $attribute > Customization::getCustomSetting("maxAttribute"))
+
+        if (preg_match("/^[1-9][0-9]*/", $order, $checkValue))
+            $checkValue = intval($checkValue[0]);
+        elseif (preg_match("/^([\x{4e00}-\x{9fa5}]|[a-z])+/ui", $order, $checkValueName))
         {
-            $this->reply = Customization::getCustomReply("checkDiceAttributeOverRange");
+            $checkValueName = strtoupper($checkValueName[0]);
+            $cardId = RobotSettings::getCharacterCard($this->userId);
+
+            if (is_null($cardId))
+            {
+                $this->reply = Customization::getCustomReply("checkDiceCharacterCardNotBound");
+                return;
+            }
+
+            $characterCard = new CharacterCard($cardId);
+            $characterCard->load();
+            $checkValue = $characterCard->get($checkValueName);
+
+            if (is_null($checkValue))
+            {
+                $this->reply = Customization::getCustomReply("checkDiceValueNotFound");
+                return;
+            }
+        }
+
+        $additional = preg_replace("/^([\x{4e00}-\x{9fa5}]+|[a-z]+|[1-9][0-9]*)/ui",
+            "", $order, 1);
+
+        if ($checkValue < 1 || $checkValue > Customization::getCustomSetting("maxAttribute"))
+        {
+            $this->reply = Customization::getCustomReply("checkDiceValueOverRange");
             return;
         }
 
@@ -69,8 +93,8 @@ class CheckDice extends AbstractAction
                 $diceOperation->rollResult . $additional . ($additional == "" ? "" : "=" . $checkResult);
 
         $this->reply = Customization::getCustomReply("checkDiceResult",
-            $this->userNickname, $rollingResultString, $attribute,
-            $this->checkDiceLevel($checkResult, $attribute));
+            $this->userNickname, $checkValueName ?? "", $rollingResultString, $checkValue,
+            $this->checkDiceLevel($checkResult, $checkValue));
 
         if ($diceOperation->vType === "H")
         {

@@ -4,6 +4,9 @@
  * conditions, the other should NOT be modified generally.
  */
 
+/** Port of HTTP API. */
+const HTTP_API_PORT = 5700;
+
 /** Custom settings. */
 define("CUSTOM_SETTINGS", array(
     /** Maximum of dice number, default value is 100 */
@@ -28,9 +31,6 @@ define("CUSTOM_SETTINGS", array(
     "jrrpRandomSeed" => strtotime(date("Y-m-d"))
 ));
 
-/** Port of HTTP API. */
-const HTTP_API_PORT = 5700;
-
 /**
  * In general, you should stop modifying and save this file now. Enjoy your TRPG time~
  */
@@ -54,15 +54,17 @@ const CUSTOM_API_PATH = "https://api.drsanwujiang.com/dicerobot";
 
 /** URL of custom API. */
 const CUSTOM_API_URL = array(
-    "queryDelinquentGroup" => CUSTOM_API_PATH . "/query_banned_group",
-    "submitDelinquentGroup" => CUSTOM_API_PATH . "/add_banned_group",
+    "getAPICredential" => CUSTOM_API_PATH . "/get_credential",
+    "getCharacterCard" => CUSTOM_API_PATH . "/get_character_card",
     "heartbeatReport" => CUSTOM_API_PATH . "/heartbeat_report",
-    "getAPICredential" => CUSTOM_API_PATH . "/get_credential"
+    "queryDelinquentGroup" => CUSTOM_API_PATH . "/query_banned_group",
+    "submitDelinquentGroup" => CUSTOM_API_PATH . "/add_banned_group"
 );
 
 /** Path of config files folder. */
 const CONFIG_DIR_PATH = __DIR__ . "/config/";
-
+/** Path of character cards folder. */
+const CHARACTER_CARD_DIR_PATH = __DIR__ . "/card/";
 /** Path of reference files folder. */
 const REFERENCE_DIR_PATH = __DIR__ . "/Reference/";
 
@@ -75,4 +77,4 @@ const DICEROBOT_HELLO_TEMPLATE_PATH = REFERENCE_DIR_PATH . "HelloTemplate.json";
 const DICEROBOT_HELP_TEMPLATE_PATH = REFERENCE_DIR_PATH . "HelpTemplate.json";
 
 /** DiceRobot version. */
-const DICEROBOT_VERSION = "1.0.1";
+const DICEROBOT_VERSION = "1.1.0";

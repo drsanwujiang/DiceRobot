@@ -8,7 +8,7 @@ use DiceRobot\Base\RobotSettings;
 /**
  * Class Nickname
  *
- * Action class of order ".nn". Set nickname of group member.
+ * Action class of order ".nn". Set/Unset nickname of group member.
  */
 final class Nickname extends AbstractAction
 {
