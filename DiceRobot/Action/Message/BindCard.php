@@ -53,7 +53,7 @@ final class BindCard extends AbstractAction
         // Request to get character card
         $result = API::getCharacterCard($this->userId, $cardId, $result["data"]["credential"]);
 
-        if ($result["code"] == -4)
+        if ($result["code"] == -3)
         {
             $this->reply = Customization::getCustomReply("bindCardPermissionDenied");
             return;
