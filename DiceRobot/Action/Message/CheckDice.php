@@ -71,7 +71,7 @@ final class CheckDice extends AbstractAction
         }
         elseif ($repeat < 1 || $repeat > Customization::getCustomSetting("maxRepeatTimes"))
         {
-            $this->reply = Customization::getCustomReply("checkDiceValueOverRange");
+            $this->reply = Customization::getCustomReply("_generalRepeatTimesOverRange");
             return;
         }
 
