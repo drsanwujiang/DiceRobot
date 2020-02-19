@@ -228,7 +228,7 @@ final class DiceOperation
     private function roll(): void
     {
         // B/P dice
-        if (!is_null($this->bpType))
+        if ($this->bpType)
         {
             // Check range
             if ($this->bpDiceNumber < 1 ||

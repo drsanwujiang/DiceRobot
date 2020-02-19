@@ -31,7 +31,7 @@ final class Dice extends AbstractAction
         $replyResultHeading = Customization::getCustomReply("diceRollResult", $this->userNickname);
         $reply = "";
 
-        if (is_null($this->diceOperation->bpType))
+        if (!$this->diceOperation->bpType)
         {
             // Normal dice
             $expression = str_replace("*", "×", $this->diceOperation->expression);
@@ -51,7 +51,7 @@ final class Dice extends AbstractAction
                 Customization::getCustomReply("_BPDiceWording")[$this->diceOperation->bpType] . ":" .
                 join(" ", $this->diceOperation->bpResult) . "]" . "=" . $this->diceOperation->rollResult;
 
-        if (is_null($this->diceOperation->vType))
+        if (!$this->diceOperation->vType)
             $this->reply = $replyReasonHeading . $replyResultHeading . $reply;
         elseif ($this->diceOperation->vType === "H")
         {
