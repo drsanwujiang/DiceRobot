@@ -8,9 +8,6 @@
 
 const CUSTOM_REPLY = array(
     /** General reply and terminology, should NOT be modified. */
-    "_generalOrderError" => "指令错误，无法识别！",
-    "_generalFileLostError" => "相关文件丢失，无法执行该指令！",
-    "_generalJSONDecodeError" => "相关文件解析失败，无法执行该指令！",
     "_BPDiceWording" => array(
         "B" => "奖励骰",
         "P" => "惩罚骰"
@@ -25,6 +22,10 @@ const CUSTOM_REPLY = array(
         "UltimateFailure" => "极限失败",
         "GreatFailure" => "大失败"
     ),
+    "_generalFileLostError" => "相关文件丢失，无法执行该指令！",
+    "_generalJSONDecodeError" => "相关文件解析失败，无法执行该指令！",
+    "_generalOrderError" => "指令错误，无法识别！",
+    "_generalReachRepeatLimit" => "指令重复次数超出限制！",
 
     /** Customized reply, modify as you wish~ */
     "bindCardFormatError" => "人物卡格式错误，无法绑定！",
@@ -37,10 +38,11 @@ const CUSTOM_REPLY = array(
     "checkDiceBPNumberOverRange" => "奖惩骰数量越界啦！",
     "checkDiceCharacterCardNotBound" => "你还没有绑定人物卡，不能这样检定哦~",
     "checkDicePrivateChatPrivateCheck" => "咦？为什么要在私聊的时候暗检定",
-    "checkDicePrivateCheck" => "{&1}悄悄进行了一次检定……",
+    "checkDicePrivateCheck" => "{&1}悄悄进行了{&2}次检定……",
     "checkDicePrivateCheckFromDiscuss" => "在讨论组({&1})中，",
     "checkDicePrivateCheckFromGroup" => "在{&1}({&2})中，",
-    "checkDiceResult" => "{&1}进行了一次{&2}检定：{&3}/{&4}，{&5}",
+    "checkDiceResult" => "{&1}/{&2}，{&3}",
+    "checkDiceResultHeading" => "{&1}进行了{&2}次{&3}检定：",
     "checkDiceRuleDangerous" => "检定规则存在危险错误，无法执行！",
     "checkDiceRuleInvalid" => "检定规则错误，无法执行！",
     "checkDiceRuleLost" => "检定规则不存在！请使用 .setcoc 重新设定",
