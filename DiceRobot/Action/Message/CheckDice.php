@@ -76,7 +76,9 @@ final class CheckDice extends AbstractAction
         }
 
         $this->reply = Customization::getCustomReply("checkDiceResultHeading",
-            $this->userNickname, $repeat, $checkValueName ?? "");
+            $this->userNickname, $repeat, $checkValueName ?? "") . $repeat > 1 ? "\n" : "";
+        $hCheckReply = Customization::getCustomReply("checkDicePrivateCheck",
+            $this->userNickname, $repeat);
 
         while ($repeat--)
         {
@@ -107,9 +109,11 @@ final class CheckDice extends AbstractAction
                     join(" ", $diceOperation->bpResult) . "]" . $additional . "=" .
                     $diceOperation->rollResult . $additional . ($additional == "" ? "" : "=" . $checkResult);
 
-            $this->reply .= "\n" . Customization::getCustomReply("checkDiceResult",
-                    $rollingResultString, $checkValue, $this->checkDiceLevel($checkResult, $checkValue));
+            $this->reply .= Customization::getCustomReply("checkDiceResult",
+                    $rollingResultString, $checkValue, $this->checkDiceLevel($checkResult, $checkValue)) . "\n";
         }
+
+        $this->reply = trim($this->reply);
 
         /** @noinspection PhpUndefinedVariableInspection */
         if ($diceOperation->vType === "H")
@@ -129,7 +133,7 @@ final class CheckDice extends AbstractAction
             $privateReply .= $this->reply;
             API::sendPrivateMessageAsync($this->userId, $privateReply);
 
-            $this->reply = Customization::getCustomReply("checkDicePrivateCheck", $this->userNickname);
+            $this->reply = $hCheckReply;
         }
     }
 
