@@ -50,8 +50,8 @@ final class CharacterCard
         $this->attributes["灵感"] = intval($attributesTable[8][5] ?? 0);
         $this->attributes["意志"] = intval($attributesTable[14][1] ?? 0);
         $this->attributes["教育"] = intval($attributesTable[14][3] ?? 0);
-        $this->attributes["理智"] = intval($statusTable[13] ?? 0);
-        $this->attributes["幸运"] = intval($statusTable[21] ?? 0);
+        $this->attributes["理智"] = intval($statusTable[13][0] ?? 0);
+        $this->attributes["幸运"] = intval($statusTable[21][0] ?? 0);
     }
 
     private function parseSkills(array &$skillsTable): void
