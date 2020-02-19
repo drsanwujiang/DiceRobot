@@ -75,9 +75,7 @@ final class Dice extends AbstractAction
 
         $reply = trim($reply);
 
-        if (!$this->diceOperation->vType)
-            $this->reply = $reply;
-        elseif ($this->diceOperation->vType == "H")
+        if ($this->diceOperation->vType == "H")
         {
             if ($this->chatType == "private")
             {
@@ -94,6 +92,8 @@ final class Dice extends AbstractAction
             $this->reply = $privateInfo;
             API::sendPrivateMessageAsync($this->userId, $privateReply);
         }
+        else
+            $this->reply = $reply;
     }
 
     protected function unableToResolve(): void
