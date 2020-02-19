@@ -64,9 +64,14 @@ final class CheckDice extends AbstractAction
         preg_match("/[1-9][0-9]*$/", $order, $repeat);
         $repeat = isset($repeat[0]) ? intval($repeat[0]) : 1;
 
-        if ($checkValue < 1 || $checkValue > Customization::getCustomSetting("maxAttribute"))
+        if ($checkValue < 1)
         {
-            $this->reply = Customization::getCustomReply("checkDiceValueOverRange");
+            $this->reply = Customization::getCustomReply("checkDiceValueInvalid");
+            return;
+        }
+        elseif ($checkValue > Customization::getCustomSetting("maxAttribute"))
+        {
+            $this->reply = Customization::getCustomReply("checkDiceValueTooLarge");
             return;
         }
         elseif ($repeat < 1 || $repeat > Customization::getCustomSetting("maxRepeatTimes"))

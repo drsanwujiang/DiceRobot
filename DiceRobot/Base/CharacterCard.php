@@ -41,17 +41,17 @@ final class CharacterCard
             return;
         }
 
-        $this->attributes["力量"] = intval($attributesTable[2][1]);
-        $this->attributes["体质"] = intval($attributesTable[2][3]);
-        $this->attributes["体型"] = intval($attributesTable[2][5]);
-        $this->attributes["敏捷"] = intval($attributesTable[8][1]);
-        $this->attributes["外貌"] = intval($attributesTable[8][3]);
-        $this->attributes["智力"] = intval($attributesTable[8][5]);
-        $this->attributes["灵感"] = intval($attributesTable[8][5]);
-        $this->attributes["意志"] = intval($attributesTable[14][1]);
-        $this->attributes["教育"] = intval($attributesTable[14][3]);
-        $this->attributes["理智"] = intval($statusTable[13]);
-        $this->attributes["幸运"] = intval($statusTable[21]);
+        $this->attributes["力量"] = intval($attributesTable[2][1] ?? 0);
+        $this->attributes["体质"] = intval($attributesTable[2][3] ?? 0);
+        $this->attributes["体型"] = intval($attributesTable[2][5] ?? 0);
+        $this->attributes["敏捷"] = intval($attributesTable[8][1] ?? 0);
+        $this->attributes["外貌"] = intval($attributesTable[8][3] ?? 0);
+        $this->attributes["智力"] = intval($attributesTable[8][5] ?? 0);
+        $this->attributes["灵感"] = intval($attributesTable[8][5] ?? 0);
+        $this->attributes["意志"] = intval($attributesTable[14][1] ?? 0);
+        $this->attributes["教育"] = intval($attributesTable[14][3] ?? 0);
+        $this->attributes["理智"] = intval($statusTable[13] ?? 0);
+        $this->attributes["幸运"] = intval($statusTable[21] ?? 0);
     }
 
     private function parseSkills(array &$skillsTable): void
