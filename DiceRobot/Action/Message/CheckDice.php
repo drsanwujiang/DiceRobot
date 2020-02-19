@@ -76,7 +76,7 @@ final class CheckDice extends AbstractAction
         }
 
         $this->reply = Customization::getCustomReply("checkDiceResultHeading",
-            $this->userNickname, $repeat, $checkValueName ?? "") . $repeat > 1 ? "\n" : "";
+            $this->userNickname, $repeat, $checkValueName ?? "") . ($repeat > 1 ? "\n" : "");
         $hCheckReply = Customization::getCustomReply("checkDicePrivateCheck",
             $this->userNickname, $repeat);
 
