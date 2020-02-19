@@ -22,7 +22,7 @@ final class CheckDice extends AbstractAction
     {
         $order = preg_replace("/^\.ra[\s]*/i", "", $this->message, 1);
 
-        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}]+|[a-z]+|[1-9][0-9]*)([\s]*[+-][1-9][0-9]*)*([\s]*#[1-9]?)?$/ui",
+        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)([\s]*[+-][1-9][0-9]*)*([\s]*#[1-9]?)?$/ui",
             $order))
             throw new OrderErrorException;
 
@@ -31,10 +31,9 @@ final class CheckDice extends AbstractAction
         $order = preg_replace("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?/",
             "", $order, 1);
 
-
         if (preg_match("/^[1-9][0-9]*/", $order, $checkValue))
             $checkValue = intval($checkValue[0]);
-        elseif (preg_match("/^([\x{4e00}-\x{9fa5}]|[a-z])+/ui", $order, $checkValueName))
+        elseif (preg_match("/^[\x{4e00}-\x{9fa5}a-z]+/ui", $order, $checkValueName))
         {
             $checkValueName = strtoupper($checkValueName[0]);
             $cardId = RobotSettings::getCharacterCard($this->userId);
@@ -56,11 +55,12 @@ final class CheckDice extends AbstractAction
             }
         }
 
-        $order = preg_replace("/^([\x{4e00}-\x{9fa5}]+|[a-z]+|[1-9][0-9]*)[\s]*/ui",
+        $order = preg_replace("/^([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)[\s]*/ui",
             "", $order, 1);
         preg_match("/^([+-][1-9][0-9]*)*/", $order, $additional);
         $additional = $additional[0];
-        $order = preg_replace("/^([+-][1-9][0-9]*)*[\s]*/", "", $order, 1);
+        $order = preg_replace("/^([+-][1-9][0-9]*)*[\s]*/",
+            "", $order, 1);
         preg_match("/[1-9]$/", $order, $repeat);
         $repeat = isset($repeat[0]) ? intval($repeat[0]) : 1;
 
