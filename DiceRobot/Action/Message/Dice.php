@@ -18,8 +18,8 @@ final class Dice extends AbstractAction
     public function __invoke(): void
     {
         $order = preg_replace("/^\.r[\s]*/i", "", $this->message, 1);
-
         preg_match("/#([1-9][0-9]*)?$/", $order, $repeat);
+        $order = preg_replace("/[\s]*#([1-9][0-9]*)?$/", "", $order, 1);
         $repeat = intval(preg_replace("/^#/", "", $repeat[0] ?? "#", 1));
         $repeat = $repeat == 0 ? 1 : $repeat;
 
