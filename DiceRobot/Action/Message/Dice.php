@@ -23,6 +23,12 @@ final class Dice extends AbstractAction
         $repeat = intval(preg_replace("/^#/", "", $repeat[0] ?? "#", 1));
         $repeat = $repeat == 0 ? 1 : $repeat;
 
+        if ($repeat < 1 || $repeat > Customization::getCustomSetting("maxRepeatTimes"))
+        {
+            $this->reply = Customization::getCustomReply("_generalRepeatTimesOverRange");
+            return;
+        }
+
         $this->diceOperation = new DiceOperation($order);
 
         if ($this->diceOperation->success != 0)

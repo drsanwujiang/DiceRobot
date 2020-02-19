@@ -26,6 +26,7 @@ const CUSTOM_REPLY = array(
     "_generalJSONDecodeError" => "相关文件解析失败，无法执行该指令！",
     "_generalOrderError" => "指令错误，无法识别！",
     "_generalReachRepeatLimit" => "指令重复次数超出限制！",
+    "_generalRepeatTimesOverRange" => "不能重复这么多次啦~",
 
     /** Customized reply, modify as you wish~ */
     "bindCardFormatError" => "人物卡格式错误，无法绑定！",
