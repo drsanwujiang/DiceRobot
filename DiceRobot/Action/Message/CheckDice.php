@@ -22,7 +22,7 @@ final class CheckDice extends AbstractAction
     {
         $order = preg_replace("/^\.ra[\s]*/i", "", $this->message, 1);
 
-        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}]+|[a-z]+|[1-9][0-9]*)([\s]*[+-][1-9][0-9]*)*$/ui",
+        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}]+|[a-z]+|[1-9][0-9]*)([\s]*[+-][1-9][0-9]*)*([\s]*#[1-9]?)?$/ui",
             $order))
             throw new OrderErrorException;
 
@@ -56,46 +56,62 @@ final class CheckDice extends AbstractAction
             }
         }
 
-        $additional = preg_replace("/^([\x{4e00}-\x{9fa5}]+|[a-z]+|[1-9][0-9]*)/ui",
+        $order = preg_replace("/^([\x{4e00}-\x{9fa5}]+|[a-z]+|[1-9][0-9]*)[\s]*/ui",
             "", $order, 1);
+        preg_match("/^([+-][1-9][0-9]*)*/", $order, $additional);
+        $additional = $additional[0];
+        $order = preg_replace("/^([+-][1-9][0-9]*)*[\s]*/", "", $order, 1);
+        preg_match("/[1-9]$/", $order, $repeat);
+        $repeat = isset($repeat[0]) ? intval($repeat[0]) : 1;
 
         if ($checkValue < 1 || $checkValue > Customization::getCustomSetting("maxAttribute"))
         {
             $this->reply = Customization::getCustomReply("checkDiceValueOverRange");
             return;
         }
-
-        $diceOperation = new DiceOperation(trim($optionalOrder . " D100"));
-
-        if ($diceOperation->success != 0)
+        elseif ($repeat < 1 || $repeat > Customization::getCustomSetting("maxRepeatTimes"))
         {
-            $this->reply = Customization::getCustomReply("checkDiceBPNumberOverRange");
+            $this->reply = Customization::getCustomReply("checkDiceValueOverRange");
             return;
         }
 
-        $evalString = "return " . $diceOperation->rollResult . $additional . ";";
-        $checkResult = eval($evalString);
-        $checkResult = $checkResult < 1 ? 1 : $checkResult;
-        $checkResult = $checkResult > 100 ? 100 : $checkResult;
+        $this->reply = Customization::getCustomReply("checkDiceResultHeading",
+            $this->userNickname, $repeat, $checkValueName ?? "");
 
-        if (is_null($diceOperation->bpType))
+        while ($repeat--)
         {
-            // Normal dice
-            $rollingResultString = $diceOperation->expression . $additional . "=" .
-                $diceOperation->rollResult . $additional . ($additional == "" ? "" : "=" . $checkResult);
+            $diceOperation = new DiceOperation(trim($optionalOrder . " D100"));
+
+            if ($diceOperation->success != 0)
+            {
+                $this->reply = Customization::getCustomReply("checkDiceBPNumberOverRange");
+                return;
+            }
+
+            $evalString = "return " . $diceOperation->rollResult . $additional . ";";
+            $checkResult = eval($evalString);
+            $checkResult = $checkResult < 1 ? 1 : $checkResult;
+            $checkResult = $checkResult > 100 ? 100 : $checkResult;
+
+            if (is_null($diceOperation->bpType))
+            {
+                // Normal dice
+                $rollingResultString = $diceOperation->expression . $additional . "=" .
+                    $diceOperation->rollResult . $additional . ($additional == "" ? "" : "=" . $checkResult);
+            }
+            else
+                // B/P dice
+                $rollingResultString = $diceOperation->bpType . $diceOperation->bpDiceNumber . $additional . "=" .
+                    $diceOperation->toResultExpression() . "[" .
+                    Customization::getCustomReply("_BPDiceWording")[$diceOperation->bpType] . ":" .
+                    join(" ", $diceOperation->bpResult) . "]" . $additional . "=" .
+                    $diceOperation->rollResult . $additional . ($additional == "" ? "" : "=" . $checkResult);
+
+            $this->reply .= "\n" . Customization::getCustomReply("checkDiceResult",
+                    $rollingResultString, $checkValue, $this->checkDiceLevel($checkResult, $checkValue));
         }
-        else
-            // B/P dice
-            $rollingResultString = $diceOperation->bpType . $diceOperation->bpDiceNumber . $additional . "=" .
-                $diceOperation->toResultExpression() . "[" .
-                Customization::getCustomReply("_BPDiceWording")[$diceOperation->bpType] . ":" .
-                join(" ", $diceOperation->bpResult) . "]" . $additional . "=" .
-                $diceOperation->rollResult . $additional . ($additional == "" ? "" : "=" . $checkResult);
 
-        $this->reply = Customization::getCustomReply("checkDiceResult",
-            $this->userNickname, $checkValueName ?? "", $rollingResultString, $checkValue,
-            $this->checkDiceLevel($checkResult, $checkValue));
-
+        /** @noinspection PhpUndefinedVariableInspection */
         if ($diceOperation->vType === "H")
         {
             if ($this->chatType == "private")

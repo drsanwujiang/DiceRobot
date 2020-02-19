@@ -24,6 +24,9 @@ define("CUSTOM_SETTINGS", array(
     /** Maximum count of COC or DND character card generation, default value is 20.*/
     "maxCharacterCardGenerateCount" => 20,
 
+    /** Maximum times to repeat order, default value is 10.*/
+    "maxRepeatTimes" => 10,
+
     /** Seed of .orz, default value is the timestamp of 00:00:00 today */
     "kowtowRandomSeed" => strtotime(date("Y-m-d")),
 
