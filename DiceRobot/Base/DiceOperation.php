@@ -113,7 +113,7 @@ final class DiceOperation
 
         // Default subexpression
         array_push($this->subexpressions,
-            new DiceSubexpression("D" . strval($this->defaultSurfaceNumber)));
+            new DiceSubexpression("D" . $this->defaultSurfaceNumber));
 
         $this->parseOrder();
         $this->roll();
@@ -126,70 +126,47 @@ final class DiceOperation
     {
         $order = $this->order;
 
-        // If expression is empty, just return
-        if ($order == "") return;
+        if (preg_match("/^[hs]/i", $order, $result))
+        {
+            $this->vType = strtoupper($result[0]);
+            $order = preg_replace("/^[hs][\s]*/i", "", $order, 1);
+        }
+        if (preg_match("/^[bp]/i", $order, $result))
+        {
+            $this->bpType = strtoupper($result[0]);
+            $order = preg_replace("/^[bp][\s]*/i", "", $order, 1);
+        }
+        if ($order == "")
+            return;
 
-        $this->parseSpecialOrder($order);
         $this->order = $order;
 
         // In case the dice is a bonus/punishment dice
-        if (!is_null($this->bpType))
+        if ($this->bpType)
         {
-            // If expression is empty, which means no reason and 1 dice
-            if ($order == "") return;
-
-            $orderArray = explode(" ", $order, 2);
-
-            if (is_numeric($orderArray[0]))
+            if (preg_match("/^[1-9][0-9]*/", $order, $result))
             {
-                $this->bpDiceNumber = intval($orderArray[0]);
-                $this->reason = $orderArray[1] ?? "";
+                $this->bpDiceNumber = intval($result[0]);
+                $this->reason = preg_replace("/^[1-9][0-9]*[\s]*/", "", $order, 1);
             }
-            else $this->reason = $order;
+            else
+                $this->reason = $this->order;
 
             return;
         }
 
         // In case the dice is a normal dice, parse operations. Sample: x1Dy1Kz1+x2Dy2+c reason
-        $orderArray = explode(" ", $order, 2);
-        $expression = $orderArray[0];
-        $this->reason = $orderArray[1] ?? "";
+        preg_match("/^[\S]+[\s]*/", $order, $result);
+        $expression = trim($result[0]);
+        $this->reason = preg_replace("/^[\S]+[\s]*/", "", $order, 1);
 
-        if ($expression == "" || is_numeric($expression))
+        if (is_numeric($expression) || preg_match("/[^0-9dk+\-x*()（）]/i", $expression))
         {
-            // If rest of the order is a numerical, use it as reason
             $this->reason = $order;
             return;
         }
 
         self::parseExpression($expression);
-    }
-
-    /**
-     * Check if the rolling order contains special order char like "H", "S", "B" or "P".
-     *
-     * @param string $order rolling order
-     */
-    private function parseSpecialOrder(string &$order): void
-    {
-        $nextChar = trim(substr($order, 0, 1));
-
-        // Sample: S x1Dy1+x2Dy2+z reason
-        $vTypes = ["H", "S"];
-        $bpTypes = ["B", "P"];
-
-        if (in_array(strtoupper($nextChar), $vTypes))
-        {
-            $this->vType = strtoupper($nextChar);
-            $order = trim(substr($order, 1));
-            $nextChar = trim(substr($order, 0, 1));
-        }
-
-        if (in_array(strtoupper($nextChar), $bpTypes))
-        {
-            $this->bpType = strtoupper($nextChar);
-            $order = trim(substr($order, 1));
-        }
     }
 
     /**
@@ -199,12 +176,6 @@ final class DiceOperation
      */
     private function parseExpression(string $expression): void
     {
-        if (preg_match("/[^0-9dk+\-x*()（）]/i", $expression))
-        {
-            $this->reason = $this->order;
-            return;
-        }
-
         // Parse expression. Sample: 3D5+5+2D6k2
         $subexpressions = preg_split("/([+\-Xx*()（）])/", $expression, -1,
             PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
@@ -227,6 +198,8 @@ final class DiceOperation
                 // If subexpression is like 5DK2
                 $subexpression[0] = str_replace(array("d", "k"), array("D", "K"), $subexpression[0]);
                 $subexpression[1] += $offsetIncrement;  // Change offset
+
+                // Add default surface number after D
                 $offsetIncrement += strlen($this->defaultSurfaceNumber);
                 $expression = substr_replace($expression, $this->defaultSurfaceNumber,
                     stripos($expression, "D", $subexpression[1]) + 1, 0);
@@ -255,7 +228,7 @@ final class DiceOperation
     private function roll(): void
     {
         // B/P dice
-        if (!is_null($this->bpType))
+        if ($this->bpType)
         {
             // Check range
             if ($this->bpDiceNumber < 1 ||

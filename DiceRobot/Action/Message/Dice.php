@@ -18,6 +18,11 @@ final class Dice extends AbstractAction
     public function __invoke(): void
     {
         $order = preg_replace("/^\.r[\s]*/i", "", $this->message, 1);
+        preg_match("/#([1-9][0-9]*)?$/", $order, $repeat);
+        $order = preg_replace("/[\s]*#([1-9][0-9]*)?$/", "", $order, 1);
+        $repeat = intval(preg_replace("/^#/", "", $repeat[0] ?? "#", 1));
+        $repeat = $repeat == 0 ? 1 : $repeat;
+
         $this->diceOperation = new DiceOperation($order);
 
         if ($this->diceOperation->success != 0)
@@ -26,38 +31,55 @@ final class Dice extends AbstractAction
             return;
         }
 
-        $replyReasonHeading = $this->diceOperation->reason == "" ? "" :
-            Customization::getCustomReply("diceRollBecauseOf", $this->diceOperation->reason);
+        $replyReasonHeading = ($this->diceOperation->reason == "" ? "" : Customization::getCustomReply(
+            "diceRollBecauseOf", $this->diceOperation->reason));
         $replyResultHeading = Customization::getCustomReply("diceRollResult", $this->userNickname);
-        $reply = "";
+        $privateInfo = $replyReasonHeading . Customization::getCustomReply("dicePrivateRoll",
+                $this->userNickname, $repeat);
+        $reply = $replyReasonHeading . $replyResultHeading . ($repeat > 1 ? "\n" : "");
 
-        if (is_null($this->diceOperation->bpType))
+        while ($repeat--)
         {
-            // Normal dice
-            $expression = str_replace("*", "×", $this->diceOperation->expression);
-            $resultExpression = str_replace("*", "×", $this->diceOperation->toResultExpression());
-            $arithmeticExpression = str_replace("*", "×",
-                $this->diceOperation->toArithmeticExpression());
+            $this->diceOperation = new DiceOperation($order);
 
-            $reply .= $expression . "=" . $resultExpression;
-            $reply .= $resultExpression == $arithmeticExpression ? "" : "=" . $arithmeticExpression;
-            $reply .= $this->diceOperation->rollResult == $arithmeticExpression ?
-                "" : "=" . $this->diceOperation->rollResult;
+            if (!$this->diceOperation->bpType && $this->diceOperation->vType == "S")
+            {
+                $expression = str_replace("*", "×", $this->diceOperation->expression);
+                $reply .= $expression . "=" . $this->diceOperation->rollResult;
+            }
+            elseif (!$this->diceOperation->bpType)
+            {
+                // Normal dice
+                $expression = str_replace("*", "×", $this->diceOperation->expression);
+                $resultExpression = str_replace("*", "×", $this->diceOperation->toResultExpression());
+                $arithmeticExpression = str_replace("*", "×",
+                    $this->diceOperation->toArithmeticExpression());
+                $reply .= $expression . "=" . $resultExpression;
+                $reply .= $resultExpression == $arithmeticExpression ? "" : "=" . $arithmeticExpression;
+                $reply .= $this->diceOperation->rollResult == $arithmeticExpression ?
+                    "" : "=" . $this->diceOperation->rollResult;
+            }
+            elseif ($this->diceOperation->vType == "S")
+                // B/P dice
+                $reply .= $this->diceOperation->bpType . $this->diceOperation->bpDiceNumber . "=" .
+                    $this->diceOperation->rollResult;
+            else
+                // B/P dice
+                $reply .= $this->diceOperation->bpType . $this->diceOperation->bpDiceNumber . "=" .
+                    $this->diceOperation->toResultExpression() . "[" .
+                    Customization::getCustomReply("_BPDiceWording")[$this->diceOperation->bpType] . ":" .
+                    join(" ", $this->diceOperation->bpResult) . "]" . "=" . $this->diceOperation->rollResult;
+
+            $reply .= "\n";
         }
-        else
-            // B/P dice
-            $reply .= $this->diceOperation->bpType . $this->diceOperation->bpDiceNumber . "=" .
-                $this->diceOperation->toResultExpression() . "[" .
-                Customization::getCustomReply("_BPDiceWording")[$this->diceOperation->bpType] . ":" .
-                join(" ", $this->diceOperation->bpResult) . "]" . "=" . $this->diceOperation->rollResult;
 
-        if (is_null($this->diceOperation->vType))
-            $this->reply = $replyReasonHeading . $replyResultHeading . $reply;
-        elseif ($this->diceOperation->vType === "H")
+        $reply = trim($reply);
+
+        if ($this->diceOperation->vType == "H")
         {
             if ($this->chatType == "private")
             {
-                $this->reply = Customization::getCustomReply("dicePrivateChatPrivateRoll");
+                $this->reply = Customization::getCustomReply("dicePrivateRollFromPrivate");
                 return;
             }
             elseif ($this->chatType == "group")
@@ -66,17 +88,12 @@ final class Dice extends AbstractAction
             else
                 $privateReply = Customization::getCustomReply("dicePrivateRollFromDiscuss", $this->chatId);
 
-            $privateReply .= $replyReasonHeading . $replyResultHeading . $reply;
+            $privateReply .= $reply;
+            $this->reply = $privateInfo;
             API::sendPrivateMessageAsync($this->userId, $privateReply);
-
-            $this->reply = $replyReasonHeading .
-                Customization::getCustomReply("dicePrivateRoll", $this->userNickname);
         }
-        elseif ($this->diceOperation->vType === "S")
-        {
-            $splitReply = explode("=", $reply);
-            $this->reply = $replyReasonHeading . $replyResultHeading . $splitReply[0] . "=" . end($splitReply);
-        }
+        else
+            $this->reply = $reply;
     }
 
     protected function unableToResolve(): void

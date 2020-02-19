@@ -22,7 +22,7 @@ final class CheckDice extends AbstractAction
     {
         $order = preg_replace("/^\.ra[\s]*/i", "", $this->message, 1);
 
-        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)([\s]*[+-][1-9][0-9]*)*([\s]*#[1-9]?)?$/ui",
+        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)([\s]*[+-][1-9][0-9]*)*([\s]*#([1-9][0-9]*)?)?$/ui",
             $order))
             throw new OrderErrorException;
 
@@ -61,7 +61,7 @@ final class CheckDice extends AbstractAction
         $additional = $additional[0];
         $order = preg_replace("/^([+-][1-9][0-9]*)*[\s]*/",
             "", $order, 1);
-        preg_match("/[1-9]$/", $order, $repeat);
+        preg_match("/[1-9][0-9]*$/", $order, $repeat);
         $repeat = isset($repeat[0]) ? intval($repeat[0]) : 1;
 
         if ($checkValue < 1 || $checkValue > Customization::getCustomSetting("maxAttribute"))
