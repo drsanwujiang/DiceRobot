@@ -91,7 +91,7 @@ final class CharacterCard
             $skillName = trim($skillNames[$i]);
 
             if ($skillName != "")
-                $this->skills[$skillName] = intval($skillValues[$i]);
+                $this->skills[strtoupper($skillName)] = intval($skillValues[$i]);
         }
     }
 
