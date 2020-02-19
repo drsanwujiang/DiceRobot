@@ -4,6 +4,6 @@
   "使用 .robot about 查看版本信息",
   "",
   "【指令一览】",
-  "游戏指令：r(包括 rh rs rb rp) coc dnd set jrrp orz",
+  "游戏指令：r(包括 rh rs rb rp) ra coc dnd set setcoc card jrrp orz",
   "控制指令：robot(包括 about start stop nn goodbye) nn help hello"
 ]
