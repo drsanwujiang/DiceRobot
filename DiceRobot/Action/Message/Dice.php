@@ -45,7 +45,7 @@ final class Dice extends AbstractAction
             if (!$this->diceOperation->bpType && $this->diceOperation->vType == "S")
             {
                 $expression = str_replace("*", "×", $this->diceOperation->expression);
-                $reply .= $expression . $this->diceOperation->rollResult;
+                $reply .= $expression . "=" . $this->diceOperation->rollResult;
             }
             elseif (!$this->diceOperation->bpType)
             {
