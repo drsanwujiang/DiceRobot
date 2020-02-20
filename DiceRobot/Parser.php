@@ -52,9 +52,12 @@ abstract class Parser
             $this->userName = $eventData->sender->nickname;
             $this->message = trim($eventData->raw_message);
 
-            if ($this->chatType == "group") $this->chatId = $eventData->group_id;
-            elseif ($this->chatType == "discuss") $this->chatId = $eventData->discuss_id;
-            elseif ($this->chatType == "private") $this->chatId = $eventData->user_id;
+            if ($this->chatType == "group")
+                $this->chatId = $eventData->group_id;
+            elseif ($this->chatType == "discuss")
+                $this->chatId = $eventData->discuss_id;
+            elseif ($this->chatType == "private")
+                $this->chatId = $eventData->user_id;
         }
         elseif ($this->postType == "notice")
         {

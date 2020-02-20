@@ -14,6 +14,7 @@ use DiceRobot\Base\RobotSettings;
  */
 final class SelfAdded extends AbstractAction
 {
+    /** @noinspection PhpUnhandledExceptionInspection */
     public function __invoke(): void
     {
         $result = API::queryDelinquentGroup($this->groupId)["data"]["query_result"];
@@ -27,13 +28,10 @@ final class SelfAdded extends AbstractAction
         }
         else
         {
-            /** @noinspection PhpUnhandledExceptionInspection */
             $template = join("\n", Customization::getCustomFile(DICEROBOT_HELLO_TEMPLATE_PATH));
-
             $loginInfo = API::getLoginInfo();
             $message = Customization::getCustomString($template, $loginInfo["data"]["nickname"],
                 substr($this->selfId, -4), substr($this->selfId, -4));
-
             API::sendGroupMessageAsync($this->groupId, $message);
             $this->loadRobotSettings("group", $this->groupId);
             RobotSettings::setSetting("active", true);

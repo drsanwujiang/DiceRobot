@@ -21,6 +21,7 @@ final class Stop extends RobotCommandAction
             RobotSettings::setSetting("active", false);
             $this->reply = Customization::getCustomReply("robotCommandStop");
         }
-        else $this->noResponse();
+        else
+            $this->noResponse();
     }
 }

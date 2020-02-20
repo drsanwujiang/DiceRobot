@@ -51,11 +51,16 @@ final class CheckDiceRule
                 $evalCommand = "return $condition;";
                 $evalResult = eval($evalCommand);
             }
-            catch (Throwable $t) { throw new COCCheckRuleInvalidException(); }
+            catch (Throwable $t)
+            {
+                throw new COCCheckRuleInvalidException();
+            }
 
-            if (!is_bool($evalResult)) throw new COCCheckRuleInvalidException();
+            if (!is_bool($evalResult))
+                throw new COCCheckRuleInvalidException();
 
-            if ($evalResult) return $level;
+            if ($evalResult)
+                return $level;
         }
 
         throw new COCCheckRuleMatchFailedException();

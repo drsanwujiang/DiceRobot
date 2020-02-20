@@ -26,22 +26,21 @@ final class BindCard extends AbstractAction
             return;
         }
         elseif (!preg_match("/^[1-9][0-9]*$/", $order))
-        {
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new OrderErrorException;
-        }
 
         // Send message
         $message = Customization::getCustomReply("bindCardPending");
 
-        if ($this->chatType == "group") API::sendGroupMessageAsync($this->chatId, $message);
-        elseif ($this->chatType == "discuss") API::sendDiscussMessageAsync($this->chatId, $message);
-        elseif ($this->chatType == "private") API::sendPrivateMessageAsync($this->chatId, $message);
+        if ($this->chatType == "group")
+            API::sendGroupMessageAsync($this->chatId, $message);
+        elseif ($this->chatType == "discuss")
+            API::sendDiscussMessageAsync($this->chatId, $message);
+        elseif ($this->chatType == "private")
+            API::sendPrivateMessageAsync($this->chatId, $message);
 
         $cardId = intval($order);
-
-        // Get credential
-        $result = API::getAPICredential($this->selfId);
+        $result = API::getAPICredential($this->selfId);  // Get credential
 
         if ($result["code"] != 0)
         {

@@ -30,7 +30,8 @@ final class RobotSettings
             $robotSettings = json_decode($jsonString, true);
             self::$robotSettings = is_null($robotSettings) ? array() : $robotSettings;
         }
-        else self::$robotSettings = array();
+        else
+            self::$robotSettings = [];
     }
 
     private static function saveSettings(): void
@@ -47,8 +48,10 @@ final class RobotSettings
 
     public static function setSetting(string $settingKey, $settingValue): void
     {
-        if (is_null($settingValue)) unset(self::$robotSettings[$settingKey]);
-        else self::$robotSettings[$settingKey] = $settingValue;
+        if (is_null($settingValue))
+            unset(self::$robotSettings[$settingKey]);
+        else
+            self::$robotSettings[$settingKey] = $settingValue;
 
         self::saveSettings();
     }
@@ -60,8 +63,10 @@ final class RobotSettings
 
     public static function setNickname(string $userId, ?string $nickname): void
     {
-        if (is_null($nickname)) unset(self::$robotSettings["nicknames"][$userId]);
-        else self::$robotSettings["nicknames"][$userId] = $nickname;
+        if (is_null($nickname))
+            unset(self::$robotSettings["nicknames"][$userId]);
+        else
+            self::$robotSettings["nicknames"][$userId] = $nickname;
 
         self::saveSettings();
     }
@@ -73,8 +78,10 @@ final class RobotSettings
 
     public static function setCharacterCard(string $userId, ?int $cardId): void
     {
-        if (is_null($cardId)) unset(self::$robotSettings["characterCards"][$userId]);
-        else self::$robotSettings["characterCards"][$userId] = $cardId;
+        if (is_null($cardId))
+            unset(self::$robotSettings["characterCards"][$userId]);
+        else
+            self::$robotSettings["characterCards"][$userId] = $cardId;
 
         self::saveSettings();
     }

@@ -6,13 +6,10 @@
  * use these reply.
  */
 
-const CUSTOM_REPLY = array(
+const CUSTOM_REPLY = [
     /** General reply and terminology, should NOT be modified. */
-    "_BPDiceWording" => array(
-        "B" => "奖励骰",
-        "P" => "惩罚骰"
-    ),
-    "_checkLevel" => array(
+    "_BPDiceWording" => ["B" => "奖励骰", "P" => "惩罚骰"],
+    "_checkLevel" => [
         "GreatSuccess" => "大成功",
         "UltimateSuccess" => "极限成功",
         "VeryHardSuccess" => "极难成功",
@@ -21,7 +18,7 @@ const CUSTOM_REPLY = array(
         "Failure" => "失败",
         "UltimateFailure" => "极限失败",
         "GreatFailure" => "大失败"
-    ),
+    ],
     "_generalFileLostError" => "相关文件丢失，无法执行该指令！",
     "_generalJSONDecodeError" => "相关文件解析失败，无法执行该指令！",
     "_generalOrderError" => "指令错误，无法识别！",
@@ -90,4 +87,4 @@ const CUSTOM_REPLY = array(
     "setDefaultSurfaceNumber" => "骰子的默认面数现在是：{&1}",
     "setDefaultSurfaceNumberError" => "骰子的面数只能是数字哦~",
     "setDefaultSurfaceNumberOverRange" => "骰子的面数只能介于1~{&1}！"
-);
+];

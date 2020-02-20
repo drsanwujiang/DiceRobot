@@ -28,14 +28,18 @@ final class Customization
             $jsonString = file_get_contents($filePath);
             $jsonArray = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
         }
-        catch (Exception $e) { throw new JSONDecodeException(); }
+        catch (Exception $e)
+        {
+            throw new JSONDecodeException();
+        }
 
         return $jsonArray;
     }
 
     public static function getCustomReply(string $replyKey, ...$variables)
     {
-        if (count($variables) == 0) return CUSTOM_REPLY[$replyKey];
+        if (count($variables) == 0)
+            return CUSTOM_REPLY[$replyKey];
 
         $reply = CUSTOM_REPLY[$replyKey];
 
@@ -48,7 +52,8 @@ final class Customization
 
     public static function getCustomString(string $customString, ...$variables): string
     {
-        if (count($variables) == 0) return $customString;
+        if (count($variables) == 0)
+            return $customString;
 
         // Start from {&1}
         for ($index = 0; $index < count($variables); $index++)

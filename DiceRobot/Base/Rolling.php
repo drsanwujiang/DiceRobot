@@ -10,7 +10,7 @@ final class Rolling
 {
     public static function roll(int $diceNumber = 1, int $surfaceNumber = 100): array
     {
-        $rollResult = array();
+        $rollResult = [];
 
         for($i = 0; $i < $diceNumber; $i++)
         {
@@ -24,7 +24,7 @@ final class Rolling
     public static function rollBySeed($seed, int $diceNumber = 1, int $surfaceNumber = 100): array
     {
         mt_srand($seed);
-        $rollResult = array();
+        $rollResult = [];
 
         for($i = 0; $i < $diceNumber; $i++)
         {

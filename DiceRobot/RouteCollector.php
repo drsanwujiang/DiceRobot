@@ -1,6 +1,7 @@
 <?php
 namespace DiceRobot;
 
+use DiceRobot\Base\AbstractAction;
 use DiceRobot\Exception\InformativeException;
 
 /**
@@ -13,12 +14,7 @@ abstract class RouteCollector extends Parser
     private object $eventData;
 
     private array $currentGroup;
-    private array $eventHandler = array(
-        "message" => array(),
-        "meta_event" => array(),
-        "notice" => array(),
-        "request" => array()
-    );
+    private array $eventHandler = ["message" => [], "meta_event" => [], "notice" => [], "request" => []];
 
     public function __construct(object $eventData)
     {
@@ -26,7 +22,6 @@ abstract class RouteCollector extends Parser
 
         $this->eventData = $eventData;
     }
-
 
     protected function group(string $eventType, callable $callable): void
     {
@@ -43,6 +38,21 @@ abstract class RouteCollector extends Parser
     protected function addComparer(array $key, array $value, string $action): void
     {
         $this->currentGroup[] = array("key" => $key, "value" => $value, "action" => $action);
+    }
+
+    public function run()
+    {
+        $action = $this->parse();
+
+        if (is_null($action))
+        {
+            $this->unableToResolve();
+            return;
+        }
+
+        $actionObject = new $action($this->eventData);
+
+        $this->execute($actionObject);
     }
 
     private function parse(): ?string
@@ -81,22 +91,9 @@ abstract class RouteCollector extends Parser
         return $action ?? NULL;
     }
 
-    /**
-     * @noinspection PhpUndefinedMethodInspection
-     * @noinspection PhpRedundantCatchClauseInspection
-     */
-    public function run()
+    /** @noinspection PhpRedundantCatchClauseInspection */
+    private function execute(AbstractAction &$actionObject): void
     {
-        $action = $this->parse();
-
-        if (is_null($action))
-        {
-            $this->unableToResolve();
-            return;
-        }
-
-        $actionObject = new $action($this->eventData);
-
         if (!$actionObject->checkActive())
         {
             $this->httpCode = $actionObject->getHttpCode();

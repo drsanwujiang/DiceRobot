@@ -22,7 +22,4 @@ $app->run();
 http_response_code($app->getHttpCode());
 
 if ($app->getHttpCode() == 200)
-{
-    echo(json_encode(array("reply" => $app->getReply(), "at_sender" => $app->getAtSender(),
-        "block" => $app->getBlock())));
-}
+    echo(json_encode(["reply" => $app->getReply(), "at_sender" => $app->getAtSender(), "block" => $app->getBlock()]));
