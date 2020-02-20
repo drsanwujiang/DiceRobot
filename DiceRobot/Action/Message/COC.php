@@ -56,9 +56,9 @@ final class COC extends AbstractAction
         $templateItems = $characterCardTemplate["items"];
         $this->reply = Customization::getCustomReply("COCGenerateCardHeading", $version) . "\n";
 
-        $characterCardRollingOrder[6] = array("3D6", "3D6", "3D6", "3D6", "3D6", "2D6+6", "2D6+6", "3D6+3", "1D10");
-        $characterCardRollingOrder[7] = array("3D6X5", "3D6X5", "(2D6+6)X5", "3D6X5", "3D6X5", "(2D6+6)X5", "3D6X5",
-                                                 "(2D6+6)X5", "3D6X5");
+        $characterCardRollingOrder[6] = ["3D6", "3D6", "3D6", "3D6", "3D6", "2D6+6", "2D6+6", "3D6+3", "1D10"];
+        $characterCardRollingOrder[7] = ["3D6X5", "3D6X5", "(2D6+6)X5", "3D6X5", "3D6X5", "(2D6+6)X5", "3D6X5",
+            "(2D6+6)X5", "3D6X5"];
 
         for ($i = 1; $i <= $generateCount; $i++)
         {
@@ -112,7 +112,7 @@ final class COC extends AbstractAction
             return $array[$keys];
         else
         {
-            $returnArray = array();
+            $returnArray = [];
 
             foreach ($keys as $key)
                 array_push($returnArray, $array[$key]);

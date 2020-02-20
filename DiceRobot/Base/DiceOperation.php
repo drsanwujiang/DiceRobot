@@ -179,7 +179,7 @@ final class DiceOperation
         // Parse expression. Sample: 3D5+5+2D6k2
         $subexpressions = preg_split("/([+\-Xx*()（）])/", $expression, -1,
             PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
-        $preSubexpressions = array();
+        $preSubexpressions = [];
         $offsetIncrement = 0;
 
         foreach ($subexpressions as &$subexpression)
@@ -188,7 +188,7 @@ final class DiceOperation
                 preg_match("/^([1-9][0-9]*)?D[1-9][0-9]*(K([1-9][0-9]*)?)?$/i", $subexpression[0]))
             {
                 // If subexpression is like 5D100K2 or 1, push to the temp array
-                $subexpression[0] = str_replace(array("d", "k"), array("D", "K"), $subexpression[0]);
+                $subexpression[0] = str_replace(["d", "k"], ["D", "K"], $subexpression[0]);
                 $subexpression[1] += $offsetIncrement;
 
                 array_push($preSubexpressions, new DiceSubexpression($subexpression[0], $subexpression[1]));
@@ -196,7 +196,7 @@ final class DiceOperation
             elseif (preg_match("/^([1-9][0-9]*)?D(K([1-9][0-9]*)?)?$/i", $subexpression[0]))
             {
                 // If subexpression is like 5DK2
-                $subexpression[0] = str_replace(array("d", "k"), array("D", "K"), $subexpression[0]);
+                $subexpression[0] = str_replace(["d", "k"], ["D", "K"], $subexpression[0]);
                 $subexpression[1] += $offsetIncrement;  // Change offset
 
                 // Add default surface number after D
@@ -218,8 +218,7 @@ final class DiceOperation
         // If successfully parse expression, apply change
         $this->subexpressions = $preSubexpressions;
         // Replace Chinese brackets, d, k, x and X
-        $this->expression = str_replace(array("（", "）", "d", "k", "x", "X"), array("(", ")", "D", "K", "*", "*"),
-            $expression);
+        $this->expression = str_replace(["（", "）", "d", "k", "x", "X"], ["(", ")", "D", "K", "*", "*"], $expression);
     }
 
     /**
@@ -285,7 +284,7 @@ final class DiceOperation
     {
         $expression = $this->expression;
         $resultExpression = "";
-        $tempArray = array();
+        $tempArray = [];
 
         foreach ($this->subexpressions as &$subexpression)
         {
@@ -309,7 +308,7 @@ final class DiceOperation
     {
         $expression = $this->expression;
         $arithmeticExpression = "";
-        $tempArray = array();
+        $tempArray = [];
 
         foreach ($this->subexpressions as &$subexpression)
         {

@@ -21,6 +21,7 @@ final class Start extends RobotCommandAction
             RobotSettings::setSetting("active", true);
             $this->reply = Customization::getCustomReply("robotCommandStart", $this->getRobotNickname());
         }
-        else $this->noResponse();
+        else
+            $this->noResponse();
     }
 }

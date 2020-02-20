@@ -39,7 +39,7 @@ final class DND extends AbstractAction
 
         for ($i = 1; $i <= $generateCount; $i++)
         {
-            $rollResult = array();
+            $rollResult = [];
 
             for ($j = 0; $j < 6; $j++)
             {

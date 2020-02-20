@@ -8,7 +8,7 @@
 const HTTP_API_PORT = 5700;
 
 /** Custom settings. */
-define("CUSTOM_SETTINGS", array(
+define("CUSTOM_SETTINGS", [
     /** Maximum of dice number, default value is 100 */
     "maxDiceNumber" => 100,
 
@@ -32,14 +32,14 @@ define("CUSTOM_SETTINGS", array(
 
     /** Seed of .jrrp, default value is the timestamp of 00:00:00 today */
     "jrrpRandomSeed" => strtotime(date("Y-m-d"))
-));
+]);
 
 /**
  * In general, you should stop modifying and save this file now. Enjoy your TRPG time~
  */
 
 /** URL of HTTP API. */
-const HTTP_API_URL = array(
+const HTTP_API_URL = [
     "getGroupInfo" => "localhost:" . HTTP_API_PORT . "/get_group_info",
     "getGroupMemberInfo" => "localhost:" . HTTP_API_PORT . "/get_group_member_info",
     "getLoginInfo" => "localhost:" . HTTP_API_PORT . "/get_login_info",
@@ -51,18 +51,18 @@ const HTTP_API_URL = array(
     "setGroupAddRequest" => "localhost:" . HTTP_API_PORT . "/set_group_add_request",
     "setGroupCard" => "localhost:" . HTTP_API_PORT . "/set_group_card",
     "setGroupLeave" => "localhost:" . HTTP_API_PORT . "/set_group_leave"
-);
+];
 
 const CUSTOM_API_PATH = "https://api.drsanwujiang.com/dicerobot";
 
 /** URL of custom API. */
-const CUSTOM_API_URL = array(
+const CUSTOM_API_URL = [
     "getAPICredential" => CUSTOM_API_PATH . "/get_credential",
     "getCharacterCard" => CUSTOM_API_PATH . "/get_character_card",
     "heartbeatReport" => CUSTOM_API_PATH . "/heartbeat_report",
     "queryDelinquentGroup" => CUSTOM_API_PATH . "/query_banned_group",
     "submitDelinquentGroup" => CUSTOM_API_PATH . "/add_banned_group"
-);
+];
 
 /** Path of config files folder. */
 const CONFIG_DIR_PATH = __DIR__ . "/config/";

@@ -3,13 +3,13 @@
  * Class autoloader.
  */
 
-$map = array(
+$map = [
     /* Classes of outermost application. */
     "DiceRobot\App" => __DIR__ . "/DiceRobot/App.php",
     "DiceRobot\Parser" => __DIR__ . "/DiceRobot/Parser.php",
     "DiceRobot\RouteCollector" => __DIR__ . "/DiceRobot/RouteCollector.php",
 
-    /** Action classes. Remember to add you class below, or it may be failed to find your class. */
+    /** Action classes. Remember to add you class below. */
     "DiceRobot\Action\Message\BindCard" => __DIR__ . "/DiceRobot/Action/Message/BindCard.php",
     "DiceRobot\Action\Message\CheckDice" => __DIR__ . "/DiceRobot/Action/Message/CheckDice.php",
     "DiceRobot\Action\Message\COC" => __DIR__ . "/DiceRobot/Action/Message/COC.php",
@@ -59,11 +59,9 @@ $map = array(
         __DIR__ . "/DiceRobot/Exception/COCCheckException/COCCheckRuleLostException.php",
     "DiceRobot\Exception\COCCheckException\COCCheckRuleMatchFailedException" =>
         __DIR__ . "/DiceRobot/Exception/COCCheckException/COCCheckRuleMatchFailedException.php",
-);
+];
 
 spl_autoload_register(function ($class) use ($map) {
     if (isset($map[$class]))
-    {
         require($map[$class]);
-    }
 }, true);

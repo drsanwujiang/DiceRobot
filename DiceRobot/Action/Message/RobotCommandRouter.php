@@ -36,11 +36,16 @@ final class RobotCommandRouter extends AbstractAction
 
     public function __invoke(): void
     {
-        if ($this->commandKey == "about") $commandAction = new About($this->eventData, $this->commandValue);
-        elseif ($this->commandKey == "start") $commandAction = new Start($this->eventData, $this->commandValue);
-        elseif ($this->commandKey == "stop") $commandAction = new Stop($this->eventData, $this->commandValue);
-        elseif ($this->commandKey == "nn") $commandAction = new Nickname($this->eventData, $this->commandValue);
-        elseif ($this->commandKey == "goodbye") $commandAction = new Goodbye($this->eventData, $this->commandValue);
+        if ($this->commandKey == "about")
+            $commandAction = new About($this->eventData, $this->commandValue);
+        elseif ($this->commandKey == "start")
+            $commandAction = new Start($this->eventData, $this->commandValue);
+        elseif ($this->commandKey == "stop")
+            $commandAction = new Stop($this->eventData, $this->commandValue);
+        elseif ($this->commandKey == "nn")
+            $commandAction = new Nickname($this->eventData, $this->commandValue);
+        elseif ($this->commandKey == "goodbye")
+            $commandAction = new Goodbye($this->eventData, $this->commandValue);
 
         if (isset($commandAction))
         {
@@ -51,7 +56,8 @@ final class RobotCommandRouter extends AbstractAction
             $this->block = $commandAction->getBlock();
             $this->httpCode = $commandAction->getHttpCode();
         }
-        else $this->unableToResolve();
+        else
+            $this->unableToResolve();
     }
 
     public function checkActive(): bool
