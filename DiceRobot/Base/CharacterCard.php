@@ -62,6 +62,9 @@ final class CharacterCard
             return;
         }
 
+        foreach ([1, 3, 15, 22, 24, 35] as $index)
+            $skillsTable[$index] = array_pad($skillsTable[$index], 34, "");
+
         $skillNames = array_merge(
             array_slice($skillsTable[1], 2, 4),
             array_slice($skillsTable[3], 6, 3),
