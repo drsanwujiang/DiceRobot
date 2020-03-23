@@ -7,9 +7,7 @@ use DiceRobot\Base\DiceOperation;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class COC
- *
- * Action class of order ".coc". Generate character card of investigator.
+ * Generate character card of investigator.
  */
 final class COC extends AbstractAction
 {

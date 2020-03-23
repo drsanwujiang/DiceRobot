@@ -6,9 +6,7 @@ use DiceRobot\Base\RobotCommandAction;
 use DiceRobot\Base\RobotSettings;
 
 /**
- * Class Start
- *
- * Action class of order ".robot start". Set robot active.
+ * Set robot activation state.
  */
 final class Start extends RobotCommandAction
 {

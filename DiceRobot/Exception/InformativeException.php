@@ -4,10 +4,8 @@ namespace DiceRobot\Exception;
 use Exception;
 
 /**
- * Class InformativeException
- *
- * Parent class to all the InformativeException. When this exception thrown, reply of action will be replaced with
- * specific reply.
+ * Informative exception.
+ * When this exception thrown, reply of the action will be replaced with specific reply.
  */
 abstract class InformativeException extends Exception
 {

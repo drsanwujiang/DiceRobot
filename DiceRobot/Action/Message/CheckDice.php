@@ -4,16 +4,15 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Base\AbstractAction;
 use DiceRobot\Base\API;
 use DiceRobot\Base\CharacterCard;
-use DiceRobot\Base\CheckDiceRule;
+use DiceRobot\Base\CheckRule;
 use DiceRobot\Base\Customization;
 use DiceRobot\Base\DiceOperation;
 use DiceRobot\Base\RobotSettings;
+use DiceRobot\Exception\CharacterCardException\CharacterCardNotBoundException;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class CheckDice
- *
- * Action class of order ".ra". Roll a check dice to investigator's attribute or skill.
+ * Roll a check dice to investigator's attribute or skill.
  */
 final class CheckDice extends AbstractAction
 {
@@ -38,11 +37,8 @@ final class CheckDice extends AbstractAction
             $checkValueName = strtoupper($checkValueName[0]);
             $cardId = RobotSettings::getCharacterCard($this->userId);
 
-            if (is_null($cardId))
-            {
-                $this->reply = Customization::getCustomReply("checkDiceCharacterCardNotBound");
-                return;
-            }
+            if (empty($cardId))
+                throw new CharacterCardNotBoundException();
 
             $characterCard = new CharacterCard($cardId);
             $characterCard->load();
@@ -80,8 +76,19 @@ final class CheckDice extends AbstractAction
             return;
         }
 
-        $this->reply = Customization::getCustomReply("checkDiceResultHeading",
-            $this->userNickname, $repeat, $checkValueName ?? "") . ($repeat > 1 ? "\n" : "");
+        $this->reply = isset($checkValueName) ?
+            Customization::getCustomReply("checkDiceResultHeadingWithAttributes",
+                $this->userNickname,
+                $characterCard->get("HP"),
+                intval(($characterCard->get("SIZ") + $characterCard->get("CON")) / 10),
+                $characterCard->get("MP"),
+                intval($characterCard->get("POW") / 5),
+                $characterCard->get("SAN"),
+                99 - $characterCard->get("克苏鲁神话") ?? 0,
+                $repeat, $checkValueName) :
+            Customization::getCustomReply("checkDiceResultHeading",
+                $this->userNickname, $repeat, "");
+        $this->reply .= $repeat > 1 ? "\n" : "";
         $hCheckReply = Customization::getCustomReply("checkDicePrivateCheck",
             $this->userNickname, $repeat);
 
@@ -147,7 +154,7 @@ final class CheckDice extends AbstractAction
     {
         $checkRules = Customization::getCustomFile(COC_CHECK_DICE_RULE_PATH)["rules"];
         $ruleIndex = RobotSettings::getSetting("cocCheckRule") ?? 0;
-        $checkLevel = (new CheckDiceRule($checkRules, $ruleIndex))->getCheckLevel($result, $value);
+        $checkLevel = (new CheckRule($checkRules, $ruleIndex))->getCheckLevel($result, $value);
 
         return Customization::getCustomReply("_checkLevel")[$checkLevel];
     }

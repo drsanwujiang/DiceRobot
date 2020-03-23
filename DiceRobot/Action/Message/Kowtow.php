@@ -7,9 +7,7 @@ use DiceRobot\Base\Rolling;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class Kowtow
- *
- * Action class of order ".orz". Kowtow to the robot, and it will show your devoutness~
+ * Kowtow to the robot, and it will show your devoutness~
  */
 final class Kowtow extends AbstractAction
 {

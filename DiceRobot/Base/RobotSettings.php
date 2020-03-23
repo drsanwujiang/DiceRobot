@@ -2,10 +2,7 @@
 namespace DiceRobot\Base;
 
 /**
- * Class RobotSettings
- *
- * Utils class about robot settings, whose member methods are used to load/save configuration and get/set specific
- * setting of chat.
+ * Utils class with robot settings methods, used to load/save configuration and get/set specific setting of chat.
  */
 final class RobotSettings
 {

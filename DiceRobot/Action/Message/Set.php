@@ -6,9 +6,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Base\RobotSettings;
 
 /**
- * Class Set
- *
- * Action class of order ".set". Set default surface number of dice.
+ * Set default surface number of dice.
  */
 final class Set extends AbstractAction
 {

@@ -6,9 +6,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Base\DiceOperation;
 
 /**
- * Class DND
- *
- * Action class of order ".dnd". Generate character card of adventure.
+ * Generate character card of adventure.
  */
 final class DND extends AbstractAction
 {

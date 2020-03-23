@@ -5,10 +5,7 @@ use DiceRobot\Base\AbstractAction;
 use DiceRobot\Base\API;
 
 /**
- * Class GroupInvite
- *
- * Action class of request "group". Approve the request when added to a group, or reject the request when invited to a
- * delinquent group.
+ * Approve the request when added to a group, or reject the request when invited to a delinquent group.
  */
 final class GroupInvite extends AbstractAction
 {

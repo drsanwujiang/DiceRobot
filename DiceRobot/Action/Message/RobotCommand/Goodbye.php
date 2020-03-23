@@ -6,9 +6,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Base\RobotCommandAction;
 
 /**
- * Class Goodbye
- *
- * Action class of order ".robot goodbye". Send information and quit the group.
+ * Send information and quit the group.
  */
 final class Goodbye extends RobotCommandAction
 {

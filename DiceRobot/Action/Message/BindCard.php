@@ -9,9 +9,7 @@ use DiceRobot\Base\RobotSettings;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class BindCard
- *
- * Action class of order ".card". Bind/Unbind COC character card.
+ * Bind/Unbind COC character card.
  */
 final class BindCard extends AbstractAction
 {

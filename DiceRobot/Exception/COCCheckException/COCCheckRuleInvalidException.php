@@ -5,9 +5,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Exception\InformativeException;
 
 /**
- * Class COCCheckRuleInvalidException
- *
- * Exception thrown when COC check rule is invalid. This exception will send reply "checkDiceRuleInvalid".
+ * COC check rule is invalid. This exception will send reply "checkDiceRuleInvalid".
  */
 final class COCCheckRuleInvalidException extends InformativeException
 {
