@@ -20,12 +20,14 @@ $map = [
     "DiceRobot\Base\RobotCommandAction" => __DIR__ . "/DiceRobot/Base/RobotCommandAction.php",
     "DiceRobot\Base\RobotSettings" => __DIR__ . "/DiceRobot/Base/RobotSettings.php",
     "DiceRobot\Base\Rolling" => __DIR__ . "/DiceRobot/Base/Rolling.php",
-    "DiceRobot\Exception\CharacterCardLostException" =>
-        __DIR__ . "/DiceRobot/Exception/CharacterCardLostException.php",
     "DiceRobot\Exception\FileLostException" => __DIR__ . "/DiceRobot/Exception/FileLostException.php",
     "DiceRobot\Exception\InformativeException" => __DIR__ . "/DiceRobot/Exception/InformativeException.php",
     "DiceRobot\Exception\JSONDecodeException" => __DIR__ . "/DiceRobot/Exception/JSONDecodeException.php",
     "DiceRobot\Exception\OrderErrorException" => __DIR__ . "/DiceRobot/Exception/OrderErrorException.php",
+    "DiceRobot\Exception\CharacterCardException\CharacterCardLostException" =>
+        __DIR__ . "/DiceRobot/Exception/CharacterCardException/CharacterCardLostException.php",
+    "DiceRobot\Exception\CharacterCardException\CharacterCardNotBoundException" =>
+        __DIR__ . "/DiceRobot/Exception/CharacterCardException/CharacterCardNotBoundException.php",
     "DiceRobot\Exception\COCCheckException\COCCheckRuleDangerousException" =>
         __DIR__ . "/DiceRobot/Exception/COCCheckException/COCCheckRuleDangerousException.php",
     "DiceRobot\Exception\COCCheckException\COCCheckRuleInvalidException" =>
