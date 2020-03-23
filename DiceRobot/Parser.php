@@ -14,7 +14,6 @@ abstract class Parser extends Response
     public string $chatType;
     public int $chatId;
     public string $userName;
-    public string $userNickname;
     public string $message;
 
     public ?string $noticeType = NULL;
