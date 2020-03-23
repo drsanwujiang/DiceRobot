@@ -45,6 +45,7 @@ final class BindCard extends AbstractAction
             error_log("DiceRobot bind character card failed: " . $result["message"] . "\n" .
                 "Delinquent group ID: " . $this->groupId);
             $this->noResponse();
+            return;
         }
 
         // Request to get character card

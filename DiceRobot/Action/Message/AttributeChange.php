@@ -53,7 +53,7 @@ class AttributeChange extends AbstractAction
         {
             $diceOperation = new DiceOperation($expression);
 
-            if (!$diceOperation->success || $diceOperation->reason != "")
+            if ($diceOperation->success < 0 || $diceOperation->reason != "")
             {
                 $this->reply = Customization::getCustomReply("attributeChangeWrongExpression");
                 return;
@@ -75,6 +75,7 @@ class AttributeChange extends AbstractAction
             error_log("DiceRobot attribute change failed:\n" . "Attribute change user QQ ID: " .
                 $this->userId);
             $this->noResponse();
+            return;
         }
 
         $response = API::updateCharacterCard($this->userId, $cardId, $attributeName, $addition, $value,

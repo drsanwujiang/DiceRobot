@@ -56,7 +56,7 @@ class SanCheck extends AbstractAction
 
             $diceOperations[$i] = new DiceOperation(trim($orders[$i]));
 
-            if (!$diceOperations[$i]->success || $diceOperations[$i]->reason != "")
+            if ($diceOperations[$i]->success < 0 || $diceOperations[$i]->reason != "")
             {
                 $this->reply = Customization::getCustomReply("sanCheckWrongExpression");
                 return;
@@ -82,6 +82,7 @@ class SanCheck extends AbstractAction
         {
             error_log("DiceRobot sanity check failed:\n" . "Sanity check user QQ ID: " . $this->userId);
             $this->noResponse();
+            return;
         }
 
         $response = API::sanityCheck($this->userId, $cardId, $checkResult, $decreases, $response["data"]["credential"]);
