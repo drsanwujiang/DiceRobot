@@ -7,9 +7,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Base\DiceOperation;
 
 /**
- * Class Dice
- *
- * Action class of order ".r". Roll a dice determined by the rolling expression.
+ * Roll a dice determined by the rolling expression.
  */
 final class Dice extends AbstractAction
 {

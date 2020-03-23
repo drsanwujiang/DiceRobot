@@ -1,55 +1,114 @@
 <?php
 namespace DiceRobot;
 
+use DiceRobot\Base\AbstractAction;
+use DiceRobot\Exception\InformativeException;
+
 /**
- * Class App
- *
- * Outermost application. Add routes and call methods defined in parent class.
+ * DiceRobot application.
  */
-final class App extends RouteCollector
+final class App extends Parser
 {
-    /** @noinspection PhpFullyQualifiedNameUsageInspection */
-    public function addRoutes(): void
+    private object $eventData;
+
+    private array $currentGroup;
+    private array $eventHandler = ["message" => [], "meta_event" => [], "notice" => [], "request" => []];
+
+    public function __construct(object $eventData)
     {
-        /** Add your actions in the corresponding methods below */
+        $this->eventData = $eventData;
+        $this->parseEventData($eventData);
+    }
 
-        // Add actions handling message event
-        $this->group("message", function (RouteCollector $rc) {
-            $rc->add(".robot", \DiceRobot\Action\Message\RobotCommandRouter::class);
-            $rc->add(".ra", \DiceRobot\Action\Message\CheckDice::class);
-            $rc->add(".r", \DiceRobot\Action\Message\Dice::class);
-            $rc->add(".coc", \DiceRobot\Action\Message\COC::class);
-            $rc->add(".dnd", \DiceRobot\Action\Message\DND::class);
-            $rc->add(".jrrp", \DiceRobot\Action\Message\JRRP::class);
-            $rc->add(".orz", \DiceRobot\Action\Message\Kowtow::class);
-            $rc->add(".card", \DiceRobot\Action\Message\BindCard::class);
-            $rc->add(".nn", \DiceRobot\Action\Message\Nickname::class);
-            $rc->add(".setcoc", \DiceRobot\Action\Message\SetCOC::class);
-            $rc->add(".set", \DiceRobot\Action\Message\Set::class);
-            $rc->add(".help", \DiceRobot\Action\Message\Help::class);
-            $rc->add(".hello", \DiceRobot\Action\Message\Hello::class);
-        });
+    public function group(string $eventType, callable $callable): void
+    {
+        $this->currentGroup = $this->eventHandler[$eventType];
+        $callable($this);
+        $this->eventHandler[$eventType] = $this->currentGroup;
+    }
 
-        // Add actions handling notice event
-        $this->group("notice", function (RouteCollector $rc) {
-            $rc->addComparer([$this->noticeType, $this->userId], ["group_increase", $this->selfId],
-                \DiceRobot\Action\Notice\SelfAdded::class);
-            $rc->addComparer([$this->noticeType, $this->subType], ["group_decrease", "kick_me"],
-                \DiceRobot\Action\Notice\SelfKicked::class);
-        });
+    public function add(string $pattern, string $action): void
+    {
+        $this->currentGroup[$pattern] = $action;
+    }
 
-        //Add actions handling request event
-        $this->group("request", function (RouteCollector $rc) {
-            $rc->addComparer([$this->requestType], ["friend"],
-                \DiceRobot\Action\Request\FriendAdd::class);
-            $rc->addComparer([$this->requestType, $this->subType], ["group", "invite"],
-                \DiceRobot\Action\Request\GroupInvite::class);
-        });
+    public function addComparer(array $key, array $value, string $action): void
+    {
+        $this->currentGroup[] = array("key" => $key, "value" => $value, "action" => $action);
+    }
 
-        //Add actions handling meta event
-        $this->group("meta_event", function (RouteCollector $rc) {
-            $rc->addComparer([$this->metaEventType], ["heartbeat"],
-                \DiceRobot\Action\MetaEvent\Heartbeat::class);
-        });
+    public function run()
+    {
+        $action = $this->parse();
+
+        if (is_null($action))
+        {
+            $this->httpCode = 204;
+            return;
+        }
+
+        $actionObject = new $action($this->eventData);
+
+        $this->execute($actionObject);
+    }
+
+    private function parse(): ?string
+    {
+        if ($this->postType == "message")
+        {
+            foreach ($this->eventHandler[$this->postType] as $pattern => $actionName)
+            {
+                $actualPattern = "/^\\$pattern/i";
+
+                if (preg_match($actualPattern, $this->message))
+                {
+                    $action = $actionName;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            foreach ($this->eventHandler[$this->postType] as $comparer)
+            {
+                for ($i = 0; $i < count($comparer["key"]); $i++)
+                {
+                    if ($comparer["key"][$i] != $comparer["value"][$i])
+                        break;
+                }
+
+                if ($i == count($comparer["key"]))
+                {
+                    $action = $comparer["action"];
+                    break;
+                }
+            }
+        }
+
+        return $action ?? NULL;
+    }
+
+    /** @noinspection PhpRedundantCatchClauseInspection */
+    private function execute(AbstractAction &$actionObject): void
+    {
+        if (!$actionObject->checkActive())
+        {
+            $this->httpCode = $actionObject->getHttpCode();
+            return;
+        }
+
+        try
+        {
+            $actionObject();
+            $this->reply = $actionObject->getReply();
+            $this->atSender = $actionObject->getAtSender();
+        }
+        catch (InformativeException $e)
+        {
+            $this->reply = $e;
+        }
+
+        $this->block = $actionObject->getBlock();
+        $this->httpCode = $actionObject->getHttpCode();
     }
 }

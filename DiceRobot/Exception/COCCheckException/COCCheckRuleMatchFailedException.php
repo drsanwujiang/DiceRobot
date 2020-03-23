@@ -5,9 +5,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Exception\InformativeException;
 
 /**
- * Class COCCheckRuleMatchFailedException
- *
- * Exception thrown when failed to match COC check rule. This exception will send reply "checkDiceRuleMatchFailed".
+ * Failed to match COC check rule. This exception will send reply "checkDiceRuleMatchFailed".
  */
 class COCCheckRuleMatchFailedException extends InformativeException
 {

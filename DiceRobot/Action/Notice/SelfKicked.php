@@ -5,9 +5,7 @@ use DiceRobot\Base\AbstractAction;
 use DiceRobot\Base\API;
 
 /**
- * Class SelfKicked
- *
- * Action class of notice "group_decrease". Submit group ID when kicked out of a group.
+ * Submit group ID when kicked out of a group.
  */
 final class SelfKicked extends AbstractAction
 {

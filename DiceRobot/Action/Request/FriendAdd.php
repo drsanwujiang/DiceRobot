@@ -5,9 +5,7 @@ use DiceRobot\Base\AbstractAction;
 use DiceRobot\Base\API;
 
 /**
- * Class FriendAdd
- *
- * Action class of request "friend". Process the request.
+ * Process the add friend request.
  */
 final class FriendAdd extends AbstractAction
 {

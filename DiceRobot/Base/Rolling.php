@@ -2,9 +2,7 @@
 namespace DiceRobot\Base;
 
 /**
- * Class Rolling
- *
- * Utility class whose member methods are used to roll a dice and return rolling result.
+ * Random number generators.
  */
 final class Rolling
 {

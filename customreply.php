@@ -1,14 +1,21 @@
 <?php
 /**
- * This file contains all the terminology and statements used in robot's reply. You can make any change you wish to
- * customized reply, but generally you don't need to modify the terminology.
+ * Terminology and statements used in robot's reply.
+ * You can make any change you wish to customized reply, but generally you don't need to modify the terminology.
  * You should use method Customization::getCustomReply(), which replaces {&1}, {&2}, {&3} ... with actual values, to
  * use these reply.
  */
 
 const CUSTOM_REPLY = [
     /** General reply and terminology, should NOT be modified. */
-    "_BPDiceWording" => ["B" => "奖励骰", "P" => "惩罚骰"],
+    "_attributeChangeWording" => [
+        "减少",
+        "增加"
+    ],
+    "_BPDiceWording" => [
+        "B" => "奖励骰",
+        "P" => "惩罚骰"
+    ],
     "_checkLevel" => [
         "GreatSuccess" => "大成功",
         "UltimateSuccess" => "极限成功",
@@ -19,6 +26,12 @@ const CUSTOM_REPLY = [
         "UltimateFailure" => "极限失败",
         "GreatFailure" => "大失败"
     ],
+    "_sanCheckLevel" => [
+        "失败",
+        "成功"
+    ],
+    "_generalCharacterCardLost" => "人物卡文件丢失了！Σ(っ°Д°;)っ",
+    "_generalCharacterCardNotBound" => "你还没有绑定人物卡，无法执行该指令",
     "_generalFileLostError" => "相关文件丢失，无法执行该指令！",
     "_generalJSONDecodeError" => "相关文件解析失败，无法执行该指令！",
     "_generalOrderError" => "指令错误，无法识别！",
@@ -26,21 +39,25 @@ const CUSTOM_REPLY = [
     "_generalRepeatTimesOverRange" => "不能重复这么多次啦~",
 
     /** Customized reply, modify as you wish~ */
+    "attributeChangeInternalError" => "与致远星的联络出现问题QAQ！请稍后再试……",
+    "attributeChangePermissionDenied" => "没有找到当前绑定的人物卡，请重新绑定！",
+    "attributeChangeResult" => "{&1}的 {&2} {&3}了{&4}点，当前 {&5}：{&6}点",
+    "attributeChangeWrongExpression" => "指令错误！属性值的变动只能是非负整数或掷骰表达式",
+    "attributeChangeValueOverstep" => "属性值的变动太大啦……",
     "bindCardFormatError" => "人物卡格式错误，无法绑定！",
     "bindCardInternalError" => "致远星沦陷了QAQ！请稍后再试……",
     "bindCardPending" => "正在联络致远星，可能需要几秒钟，请稍等……",
     "bindCardPermissionDenied" => "这张人物卡不属于你哦~",
     "bindCardSuccess" => "人物卡绑定完成啦~",
     "bindCardUnbind" => "人物卡解绑成功",
-    "characterCardLost" => "人物卡文件丢失了！Σ(っ°Д°;)っ",
     "checkDiceBPNumberOverRange" => "奖惩骰数量越界啦！",
-    "checkDiceCharacterCardNotBound" => "你还没有绑定人物卡，不能这样检定哦~",
     "checkDicePrivateChatPrivateCheck" => "咦？为什么要在私聊的时候暗检定",
     "checkDicePrivateCheck" => "{&1}悄悄进行了{&2}次检定……",
     "checkDicePrivateCheckFromDiscuss" => "在讨论组({&1})中，",
     "checkDicePrivateCheckFromGroup" => "在{&1}({&2})中，",
     "checkDiceResult" => "{&1}/{&2}，{&3}",
     "checkDiceResultHeading" => "{&1}进行了{&2}次{&3}检定：",
+    "checkDiceResultHeadingWithAttributes" => "{&1}(HP:{&2}/{&3} MP:{&4}/{&5} SAN:{&6}/{&7})进行了{&8}次{&9}检定：",
     "checkDiceRuleDangerous" => "检定规则存在危险错误，无法执行！",
     "checkDiceRuleInvalid" => "检定规则错误，无法执行！",
     "checkDiceRuleLost" => "检定规则不存在！请使用 .setcoc 重新设定",
@@ -79,6 +96,12 @@ const CUSTOM_REPLY = [
     "robotCommandStart" => "呐呐~{&1}为你服务~☆♪",
     "robotCommandStop" => "休息，休息一会儿~",
     "robotCommandUnknown" => "咦？这是什么奇怪的指令？",
+    "sanCheckInternalError" => "致远星被克苏鲁吞噬惹QAQ！请稍后再试……",
+    "sanCheckPermissionDenied" => "没有找到当前绑定的人物卡，请重新绑定！",
+    "sanCheckResult" => "{&1}进行了 SAN 值检定：{&2}/{&3}，{&4}\nSAN 值减少{&5}点，剩余{&6}/{&7}",
+    "sanCheckSanityNotFound" => "当前人物卡未设置 SAN 属性，无法检定！",
+    "sanCheckSanityInvalid" => "SAN 值非法，不能进行检定！",
+    "sanCheckWrongExpression" => "指令错误！SAN 值损失只能是非负整数或掷骰表达式",
     "selfAddedBannedGroup" => "本群已被列入不友好群聊名单，DiceRobot 系列机器人拒绝服务。",
     "setCOCChangeRuleDenied" => "只有群主或管理员才可以使用这个指令哦~",
     "setCOCCurrentRule" => "当前检定规则：{&1}\n规则描述：{&2}\n检定等级：\n{&3}",
@@ -86,5 +109,5 @@ const CUSTOM_REPLY = [
     "setCOCRuleIndexError" => "检定规则序号只能是数字哦~",
     "setDefaultSurfaceNumber" => "骰子的默认面数现在是：{&1}",
     "setDefaultSurfaceNumberError" => "骰子的面数只能是数字哦~",
-    "setDefaultSurfaceNumberOverRange" => "骰子的面数只能介于1~{&1}！"
+    "setDefaultSurfaceNumberOverRange" => "骰子的面数只能介于1~{&1}！",
 ];

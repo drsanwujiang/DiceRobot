@@ -9,9 +9,7 @@ use DiceRobot\Base\RobotSettings;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class BindCard
- *
- * Action class of order ".card". Bind/Unbind COC character card.
+ * Bind/Unbind COC character card.
  */
 final class BindCard extends AbstractAction
 {
@@ -47,6 +45,7 @@ final class BindCard extends AbstractAction
             error_log("DiceRobot bind character card failed: " . $result["message"] . "\n" .
                 "Delinquent group ID: " . $this->groupId);
             $this->noResponse();
+            return;
         }
 
         // Request to get character card

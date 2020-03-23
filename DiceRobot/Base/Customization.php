@@ -6,9 +6,7 @@ use DiceRobot\Exception\JSONDecodeException;
 use Exception;
 
 /**
- * Class Customization
- *
- * This class contains functions used to get customized data.
+ * Utility class with methods to get customized data.
  */
 final class Customization
 {

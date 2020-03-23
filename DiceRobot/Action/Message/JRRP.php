@@ -7,9 +7,7 @@ use DiceRobot\Base\Rolling;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class JRRP
- *
- * Action class of order ".jrrp". Send luck value of message sender.
+ * Send luck value of message sender.
  */
 final class JRRP extends AbstractAction
 {

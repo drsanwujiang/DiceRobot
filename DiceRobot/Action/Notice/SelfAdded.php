@@ -7,10 +7,8 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Base\RobotSettings;
 
 /**
- * Class SelfAdded
- *
- * Action class of notice "group_increase". Send greetings according to hello template when added to a group, or send
- * a message and quit when invited to a delinquent group.
+ * Send greetings according to the template when added to a group, or send message and quit when invited to a
+ * delinquent group.
  */
 final class SelfAdded extends AbstractAction
 {

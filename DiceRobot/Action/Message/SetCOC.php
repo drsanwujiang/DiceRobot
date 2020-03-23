@@ -3,14 +3,12 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Base\AbstractAction;
 use DiceRobot\Base\API;
-use DiceRobot\Base\CheckDiceRule;
+use DiceRobot\Base\CheckRule;
 use DiceRobot\Base\Customization;
 use DiceRobot\Base\RobotSettings;
 
 /**
- * Class SetCOC
- *
- * Action class of order ".setcoc". Show description of current rule, or set default rule of COC check dice.
+ * Show description of current rule, or set default rule of COC check dice.
  */
 final class SetCOC extends AbstractAction
 {
@@ -26,7 +24,7 @@ final class SetCOC extends AbstractAction
         }
 
         $checkRules = Customization::getCustomFile(COC_CHECK_DICE_RULE_PATH)["rules"];
-        $rule = new CheckDiceRule($checkRules, $ruleIndex == "" ?
+        $rule = new CheckRule($checkRules, $ruleIndex == "" ?
             (RobotSettings::getSetting("cocCheckRule") ?? 0) : intval($ruleIndex));
 
         if ($ruleIndex == "")

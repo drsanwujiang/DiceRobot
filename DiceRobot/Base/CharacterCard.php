@@ -1,15 +1,33 @@
 <?php
 namespace DiceRobot\Base;
 
-use DiceRobot\Exception\FileLostException;
+use DiceRobot\Exception\CharacterCardException\CharacterCardLostException;
 
 /**
- * Class CharacterCard
- *
- * Container of COC character card.
+ * COC character card container.
  */
 final class CharacterCard
 {
+    const ATTRIBUTE_ENG_NAMES = [
+        "STR" => "力量",
+        "CON" => "体质",
+        "SIZ" => "体型",
+        "DEX" => "敏捷",
+        "APP" => "外貌",
+        "INT" => "智力",
+        "IDEA" => "灵感",
+        "POW" => "意志",
+        "EDU" => "教育",
+        "HP" => "生命",
+        "SAN" => "理智",
+        "LUCK" => "幸运",
+        "MP" => "魔法"
+    ];
+
+    const ATTRIBUTE_NAMES = [
+        "力量", "体质", "体型", "敏捷", "外貌", "智力", "灵感", "意志", "教育", "生命", "理智", "幸运", "魔法"
+    ];
+
     private static string $characterCardDir;
     private string $characterCardPath;
 
@@ -50,8 +68,10 @@ final class CharacterCard
         $this->attributes["灵感"] = intval($attributesTable[8][5] ?? 0);  // INT and IDEA is same
         $this->attributes["意志"] = intval($attributesTable[14][1] ?? 0);
         $this->attributes["教育"] = intval($attributesTable[14][3] ?? 0);
+        $this->attributes["生命"] = intval($statusTable[4][0] ?? 0);
         $this->attributes["理智"] = intval($statusTable[13][0] ?? 0);
         $this->attributes["幸运"] = intval($statusTable[21][0] ?? 0);
+        $this->attributes["魔法"] = intval($statusTable[29][0] ?? 0);
     }
 
     private function parseSkills(array &$skillsTable): void
@@ -102,7 +122,7 @@ final class CharacterCard
     public function load(): void
     {
         if (!file_exists($this->characterCardPath))
-            throw new FileLostException();
+            throw new CharacterCardLostException();
 
         $jsonString = file_get_contents($this->characterCardPath);
         $characterCard = json_decode($jsonString, true);
@@ -121,30 +141,21 @@ final class CharacterCard
         file_put_contents($this->characterCardPath, $jsonString);
     }
 
-    public function get($checkValueName): ?int
+    public function get(string $checkValueName): ?int
     {
-        $attributeEngNames = [
-            "STR" => "力量",
-            "CON" => "体质",
-            "SIZ" => "体型",
-            "DEX" => "敏捷",
-            "APP" => "外貌",
-            "INT" => "智力",
-            "IDEA" => "灵感",
-            "POW" => "意志",
-            "EDU" => "教育",
-            "LUCK" => "幸运",
-            "SAN" => "理智"
-        ];
-        $attributeNames = [
-            "力量", "体质", "体型", "敏捷", "外貌", "智力", "灵感", "意志", "教育", "幸运", "理智"
-        ];
+        $checkValueName = self::ATTRIBUTE_ENG_NAMES[$checkValueName] ?? $checkValueName;
 
-        $checkValueName = $attributeEngNames[$checkValueName] ?? $checkValueName;
-
-        if (in_array($checkValueName, $attributeNames))
+        if (in_array($checkValueName, self::ATTRIBUTE_NAMES))
             return $this->attributes[$checkValueName];
         else
             return $this->skills[$checkValueName] ?? NULL;
+    }
+
+    public function set($attributeName, $attribute): void
+    {
+        $attributeName = self::ATTRIBUTE_ENG_NAMES[$attributeName] ?? $attributeName;
+        $this->attributes[$attributeName] = $attribute;
+
+        $this->save();
     }
 }

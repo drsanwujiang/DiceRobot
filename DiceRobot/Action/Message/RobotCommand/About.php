@@ -6,9 +6,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Base\RobotCommandAction;
 
 /**
- * Class About
- *
- * Action class of order ".robot about". Send about information.
+ * Send about information.
  */
 final class About extends RobotCommandAction
 {

@@ -7,9 +7,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class Hello
- *
- * Action class of order ".hello". Send greetings according to hello template.
+ * Send greetings according to the template.
  */
 final class Hello extends AbstractAction
 {

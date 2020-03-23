@@ -9,11 +9,9 @@ use DiceRobot\Exception\COCCheckException\COCCheckRuleMatchFailedException;
 use Throwable;
 
 /**
- * Class CheckDiceRule
- *
- * Container of COC check rule.
+ * COC check rule container.
  */
-final class CheckDiceRule
+final class CheckRule
 {
     public string $name;
     public string $description;

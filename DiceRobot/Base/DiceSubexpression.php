@@ -8,85 +8,41 @@ namespace DiceRobot\Base;
  */
 final class DiceSubexpression
 {
-    /**
-     * Subexpression.
-     *
-     * @var string
-     */
+    /** @var string Subexpression */
     public string $subexpression;
 
-    /**
-     * Offset of subexpression in the parent expression.
-     *
-     * @var int
-     */
+    /** @var int Offset of subexpression in the parent expression */
     private int $offset = 0;
 
-    /**
-     * Type of this subexpression.
-     *
-     * 0: Constant
-     * 1: Normal dice expression
-     * 2: K dice, take several maximum
-     *
-     * @var int
-     */
+    /** @var int Subexpression type. 0: Constant, 1: Normal dice expression, 2: K dice, take several maximum */
     private int $type;
 
-    /**
-     * Expression value, if $type is 0.
-     *
-     * @var int
-     */
+    /** @var int Constant expression value */
     private int $constant;
 
-    /**
-     * Dice number, if $type is 1 or 2.
-     *
-     * @var int
-     */
+    /** @var int Dice number */
     private int $diceNumber = 1;
 
-    /**
-     * Dice surface number, if $type is 1 or 2.
-     *
-     * @var int
-     */
+    /** @var int Dice surface number */
     private int $surfaceNumber = 100;
 
-    /**
-     * K number, if $type is 2.
-     *
-     * @var int
-     */
+    /** @var int K dice number */
     private int $kNumber = 1;
 
-    /**
-     * Result of rolling.
-     *
-     * @var array
-     */
+    /** @var array Rolling result */
     private array $rollResult;
 
-    /**
-     * Summary of rolling result.
-     *
-     * @var int
-     */
+    /** @var int Rolling result summary */
     public int $rollSummary;
 
-    /**
-     * If the expression has been successfully executed.
-     *
-     * @var bool
-     */
+    /** @var bool Success flag */
     public bool $success = true;
 
     /**
      * DiceSubexpression constructor.
      *
-     * @param string $subexpression rolling subexpression
-     * @param int $offset offset of subexpression in rolling expression
+     * @param string $subexpression Rolling subexpression
+     * @param int $offset Offset of subexpression in rolling expression
      */
     public function __construct(string $subexpression, int $offset = 0)
     {
@@ -168,7 +124,7 @@ final class DiceSubexpression
     /**
      * Generate result string with all points joint by plus sign.
      *
-     * @return string result string
+     * @return string Result string
      */
     public function getResultString(): string
     {

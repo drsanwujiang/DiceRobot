@@ -6,9 +6,7 @@ use DiceRobot\Base\RobotCommandAction;
 use DiceRobot\Base\RobotSettings;
 
 /**
- * Class Stop
- *
- * Action class of order ".robot stop". Set robot inactive.
+ * Set robot inactivation state.
  */
 final class Stop extends RobotCommandAction
 {

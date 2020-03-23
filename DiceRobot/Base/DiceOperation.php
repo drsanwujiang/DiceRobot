@@ -4,107 +4,49 @@ namespace DiceRobot\Base;
 use Throwable;
 
 /**
- * Class DiceOperation
- *
- * Container of rolling operation.
+ * Dice rolling operation container.
  */
 final class DiceOperation
 {
-    /**
-     * The default dice surface number read from robot settings. If subexpression doesn't contain surface number, like
-     * "D" or "5D", this value will be added.
-     *
-     * @var int
-     */
+    /** @var int Default dice surface number */
     private int $defaultSurfaceNumber;
 
-    /**
-     * Order to roll.
-     *
-     * @var string
-     */
+    /** @var string Order to roll */
     private string $order;
 
-    /**
-     * Visibility type of rolling.
-     *
-     * H: Private rolling
-     * S: Only display final result
-     *
-     * @var string
-     */
+    /** @var string Visibility type of rolling. H: Private rolling, S: Only display final result */
     public ?string $vType = NULL;
 
-    /**
-     * Flag of bonus/punishment dice.
-     *
-     * B: Bonus dice
-     * P: Punishment dice
-     *
-     * @var string
-     */
+    /** @var string Bonus/punishment dice type. B: Bonus dice, P: Punishment dice */
     public ?string $bpType = NULL;
 
-    /**
-     * Bonus/punishment dice number, if the dice is a bonus/punishment dice.
-     *
-     * @var int
-     */
+    /** @var int Bonus/punishment dice number */
     public int $bpDiceNumber = 1;
 
-    /**
-     * Rolling result of bonus/punishment dice.
-     *
-     * @var array
-     */
+    /** @var array Rolling result of bonus/punishment dice */
     public array $bpResult;
 
-    /**
-     * Expression of rolling.
-     *
-     * @var string
-     */
+    /** @var string Rolling expression */
     public string $expression = "D100";
 
-    /**
-     * Subexpression objects.
-     *
-     * @var array
-     */
+    /** @var array Subexpressions */
     public array $subexpressions = array();
 
-    /**
-     * Reason to roll, which can be an empty string.
-     *
-     * @var string
-     */
+    /** @var string Rolling reason */
     public string $reason = "";
 
-    /**
-     * If the expression has been successfully executed.
-     *
-     * 0: Roll successfully
-     * -1: Dice number or dice surface number out of range
-     * -2: Subexpression is illegal
-     *
-     * @var int
-     */
+    /** @var int Success flag. 0: Success, -1: Dice number/Surface number out of range, -2: Subexpression illegal */
     public int $success = 0;
 
-    /**
-     * Result of the expression, if the dice is a normal dice.
-     * Result of rolling, if the dice is a b/p dice.
-     *
-     * @var int
-     */
+    /** @var int Rolling result */
     public int $rollResult;
 
     /**
      * DiceOperation constructor.
      *
-     * @param string $order rolling order
+     * @param string $order Rolling order
      */
-    public function __construct(string $order)
+    public function __construct(string $order = "")
     {
         $defaultSurfaceNumber = RobotSettings::getSetting("defaultSurfaceNumber");
         $this->defaultSurfaceNumber = $defaultSurfaceNumber ??
@@ -172,7 +114,7 @@ final class DiceOperation
     /**
      * Parse rolling expression to several subexpression split by mathematical symbols.
      *
-     * @param string $expression rolling expression
+     * @param string $expression Rolling expression
      */
     private function parseExpression(string $expression): void
     {
@@ -278,7 +220,7 @@ final class DiceOperation
     /**
      * Generate result expression, in which the subexpressions will be replaced with rolling result.
      *
-     * @return string result expression
+     * @return string Result expression
      */
     public function toResultExpression(): string
     {
@@ -302,7 +244,7 @@ final class DiceOperation
     /**
      * Generate arithmetic expression, in which the subexpressions will be replaced with rolling summary.
      *
-     * @return string arithmetic expression
+     * @return string Arithmetic expression
      */
     public function toArithmeticExpression(): string
     {

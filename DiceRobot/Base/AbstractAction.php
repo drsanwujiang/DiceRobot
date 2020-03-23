@@ -4,9 +4,7 @@ namespace DiceRobot\Base;
 use DiceRobot\Parser;
 
 /**
- * Class AbstractAction
- *
- * Parent class to all the action classes. Action class should extend this class and implement function __invoke().
+ * Abstract action. Action class should extend this class and implement function __invoke().
  */
 abstract class AbstractAction extends Parser
 {
@@ -15,7 +13,7 @@ abstract class AbstractAction extends Parser
 
     public function __construct(object $eventData)
     {
-        parent::__construct($eventData);
+        $this->parseEventData($eventData);
 
         if ($this->postType == "message")
         {
@@ -58,5 +56,23 @@ abstract class AbstractAction extends Parser
         }
 
         return true;
+    }
+
+    /**
+     * Actions should call this method when no need to response. For accurate recognition, this function should
+     * always set HTTP code to 204.
+     */
+    final protected function noResponse(): void
+    {
+        $this->httpCode = 204;
+    }
+
+    /**
+     * Action can redefine this method to implement specific function, and call it when the order is unable to be
+     * resolved.
+     */
+    protected function unableToResolve(): void
+    {
+        $this->httpCode = 204;
     }
 }

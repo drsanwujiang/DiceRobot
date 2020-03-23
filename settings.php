@@ -1,7 +1,7 @@
 <?php
 /**
- * This file contains all the settings of DiceRobot. Some of the settings can be changed according to your actual
- * conditions, the other should NOT be modified generally.
+ * Settings of DiceRobot.
+ * Some of the settings can be changed according to your actual conditions, the other should NOT be modified generally.
  */
 
 /** Port of HTTP API. */
@@ -21,11 +21,14 @@ define("CUSTOM_SETTINGS", [
     /** Maximum of character's attribute, default value is 1000.*/
     "maxAttribute" => 1000,
 
+    /** Maximum of character's attribute change, default value is 1000.*/
+    "maxAttributeChange" => 1000,
+
     /** Maximum count of COC or DND character card generation, default value is 20.*/
     "maxCharacterCardGenerateCount" => 20,
 
-    /** Maximum times to repeat order, default value is 10.*/
-    "maxRepeatTimes" => 10,
+    /** Maximum times to repeat order, default value is 100.*/
+    "maxRepeatTimes" => 100,
 
     /** Seed of .orz, default value is the timestamp of 00:00:00 today */
     "kowtowRandomSeed" => strtotime(date("Y-m-d")),
@@ -38,19 +41,21 @@ define("CUSTOM_SETTINGS", [
  * In general, you should stop modifying and save this file now. Enjoy your TRPG time~
  */
 
+const HTTP_API_PATH = "localhost:" . HTTP_API_PORT;
+
 /** URL of HTTP API. */
 const HTTP_API_URL = [
-    "getGroupInfo" => "localhost:" . HTTP_API_PORT . "/get_group_info",
-    "getGroupMemberInfo" => "localhost:" . HTTP_API_PORT . "/get_group_member_info",
-    "getLoginInfo" => "localhost:" . HTTP_API_PORT . "/get_login_info",
-    "sendDiscussMessage" => "localhost:" . HTTP_API_PORT . "/send_discuss_msg",
-    "sendGroupMessage" => "localhost:" . HTTP_API_PORT . "/send_group_msg",
-    "sendPrivateMessage" => "localhost:" . HTTP_API_PORT . "/send_private_msg",
-    "setDiscussLeave" => "localhost:" . HTTP_API_PORT . "/set_discuss_leave",
-    "setFriendAddRequest" => "localhost:" . HTTP_API_PORT . "/set_friend_add_request",
-    "setGroupAddRequest" => "localhost:" . HTTP_API_PORT . "/set_group_add_request",
-    "setGroupCard" => "localhost:" . HTTP_API_PORT . "/set_group_card",
-    "setGroupLeave" => "localhost:" . HTTP_API_PORT . "/set_group_leave"
+    "getGroupInfo" => HTTP_API_PATH . "/get_group_info",
+    "getGroupMemberInfo" => HTTP_API_PATH . "/get_group_member_info",
+    "getLoginInfo" => HTTP_API_PATH . "/get_login_info",
+    "sendDiscussMessage" => HTTP_API_PATH . "/send_discuss_msg",
+    "sendGroupMessage" => HTTP_API_PATH . "/send_group_msg",
+    "sendPrivateMessage" => HTTP_API_PATH . "/send_private_msg",
+    "setDiscussLeave" => HTTP_API_PATH . "/set_discuss_leave",
+    "setFriendAddRequest" => HTTP_API_PATH . "/set_friend_add_request",
+    "setGroupAddRequest" => HTTP_API_PATH . "/set_group_add_request",
+    "setGroupCard" => HTTP_API_PATH . "/set_group_card",
+    "setGroupLeave" => HTTP_API_PATH . "/set_group_leave"
 ];
 
 const CUSTOM_API_PATH = "https://api.drsanwujiang.com/dicerobot";
@@ -61,7 +66,9 @@ const CUSTOM_API_URL = [
     "getCharacterCard" => CUSTOM_API_PATH . "/get_character_card",
     "heartbeatReport" => CUSTOM_API_PATH . "/heartbeat_report",
     "queryDelinquentGroup" => CUSTOM_API_PATH . "/query_banned_group",
-    "submitDelinquentGroup" => CUSTOM_API_PATH . "/add_banned_group"
+    "sanityCheck" => CUSTOM_API_PATH . "/sanity_check",
+    "submitDelinquentGroup" => CUSTOM_API_PATH . "/add_banned_group",
+    "updateCharacterCard" => CUSTOM_API_PATH . "/update_character_card"
 ];
 
 /** Path of config files folder. */
@@ -80,4 +87,4 @@ const DICEROBOT_HELLO_TEMPLATE_PATH = REFERENCE_DIR_PATH . "HelloTemplate.json";
 const DICEROBOT_HELP_TEMPLATE_PATH = REFERENCE_DIR_PATH . "HelpTemplate.json";
 
 /** DiceRobot version. */
-const DICEROBOT_VERSION = "1.1.3";
+const DICEROBOT_VERSION = "1.2.0";

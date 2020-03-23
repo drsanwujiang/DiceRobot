@@ -11,9 +11,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Base\RobotSettings;
 
 /**
- * Class RobotCommand
- *
- * Action class of order ".robot". Parse robot control order and pass to specific class to handle.
+ * Parse robot control order and pass to specific class to handle.
  */
 final class RobotCommandRouter extends AbstractAction
 {

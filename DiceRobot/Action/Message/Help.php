@@ -6,9 +6,7 @@ use DiceRobot\Base\Customization;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class Help
- *
- * Action class of order ".help". Send help information according to help template.
+ * Send help information according to the template.
  */
 final class Help extends AbstractAction
 {

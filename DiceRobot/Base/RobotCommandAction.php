@@ -2,9 +2,7 @@
 namespace DiceRobot\Base;
 
 /**
- * Class RobotCommandAction
- *
- * Parent class to all the action classes of robot control ang manage.
+ * Robot command action. Robot control ang manage class should extend this class and implement function __invoke().
  */
 abstract class RobotCommandAction extends AbstractAction
 {

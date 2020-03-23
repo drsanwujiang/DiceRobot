@@ -7,9 +7,7 @@ use DiceRobot\Base\RobotCommandAction;
 use DiceRobot\Base\RobotSettings;
 
 /**
- * Class Nickname
- *
- * Action class of order ".robot nn". Set nickname of robot.
+ * Set nickname of robot.
  */
 final class Nickname extends RobotCommandAction
 {
