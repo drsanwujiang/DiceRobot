@@ -45,8 +45,14 @@ class SanCheck extends AbstractAction
                 $decreases[$i] = (int) $orders[$i];
                 $decreaseResults[$i] = $orders[$i];
 
-                if ($decreases[$i] >= 0)
+                if ($decreases[$i] >= 0 &&
+                    $decreases[$i] <= Customization::getCustomSetting("maxAttributeChange"))
                     continue;
+                elseif ($decreases[$i] > Customization::getCustomSetting("maxAttributeChange"))
+                {
+                    $this->reply = Customization::getCustomReply("sanCheckValueOverstep");
+                    return;
+                }
                 else
                 {
                     $this->reply = Customization::getCustomReply("sanCheckWrongExpression");

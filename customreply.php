@@ -101,6 +101,7 @@ const CUSTOM_REPLY = [
     "sanCheckResult" => "{&1}进行了 SAN 值检定：{&2}/{&3}，{&4}\nSAN 值减少{&5}点，剩余{&6}/{&7}",
     "sanCheckSanityNotFound" => "当前人物卡未设置 SAN 属性，无法检定！",
     "sanCheckSanityInvalid" => "SAN 值非法，不能进行检定！",
+    "sanCheckValueOverstep" => "SAN 值的变动太大啦……",
     "sanCheckWrongExpression" => "指令错误！SAN 值损失只能是非负整数或掷骰表达式",
     "selfAddedBannedGroup" => "本群已被列入不友好群聊名单，DiceRobot 系列机器人拒绝服务。",
     "setCOCChangeRuleDenied" => "只有群主或管理员才可以使用这个指令哦~",
