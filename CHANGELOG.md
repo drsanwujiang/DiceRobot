@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 - 2020-03-23
+## 1.2.0 - 2020-03-24
 
 ## Added
 - Order now can begin with Chinese period (。)
