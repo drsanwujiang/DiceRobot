@@ -11,7 +11,7 @@
 - Optimize the code
 - Optimize the architecture
 - Merge some replies
-- Improve PHP docs
+- Update PHP docs
 
 ### Fixed
 - Fix a logical fallacy in check rule

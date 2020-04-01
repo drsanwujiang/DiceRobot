@@ -32,8 +32,8 @@ final class APIService
     /**
      * Send a post request via cURL.
      *
-     * @param string $url URl to access
-     * @param array|null $data Data to post
+     * @param string $url URl
+     * @param array|null $data Data
      *
      * @return bool|string Returned content
      */
@@ -52,7 +52,7 @@ final class APIService
         return $result;
     }
 
-    /* APIService of HTTP APIService plugin */
+    /* APIs of HTTP API plugin */
 
     public static function getGroupInfo(int $groupId, bool $noCache = false): array
     {
@@ -206,12 +206,12 @@ final class APIService
         self::curlPost($url, $data);
     }
 
-    /* APIService of Drsanwujiang. Please do NOT factitious query through or submit data to this APIService. */
+    /* APIs of Drsanwujiang. Please do NOT factitious query through or submit data to these APIs. */
 
     /**
      * Get credential which will be submitted when robot queries data from public database.
      *
-     * @param int $selfId QQ ID of robot
+     * @param int $selfId QQ ID of the robot
      *
      * @return array Returned data
      */
@@ -252,7 +252,7 @@ final class APIService
     /**
      * Report to database. This report will be queried when robot requests credential.
      *
-     * @param int $selfId QQ ID of robot
+     * @param int $selfId QQ ID of the robot
      */
     public static function heartbeatReport(int $selfId): void
     {
@@ -270,7 +270,7 @@ final class APIService
     /**
      * Query if the group is delinquent.
      *
-     * @param int $groupId Group ID to query
+     * @param int $groupId Group ID
      *
      * @return array Returned data
      */
@@ -315,9 +315,10 @@ final class APIService
     }
 
     /**
-     * Submit delinquent group ID to public database. These group ID will be queried when DiceRobot is added to group.
+     * Submit ID of the delinquent group to public database. These group IDs will be queried when DiceRobot is added
+     * to a group.
      *
-     * @param int $groupId Group ID to submit
+     * @param int $groupId Delinquent group ID
      * @param string $credential Credential
      *
      * @return array Returned data

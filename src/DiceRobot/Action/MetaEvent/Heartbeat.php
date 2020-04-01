@@ -5,7 +5,7 @@ use DiceRobot\Action\Action;
 use DiceRobot\Service\APIService;
 
 /**
- * Heartbeat report to the APIService server.
+ * Heartbeat report to the API server.
  */
 final class Heartbeat extends Action
 {

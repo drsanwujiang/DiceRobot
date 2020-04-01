@@ -3,7 +3,7 @@
  * DiceRobot 1.3.0
  * ©2019-2020 Drsanwujiang
  *
- * A TRPG dice robot based on CoolQ HTTP APIService plugin.
+ * A TRPG dice robot based on CoolQ HTTP API plugin.
  */
 
 use DiceRobot\App;

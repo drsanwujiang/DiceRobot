@@ -81,7 +81,7 @@ final class BindCard extends Action
     }
 
     /**
-     * Request APIService credential.
+     * Request API credential.
      *
      * @return string Credential
      *
@@ -106,7 +106,7 @@ final class BindCard extends Action
      * Get character card content.
      *
      * @param int $cardId Character card ID
-     * @param string $credential APIService credential
+     * @param string $credential API credential
      *
      * @return array Character card content
      *

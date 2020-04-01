@@ -128,7 +128,7 @@ final class SanCheck extends Action
     }
 
     /**
-     * Request APIService credential.
+     * Request API credential.
      *
      * @return string Credential
      *

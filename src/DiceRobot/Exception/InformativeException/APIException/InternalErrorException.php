@@ -5,7 +5,7 @@ use DiceRobot\Exception\InformativeException;
 use DiceRobot\Service\Customization;
 
 /**
- * Internal error occurred in APIService server. This exception will send reply "_generalAPIInternalError".
+ * Internal error occurred in API server. This exception will send reply "_generalAPIInternalError".
  */
 final class InternalErrorException extends InformativeException
 {
