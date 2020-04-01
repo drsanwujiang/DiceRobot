@@ -1,8 +1,25 @@
 # Changelog
 
+## 1.3.0 - 2020-04-01
+
+### Changed
+- Use class static member to store settings and replies, instead of global constant
+- Rename and refactor some classes
+- Autoloader now loads class directly and no longer need mapping
+- File reading/writing now is processed by class `IOService`
+- Class `App` now responds to HTTP API
+- Optimize the code
+- Optimize the architecture
+- Merge some replies
+- Improve PHP docs
+
+### Fixed
+- Fix a logical fallacy in check rule
+- Fix namespace bugs in `CheckRuleException`
+
 ## 1.2.0 - 2020-03-24
 
-## Added
+### Added
 - Order now can begin with Chinese period (。)
 - Sanity check (.sc)
 - Change attributes (.hp, .mp, .san)
