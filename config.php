@@ -35,6 +35,10 @@ Reference::setMapping([
     "HelpTemplate" => "HelpTemplate.json",
 ]);
 
+// Set default port of HTTP API
+if (!defined("HTTP_API_PORT"))
+    define("HTTP_API_PORT", 5700);
+
 // Set up HTTP API URLs
 APIService::setHttpApiUrl([
     "getGroupInfo" => "http://localhost:" . HTTP_API_PORT . "/get_group_info",
@@ -60,7 +64,3 @@ APIService::setCustomApiUrl([
     "submitDelinquentGroup" => "https://api.drsanwujiang.com/dicerobot/add_banned_group",
     "updateCharacterCard" => "https://api.drsanwujiang.com/dicerobot/update_character_card"
 ]);
-
-// Set default port of HTTP API
-if (!defined("HTTP_API_PORT"))
-    define("HTTP_API_PORT", 5700);
