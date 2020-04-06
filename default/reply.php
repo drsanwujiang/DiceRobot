@@ -4,28 +4,41 @@
  */
 
 return [
-    /** General reply */
-    "_generalAPIInternalError" => "与致远星的联络出现问题QAQ！请稍后再试……",
-    "_generalCharacterCardItemNotExist" => "当前人物卡不存在该属性/技能，请重新绑定！",
-    "_generalCharacterCardNotBound" => "你还没有绑定人物卡，无法执行该指令",
-    "_generalCharacterCardNotFound" => "这张人物卡不存在或不属于你哦~",
-    "_generalCharacterCardPermissionDenied" => "没有找到当前绑定的人物卡，请重新绑定！",
-    "_generalDiceNumberOverstep" => "被骰子淹没，不知所措……",
-    "_generalDiceSurfaceNumberOverstep" => "为什么会有这么多面的骰子啊(　д ) ﾟ ﾟ",
-    "_generalFileLost" => "相关文件丢失，无法执行该指令！",
-    "_generalFileUnwritable" => "无法写入相关文件，请检查 DiceRobot 运行目录的权限！",
-    "_generalJSONDecodeError" => "相关文件解析失败，无法执行该指令！",
+    /** Exception reply */
+    /* General */
     "_generalOrderError" => "指令错误，无法识别！",
-    "_generalReachRepeatLimit" => "指令重复次数超出限制！",
-    "_generalReferenceUndefined" => "引用的文件未定义，无法执行该指令！",
     "_generalRepeatTimeOverstep" => "不能重复这么多次啦~",
+    "_generalReferenceUndefined" => "引用的文件未定义，无法执行该指令！",
+    /* Dice */
+    "diceNumberOverstep" => "被骰子淹没，不知所措……",
+    "diceSurfaceNumberOverstep" => "为什么会有这么多面的骰子啊(　д ) ﾟ ﾟ",
+    "diceExpressionError" => "表达式无法解析！",
+    /* IOService */
+    "IOFileLost" => "相关文件丢失，无法执行该指令！",
+    "IOFileDecodeError" => "相关文件解析失败，无法执行该指令！",
+    "IOFileUnwritable" => "无法写入相关文件，请检查 DiceRobot 运行目录的权限！",
+    /* APIService */
+    "APINetworkError" => "无法连接到致远星，请检查星际通讯是否正常！",
+    "APIInternalError" => "与致远星的联络出现问题QAQ！请稍后再试……",
+    "APIJSONDecodeError" => "致远星传回了无法解析的数据(O_O)！请稍后再试……",
+    "APIUnexpectedError" => "发生了预料之外的错误……",
+    /* CharacterCard */
+    "characterCardNotBound" => "你还没有绑定人物卡，无法执行该指令",
+    "characterCardNotFound" => "这张人物卡不存在或不属于你哦~",
+    "characterCardFormatInvalid" => "人物卡格式错误，请重新创建人物卡！",
+    "characterCardItemNotExist" => "当前人物卡不存在该属性/技能，请重新绑定！",
+    "characterCardPermissionDenied" => "没有找到当前绑定的人物卡，请重新绑定！",
+    /* CheckRule */
+    "checkRuleLost" => "检定规则不存在！请使用 .setcoc 重新设定",
+    "checkRuleInvalid" => "检定规则错误，无法执行！",
+    "checkRuleMatchFailed" => "检定规则匹配失败！此规则可能存在缺陷，请更换规则",
+    "checkRuleDangerous" => "检定规则存在危险错误，无法执行！",
 
     /** Action reply */
     /* BindCard */
     "bindCardPending" => "正在联络致远星，可能需要几秒钟，请稍等……",
     "bindCardSuccess" => "人物卡绑定完成啦~",
     "bindCardUnbind" => "人物卡解绑成功",
-    "bindCardFormatError" => "人物卡格式错误，无法绑定！",
     /* ChangeAttribute */
     "changeAttributeResult" => "{&1}的 {&2} {&3}了{&4}点，当前 {&5}：{&6}点",
     "changeAttributeWrongExpression" => "指令错误！属性值的变动只能是非负整数或掷骰表达式",
@@ -91,9 +104,4 @@ return [
     "robotCommandGoodbyePrivate" => "请手动删除我吧！东西流水，终解两相逢！",
     /* SelfAdded */
     "selfAddedBannedGroup" => "本群已被列入不友好群聊名单，DiceRobot 系列机器人拒绝服务。",
-    /* CheckRule */
-    "checkRuleLost" => "检定规则不存在！请使用 .setcoc 重新设定",
-    "checkRuleInvalid" => "检定规则错误，无法执行！",
-    "checkRuleMatchFailed" => "检定规则匹配失败！此规则可能存在缺陷，请更换规则",
-    "checkRuleDangerous" => "检定规则存在危险错误，无法执行！",
 ];

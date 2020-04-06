@@ -25,7 +25,7 @@ abstract class Parser extends Response
     public ?string $metaEventType = NULL;
 
     /**
-     * Constructor.
+     * The constructor.
      *
      * @param object $eventData The event data
      */

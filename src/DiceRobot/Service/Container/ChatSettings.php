@@ -2,13 +2,13 @@
 namespace DiceRobot\Service\Container;
 
 use DiceRobot\Exception\InformativeException\CharacterCardException\NotBoundException;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Service\IOService;
 
 /**
- * Utils class with robot settings methods, used to load/save configuration and get/set specific setting of chat.
+ * The chat settings.
  */
-final class ChatSettings
+class ChatSettings
 {
     private static string $configDir;
 
@@ -17,7 +17,7 @@ final class ChatSettings
     private array $settings;
 
     /**
-     * Constructor.
+     * The constructor.
      *
      * @param string $chatType Chat type
      * @param int $chatId Chat ID

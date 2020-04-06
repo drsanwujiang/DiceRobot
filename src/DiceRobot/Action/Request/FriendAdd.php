@@ -1,17 +1,22 @@
 <?php
 namespace DiceRobot\Action\Request;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Service\APIService;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 
 /**
- * Process the add friend request.
+ * Process the friend adding request.
  */
 final class FriendAdd extends Action
 {
+    /**
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     */
     public function __invoke(): void
     {
-        APIService::setFriendAddRequestAsync($this->flag, true);  // Default approve request
+        $this->coolq->setFriendAddRequestAsync($this->flag, true);  // Approve request by default
         $this->noResponse();
     }
 }

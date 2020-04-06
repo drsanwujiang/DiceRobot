@@ -5,12 +5,12 @@ use DiceRobot\Exception\InformativeException;
 use DiceRobot\Service\Customization;
 
 /**
- * Dice surface number oversteps the limit. This exception will send reply "_generalDiceSurfaceNumberOverstep".
+ * Dice surface number oversteps the limit. This exception will send reply "diceSurfaceNumberOverstep".
  */
-final class SurfaceNumberOverstepException extends InformativeException
+class SurfaceNumberOverstepException extends InformativeException
 {
     public function __construct()
     {
-        parent::__construct(Customization::getReply("_generalDiceSurfaceNumberOverstep"));
+        parent::__construct(Customization::getReply("diceSurfaceNumberOverstep"));
     }
 }

@@ -1,11 +1,14 @@
 <?php
 namespace DiceRobot\Service\Container;
 
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\JSONDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
 use DiceRobot\Service\IOService;
 
+/**
+ * The reference.
+ */
 class Reference
 {
     protected static string $referenceDir;
@@ -14,12 +17,12 @@ class Reference
     protected array $reference;
 
     /**
-     * Constructor.
+     * The constructor.
      *
      * @param string $refKey Reference key
      *
+     * @throws FileDecodeException
      * @throws FileLostException
-     * @throws JSONDecodeException
      * @throws ReferenceUndefinedException
      */
     public function __construct(string $refKey)
@@ -52,8 +55,8 @@ class Reference
      *
      * @param string $refKey
      *
+     * @throws FileDecodeException
      * @throws FileLostException
-     * @throws JSONDecodeException
      * @throws ReferenceUndefinedException
      */
     private function load(string $refKey): void

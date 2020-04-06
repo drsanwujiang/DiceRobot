@@ -1,13 +1,18 @@
 <?php
 namespace DiceRobot\Action\Message;
 
+use DiceRobot\Action;
 use DiceRobot\Action\Message\RobotCommand\About;
 use DiceRobot\Action\Message\RobotCommand\Goodbye;
 use DiceRobot\Action\Message\RobotCommand\Nickname;
 use DiceRobot\Action\Message\RobotCommand\Start;
 use DiceRobot\Action\Message\RobotCommand\Stop;
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
+use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
 use DiceRobot\Service\Customization;
 
 /**
@@ -20,6 +25,11 @@ final class RobotCommandRouter extends Action
     private string $commandKey;
     private string $commandValue;
 
+    /**
+     * The  constructor.
+     *
+     * @param object $eventData The event data
+     */
     public function __construct(object $eventData)
     {
         parent::__construct($eventData);
@@ -33,7 +43,12 @@ final class RobotCommandRouter extends Action
     }
 
     /**
+     * @throws FileDecodeException
+     * @throws FileLostException
      * @throws FileUnwritableException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws ReferenceUndefinedException
      */
     public function __invoke(): void
     {

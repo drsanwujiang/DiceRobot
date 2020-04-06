@@ -1,13 +1,14 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 use DiceRobot\Exception\InformativeException\CheckRuleException\LostException;
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
-use DiceRobot\Exception\InformativeException\JSONDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
-use DiceRobot\Service\APIService;
 use DiceRobot\Service\Container\CheckRule;
 use DiceRobot\Service\Customization;
 
@@ -17,10 +18,12 @@ use DiceRobot\Service\Customization;
 final class SetCOC extends Action
 {
     /**
+     * @throws FileDecodeException
      * @throws FileLostException
      * @throws FileUnwritableException
-     * @throws JSONDecodeException
+     * @throws InternalErrorException
      * @throws LostException
+     * @throws NetworkErrorException
      * @throws ReferenceUndefinedException
      */
     public function __invoke(): void
@@ -63,9 +66,12 @@ final class SetCOC extends Action
      * Get user's role.
      *
      * @return string User's role
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      */
     private function getUserRole(): string
     {
-        return $this->sender->role ?? APIService::getGroupMemberInfo($this->chatId, $this->userId)["data"]["role"];
+        return $this->sender->role ?? $this->coolq->getGroupMemberInfo($this->chatId, $this->userId)["role"];
     }
 }

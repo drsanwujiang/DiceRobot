@@ -7,9 +7,9 @@ use DiceRobot\Service\Customization;
 use DiceRobot\Service\Rolling;
 
 /**
- * Container of minimum subexpression of a rolling expression.
+ * The minimum subexpression of a rolling expression.
  */
-final class Subexpression
+class Subexpression
 {
     /** @var string Subexpression */
     public string $subexpression;
@@ -39,7 +39,7 @@ final class Subexpression
     public int $rollSummary;
 
     /**
-     * Subexpression constructor.
+     * The constructor.
      *
      * @param string $subexpression Rolling subexpression
      * @param int $offset Offset of subexpression in rolling expression

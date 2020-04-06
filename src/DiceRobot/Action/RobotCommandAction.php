@@ -1,6 +1,8 @@
 <?php
 namespace DiceRobot\Action;
 
+use DiceRobot\Action;
+
 /**
  * Robot command action. Robot control ang manage class should extend this class and implement function __invoke().
  */

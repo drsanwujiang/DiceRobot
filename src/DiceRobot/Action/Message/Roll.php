@@ -1,12 +1,13 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\ArithmeticExpressionErrorException;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\DiceNumberOverstepException;
+use DiceRobot\Exception\InformativeException\DiceException\ExpressionErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\SurfaceNumberOverstepException;
 use DiceRobot\Exception\InformativeException\RepeatTimeOverstepException;
-use DiceRobot\Service\APIService;
 use DiceRobot\Service\Container\Dice\Dice;
 use DiceRobot\Service\Customization;
 
@@ -16,8 +17,10 @@ use DiceRobot\Service\Customization;
 final class Roll extends Action
 {
     /**
-     * @throws ArithmeticExpressionErrorException
      * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      * @throws RepeatTimeOverstepException
      * @throws SurfaceNumberOverstepException
      */
@@ -60,11 +63,11 @@ final class Roll extends Action
     }
 
     /**
-     * Check the repeat time range.
+     * Check range of repeat time.
      *
      * @param int $repeat Repeat time
      *
-     * @return bool Flag of validity
+     * @return bool Validity
      *
      * @throws RepeatTimeOverstepException
      */
@@ -78,16 +81,19 @@ final class Roll extends Action
 
     /**
      * Send private message.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      */
     private function sendPrivateMessage(): void
     {
         if ($this->chatType == "group")
             $privateReply = Customization::getReply("rollPrivatelyInGroup",
-                APIService::getGroupInfo($this->chatId)["data"]["group_name"], $this->chatId);
+                $this->coolq->getGroupInfo($this->chatId)["group_name"], $this->chatId);
         else
             $privateReply = Customization::getReply("rollPrivatelyInDiscuss", $this->chatId);
 
         $privateReply .= $this->reply;
-        APIService::sendPrivateMessageAsync($this->userId, $privateReply);
+        $this->coolq->sendPrivateMessageAsync($this->userId, $privateReply);
     }
 }

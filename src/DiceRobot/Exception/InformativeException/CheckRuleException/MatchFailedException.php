@@ -7,7 +7,7 @@ use DiceRobot\Service\Customization;
 /**
  * Failed to match check rule. This exception will send reply "checkRuleMatchFailed".
  */
-final class MatchFailedException extends InformativeException
+class MatchFailedException extends InformativeException
 {
     public function __construct()
     {

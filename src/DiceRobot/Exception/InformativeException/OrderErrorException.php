@@ -7,7 +7,7 @@ use DiceRobot\Service\Customization;
 /**
  * Failed to parse the order. This exception will send reply "_generalOrderError".
  */
-final class OrderErrorException extends InformativeException
+class OrderErrorException extends InformativeException
 {
     public function __construct()
     {

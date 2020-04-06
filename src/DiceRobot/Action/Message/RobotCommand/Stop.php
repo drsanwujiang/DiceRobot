@@ -2,7 +2,7 @@
 namespace DiceRobot\Action\Message\RobotCommand;
 
 use DiceRobot\Action\RobotCommandAction;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Service\Customization;
 
 /**

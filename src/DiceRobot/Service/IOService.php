@@ -1,12 +1,15 @@
 <?php
 namespace DiceRobot\Service;
 
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
-use DiceRobot\Exception\InformativeException\JSONDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use Exception;
 
-final class IOService
+/**
+ * The IO service.
+ */
+class IOService
 {
     /**
      * Get file content.
@@ -15,8 +18,8 @@ final class IOService
      *
      * @return array File content
      *
+     * @throws FileDecodeException
      * @throws FileLostException
-     * @throws JSONDecodeException
      */
     public static function getFile(string $path): array
     {
@@ -26,14 +29,14 @@ final class IOService
         try
         {
             $jsonString = file_get_contents($path);
-            $jsonArray = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
+            $content = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
         }
         catch (Exception $e)
         {
-            throw new JSONDecodeException();
+            throw new FileDecodeException();
         }
 
-        return $jsonArray;
+        return $content;
     }
 
     /**

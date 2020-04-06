@@ -5,12 +5,12 @@ use DiceRobot\Exception\InformativeException;
 use DiceRobot\Service\Customization;
 
 /**
- * Character card not bound. This exception will send reply "_generalCharacterCardNotBound".
+ * Character card is not bound. This exception will send reply "characterCardNotBound".
  */
-final class NotBoundException extends InformativeException
+class NotBoundException extends InformativeException
 {
     public function __construct()
     {
-        parent::__construct(Customization::getReply("_generalCharacterCardNotBound"));
+        parent::__construct(Customization::getReply("characterCardNotBound"));
     }
 }

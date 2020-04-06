@@ -2,7 +2,7 @@
 namespace DiceRobot;
 
 /**
- * Response.
+ * The response to HTTP API plugin.
  */
 abstract class Response
 {

@@ -2,9 +2,9 @@
 namespace DiceRobot\Service;
 
 /**
- * Utility class with methods to get customized data.
+ * The customization service.
  */
-final class Customization
+class Customization
 {
     private static array $settings;
     private static array $wording;

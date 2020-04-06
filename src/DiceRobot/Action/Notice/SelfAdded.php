@@ -1,12 +1,15 @@
 <?php
 namespace DiceRobot\Action\Notice;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Exception\InformativeException\APIException\UnexpectedErrorException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Exception\InformativeException\JSONDecodeException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
-use DiceRobot\Service\APIService;
 use DiceRobot\Service\Container\Reference;
 use DiceRobot\Service\Customization;
 
@@ -17,28 +20,32 @@ use DiceRobot\Service\Customization;
 final class SelfAdded extends Action
 {
     /**
+     * @throws FileDecodeException
      * @throws FileLostException
      * @throws FileUnwritableException
+     * @throws InternalErrorException
      * @throws JSONDecodeException
+     * @throws NetworkErrorException
      * @throws ReferenceUndefinedException
+     * @throws UnexpectedErrorException
      */
     public function __invoke(): void
     {
-        $delinquent = $this->queryGroupInfo();
+        $state = $this->queryGroup();
 
-        if ($delinquent)
+        if ($state)
         {
             // Group is in black list, quit
             $message = Customization::getReply("selfAddedBannedGroup");
-            APIService::sendGroupMessage($this->groupId, $message);
-            APIService::setGroupLeaveAsync($this->groupId);
+            $this->coolq->sendGroupMessage($this->groupId, $message);
+            $this->coolq->setGroupLeaveAsync($this->groupId);
         }
         else
         {
             $reference = (new Reference("HelloTemplate"))->getString();
             $message = Customization::getString($reference, $this->getLoginInfo()["nickname"],
                 substr($this->selfId, -4), substr($this->selfId, -4));
-            APIService::sendGroupMessageAsync($this->groupId, $message);
+            $this->coolq->sendGroupMessageAsync($this->groupId, $message);
             $this->loadChatSettings("group", $this->groupId);
             $this->chatSettings->set("active", true);
         }
@@ -49,20 +56,29 @@ final class SelfAdded extends Action
     /**
      * Query if this group is delinquent.
      *
-     * @return bool Delinquent flag
+     * @return bool Delinquent
+     *
+     * @throws InternalErrorException
+     * @throws JSONDecodeException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
-    private function queryGroupInfo(): bool
+    private function queryGroup(): bool
     {
-        return APIService::queryDelinquentGroup($this->groupId)["data"]["query_result"];
+        $this->apiService->auth($this->selfId);
+        return $this->apiService->queryGroup($this->groupId)->state;
     }
 
     /**
      * Get current robot's info.
      *
-     * @return array Info
+     * @return array The info
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      */
     private function getLoginInfo(): array
     {
-        return APIService::getLoginInfo()["data"];
+        return $this->coolq->getLoginInfo();
     }
 }

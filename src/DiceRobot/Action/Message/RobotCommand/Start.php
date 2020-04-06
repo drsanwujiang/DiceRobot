@@ -2,7 +2,9 @@
 namespace DiceRobot\Action\Message\RobotCommand;
 
 use DiceRobot\Action\RobotCommandAction;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Service\Customization;
 
 /**
@@ -12,6 +14,8 @@ final class Start extends RobotCommandAction
 {
     /**
      * @throws FileUnwritableException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      */
     public function __invoke(): void
     {

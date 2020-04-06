@@ -5,12 +5,12 @@ use DiceRobot\Exception\InformativeException;
 use DiceRobot\Service\Customization;
 
 /**
- * Internal error occurred in API server. This exception will send reply "_generalAPIInternalError".
+ * Internal error occurred in API server. This exception will send reply "APIInternalError".
  */
-final class InternalErrorException extends InformativeException
+class InternalErrorException extends InformativeException
 {
     public function __construct()
     {
-        parent::__construct(Customization::getReply("_generalAPIInternalError"));
+        parent::__construct(Customization::getReply("APIInternalError"));
     }
 }

@@ -1,7 +1,9 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
 use DiceRobot\Service\Customization;
 use DiceRobot\Service\Rolling;
@@ -11,9 +13,11 @@ use DiceRobot\Service\Rolling;
  */
 final class Kowtow extends Action
 {
-    private const KOWTOW_LEVEL = [10, 30, 60, 80, 95, 100];
+    const KOWTOW_LEVEL = [10, 30, 60, 80, 95, 100];
 
     /**
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      * @throws OrderErrorException
      */
     public function __invoke(): void
@@ -42,7 +46,7 @@ final class Kowtow extends Action
     /**
      * Check the validity of the order.
      *
-     * @param string $order Order
+     * @param string $order The order
      *
      * @throws OrderErrorException
      */

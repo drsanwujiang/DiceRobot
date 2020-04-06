@@ -1,20 +1,21 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\ArithmeticExpressionErrorException;
-use DiceRobot\Exception\CredentialException;
+use DiceRobot\Action;
 use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
-use DiceRobot\Exception\InformativeException\APIException\PermissionDeniedException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Exception\InformativeException\APIException\UnexpectedErrorException;
 use DiceRobot\Exception\InformativeException\CharacterCardException\ItemNotExistException;
 use DiceRobot\Exception\InformativeException\CharacterCardException\NotBoundException;
 use DiceRobot\Exception\InformativeException\DiceException\DiceNumberOverstepException;
+use DiceRobot\Exception\InformativeException\DiceException\ExpressionErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\SurfaceNumberOverstepException;
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Exception\InformativeException\JSONDecodeException;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
-use DiceRobot\Service\APIService;
+use DiceRobot\Service\API\Response\SanityCheckResponse;
 use DiceRobot\Service\Container\CharacterCard;
 use DiceRobot\Service\Container\Dice\Dice;
 use DiceRobot\Service\Customization;
@@ -25,18 +26,19 @@ use DiceRobot\Service\Customization;
 final class SanCheck extends Action
 {
     /**
-     * @throws ArithmeticExpressionErrorException
-     * @throws CredentialException
      * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws FileDecodeException
      * @throws FileLostException
      * @throws FileUnwritableException
      * @throws InternalErrorException
      * @throws ItemNotExistException
      * @throws JSONDecodeException
+     * @throws NetworkErrorException
      * @throws NotBoundException
      * @throws OrderErrorException
-     * @throws PermissionDeniedException
      * @throws SurfaceNumberOverstepException
+     * @throws UnexpectedErrorException
      */
     public function __invoke(): void
     {
@@ -45,7 +47,6 @@ final class SanCheck extends Action
 
         $cardId = $this->chatSettings->getCharacterCardId($this->userId);
         $characterCard = new CharacterCard($cardId);
-        $characterCard->load();
 
         $orders = explode("/", $order, 2);
         $dices = $decreases = $decreaseResults = [];
@@ -78,23 +79,22 @@ final class SanCheck extends Action
 
         $dices[2] = new Dice(); // Check dice
         $checkResult = $dices[2]->rollResult;
-        $updateResult = $this->updateCard($cardId, $checkResult, $decreases);
+        $response = $this->updateCard($cardId, $checkResult, $decreases);
 
-        $checkSuccess = $updateResult["check_success"];
         $maxSanity = 99 - $characterCard->get("克苏鲁神话") ?? 0;
         $checkResultString = $dices[2]->getCompleteExpression();
-        $decreaseResult = $checkSuccess ? $decreaseResults[0] : $decreaseResults[1];
+        $decreaseResult = $response->checkSuccess ? $decreaseResults[0] : $decreaseResults[1];
 
-        $characterCard->set("SAN", $updateResult["after_sanity"]);
+        $characterCard->set("SAN", $response->afterSanity);
         $this->reply = Customization::getReply("sanCheckResult", $this->userNickname, $checkResultString,
-            $updateResult["before_sanity"], Customization::getWording("_sanCheckLevel", $checkSuccess),
-            $decreaseResult, $updateResult["after_sanity"], $maxSanity);
+            $response->beforeSanity, Customization::getWording("sanCheckLevel", $response->checkSuccess),
+            $decreaseResult, $response->afterSanity, $maxSanity);
     }
 
     /**
      * Check the validity of the order.
      *
-     * @param string $order Order
+     * @param string $order The order
      *
      * @throws OrderErrorException
      */
@@ -105,11 +105,11 @@ final class SanCheck extends Action
     }
 
     /**
-     * Check the value range.
+     * Check range of the value.
      *
-     * @param int $value Value
+     * @param int $value The value
      *
-     * @return bool Flag of validity
+     * @return bool Validity
      */
     private function checkRange(int $value): bool
     {
@@ -128,48 +128,22 @@ final class SanCheck extends Action
     }
 
     /**
-     * Request API credential.
-     *
-     * @return string Credential
-     *
-     * @throws CredentialException
-     */
-    private function getCredential(): string
-    {
-        $response = APIService::getAPICredential($this->selfId);
-
-        if ($response["code"] != 0)
-        {
-            $errMessage = "DiceRobot sanity check failed:\n" . "Sanity check user QQ ID: " . $this->userId;
-
-            throw new CredentialException($errMessage);
-        }
-
-        return $response["data"]["credential"];
-    }
-
-    /**
-     * Update character card.
+     * Update the character card.
      *
      * @param int $cardId Character card ID
-     * @param int $checkResult Check result
+     * @param int $checkResult The check result
      * @param array $decreases Decreases
      *
-     * @return array Response content
+     * @return SanityCheckResponse The response
      *
      * @throws InternalErrorException
-     * @throws CredentialException
-     * @throws PermissionDeniedException
+     * @throws JSONDecodeException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
-    private function updateCard(int $cardId, int $checkResult, array $decreases): array
+    private function updateCard(int $cardId, int $checkResult, array $decreases): SanityCheckResponse
     {
-        $response = APIService::sanityCheck($this->userId, $cardId, $checkResult, $decreases, $this->getCredential());
-
-        if ($response["code"] == -3)
-            throw new PermissionDeniedException();
-        elseif ($response["code"] != 0)
-            throw new InternalErrorException();
-
-        return $response["data"];
+        $this->apiService->auth($this->selfId, $this->userId);
+        return $this->apiService->sc($cardId, $checkResult, $decreases);
     }
 }

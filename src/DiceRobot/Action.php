@@ -1,27 +1,34 @@
 <?php
-namespace DiceRobot\Action;
+namespace DiceRobot;
 
-use DiceRobot\Parser;
-use DiceRobot\Service\APIService;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Service\API\CoolQAPI;
+use DiceRobot\Service\API\DiceRobotAPI;
 use DiceRobot\Service\Container\Dice\Dice;
 use DiceRobot\Service\Container\ChatSettings;
 
 /**
- * Abstract action. Action class should extend this class and implement function __invoke().
+ * DiceRobot action. Action class should extend this class and implement function __invoke().
  */
 abstract class Action extends Parser
 {
+    protected CoolQAPI $coolq;
+    protected DiceRobotAPI $apiService;
     protected ChatSettings $chatSettings;
     protected string $userNickname;
     protected object $sender;
 
     /**
-     * Constructor.
+     * The constructor.
      *
      * @param object $eventData The event data
      */
     public function __construct(object $eventData)
     {
+        $this->coolq = new CoolQAPI();
+        $this->apiService = new DiceRobotAPI();
+
         parent::__construct($eventData);
 
         if ($this->postType == "message")
@@ -60,10 +67,13 @@ abstract class Action extends Parser
      * Get robot's nickname
      *
      * @return string Robot nickname
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      */
     final protected function getRobotNickname(): string
     {
-        return $this->chatSettings->get("robotNickname") ?? APIService::getLoginInfo()["data"]["nickname"];
+        return $this->chatSettings->get("robotNickname") ?? $this->coolq->getLoginInfo()["nickname"];
     }
 
     /**

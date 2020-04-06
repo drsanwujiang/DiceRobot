@@ -1,7 +1,6 @@
 <?php
 namespace DiceRobot;
 
-use DiceRobot\Action\Action;
 use DiceRobot\Exception\InformativeException;
 
 /**
@@ -12,7 +11,7 @@ final class App extends RouteCollector
     private object $eventData;
 
     /**
-     * Constructor.
+     * The constructor.
      *
      * @param object $eventData The event data
      */

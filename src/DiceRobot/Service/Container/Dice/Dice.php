@@ -1,17 +1,17 @@
 <?php
 namespace DiceRobot\Service\Container\Dice;
 
-use DiceRobot\Exception\ArithmeticExpressionErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\DiceNumberOverstepException;
+use DiceRobot\Exception\InformativeException\DiceException\ExpressionErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\SurfaceNumberOverstepException;
 use DiceRobot\Service\Customization;
 use DiceRobot\Service\Rolling;
 use Throwable;
 
 /**
- * Dice container.
+ * The dice.
  */
-final class Dice
+class Dice
 {
     /** @var int Default dice surface number */
     private static int $defaultSurfaceNumber;
@@ -44,13 +44,13 @@ final class Dice
     public int $rollResult;
 
     /**
-     * Dice constructor.
+     * The constructor.
      *
      * @param string $order Rolling order
      *
      * @throws DiceNumberOverstepException
      * @throws SurfaceNumberOverstepException
-     * @throws ArithmeticExpressionErrorException
+     * @throws ExpressionErrorException
      */
     public function __construct(string $order = "")
     {
@@ -185,7 +185,7 @@ final class Dice
      * Roll several dices determined by subexpressions and calculate summary.
      *
      * @throws DiceNumberOverstepException
-     * @throws ArithmeticExpressionErrorException
+     * @throws ExpressionErrorException
      */
     private function roll(): void
     {
@@ -211,12 +211,12 @@ final class Dice
 
         try
         {
-            $evalCommand = "return " . $this->toArithmeticExpression() . ";";
+            $evalCommand = "return {$this->toArithmeticExpression()};";
             $this->rollResult = eval($evalCommand);
         }
         catch (Throwable $t)
         {
-            throw new ArithmeticExpressionErrorException(
+            throw new ExpressionErrorException(
                 $t->getMessage(),
                 $this->order,
                 $this->expression,
@@ -318,7 +318,7 @@ final class Dice
             // B/P dice
             if ($this->vType != "S")
                 $completeExpression = $this->bpType . $this->bpDiceNumber . "=" . $this->getResultExpression() .
-                    "[" . Customization::getWording("_BPDiceWording", $this->bpType) . ":" .
+                    "[" . Customization::getWording("BPDiceType", $this->bpType) . ":" .
                     join(" ", $this->bpResult) . "]" . "=" . $this->rollResult;
             else
                 $completeExpression = $this->bpType . $this->bpDiceNumber . "=" . $this->rollResult;

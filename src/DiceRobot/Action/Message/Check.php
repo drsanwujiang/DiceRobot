@@ -1,8 +1,9 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\ArithmeticExpressionErrorException;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 use DiceRobot\Exception\InformativeException\CharacterCardException\ItemNotExistException;
 use DiceRobot\Exception\InformativeException\CharacterCardException\NotBoundException;
 use DiceRobot\Exception\InformativeException\CheckRuleException\DangerousException;
@@ -10,13 +11,13 @@ use DiceRobot\Exception\InformativeException\CheckRuleException\InvalidException
 use DiceRobot\Exception\InformativeException\CheckRuleException\LostException;
 use DiceRobot\Exception\InformativeException\CheckRuleException\MatchFailedException;
 use DiceRobot\Exception\InformativeException\DiceException\DiceNumberOverstepException;
+use DiceRobot\Exception\InformativeException\DiceException\ExpressionErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\SurfaceNumberOverstepException;
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\JSONDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
 use DiceRobot\Exception\InformativeException\RepeatTimeOverstepException;
-use DiceRobot\Service\APIService;
 use DiceRobot\Service\Container\CharacterCard;
 use DiceRobot\Service\Container\CheckRule;
 use DiceRobot\Service\Container\Dice\Dice;
@@ -31,12 +32,12 @@ final class Check extends Action
     private CheckRule $checkRule;
 
     /**
-     * Constructor.
+     * The constructor.
      *
-     * @param object $eventData Event data
+     * @param object $eventData The event data
      *
+     * @throws FileDecodeException
      * @throws FileLostException
-     * @throws JSONDecodeException
      * @throws LostException
      * @throws ReferenceUndefinedException
      */
@@ -49,14 +50,16 @@ final class Check extends Action
     }
 
     /**
-     * @throws ArithmeticExpressionErrorException
      * @throws DangerousException
      * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws FileDecodeException
      * @throws FileLostException
+     * @throws InternalErrorException
      * @throws InvalidException
      * @throws ItemNotExistException
-     * @throws JSONDecodeException
      * @throws MatchFailedException
+     * @throws NetworkErrorException
      * @throws NotBoundException
      * @throws OrderErrorException
      * @throws RepeatTimeOverstepException
@@ -102,7 +105,7 @@ final class Check extends Action
     /**
      * Check the validity of the order.
      *
-     * @param string $order Order
+     * @param string $order The order
      *
      * @throws OrderErrorException
      */
@@ -115,14 +118,14 @@ final class Check extends Action
     /**
      * Get the value to be checked.
      *
-     * @param string $item Item
+     * @param string $item The item
      * @param int $repeat Repeat time
      *
      * @return int The value to be checked
      *
+     * @throws FileDecodeException
      * @throws FileLostException
      * @throws ItemNotExistException
-     * @throws JSONDecodeException
      * @throws NotBoundException
      */
     private function getCheckValue(string $item, int $repeat): int
@@ -136,28 +139,25 @@ final class Check extends Action
         elseif (preg_match("/^[\x{4e00}-\x{9fa5}a-z]+/ui", $item, $itemName))
         {
             $itemName = strtoupper($itemName[0]);
-            $cardId = $this->chatSettings->getCharacterCardId($this->userId);
-            $card = new CharacterCard($cardId);
-            $card->load();
+            $card = new CharacterCard($this->chatSettings->getCharacterCardId($this->userId));
             $checkValue = $card->get($itemName);
             $this->reply = Customization::getReply("checkResultHeadingWithAttributes",
                 $this->userNickname,
                 $card->get("HP"), intval(($card->get("SIZ") + $card->get("CON")) / 10),
                 $card->get("MP"), intval($card->get("POW") / 5),
-                $card->get("SAN"), 99 - $card->get("克苏鲁神话") ?? 0,
-                $repeat, $itemName);
+                $card->get("SAN"), 99 - $card->get("克苏鲁神话"), $repeat, $itemName);
         }
 
         return $checkValue;
     }
 
     /**
-     * Check the value and the repeat time range.
+     * Check range of the value and repeat time.
      *
-     * @param int $value Value
+     * @param int $value The value
      * @param int $repeat Repeat time
      *
-     * @return bool Flag of validity
+     * @return bool Validity
      *
      * @throws RepeatTimeOverstepException
      */
@@ -184,10 +184,10 @@ final class Check extends Action
      *
      * @param string $optionalOrder Optional order
      * @param string $additional Additional operations
-     * @param int $checkValue Check value
+     * @param int $checkValue The check value
      * @param int $repeat Repeat time
      *
-     * @throws ArithmeticExpressionErrorException
+     * @throws ExpressionErrorException
      * @throws DangerousException
      * @throws DiceNumberOverstepException
      * @throws InvalidException
@@ -217,8 +217,8 @@ final class Check extends Action
     /**
      * Get check level according to the check value and the check result.
      *
-     * @param int $result Check result
-     * @param int $value Check value
+     * @param int $result The check result
+     * @param int $value The check value
      *
      * @return string Check level
      *
@@ -229,22 +229,25 @@ final class Check extends Action
     private function getCheckLevel(int $result, int $value): string
     {
         $checkLevel = $this->checkRule->getCheckLevel($result, $value);
-        return Customization::getWording("_checkLevel", $checkLevel);
+        return Customization::getWording("checkLevel", $checkLevel);
     }
 
     /**
      * Send private message.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      */
     private function sendPrivateMessage(): void
     {
         if ($this->chatType == "group")
             $privateReply = Customization::getReply("checkPrivatelyInGroup",
-                APIService::getGroupInfo($this->chatId)["data"]["group_name"], $this->chatId);
+                $this->coolq->getGroupInfo($this->chatId)["group_name"], $this->chatId);
         else
             $privateReply = Customization::getReply("checkPrivatelyInDiscuss",
                 $this->chatId);
 
         $privateReply .= $this->reply;
-        APIService::sendPrivateMessageAsync($this->userId, $privateReply);
+        $this->coolq->sendPrivateMessageAsync($this->userId, $privateReply);
     }
 }

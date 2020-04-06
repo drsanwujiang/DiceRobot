@@ -7,7 +7,7 @@ use DiceRobot\Service\Customization;
 /**
  * Check rule is dangerous. This exception will send reply "checkRuleDangerous".
  */
-final class DangerousException extends InformativeException
+class DangerousException extends InformativeException
 {
     public function __construct()
     {

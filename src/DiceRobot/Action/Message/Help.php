@@ -1,9 +1,9 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\JSONDecodeException;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
 use DiceRobot\Service\Container\Reference;
@@ -15,7 +15,7 @@ final class Help extends Action
 {
     /**
      * @throws FileLostException
-     * @throws JSONDecodeException
+     * @throws FileDecodeException
      * @throws OrderErrorException
      * @throws ReferenceUndefinedException
      */
@@ -29,7 +29,7 @@ final class Help extends Action
     /**
      * Check the validity of the order.
      *
-     * @param string $order Order
+     * @param string $order The order
      *
      * @throws OrderErrorException
      */

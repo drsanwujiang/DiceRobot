@@ -1,12 +1,13 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\JSONDecodeException;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
-use DiceRobot\Service\APIService;
 use DiceRobot\Service\Container\Reference;
 use DiceRobot\Service\Customization;
 
@@ -16,8 +17,10 @@ use DiceRobot\Service\Customization;
 final class Hello extends Action
 {
     /**
+     * @throws FileDecodeException
      * @throws FileLostException
-     * @throws JSONDecodeException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      * @throws OrderErrorException
      * @throws ReferenceUndefinedException
      */
@@ -27,15 +30,14 @@ final class Hello extends Action
         $this->checkOrder($order);
 
         $template = (new Reference("HelloTemplate"))->getString();
-        $loginInfo = $this->getLoginInfo();
-        $this->reply = Customization::getString($template,
-            $loginInfo["nickname"], substr($this->selfId, -4), substr($this->selfId, -4));
+        $this->reply = Customization::getString($template, $this->coolq->getLoginInfo()["nickname"],
+            substr($this->selfId, -4), substr($this->selfId, -4));
     }
 
     /**
      * Check the validity of the order.
      *
-     * @param string $order Order
+     * @param string $order The order
      *
      * @throws OrderErrorException
      */
@@ -43,15 +45,5 @@ final class Hello extends Action
     {
         if ($order != "")
             throw new OrderErrorException;
-    }
-
-    /**
-     * Get current robot's info.
-     *
-     * @return array Info
-     */
-    private function getLoginInfo(): array
-    {
-        return APIService::getLoginInfo()["data"];
     }
 }

@@ -1,9 +1,11 @@
 <?php
 namespace DiceRobot\Action\Notice;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\CredentialException;
-use DiceRobot\Service\APIService;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Exception\InformativeException\APIException\UnexpectedErrorException;
+use DiceRobot\Exception\InformativeException\JSONDecodeException;
 
 /**
  * Submit group ID when kicked out of a group.
@@ -11,33 +13,28 @@ use DiceRobot\Service\APIService;
 final class SelfKicked extends Action
 {
     /**
-     * @throws CredentialException
+     * @throws InternalErrorException
+     * @throws JSONDecodeException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     public function __invoke(): void
     {
-        APIService::submitDelinquentGroup($this->groupId, $this->getCredential()); // Submit this group to public database
+        $this->submitGroup();  // Submit this group to public database
         $this->noResponse();
     }
 
     /**
-     * Request API credential.
+     * Submit the group.
      *
-     * @return string Credential
-     *
-     * @throws CredentialException
+     * @throws InternalErrorException
+     * @throws JSONDecodeException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
-    private function getCredential(): string
+    private function submitGroup(): void
     {
-        $response = APIService::getAPICredential($this->selfId);
-
-        if ($response["code"] != 0)
-        {
-            $errMessage = "DiceRobot submits delinquent group failed: " . $response["message"] . "\n" .
-                "Delinquent group ID: " . $this->groupId;
-
-            throw new CredentialException($errMessage);
-        }
-
-        return $response["data"]["credential"];
+        $this->apiService->auth($this->selfId);
+        $this->apiService->submitGroup($this->groupId);
     }
 }

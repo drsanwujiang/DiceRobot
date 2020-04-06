@@ -2,9 +2,9 @@
 namespace DiceRobot\Service;
 
 /**
- * Random number generators.
+ * Random number generator.
  */
-final class Rolling
+class Rolling
 {
     public static function roll(int $diceNumber = 1, int $surfaceNumber = 100): array
     {

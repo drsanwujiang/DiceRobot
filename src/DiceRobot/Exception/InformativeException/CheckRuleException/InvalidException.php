@@ -7,7 +7,7 @@ use DiceRobot\Service\Customization;
 /**
  * Check rule is invalid. This exception will send reply "checkRuleInvalid".
  */
-final class InvalidException extends InformativeException
+class InvalidException extends InformativeException
 {
     public function __construct()
     {

@@ -7,7 +7,7 @@ use DiceRobot\Service\Customization;
 /**
  * Reference file is undefined. This exception will send reply "_generalReferenceUndefined".
  */
-final class ReferenceUndefinedException extends InformativeException
+class ReferenceUndefinedException extends InformativeException
 {
     public function __construct()
     {

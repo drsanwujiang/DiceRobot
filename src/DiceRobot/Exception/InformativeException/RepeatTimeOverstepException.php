@@ -7,7 +7,7 @@ use DiceRobot\Service\Customization;
 /**
  * Repeat time oversteps the limit. This exception will send reply "_generalRepeatTimeOverstep".
  */
-final class RepeatTimeOverstepException extends InformativeException
+class RepeatTimeOverstepException extends InformativeException
 {
     public function __construct()
     {

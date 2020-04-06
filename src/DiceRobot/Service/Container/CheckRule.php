@@ -5,15 +5,15 @@ use DiceRobot\Exception\InformativeException\CheckRuleException\DangerousExcepti
 use DiceRobot\Exception\InformativeException\CheckRuleException\InvalidException;
 use DiceRobot\Exception\InformativeException\CheckRuleException\LostException;
 use DiceRobot\Exception\InformativeException\CheckRuleException\MatchFailedException;
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\JSONDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
 use Throwable;
 
 /**
- * COC check rule container.
+ * COC check rule.
  */
-final class CheckRule extends Reference
+class CheckRule extends Reference
 {
     public string $name;
     public string $description;
@@ -21,12 +21,12 @@ final class CheckRule extends Reference
     private array $levels;
 
     /**
-     * Constructor.
+     * The constructor.
      *
      * @param int $ruleIndex Rule index
      *
      * @throws FileLostException
-     * @throws JSONDecodeException
+     * @throws FileDecodeException
      * @throws LostException
      * @throws ReferenceUndefinedException
      */

@@ -1,8 +1,8 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
+use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Service\Customization;
 
 /**

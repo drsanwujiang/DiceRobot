@@ -2,7 +2,8 @@
 namespace DiceRobot\Action\Message\RobotCommand;
 
 use DiceRobot\Action\RobotCommandAction;
-use DiceRobot\Service\APIService;
+use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 use DiceRobot\Service\Customization;
 
 /**
@@ -10,6 +11,10 @@ use DiceRobot\Service\Customization;
  */
 final class Goodbye extends RobotCommandAction
 {
+    /**
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     */
     public function __invoke(): void
     {
         if ($this->chatType == "private")
@@ -24,8 +29,8 @@ final class Goodbye extends RobotCommandAction
                     )
                 )
             ) {
-                APIService::sendDiscussMessage($this->chatId, Customization::getReply("robotCommandGoodbye"));
-                APIService::setDiscussLeaveAsync($this->chatId);
+                $this->coolq->sendDiscussMessage($this->chatId, Customization::getReply("robotCommandGoodbye"));
+                $this->coolq->setDiscussLeaveAsync($this->chatId);
             }
 
             $this->noResponse();
@@ -41,12 +46,12 @@ final class Goodbye extends RobotCommandAction
                 )
             ) {
                 $userRole = $this->sender->role ??
-                    APIService::getGroupMemberInfo($this->chatId, $this->userId)["data"]["role"];
+                    $this->coolq->getGroupMemberInfo($this->chatId, $this->userId)["data"]["role"];
 
                 if ($userRole == "owner") {
-                    APIService::sendGroupMessage($this->chatId,
+                    $this->coolq->sendGroupMessage($this->chatId,
                         Customization::getReply("robotCommandGoodbye"));
-                    APIService::setGroupLeaveAsync($this->chatId);
+                    $this->coolq->setGroupLeaveAsync($this->chatId);
                     $this->noResponse();
                 }
                 else

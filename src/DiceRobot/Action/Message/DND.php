@@ -1,12 +1,12 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\ArithmeticExpressionErrorException;
+use DiceRobot\Action;
 use DiceRobot\Exception\InformativeException\DiceException\DiceNumberOverstepException;
+use DiceRobot\Exception\InformativeException\DiceException\ExpressionErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\SurfaceNumberOverstepException;
-use DiceRobot\Exception\InformativeException\FileLostException;
-use DiceRobot\Exception\InformativeException\JSONDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
 use DiceRobot\Service\Container\Dice\Dice;
@@ -18,13 +18,13 @@ use DiceRobot\Service\Customization;
  */
 final class DND extends Action
 {
-    private const DND_GENERATE_RULE = "4D6K3";
+    const DND_GENERATE_RULE = "4D6K3";
 
     /**
-     * @throws ArithmeticExpressionErrorException
      * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws FileDecodeException
      * @throws FileLostException
-     * @throws JSONDecodeException
      * @throws OrderErrorException
      * @throws ReferenceUndefinedException
      * @throws SurfaceNumberOverstepException
@@ -53,7 +53,7 @@ final class DND extends Action
     /**
      * Check the validity of the order.
      *
-     * @param string $order Order
+     * @param string $order The order
      *
      * @throws OrderErrorException
      */
@@ -68,10 +68,10 @@ final class DND extends Action
      *
      * @param int $time Generate time
      *
-     * @throws ArithmeticExpressionErrorException
+     * @throws ExpressionErrorException
      * @throws DiceNumberOverstepException
+     * @throws FileDecodeException
      * @throws FileLostException
-     * @throws JSONDecodeException
      * @throws ReferenceUndefinedException
      * @throws SurfaceNumberOverstepException
      */

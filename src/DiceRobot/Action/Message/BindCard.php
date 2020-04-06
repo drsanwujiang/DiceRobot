@@ -1,13 +1,16 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
-use DiceRobot\Exception\CredentialException;
+use DiceRobot\Action;
 use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
-use DiceRobot\Exception\InformativeException\APIException\NotFoundException;
-use DiceRobot\Exception\InformativeException\FileUnwritableException;
+use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Exception\InformativeException\APIException\UnexpectedErrorException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
+use DiceRobot\Exception\InformativeException\JSONDecodeException;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
-use DiceRobot\Service\APIService;
+use DiceRobot\Service\API\Response\GetCardResponse;
 use DiceRobot\Service\Container\CharacterCard;
 use DiceRobot\Service\Customization;
 
@@ -17,11 +20,14 @@ use DiceRobot\Service\Customization;
 final class BindCard extends Action
 {
     /**
-     * @throws InternalErrorException
-     * @throws CredentialException
+     * @throws FileDecodeException
+     * @throws FileLostException
      * @throws FileUnwritableException
-     * @throws NotFoundException
+     * @throws InternalErrorException
+     * @throws JSONDecodeException
+     * @throws NetworkErrorException
      * @throws OrderErrorException
+     * @throws UnexpectedErrorException
      */
     public function __invoke(): void
     {
@@ -38,16 +44,10 @@ final class BindCard extends Action
         $this->sendPendingMessage();
 
         $cardId = (int) $order;
-        $cardContent = $this->getCardContent($cardId, $this->getCredential());
-        $card = new CharacterCard($cardId);
+        $response = $this->getCard($cardId);
+        $card = new CharacterCard($cardId, false);
+        $card->import($response);
 
-        if (!$card->parse($cardContent["attributes"], $cardContent["status"], $cardContent["skills"]))
-        {
-            $this->reply = Customization::getReply("bindCardFormatError");
-            return;
-        }
-
-        $card->save();
         $this->chatSettings->setCharacterCardId($this->userId, $cardId);
         $this->reply = Customization::getReply("bindCardSuccess");
     }
@@ -55,7 +55,7 @@ final class BindCard extends Action
     /**
      * Check the validity of the order.
      *
-     * @param string $order Order
+     * @param string $order The order
      *
      * @throws OrderErrorException
      */
@@ -66,62 +66,38 @@ final class BindCard extends Action
     }
 
     /**
-     * Send message that request is pending.
+     * Send message of pending request.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
      */
     private function sendPendingMessage(): void
     {
         $message = Customization::getReply("bindCardPending");
 
         if ($this->chatType == "group")
-            APIService::sendGroupMessageAsync($this->chatId, $message);
+            $this->coolq->sendGroupMessageAsync($this->chatId, $message);
         elseif ($this->chatType == "discuss")
-            APIService::sendDiscussMessageAsync($this->chatId, $message);
+            $this->coolq->sendDiscussMessageAsync($this->chatId, $message);
         elseif ($this->chatType == "private")
-            APIService::sendPrivateMessageAsync($this->chatId, $message);
-    }
-
-    /**
-     * Request API credential.
-     *
-     * @return string Credential
-     *
-     * @throws CredentialException
-     */
-    private function getCredential(): string
-    {
-        $response = APIService::getAPICredential($this->selfId);
-
-        if ($response["code"] != 0)
-        {
-            $errMessage = "DiceRobot bind character card failed: " . $response["message"] . "\n" .
-                "Delinquent group ID: " . $this->groupId;
-
-            throw new CredentialException($errMessage);
-        }
-
-        return $response["data"]["credential"];
+            $this->coolq->sendPrivateMessageAsync($this->chatId, $message);
     }
 
     /**
      * Get character card content.
      *
      * @param int $cardId Character card ID
-     * @param string $credential API credential
      *
-     * @return array Character card content
+     * @return GetCardResponse The response
      *
      * @throws InternalErrorException
-     * @throws NotFoundException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     * @throws JSONDecodeException
      */
-    private function getCardContent(int $cardId, string $credential): array
+    private function getCard(int $cardId): GetCardResponse
     {
-        $response = APIService::getCharacterCard($this->userId, $cardId, $credential);
-
-        if ($response["code"] == -3)
-            throw new NotFoundException();
-        elseif ($response["code"] != 0)
-            throw new InternalErrorException();
-
-        return $response["data"];
+        $this->apiService->auth($this->selfId, $this->userId);
+        return $this->apiService->getCard($cardId);
     }
 }

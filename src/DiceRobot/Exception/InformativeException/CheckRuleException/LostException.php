@@ -7,7 +7,7 @@ use DiceRobot\Service\Customization;
 /**
  * Check rule is lost. This exception will send reply "checkRuleLost".
  */
-final class LostException extends InformativeException
+class LostException extends InformativeException
 {
     public function __construct()
     {

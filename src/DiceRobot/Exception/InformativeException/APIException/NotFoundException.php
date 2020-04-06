@@ -5,12 +5,12 @@ use DiceRobot\Exception\InformativeException;
 use DiceRobot\Service\Customization;
 
 /**
- * Character card not found. This exception will send reply "_generalCharacterCardNotFound".
+ * Character card not found. This exception will send reply "characterCardNotFound".
  */
-final class NotFoundException extends InformativeException
+class NotFoundException extends InformativeException
 {
     public function __construct()
     {
-        parent::__construct(Customization::getReply("_generalCharacterCardNotFound"));
+        parent::__construct(Customization::getReply("characterCardNotFound"));
     }
 }

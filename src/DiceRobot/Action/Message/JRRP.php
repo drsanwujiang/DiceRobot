@@ -1,7 +1,7 @@
 <?php
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Action;
+use DiceRobot\Action;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
 use DiceRobot\Service\Customization;
 use DiceRobot\Service\Rolling;
@@ -27,7 +27,7 @@ final class JRRP extends Action
     /**
      * Check the validity of the order.
      *
-     * @param string $order Order
+     * @param string $order The order
      *
      * @throws OrderErrorException
      */

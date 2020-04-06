@@ -1,6 +1,7 @@
 <?php
 
-use DiceRobot\Service\APIService;
+use DiceRobot\Service\API\CoolQAPI;
+use DiceRobot\Service\API\DiceRobotAPI;
 use DiceRobot\Service\Container\ChatSettings;
 use DiceRobot\Service\Container\CharacterCard;
 use DiceRobot\Service\Container\Reference;
@@ -39,28 +40,6 @@ Reference::setMapping([
 if (!defined("HTTP_API_PORT"))
     define("HTTP_API_PORT", 5700);
 
-// Set up HTTP API URLs
-APIService::setHttpApiUrl([
-    "getGroupInfo" => "http://localhost:" . HTTP_API_PORT . "/get_group_info",
-    "getGroupMemberInfo" => "http://localhost:" . HTTP_API_PORT . "/get_group_member_info",
-    "getLoginInfo" => "http://localhost:" . HTTP_API_PORT . "/get_login_info",
-    "sendDiscussMessage" => "http://localhost:" . HTTP_API_PORT . "/send_discuss_msg",
-    "sendGroupMessage" => "http://localhost:" . HTTP_API_PORT . "/send_group_msg",
-    "sendPrivateMessage" => "http://localhost:" . HTTP_API_PORT . "/send_private_msg",
-    "setDiscussLeave" => "http://localhost:" . HTTP_API_PORT . "/set_discuss_leave",
-    "setFriendAddRequest" => "http://localhost:" . HTTP_API_PORT . "/set_friend_add_request",
-    "setGroupAddRequest" => "http://localhost:" . HTTP_API_PORT . "/set_group_add_request",
-    "setGroupCard" => "http://localhost:" . HTTP_API_PORT . "/set_group_card",
-    "setGroupLeave" => "http://localhost:" . HTTP_API_PORT . "/set_group_leave"
-]);
-
-// Set up custom API URLs
-APIService::setCustomApiUrl([
-    "getAPICredential" => "https://api.drsanwujiang.com/dicerobot/get_credential",
-    "getCharacterCard" => "https://api.drsanwujiang.com/dicerobot/get_character_card",
-    "heartbeatReport" => "https://api.drsanwujiang.com/dicerobot/heartbeat_report",
-    "queryDelinquentGroup" => "https://api.drsanwujiang.com/dicerobot/query_banned_group",
-    "sanityCheck" => "https://api.drsanwujiang.com/dicerobot/sanity_check",
-    "submitDelinquentGroup" => "https://api.drsanwujiang.com/dicerobot/add_banned_group",
-    "updateCharacterCard" => "https://api.drsanwujiang.com/dicerobot/update_character_card"
-]);
+// Set up API prefix
+CoolQAPI::setPrefix("http://localhost:" . HTTP_API_PORT);
+DiceRobotAPI::setPrefix("https://api.drsanwujiang.com/dicerobot/v2");

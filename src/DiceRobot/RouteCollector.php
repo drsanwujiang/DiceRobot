@@ -2,7 +2,7 @@
 namespace DiceRobot;
 
 /**
- * Route collector.
+ * The route collector.
  */
 abstract class RouteCollector extends Parser
 {

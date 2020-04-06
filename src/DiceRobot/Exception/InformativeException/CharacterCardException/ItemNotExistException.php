@@ -5,12 +5,12 @@ use DiceRobot\Exception\InformativeException;
 use DiceRobot\Service\Customization;
 
 /**
- * Item does not exist in character card. This exception will send reply "_generalCharacterCardItemNotExist".
+ * Item does not exist in character card. This exception will send reply "characterCardItemNotExist".
  */
-final class ItemNotExistException extends InformativeException
+class ItemNotExistException extends InformativeException
 {
     public function __construct()
     {
-        parent::__construct(Customization::getReply("_generalCharacterCardItemNotExist"));
+        parent::__construct(Customization::getReply("characterCardItemNotExist"));
     }
 }
