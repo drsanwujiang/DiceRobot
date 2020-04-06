@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0 - 2020-04-06
+## 1.3.0 - 2020-04-07
 
 ### Added
 - Class `IOService` separated from class `Customization`
@@ -20,7 +20,7 @@
 - DiceRobot APIs now returns specific response object
 - Class `App` now responds to the HTTP API plugin
 - Non-action class only returns correct result, and throws exception when error occurs
-- DiceRobot APIs is now v2
+- DiceRobot APIs is now v2, faster and more RESTful
 
 ### Refactored
 - Refactor some classes
