@@ -43,9 +43,9 @@ final class SelfAdded extends Action
         else
         {
             $reference = (new Reference("HelloTemplate"))->getString();
-            $message = Customization::getString($reference, $this->getLoginInfo()["nickname"],
+            $message = Customization::getString($reference, $this->coolq->getLoginInfo()["nickname"],
                 substr($this->selfId, -4), substr($this->selfId, -4));
-            $this->coolq->sendGroupMessageAsync($this->groupId, $message);
+            $this->coolq->sendGroupMessage($this->groupId, $message);
             $this->loadChatSettings("group", $this->groupId);
             $this->chatSettings->set("active", true);
         }
@@ -67,18 +67,5 @@ final class SelfAdded extends Action
     {
         $this->apiService->auth($this->selfId);
         return $this->apiService->queryGroup($this->groupId)->state;
-    }
-
-    /**
-     * Get current robot's info.
-     *
-     * @return array The info
-     *
-     * @throws InternalErrorException
-     * @throws NetworkErrorException
-     */
-    private function getLoginInfo(): array
-    {
-        return $this->coolq->getLoginInfo();
     }
 }

@@ -74,7 +74,7 @@ class CoolQAPI extends APIService
     {
         $url = static::$prefix . "/get_login_info";
 
-        return $this->decode(self::request($url, false))["data"];
+        return $this->decode(self::request($url))["data"];
     }
 
     /**
