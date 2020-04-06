@@ -1,0 +1,9 @@
+[
+  "DiceRobot 帮助信息",
+  "详细使用说明及示例请访问 https://docs.drsanwujiang.com/dicerobot/order",
+  "使用 .robot about 查看版本信息",
+  "",
+  "【指令一览】",
+  "游戏指令：r(包括 rh rs rb rp) ra(包括 rah rab rap) sc coc dnd set setcoc card jrrp orz hp|mp|san",
+  "控制指令：robot(包括 about start stop nn goodbye) nn help hello"
+]

@@ -1,8 +1,38 @@
 # Changelog
 
+## 1.3.0 - 2020-04-07
+
+### Added
+- Class `IOService` separated from class `Customization`
+- Class `CoolQAPI`, `DiceRobotAPI`, `Request` and `API\Response`
+- DiceRobot API response classes
+- Exceptions thrown by non-action class
+
+### Fixed
+- Fix a logical fallacy in check rule
+- Fix namespace bugs in `CheckRuleException`
+
+### Changed
+- Use class static member variables to store settings and replies, instead of global constants
+- Autoloader now loads class directly and no longer need mapping
+- File reading/writing is now processed by class `IOService`
+- API accessing is now processed by class `CoolQAPI` and `DiceRobotAPI`
+- DiceRobot APIs now returns specific response object
+- Class `App` now responds to the HTTP API plugin
+- Non-action class only returns correct result, and throws exception when error occurs
+- DiceRobot APIs is now v2, faster and more RESTful
+
+### Refactored
+- Refactor some classes
+- Optimize the code
+- Optimize the architecture
+- Optimize API exception handling
+- Merge some replies
+- Update PHP docs
+
 ## 1.2.0 - 2020-03-24
 
-## Added
+### Added
 - Order now can begin with Chinese period (。)
 - Sanity check (.sc)
 - Change attributes (.hp, .mp, .san)

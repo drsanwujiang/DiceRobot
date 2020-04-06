@@ -1,6 +1,6 @@
 <?php
 /**
- * DiceRobot 1.2.0
+ * DiceRobot 1.3.0
  * ©2019-2020 Drsanwujiang
  *
  * A TRPG dice robot based on CoolQ HTTP API plugin.
@@ -8,21 +8,19 @@
 
 use DiceRobot\App;
 
-require "autoloader.php";
-require "settings.php";
-require "customreply.php";
+// Register autoloader
+require __DIR__ . "/autoloader.php";
+
+// Set up settings
+require __DIR__ . "/config.php";
 
 // Collect event data
 $eventData = json_decode(file_get_contents("php://input"));
 
+// Create App instance
 $app = new App($eventData);
 
 // Register routes
-(require "routes.php")($app);
+(require __DIR__ . "/routes.php")($app);
 
 $app->run();
-
-http_response_code($app->getHttpCode());
-
-if ($app->getHttpCode() == 200)
-    echo(json_encode(["reply" => $app->getReply(), "at_sender" => $app->getAtSender(), "block" => $app->getBlock()]));
