@@ -1,20 +1,21 @@
 <?php
 namespace DiceRobot\Exception;
 
+use DiceRobot\Service\Customization;
 use Exception;
 
 /**
  * Informative exception. When this exception thrown, reply of the action will be replaced with specific reply.
  */
-abstract class InformativeException extends Exception
+class InformativeException extends Exception
 {
     protected string $reply;
 
-    public function __construct(string $reply)
+    public function __construct(string $replyKey, ...$args)
     {
         parent::__construct();
 
-        $this->reply = $reply;
+        $this->reply = Customization::getReply($replyKey, ...$args);
     }
 
     public function __toString()

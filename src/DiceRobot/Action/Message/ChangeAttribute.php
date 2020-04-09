@@ -2,6 +2,7 @@
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException;
 use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
 use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 use DiceRobot\Exception\InformativeException\APIException\UnexpectedErrorException;
@@ -30,6 +31,7 @@ final class ChangeAttribute extends Action
      * @throws FileDecodeException
      * @throws FileLostException
      * @throws FileUnwritableException
+     * @throws InformativeException
      * @throws InternalErrorException
      * @throws JSONDecodeException
      * @throws NetworkErrorException
@@ -40,17 +42,14 @@ final class ChangeAttribute extends Action
      */
     public function __invoke(): void
     {
-        $order = preg_replace("/^\./", "", $this->message, 1);
+        $order = preg_replace("/^\./", "", $this->message);
         $this->checkOrder($order);
-        $cardId = $this->chatSettings->getCharacterCardId($this->userId);
-        $characterCard = new CharacterCard($cardId);
 
-        preg_match("/^(hp|mp|san)/i", $order, $attribute);
-        $attribute = strtoupper($attribute[0]);
-        $order = preg_replace("/^(hp|mp|san)[\s]*/i", "", $order, 1);
-        preg_match("/^[+-]/", $order, $symbol);
-        $symbol = $symbol[0];
-        $expression = preg_replace("/^[+-][\s]*/", "", $order, 1);
+        // Parse the order
+        preg_match("/^(hp|mp|san)[\s]*([+-])[\s]*([\S]+)$/i", $order, $matches);
+        $attribute = strtoupper($matches[1]);
+        $symbol = $matches[2];
+        $expression = $matches[3];
 
         if (is_numeric($expression))
         {
@@ -58,28 +57,26 @@ final class ChangeAttribute extends Action
             $result = $expression;
 
             if ($value < 0 || $value > Customization::getSetting("maxAttributeChange"))
-            {
-                $this->reply = Customization::getReply("changeAttributeValueOverstep");
-                return;
-            }
+                throw new InformativeException("changeAttributeValueOverstep");
         }
         else
         {
             $dice = new Dice($expression);
 
             if ($dice->reason != "")
-            {
-                $this->reply = Customization::getReply("changeAttributeWrongExpression");
-                return;
-            }
+                throw new InformativeException("changeAttributeWrongExpression");
 
             $value = $dice->rollResult;
             $result = $dice->getCompleteExpression();
         }
 
-        $change = (int) ($symbol . $value);
-        $response = $this->updateCard($cardId, $attribute, $change);
-        $characterCard->set($attribute, $response->afterValue);
+        $cardId = $this->chatSettings->getCharacterCardId($this->userId);
+        $card = new CharacterCard($cardId);
+
+        $response = $this->updateCard($cardId, $attribute, (int) ($symbol . $value));
+
+        $card->set($attribute, $response->afterValue);  // Update item in the character card
+
         $this->reply = Customization::getReply("changeAttributeResult", $this->userNickname,
             $attribute, Customization::getWording("attributeChange", $symbol == "+"),
             $result, $attribute, $response->afterValue);
@@ -94,7 +91,7 @@ final class ChangeAttribute extends Action
      */
     private function checkOrder(string $order): void
     {
-        if (!preg_match("/^(hp|mp|san)[\s]*[+-][\s]*/i", $order))
+        if (!preg_match("/^(hp|mp|san)[\s]*[+-][\s]*[\S]+/i", $order))
             throw new OrderErrorException;
     }
 
@@ -115,6 +112,7 @@ final class ChangeAttribute extends Action
     private function updateCard(int $cardId, string $attribute, int $change): UpdateCardResponse
     {
         $this->apiService->auth($this->selfId, $this->userId);
+
         return $this->apiService->updateCard($cardId, $attribute, $change);
     }
 }

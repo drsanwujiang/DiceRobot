@@ -163,7 +163,7 @@ class DiceRobotAPI extends APIService
      * @throws NetworkErrorException
      * @throws UnexpectedErrorException
      */
-    public function sc(int $cardId, int $checkResult, array $decreases): SanityCheckResponse
+    public function sanityCheck(int $cardId, int $checkResult, array $decreases): SanityCheckResponse
     {
         $url = static::$prefix . "/card/{$cardId}/sc";
         $method = "PATCH";

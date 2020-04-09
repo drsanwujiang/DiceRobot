@@ -26,17 +26,17 @@ final class Roll extends Action
      */
     public function __invoke(): void
     {
-        $order = preg_replace("/^\.r[\s]*/i", "", $this->message, 1);
+        $order = preg_replace("/^\.r[\s]*/i", "", $this->message);
 
-        preg_match("/#([1-9][0-9]*)?$/", $order, $repeat);
-        $order = preg_replace("/[\s]*#([1-9][0-9]*)?$/", "", $order, 1);
-        $repeat = (int) preg_replace("/^#/", "", $repeat[0] ?? "#", 1);
-        $repeat = $repeat == 0 ? 1 : $repeat;
+        // Parse the order
+        preg_match("/^(.*?)(?:#([1-9][0-9]*))?$/", $order, $matches);
+        $diceOrder = $matches[1] ?? "";
+        $repeat = empty($matches[2] ?? "") ? 1 : (int) $matches[2];
 
         if (!$this->checkRange($repeat))
             return;
 
-        $dice = new Dice($order);
+        $dice = new Dice($diceOrder);
         $replyReasonHeading = ($dice->reason == "" ? "" : Customization::getReply(
             "rollBecauseOf", $dice->reason));
         $replyResultHeading = Customization::getReply("rollResult", $this->userNickname);
@@ -46,7 +46,7 @@ final class Roll extends Action
 
         while ($repeat--)
         {
-            $dice = new Dice($order);
+            $dice = new Dice($diceOrder);
             $this->reply .= $dice->getCompleteExpression() . "\n";
         }
 

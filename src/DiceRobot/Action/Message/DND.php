@@ -2,6 +2,7 @@
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException;
 use DiceRobot\Exception\InformativeException\DiceException\DiceNumberOverstepException;
 use DiceRobot\Exception\InformativeException\DiceException\ExpressionErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\SurfaceNumberOverstepException;
@@ -25,27 +26,26 @@ final class DND extends Action
      * @throws ExpressionErrorException
      * @throws FileDecodeException
      * @throws FileLostException
+     * @throws InformativeException
      * @throws OrderErrorException
      * @throws ReferenceUndefinedException
      * @throws SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {
-        $order = preg_replace("/^\.dnd[\s]*/i", "", $this->message, 1);
+        $order = preg_replace("/^\.dnd[\s]*/i", "", $this->message);
         $this->checkOrder($order);
 
         $generateTime = $order == "" ? 1 : (int) $order;
 
-        if ($generateTime < 1 ||
-            $generateTime > Customization::getSetting("maxCharacterCardGenerateCount")
-        ) {
-            $this->reply = Customization::getReply("DNDGenerateCardCountOverstep",
+        if ($generateTime < 1 || $generateTime > Customization::getSetting("maxCharacterCardGenerateCount"))
+            throw new InformativeException("DNDGenerateCardCountOverstep",
                 Customization::getSetting("maxCharacterCardGenerateCount"));
-            return;
-        }
 
         $this->reply = Customization::getReply("DNDGenerateCardHeading") . "\n";
+
         $this->generate($generateTime);
+
         $this->reply = trim($this->reply);
         $this->atSender = true;
     }

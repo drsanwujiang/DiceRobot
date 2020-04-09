@@ -57,8 +57,7 @@ class Dice
         $this->order = $order;
 
         // Default subexpression
-        array_push($this->subexpressions,
-            new Subexpression("D" . self::$defaultSurfaceNumber));
+        array_push($this->subexpressions, new Subexpression("D" . self::$defaultSurfaceNumber));
         $this->parseOrder();
         $this->roll();
     }
@@ -81,45 +80,34 @@ class Dice
      */
     private function parseOrder(): void
     {
-        $order = $this->order;
+        preg_match("/^(?:([hs])[\s]*)?(?:([bp])[\s]*)?/i", $this->order, $matches);
 
-        if (preg_match("/^[hs]/i", $order, $result))
-        {
-            $this->vType = strtoupper($result[0]);
-            $order = preg_replace("/^[hs][\s]*/i", "", $order, 1);
-        }
-        if (preg_match("/^[bp]/i", $order, $result))
-        {
-            $this->bpType = strtoupper($result[0]);
-            $order = preg_replace("/^[bp][\s]*/i", "", $order, 1);
-        }
-        if ($order == "")
+        $this->order = preg_replace("/^([hs][\s]*)?([bp][\s]*)?/i", "", $this->order);
+        $this->vType = empty($matches[1] ?? "") ? NULL : strtoupper($matches[1]);
+        $this->bpType = empty($matches[2] ?? "") ? NULL : strtoupper($matches[2]);
+
+        if ($this->order == "")
             return;
-
-        $this->order = $order;
 
         // In case the dice is a bonus/punishment dice
         if ($this->bpType)
         {
-            if (preg_match("/^[1-9][0-9]*/", $order, $result))
-            {
-                $this->bpDiceNumber = (int) $result[0];
-                $this->reason = preg_replace("/^[1-9][0-9]*[\s]*/", "", $order, 1);
-            }
-            else
-                $this->reason = $this->order;
+            preg_match("/^([1-9][0-9]*)?[\s]*([\S]*)/i", $this->order, $matches);
+
+            $this->bpDiceNumber = empty($matches[1] ?? "") ? $this->bpDiceNumber : (int) $matches[1];
+            $this->reason = $matches[2] ?? "";
 
             return;
         }
 
-        // In case the dice is a normal dice, parse operations. Sample: x1Dy1Kz1+x2Dy2+c reason
-        preg_match("/^[\S]+[\s]*/", $order, $result);
-        $expression = trim($result[0]);
-        $this->reason = preg_replace("/^[\S]+[\s]*/", "", $order, 1);
+        // In case the dice is a normal dice, parse expressions. Sample: x1Dy1Kz1+x2Dy2+c reason
+        preg_match("/^([0-9dk+\-x*()（）]+)?[\s]*([\S]*)/i", $this->order, $matches);
+        $expression = $matches[1] ?? "";
+        $this->reason = $matches[2] ?? "";
 
-        if (is_numeric($expression) || preg_match("/[^0-9dk+\-x*()（）]/i", $expression))
+        if (is_numeric($expression))
         {
-            $this->reason = $order;
+            $this->reason = $this->order;
             return;
         }
 

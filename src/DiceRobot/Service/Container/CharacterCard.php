@@ -92,6 +92,10 @@ class CharacterCard
      */
     private function save(): void
     {
+        if (!file_exists(self::$cardDir))
+            IOService::createDir(self::$cardDir);
+
+        $cardPath = self::$cardDir . $this->id . ".json";
         $cardContent = [
             "id" => $this->id,
             "type" => $this->type,
@@ -99,10 +103,6 @@ class CharacterCard
             "skills" => $this->skills
         ];
 
-        if (!file_exists(self::$cardDir))
-            mkdir(self::$cardDir, 0755, true);
-
-        $cardPath = self::$cardDir . $this->id . ".json";
         IOService::putFile($cardPath, $cardContent);
     }
 

@@ -8,24 +8,31 @@ use DiceRobot\Exception\InformativeException;
  */
 final class App extends RouteCollector
 {
+    /** @var object The event data */
     private object $eventData;
 
     /**
      * The constructor.
-     *
-     * @param object $eventData The event data
      */
-    public function __construct(object $eventData)
+    public function __construct()
     {
-        parent::__construct($eventData);
+        $this->collect();
 
-        $this->eventData = $eventData;
+        parent::__construct($this->eventData);
+    }
+
+    /**
+     * Collect the event data.
+     */
+    private function collect(): void
+    {
+        $this->eventData = json_decode(file_get_contents("php://input"));
     }
 
     /**
      * Run the application.
      */
-    public function run()
+    public function run(): void
     {
         $className = $this->match();
 
@@ -33,8 +40,15 @@ final class App extends RouteCollector
             $this->httpCode = 204;
         else
         {
-            $action = new $className($this->eventData);
-            $this->execute($action);
+            try
+            {
+                $action = new $className($this->eventData);
+                $this->execute($action);
+            }
+            catch (InformativeException $e)
+            {
+                $this->reply = $e;
+            }
         }
 
         $this->respond();
@@ -86,7 +100,9 @@ final class App extends RouteCollector
      *
      * @param Action $action The action object
      *
-     * @noinspection PhpRedundantCatchClauseInspection
+     * @throws InformativeException
+     *
+     * @noinspection PhpDocRedundantThrowsInspection
      */
     private function execute(Action $action): void
     {
@@ -97,17 +113,9 @@ final class App extends RouteCollector
             return;
         }
 
-        try
-        {
-            $action();
-            $this->reply = $action->getReply();
-            $this->atSender = $action->getAtSender();
-        }
-        catch (InformativeException $e)
-        {
-            $this->reply = $e;
-        }
-
+        $action();
+        $this->reply = $action->getReply();
+        $this->atSender = $action->getAtSender();
         $this->block = $action->getBlock();
         $this->httpCode = $action->getHttpCode();
     }

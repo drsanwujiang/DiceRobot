@@ -9,8 +9,9 @@ use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
  */
 class Request
 {
-    private $ch = NULL;
     private static ?Request $instance = NULL;
+
+    private $ch = NULL;
 
     private function __construct()
     {
@@ -30,7 +31,7 @@ class Request
     {
         if (!self::$instance instanceof self)
         {
-            self::$instance = new self();
+            self::$instance = new Request();
         }
 
         return self::$instance;

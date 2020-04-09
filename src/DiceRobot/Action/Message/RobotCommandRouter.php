@@ -29,6 +29,10 @@ final class RobotCommandRouter extends Action
      * The  constructor.
      *
      * @param object $eventData The event data
+     *
+     * @throws FileDecodeException
+     * @throws FileLostException
+     * @throws FileUnwritableException
      */
     public function __construct(object $eventData)
     {
@@ -37,9 +41,11 @@ final class RobotCommandRouter extends Action
         $this->eventData = $eventData;
 
         $command = preg_replace("/^\.robot[\s]*/i", "", $this->message, 1);
-        $commandPair = explode(" ", $command, 2);
-        $this->commandKey = $commandPair[0];
-        $this->commandValue = isset($commandPair[1]) ? trim($commandPair[1]) : "";
+
+        // Parse the order
+        preg_match("/^([\S]+)(?:[\s]+([\S]+))?$/", $command, $matches);
+        $this->commandKey = $matches[1] ?? "";
+        $this->commandValue = $matches[2] ?? "";
     }
 
     /**

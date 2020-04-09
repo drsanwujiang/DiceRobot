@@ -3,6 +3,9 @@ namespace DiceRobot;
 
 use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
 use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Service\API\CoolQAPI;
 use DiceRobot\Service\API\DiceRobotAPI;
 use DiceRobot\Service\Container\Dice\Dice;
@@ -23,13 +26,17 @@ abstract class Action extends Parser
      * The constructor.
      *
      * @param object $eventData The event data
+     *
+     * @throws FileDecodeException
+     * @throws FileLostException
+     * @throws FileUnwritableException
      */
     public function __construct(object $eventData)
     {
+        parent::__construct($eventData);
+
         $this->coolq = new CoolQAPI();
         $this->apiService = new DiceRobotAPI();
-
-        parent::__construct($eventData);
 
         if ($this->postType == "message")
         {
@@ -46,6 +53,10 @@ abstract class Action extends Parser
      *
      * @param string|null $chatType Chat type
      * @param int|null $chatId Chat ID
+     *
+     * @throws FileDecodeException
+     * @throws FileLostException
+     * @throws FileUnwritableException
      */
     final protected function loadChatSettings(?string $chatType = NULL, ?int $chatId = NULL): void
     {
