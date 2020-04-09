@@ -2,6 +2,7 @@
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException;
 use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
 use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 use DiceRobot\Exception\InformativeException\CheckRuleException\LostException;
@@ -21,6 +22,7 @@ final class SetCOC extends Action
      * @throws FileDecodeException
      * @throws FileLostException
      * @throws FileUnwritableException
+     * @throws InformativeException
      * @throws InternalErrorException
      * @throws LostException
      * @throws NetworkErrorException
@@ -28,21 +30,20 @@ final class SetCOC extends Action
      */
     public function __invoke(): void
     {
-        $ruleIndex = preg_replace("/^\.setcoc[\s]*/i", "", $this->message, 1);
+        $ruleIndex = preg_replace("/^\.setcoc[\s]*/i", "", $this->message);
 
         if ($ruleIndex != "" && !is_numeric($ruleIndex))
-        {
-            $this->reply = Customization::getReply("setCOCRuleIndexError");
-            return;
-        }
+            throw new InformativeException("setCOCRuleIndexError");
 
-        $rule = new CheckRule($ruleIndex == "" ?
-            ($this->chatSettings->get("cocCheckRule") ?? 0) : (int) $ruleIndex);
+        $rule = new CheckRule(
+            $ruleIndex == "" ? ($this->chatSettings->get("cocCheckRule") ?? 0) : (int) $ruleIndex
+        );
 
+        // Show rule details
         if ($ruleIndex == "")
         {
-            $this->reply = Customization::getReply("setCOCCurrentRule", $rule->name,
-                $rule->description, $rule->intro);
+            $this->reply = Customization::getReply("setCOCCurrentRule",
+                $rule->name, $rule->description, $rule->intro);
             return;
         }
 
@@ -51,15 +52,12 @@ final class SetCOC extends Action
             $userRole = $this->getUserRole();
 
             if ($userRole == "member")
-            {
-                $this->reply = Customization::getReply("setCOCChangeRuleDenied");
-                return;
-            }
+                throw new InformativeException("setCOCChangeRuleDenied");
         }
 
         $this->chatSettings->set("cocCheckRule", (int) $ruleIndex);
-        $this->reply = Customization::getReply("setCOCRuleChanged", $rule->name, $rule->description,
-            $rule->intro);
+        $this->reply = Customization::getReply("setCOCRuleChanged",
+            $rule->name, $rule->description, $rule->intro);
     }
 
     /**

@@ -2,6 +2,8 @@
 namespace DiceRobot\Service\Container;
 
 use DiceRobot\Exception\InformativeException\CharacterCardException\NotBoundException;
+use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
+use DiceRobot\Exception\InformativeException\IOException\FileLostException;
 use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Service\IOService;
 
@@ -21,6 +23,10 @@ class ChatSettings
      *
      * @param string $chatType Chat type
      * @param int $chatId Chat ID
+     *
+     * @throws FileDecodeException
+     * @throws FileLostException
+     * @throws FileUnwritableException
      */
     public function __construct(string $chatType, int $chatId)
     {
@@ -42,19 +48,20 @@ class ChatSettings
 
     /**
      * Load chat settings.
+     *
+     * @throws FileDecodeException
+     * @throws FileLostException
+     * @throws FileUnwritableException
      */
     private function load(): void
     {
         if (!file_exists($this->settingsDir))
-            mkdir($this->settingsDir, 0755, true);
+            IOService::createDir($this->settingsDir);
 
         if (file_exists($this->settingsPath))
-        {
-            $jsonString = file_get_contents($this->settingsPath);
-            $settings = json_decode($jsonString, true);
-        }
+            $this->settings = IOService::getFile($this->settingsPath);
 
-        $this->settings = $settings ?? [];
+        $this->settings ??= [];
     }
 
     /**

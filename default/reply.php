@@ -12,7 +12,7 @@ return [
     /* Dice */
     "diceNumberOverstep" => "被骰子淹没，不知所措……",
     "diceSurfaceNumberOverstep" => "为什么会有这么多面的骰子啊(　д ) ﾟ ﾟ",
-    "diceExpressionError" => "表达式无法解析！",
+    "diceExpressionError" => "掷骰表达式无法解析！",
     /* IOService */
     "IOFileLost" => "相关文件丢失，无法执行该指令！",
     "IOFileDecodeError" => "相关文件解析失败，无法执行该指令！",
@@ -82,9 +82,11 @@ return [
     "rollPrivately" => "{&1}悄悄地进行了{&2}次掷骰……",
     "rollPrivatelyInPrivate" => "咦？为什么要在私聊的时候暗骰",
     /* SanCheck */
-    "sanCheckResult" => "{&1}进行了 SAN 值检定：{&2}/{&3}，{&4}\nSAN 值减少{&5}点，剩余{&6}/{&7}",
-    "sanCheckValueOverstep" => "SAN 值的变动太大啦……",
-    "sanCheckWrongExpression" => "指令错误！SAN 值的损失只能是非负整数或掷骰表达式",
+    "sanCheckResult" => "{&1}进行了 SAN 值检定：{&2}/{&3}，{&4}\nSAN 值减少{&5}点，剩余{&6}/{&7}点",
+    "sanCheckResultWithSanity" => "{&1}进行了 SAN 值检定：{&2}/{&3}，{&4}\nSAN 值减少{&5}点，剩余{&6}点",
+    "sanCheckDecreaseOverstep" => "SAN 值的变动太大啦……",
+    "sanCheckSanityOverstep" => "SAN 值也太高了一点吧 ﾉ)ﾟДﾟ( ",
+    "sanCheckWrongExpression" => "指令错误！SAN 值的损失只能是非负整数或结果非负的掷骰表达式",
     /* Set */
     "setDefaultSurfaceNumberResult" => "骰子的默认面数现在是：{&1}",
     "setDefaultSurfaceNumberError" => "骰子的默认面数只能是数字哦~",

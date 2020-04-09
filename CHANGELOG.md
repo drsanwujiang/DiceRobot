@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.1 - 2020-04-09
+
+### Added
+- Sanity check (.sc) can be used without character card bound
+
+### Fixed
+- Fix bugs in `ChatSettings` which can cause `FileUnwritableException` unexpectedly
+
+### Changed
+- Directory creation now processed by `IOService`
+- File/directory path will be checked before created/written
+- Error will be logged when failed to create/write file/directory
+
+### Refactored
+- Optimize the logic of `App`
+- Optimize the regular expressions
+
 ## 1.3.0 - 2020-04-07
 
 ### Added

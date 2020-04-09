@@ -31,8 +31,9 @@ final class BindCard extends Action
      */
     public function __invoke(): void
     {
-        $order = preg_replace("/^\.card[\s]*/i", "", $this->message, 1);
+        $order = preg_replace("/^\.card[\s]*/i", "", $this->message);
 
+        // Unbind character card
         if ($order == "")
         {
             $this->chatSettings->setCharacterCardId($this->userId, NULL);
@@ -44,11 +45,11 @@ final class BindCard extends Action
         $this->sendPendingMessage();
 
         $cardId = (int) $order;
-        $response = $this->getCard($cardId);
-        $card = new CharacterCard($cardId, false);
-        $card->import($response);
+        $card = new CharacterCard($cardId, false);  // Create empty instance
 
+        $card->import($this->getCard($cardId));  // Import character card
         $this->chatSettings->setCharacterCardId($this->userId, $cardId);
+
         $this->reply = Customization::getReply("bindCardSuccess");
     }
 
@@ -98,6 +99,7 @@ final class BindCard extends Action
     private function getCard(int $cardId): GetCardResponse
     {
         $this->apiService->auth($this->selfId, $this->userId);
+
         return $this->apiService->getCard($cardId);
     }
 }

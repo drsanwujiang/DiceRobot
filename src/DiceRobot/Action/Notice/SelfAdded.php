@@ -37,6 +37,7 @@ final class SelfAdded extends Action
         {
             // Group is in black list, quit
             $message = Customization::getReply("selfAddedBannedGroup");
+
             $this->coolq->sendGroupMessage($this->groupId, $message);
             $this->coolq->setGroupLeaveAsync($this->groupId);
         }
@@ -45,6 +46,7 @@ final class SelfAdded extends Action
             $reference = (new Reference("HelloTemplate"))->getString();
             $message = Customization::getString($reference, $this->coolq->getLoginInfo()["nickname"],
                 substr($this->selfId, -4), substr($this->selfId, -4));
+
             $this->coolq->sendGroupMessage($this->groupId, $message);
             $this->loadChatSettings("group", $this->groupId);
             $this->chatSettings->set("active", true);
@@ -66,6 +68,7 @@ final class SelfAdded extends Action
     private function queryGroup(): bool
     {
         $this->apiService->auth($this->selfId);
+
         return $this->apiService->queryGroup($this->groupId)->state;
     }
 }

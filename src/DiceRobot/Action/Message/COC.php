@@ -2,6 +2,7 @@
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException;
 use DiceRobot\Exception\InformativeException\DiceException\DiceNumberOverstepException;
 use DiceRobot\Exception\InformativeException\DiceException\ExpressionErrorException;
 use DiceRobot\Exception\InformativeException\DiceException\SurfaceNumberOverstepException;
@@ -37,48 +38,41 @@ final class COC extends Action
      * @throws ExpressionErrorException
      * @throws FileDecodeException
      * @throws FileLostException
+     * @throws InformativeException
      * @throws OrderErrorException
      * @throws ReferenceUndefinedException
      * @throws SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {
+        $order = preg_replace("/^\.coc[\s]*/i", "", $this->message);
+
+        // Default parameters
         $version = 7;
         $generateTime = 1;
         $detailed = false;
-        $order = preg_replace("/^\.coc[\s]*/i", "", $this->message, 1);
 
-        if ($order == "")
-            $generateTime = 1;
-        elseif (preg_match("/^[6-7]$/", $order))
-            $version = (int) $order;
-        elseif (preg_match("/^[1-9][0-9]*$/", $order))
-            $generateTime = (int) $order;
-        elseif (preg_match("/^[6-7]\s+[1-9][0-9]*$/", $order))
+        // Parse the order
+        if (preg_match("/^([6-7])?[\s]*([1-9][0-9]*)?$/", $order, $matches))
         {
-            $orderArray = preg_split("/\s+/", $order, 2);
-            $version = $orderArray[0];
-            $generateTime = $orderArray[1];
+            $version = ($matches[1] ?? "") == "" ? $version : (int) $matches[1];
+            $generateTime = ($matches[2] ?? "") == "" ? $generateTime : (int) $matches[2];
         }
-        elseif (preg_match("/^D$/i", $order))
-            $detailed = true;
-        elseif (preg_match("/^[6-7]\s*D/i", $order))
+        elseif (preg_match("/^([6-7])?[\s]*D$/i", $order, $matches))
         {
-            $version = $order[0];
+            $version = ($matches[1] ?? "") == "" ? $version : (int) $matches[1];
             $detailed = true;
         }
         else
             throw new OrderErrorException;
 
         if ($generateTime > Customization::getSetting("maxCharacterCardGenerateCount"))
-        {
-            $this->reply = Customization::getReply("COCGenerateCardCountOverstep",
+            throw new InformativeException("COCGenerateCardCountOverstep",
                 Customization::getSetting("maxCharacterCardGenerateCount"));
-            return;
-        }
 
-        $reference = new Reference("COCCharacterCardTemplate");
+        $reference = new Reference("COCCharacterCardTemplate");  // Load reference
         $this->reply = Customization::getReply("COCGenerateCardHeading", $version) . "\n";
+
         $this->generate($version, $generateTime, $reference);
 
         if ($detailed)
@@ -131,7 +125,7 @@ final class COC extends Action
      */
     private function generateDetail(Reference $reference): void
     {
-        $items = $reference->get("templates")["items"];
+        $items = $reference->get("items");
 
         $sex = $this->draw($items["sex"]);
         $age = (new Dice(self::COC_GENERATE_RULE["age"]))->rollResult;

@@ -8,7 +8,7 @@ use DiceRobot\Service\Container\Reference;
 use DiceRobot\Service\Customization;
 
 /** DiceRobot version. */
-const DICEROBOT_VERSION = "1.3.0";
+const DICEROBOT_VERSION = "1.3.1";
 
 // Set up settings
 Customization::setSettings(require __DIR__ . "/default/settings.php");

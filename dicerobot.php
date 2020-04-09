@@ -1,6 +1,6 @@
 <?php
 /**
- * DiceRobot 1.3.0
+ * DiceRobot 1.3.1
  * ©2019-2020 Drsanwujiang
  *
  * A TRPG dice robot based on CoolQ HTTP API plugin.
@@ -14,13 +14,11 @@ require __DIR__ . "/autoloader.php";
 // Set up settings
 require __DIR__ . "/config.php";
 
-// Collect event data
-$eventData = json_decode(file_get_contents("php://input"));
-
 // Create App instance
-$app = new App($eventData);
+$app = new App();
 
 // Register routes
 (require __DIR__ . "/routes.php")($app);
 
+// Execute main logic
 $app->run();

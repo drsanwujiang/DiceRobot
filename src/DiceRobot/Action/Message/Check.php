@@ -2,6 +2,7 @@
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action;
+use DiceRobot\Exception\InformativeException;
 use DiceRobot\Exception\InformativeException\APIException\InternalErrorException;
 use DiceRobot\Exception\InformativeException\APIException\NetworkErrorException;
 use DiceRobot\Exception\InformativeException\CharacterCardException\ItemNotExistException;
@@ -15,6 +16,7 @@ use DiceRobot\Exception\InformativeException\DiceException\ExpressionErrorExcept
 use DiceRobot\Exception\InformativeException\DiceException\SurfaceNumberOverstepException;
 use DiceRobot\Exception\InformativeException\IOException\FileDecodeException;
 use DiceRobot\Exception\InformativeException\IOException\FileLostException;
+use DiceRobot\Exception\InformativeException\IOException\FileUnwritableException;
 use DiceRobot\Exception\InformativeException\OrderErrorException;
 use DiceRobot\Exception\InformativeException\ReferenceUndefinedException;
 use DiceRobot\Exception\InformativeException\RepeatTimeOverstepException;
@@ -28,7 +30,6 @@ use DiceRobot\Service\Customization;
  */
 final class Check extends Action
 {
-    private bool $private;
     private CheckRule $checkRule;
 
     /**
@@ -38,6 +39,7 @@ final class Check extends Action
      *
      * @throws FileDecodeException
      * @throws FileLostException
+     * @throws FileUnwritableException
      * @throws LostException
      * @throws ReferenceUndefinedException
      */
@@ -55,6 +57,7 @@ final class Check extends Action
      * @throws ExpressionErrorException
      * @throws FileDecodeException
      * @throws FileLostException
+     * @throws InformativeException
      * @throws InternalErrorException
      * @throws InvalidException
      * @throws ItemNotExistException
@@ -67,35 +70,26 @@ final class Check extends Action
      */
     public function __invoke(): void
     {
-        $order = preg_replace("/^\.ra[\s]*/i", "", $this->message, 1);
+        $order = preg_replace("/^\.ra[\s]*/i", "", $this->message);
         $this->checkOrder($order);
 
-        preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?/", $order, $optionalOrder);
-        $optionalOrder = $optionalOrder[0];
-        $order = preg_replace("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?/",
-            "", $order, 1);
-        preg_match("/^([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)/ui", $order, $checkItem);
-        $checkItem = $checkItem[0];
-        $order = preg_replace("/^([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)[\s]*/ui",
-            "", $order, 1);
-        preg_match("/^([+-][1-9][0-9]*)*/", $order, $additional);
-        $additional = $additional[0];
-        $order = preg_replace("/^([+-][1-9][0-9]*)*[\s]*/",
-            "", $order, 1);
-        preg_match("/[1-9][0-9]*$/", $order, $repeat);
-        $repeat = isset($repeat[0]) ? (int) $repeat[0] : 1;
+        // Parse the order
+        preg_match("/^(h)?[\s]*([bp](?:[\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)[\s]*((?:[+-][1-9][0-9]*[\s]*)*)(?:#([1-9][0-9]*)?)?$/ui", $order, $matches);
+        $private = strtoupper($matches[1]) == "H";
+        $bp = $matches[2];
+        $item = $matches[3];
+        $addition = str_replace(" ", "", $matches[4]);
+        $repeat = (int) ($matches[5] ?? 1);
 
-        $checkValue = $this->getCheckValue($checkItem, $repeat);
+        $checkValue = $this->getCheckValue($item, $repeat);
         $this->reply .= $repeat > 1 ? "\n" : "";
 
-        if (!$this->checkRange($checkValue, $repeat))
-            return;
+        $this->checkRange($checkValue, $repeat);
+        $this->check($bp, $addition, $checkValue, $repeat);
 
-        $this->check($optionalOrder, $additional, $checkValue, $repeat);
-
-        if ($this->private && $this->chatType == "private")
+        if ($private && $this->chatType == "private")
             $this->reply = Customization::getReply("checkPrivatelyInPrivate");
-        elseif ($this->private)
+        elseif ($private)
         {
             $this->sendPrivateMessage();
             $this->reply = Customization::getReply("checkPrivately", $this->userNickname, $repeat);
@@ -111,7 +105,7 @@ final class Check extends Action
      */
     private function checkOrder(string $order): void
     {
-        if (!preg_match("/^(h[\s]*)?([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)([\s]*[+-][1-9][0-9]*)*([\s]*#([1-9][0-9]*)?)?$/ui", $order))
+        if (!preg_match("/^(h)?[\s]*([bp]([\s]*[1-9][0-9]*)?[\s]+)?([\x{4e00}-\x{9fa5}a-z]+|[1-9][0-9]*)[\s]*([+-][1-9][0-9]*[\s]*)*(#([1-9][0-9]*)?)?$/ui", $order))
             throw new OrderErrorException;
     }
 
@@ -130,22 +124,22 @@ final class Check extends Action
      */
     private function getCheckValue(string $item, int $repeat): int
     {
-        if (preg_match("/^[1-9][0-9]*/", $item, $checkValue))
+        if (is_numeric($item))
         {
-            $checkValue = (int) $checkValue[0];
+            $checkValue = (int) $item;
             $this->reply = Customization::getReply("checkResultHeading",
                 $this->userNickname, $repeat, "");
         }
-        elseif (preg_match("/^[\x{4e00}-\x{9fa5}a-z]+/ui", $item, $itemName))
+        else
         {
-            $itemName = strtoupper($itemName[0]);
             $card = new CharacterCard($this->chatSettings->getCharacterCardId($this->userId));
-            $checkValue = $card->get($itemName);
+            $checkValue = $card->get(strtoupper($item));
             $this->reply = Customization::getReply("checkResultHeadingWithAttributes",
                 $this->userNickname,
                 $card->get("HP"), intval(($card->get("SIZ") + $card->get("CON")) / 10),
                 $card->get("MP"), intval($card->get("POW") / 5),
-                $card->get("SAN"), 99 - $card->get("克苏鲁神话"), $repeat, $itemName);
+                $card->get("SAN"), 99 - $card->get("克苏鲁神话"),
+                $repeat, $item);
         }
 
         return $checkValue;
@@ -157,33 +151,24 @@ final class Check extends Action
      * @param int $value The value
      * @param int $repeat Repeat time
      *
-     * @return bool Validity
-     *
+     * @throws InformativeException
      * @throws RepeatTimeOverstepException
      */
-    private function checkRange(int $value, int $repeat): bool
+    private function checkRange(int $value, int $repeat): void
     {
         if ($value < 1)
-        {
-            $this->reply = Customization::getReply("checkValueInvalid");
-            return false;
-        }
+            throw new InformativeException("checkValueInvalid");
         elseif ($value > Customization::getSetting("maxAttribute"))
-        {
-            $this->reply = Customization::getReply("checkValueTooLarge");
-            return false;
-        }
+            throw new InformativeException("checkValueTooLarge");
         elseif ($repeat < 1 || $repeat > Customization::getSetting("maxRepeatTimes"))
             throw new RepeatTimeOverstepException();
-
-        return true;
     }
 
     /**
      * Check.
      *
-     * @param string $optionalOrder Optional order
-     * @param string $additional Additional operations
+     * @param string $bp B/P order
+     * @param string $addition Additional operations
      * @param int $checkValue The check value
      * @param int $repeat Repeat time
      *
@@ -194,24 +179,18 @@ final class Check extends Action
      * @throws MatchFailedException
      * @throws SurfaceNumberOverstepException
      */
-    private function check(string $optionalOrder, string $additional, int $checkValue, int $repeat): void
+    private function check(string $bp, string $addition, int $checkValue, int $repeat): void
     {
         do
         {
-            $dice = new Dice(trim($optionalOrder . " D100"));
-
-            $evalString = "return " . $dice->rollResult . $additional . ";";
-            $checkResult = eval($evalString);
-            $checkResult = $checkResult < 1 ? 1 : $checkResult;
-            $checkResult = $checkResult > 100 ? 100 : $checkResult;
-            $rollingResultString = $dice->getCompleteExpression() . $additional .
-                ($additional == "" ? "" : "=" . $checkResult);
-            $this->reply .= Customization::getReply("checkResult", $rollingResultString, $checkValue,
-                    $this->getCheckLevel($checkResult, $checkValue)) . "\n";
+            $dice = new Dice(trim("{$bp}D100{$addition}"));
+            $dice->rollResult = $dice->rollResult < 1 ? 1 : $dice->rollResult;
+            $dice->rollResult = $dice->rollResult > 100 ? 100 : $dice->rollResult;
+            $this->reply .= Customization::getReply("checkResult", $dice->getCompleteExpression(),
+                    $checkValue, $this->getCheckLevel($dice->rollResult, $checkValue)) . "\n";
         } while (--$repeat);
 
         $this->reply = trim($this->reply);
-        $this->private = $dice->vType == "H";
     }
 
     /**
@@ -229,6 +208,7 @@ final class Check extends Action
     private function getCheckLevel(int $result, int $value): string
     {
         $checkLevel = $this->checkRule->getCheckLevel($result, $value);
+
         return Customization::getWording("checkLevel", $checkLevel);
     }
 
