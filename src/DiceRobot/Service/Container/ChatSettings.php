@@ -55,6 +55,9 @@ class ChatSettings
      */
     private function load(): void
     {
+        if (!file_exists(self::$configDir))
+            IOService::createDir(self::$configDir);
+
         if (!file_exists($this->settingsDir))
             IOService::createDir($this->settingsDir);
 

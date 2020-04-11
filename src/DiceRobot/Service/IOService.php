@@ -21,7 +21,7 @@ class IOService
     public static function createDir(string $path): void
     {
         // Parent directory is not writable
-        if (!is_writable(dirname($path)) || false === mkdir($path, 0755, true))
+        if (!is_writable(dirname($path)) || false === mkdir($path, 0755))
             throw new FileUnwritableException(
                 "The directory '{$path}' cannot be created. " .
                 "Please check the permission and make sure it has been granted."
