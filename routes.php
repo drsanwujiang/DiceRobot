@@ -6,6 +6,10 @@
 use DiceRobot\App;
 
 return function (App $app) {
+    // Check status
+    if ($app->getStatus() < 0)
+        return;
+
     // Routes of message event
     $app->group("message", function (App $group) {
         $group->add("^\\.robot", \DiceRobot\Action\Message\RobotCommandRouter::class);

@@ -8,8 +8,23 @@ use DiceRobot\Exception\InformativeException;
  */
 final class App extends RouteCollector
 {
+    /**
+     * @var int Progress of the application
+     *
+     * 1: Running
+     * 0: Finished
+     * -1: Failed to parse the event data
+     * -2: No order filtered
+     * -3: Matching failed
+     * -4: Executing failed
+     */
+    private int $status = 1;
+
     /** @var object The event data */
     private object $eventData;
+
+    /** @var string Action name */
+    private string $actionName;
 
     /**
      * The constructor.
@@ -18,7 +33,18 @@ final class App extends RouteCollector
     {
         $this->collect();
 
-        parent::__construct($this->eventData);
+        if ($this->status > 0)
+            parent::__construct($this->eventData);
+    }
+
+    /**
+     * Get progress of the application.
+     *
+     * @return int The progress
+     */
+    public function getStatus(): int
+    {
+        return $this->status;
     }
 
     /**
@@ -26,54 +52,65 @@ final class App extends RouteCollector
      */
     private function collect(): void
     {
-        $this->eventData = json_decode(file_get_contents("php://input"));
+        if (is_object($eventData = json_decode(file_get_contents("php://input"))))
+            $this->eventData = $eventData;
+        else
+            $this->status = -1;  // Failed to parse the event data
     }
 
     /**
      * Run the application.
+     *
+     * @return int Progress of the application
      */
-    public function run(): void
+    public function run(): int
     {
-        if (!$this->filter() || is_null($className = $this->match()))
+        if ($this->status < 0 || $this->filter() < 0 || $this->match() < 0)
             $this->httpCode = 204;
         else
         {
             try
             {
-                $action = new $className($this->eventData);
+                $action = new $this->actionName($this->eventData);
                 $this->execute($action);
             }
             catch (InformativeException $e)
             {
+                $this->status = -4;  // Executing failed
                 $this->reply = $e;
             }
         }
 
         $this->respond();
+        return $this->status;
     }
 
     /**
      * Filter the order.
      *
-     * @return bool The filter result
+     * @return int Progress of the application
      */
-    private function filter(): bool
+    private function filter(): int
     {
+        if ($this->postType != "message")
+            return $this->status;
+
         if (preg_match("/^\s*[.。]([\s\S]+)/u", $this->message, $matches))
         {
-            $this->message = "." . trim($matches[1]);
-            return true;
+            $this->message = $this->eventData->raw_message = "." . trim($matches[1]);
+            return $this->status;
         }
 
-        return false;
+        $this->status = -2;  // No order filtered
+        return $this->status;
     }
 
     /**
      * Match the order to the action.
      *
-     * @return string|null Action class name
+     * @return int Progress of the application
      */
-    private function match(): ?string
+    private function match(): int
     {
         if ($this->postType == "message")
         {
@@ -83,8 +120,8 @@ final class App extends RouteCollector
 
                 if (preg_match($actualPattern, $this->message))
                 {
-                    $actionName = $className;
-                    break;
+                    $this->actionName = $className;
+                    return $this->status;
                 }
             }
         }
@@ -100,13 +137,14 @@ final class App extends RouteCollector
 
                 if ($i == count($comparer["group1"]))
                 {
-                    $actionName = $comparer["action"];
-                    break;
+                    $this->actionName = $comparer["action"];
+                    return $this->status;
                 }
             }
         }
 
-        return $actionName ?? NULL;
+        $this->status = -3;  // Matching failed
+        return $this->status;
     }
 
     /**
@@ -139,6 +177,8 @@ final class App extends RouteCollector
      */
     private function respond(): void
     {
+        $this->status = 7;
+
         http_response_code($this->getHttpCode());
 
         if ($this->getHttpCode() == 200)
