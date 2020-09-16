@@ -34,9 +34,7 @@ final class App extends RouteCollector
      */
     public function run(): void
     {
-        $className = $this->match();
-
-        if (is_null($className))
+        if (!$this->filter() || is_null($className = $this->match()))
             $this->httpCode = 204;
         else
         {
@@ -52,6 +50,22 @@ final class App extends RouteCollector
         }
 
         $this->respond();
+    }
+
+    /**
+     * Filter the order.
+     *
+     * @return bool The filter result
+     */
+    private function filter(): bool
+    {
+        if (preg_match("/^\s*[.。]([\s\S]+)/u", $this->message, $matches))
+        {
+            $this->message = "." . trim($matches[1]);
+            return true;
+        }
+
+        return false;
     }
 
     /**

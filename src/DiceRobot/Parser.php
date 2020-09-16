@@ -51,8 +51,7 @@ abstract class Parser extends Response
             $this->chatType = $eventData->message_type;
             $this->userId = $eventData->user_id;
             $this->userName = $eventData->sender->nickname;
-
-            $this->message = "." . trim(mb_substr($eventData->raw_message, 1));
+            $this->message = $eventData->raw_message;
 
             if ($this->chatType == "group")
                 $this->chatId = $eventData->group_id;

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0 - 2020-09-16
+
+### Changed
+- Order filter is now processed by DiceRobot
+
+
 ## 1.3.1 - 2020-04-09
 
 ### Added
@@ -16,6 +22,7 @@
 ### Refactored
 - Optimize the logic of `App`
 - Optimize the regular expressions
+
 
 ## 1.3.0 - 2020-04-07
 
@@ -47,6 +54,7 @@
 - Merge some replies
 - Update PHP docs
 
+
 ## 1.2.0 - 2020-03-24
 
 ### Added
@@ -71,27 +79,32 @@
 ### Removed
 - Remove constructor of `Parser`
 
+
 ## 1.1.3 - 2020-02-21
 
 ### Fixed
 - Fix bugs
 - Optimize code
 
+
 ## 1.1.2 - 2020-02-19
 
 ### Added
 - Repeat order .r
+
 
 ## 1.1.1 - 2020-02-19
 
 ### Added
 - Repeat order (#times)
 
+
 ## 1.1.0 - 2020-02-19
 
 ### Added
 - Bind character card (.card)
 - Order .ra now supports attribute/skill name check
+
 
 ## 1.0.1 - 2020-02-17
 
@@ -103,6 +116,7 @@
 
 ### Changed
 - Change attribute limit of order .ra
+
 
 ## 1.0.0 - 2020-02-14
 
