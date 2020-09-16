@@ -1,9 +1,9 @@
 <?php
 /**
- * DiceRobot 1.3.1
+ * DiceRobot 1.4.0
  * ©2019-2020 Drsanwujiang
  *
- * A TRPG dice robot based on CoolQ HTTP API plugin.
+ * A TRPG dice robot based on OneBot standard plugin.
  */
 
 use DiceRobot\App;

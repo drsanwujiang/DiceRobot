@@ -19,10 +19,10 @@ class Dice
     /** @var string Order to roll */
     private string $order;
 
-    /** @var string Visibility type of rolling. H: Private rolling, S: Only display final result */
+    /** @var string|null Visibility type of rolling. H: Private rolling, S: Only display final result */
     public ?string $vType = NULL;
 
-    /** @var string Bonus/punishment dice type. B: Bonus dice, P: Punishment dice */
+    /** @var string|null Bonus/punishment dice type. B: Bonus dice, P: Punishment dice */
     public ?string $bpType = NULL;
 
     /** @var int Bonus/punishment dice number */
@@ -82,7 +82,7 @@ class Dice
     {
         preg_match("/^(?:([hs])[\s]*)?(?:([bp])[\s]*)?/i", $this->order, $matches);
 
-        $this->order = preg_replace("/^([hs][\s]*)?([bp][\s]*)?/i", "", $this->order);
+        $this->order = (string) preg_replace("/^([hs][\s]*)?([bp][\s]*)?/i", "", $this->order);
         $this->vType = empty($matches[1] ?? "") ? NULL : strtoupper($matches[1]);
         $this->bpType = empty($matches[2] ?? "") ? NULL : strtoupper($matches[2]);
 
