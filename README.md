@@ -1,44 +1,56 @@
 # DiceRobot
 
-DiceRobot，一个基于 [OneBot](https://github.com/howmanybots/onebot) 标准插件的 TRPG 骰子机器人。
+DiceRobot，一个基于 [Swoole](https://www.swoole.com/) 的 TRPG 骰子机器人。
+
+
+## 如果你是 Master
+
+DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传统 PHP 环境带来的包袱，享受协程和高并发带来的快乐的同时，依旧随心所欲地对机器人的代码进行修改，达到你想要的效果。
 
 目前，DiceRobot 可被部署在使用了以下框架及插件的机器人上：
 
-* ~~使用 CoolQ 框架并加载了 [CQHTTP](https://github.com/richardchien/coolq-http-api) 插件的机器人~~
-* 使用 [Mirai](https://github.com/mamoe/mirai) 框架并加载了 [CQHTTP Mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai) 插件的机器人
+* ~~使用 CoolQ 并加载了 [CQHTTP](https://github.com/richardchien/coolq-http-api) 插件的机器人~~（1.0.0 ~ 1.3.2）
+* ~~使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [CQHTTP Mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai) 插件的机器人~~（1.4.0）
+* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http/) 插件的机器人（2.0.0）
 
-DiceRobot 由 PHP 编写，意味着你可以随心所欲地对机器人的代码进行修改，达到你想要的效果。
+### 部署
 
-## 部署
+无需 Docker、Apache 等环境，没有复杂的设置，部署 DiceRobot 十分简单！
 
-你可以使用 **DiceRobot 快速部署脚本** 和 **DiceRobot Windows 整合包** 来轻松部署 DiceRobot，使用方法非常简单！
+如果你追求极致简洁的一键部署，那么只需几分钟，就可以直接使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以使用 Composer 安装。
 
-参照 [DiceRobot 说明文档](https://docs.drsanwujiang.com/dicerobot/) 的 [部署](https://docs.drsanwujiang.com/dicerobot/deploy) 一节，5 分钟内就可以部署完毕开始使用。
+### 自定义
 
-## 指令
+如果现有的功能无法满足你的需要，那么你可以 [自定义](https://docs.drsanwujiang.com/dicerobot/deploy/customization) DiceRobot。
 
-DiceRobot 实现了若干与 TRPG 有关的功能，分为游戏指令和控制指令。
 
-详细指令说明参见 [DiceRobot 说明文档](https://docs.drsanwujiang.com/dicerobot/) 的 [指令](https://docs.drsanwujiang.com/dicerobot/order) 一节。
+## 如果你是使用者
 
-## 自定义
+### 使用
 
-由于 PHP 的特性，你可以轻松地定制 DiceRobot 以达到你想要的目的，例如自定义回复、自定义设置、新增指令、新增检定规则、修改指令行为等。
+我们非常建议部署自己的机器人，不过如果觉得部署过程太麻烦，依然可以使用官方机器人：
 
-自定义的详细说明可以参见 [DiceRobot 说明文档](https://docs.drsanwujiang.com/dicerobot/) 的 [自定义](https://docs.drsanwujiang.com/dicerobot/customization) 一节。
+* Sanwu Jr.（2656398864）- 稳定版机器人，7 × 24h 在线
+* Sakura Tsang（3330148645）- 开发版机器人，在调试 BUG 时可能会暂时不可用
 
-## 意见和建议
+可以在 [在线机器人列表](https://tool.drsanwujiang.com/dicerobot/online) 页面查看机器人的在线状态。
 
-如果在使用过程中出现问题，请在 GitHub 提交 Issue 或者发邮件到 [drsanwujiang@gmail.com](mailto:drsanwujiang@gmail.com)。在 Issue 或邮件中请附上你发出的具体指令，以及 PHP 的错误日志：
+### 指令
 
-* Linux 中一般是 `/var/log/apache2/dicerobot.error.log` 文件
-* Windows 中一般是 `DiceRobot-Windows\XAMPP\apache\logss\error.log` 文件
+在 [指令](https://docs.drsanwujiang.com/dicerobot/use/order) 页面可以查阅所有指令的详细说明，使用 [.help](https://docs.drsanwujiang.com/dicerobot/use/order#help) 指令同样可以。
 
-有任何意见建议或想法，同样可以通过这两种方式告知，十分感谢。~~并没有几个人的~~摸鱼群 824668756，可以来瞎聊~
+### 就这些了
+
+有任何意见建议或想法，都可以直接在 GitHub 提交 Issue，或者发邮件联系我：[drsanwujiang@gmail.com](mailto:drsanwujiang@gmail.com) 。
+
+并没有几个人的摸鱼群 824668756，可以来瞎聊~
+
+玩得愉快~
+
 
 ## 致谢
 
-DiceRobot 的开发初衷是解决 [Dice!](https://github.com/w4123/Dice) 插件在使用过程中的一些小问题，以及增加了一些功能，所以基本掷骰指令照搬了 Dice! 的指令。
+DiceRobot 的开发初衷是解决 [Dice!](https://github.com/w4123/Dice) 插件在使用过程中的一些小问题，以及增加了一些功能，所以基本掷骰指令照搬了 Dice! 的指令，一些资源文件（例如 NameTemplate.json）也借用了 Dice! 的代码。
 
 在此感谢 [溯回](https://github.com/w4123) 大佬开发了 Dice!，让 QQ 群跑团方便了许多！
 

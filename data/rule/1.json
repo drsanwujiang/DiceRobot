@@ -1,0 +1,15 @@
+{
+    "name": "轮回 COC 房规",
+    "description": "轮回 COC 检定规则",
+    "introduction": "大成功：1\n极限成功：2-4\n极难成功：<=检定值的五分之一\n困难成功：<=检定值的一半\n成功：<=检定值\n失败：>检定值且<大失败数值\n极限失败：当检定值>=50时为96-99\n大失败：检定值低于50时为>=96，否则为100",
+    "levels": {
+        "GreatSuccess": "{&result} == 1",
+        "UltimateSuccess": "{&result} <= {&value} && {&result} <= 4",
+        "VeryHardSuccess": "{&result} <= {&value} \/ 5",
+        "HardSuccess": "{&result} <= {&value} \/ 2",
+        "Success": "{&result} <= {&value}",
+        "Failure": "{&result} < 96",
+        "UltimateFailure": "{&value} >= 50 && {&result} <= 99",
+        "GreatFailure": "{&result} >= 96"
+    }
+}
