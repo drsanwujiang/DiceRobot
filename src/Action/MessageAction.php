@@ -162,17 +162,20 @@ abstract class MessageAction implements Action
      */
     final protected function getRobotNickname(): string
     {
-        if ($this->message instanceof GroupMessage)
-            if ($nickname = $this->chatSettings->getString("robotNickname"))
-                return $nickname;
-            else
-                return empty($nickname = $this->api->getMemberName(
-                        $this->message->sender->group->id,
-                        $this->robot->getId()
-                    )->getString("name", "")
-                ) ? $this->robot->getNickname() : $nickname;
+        $nickname = $this->chatSettings->getString("robotNickname");
 
-        return $this->chatSettings->getString("robotNickname") ?? $this->robot->getNickname();
+        if (!empty($nickname))
+            return $nickname;
+
+        if ($this->message instanceof GroupMessage)
+            return empty(
+                $nickname = $this->api->getMemberName(
+                    $this->message->sender->group->id,
+                    $this->robot->getId()
+                )->getString("name", "")
+            ) ? $this->robot->getNickname() : $nickname;
+        else
+            return $this->robot->getNickname();
     }
 
     /**

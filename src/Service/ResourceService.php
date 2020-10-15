@@ -145,7 +145,7 @@ class ResourceService
             $this->saveCharacterCards();
             $this->saveChatSettings();
             //$this->saveReferences();
-            $this->saveCheckRules();
+            //$this->saveCheckRules();
         }
         catch (RuntimeException $e)
         {
