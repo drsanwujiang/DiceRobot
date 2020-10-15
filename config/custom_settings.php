@@ -18,7 +18,7 @@ $settings["mirai"] = [
 $settings["log"] = [
     "level" => [
         "file" => Logger::NOTICE,
-        "console" => Logger::DEBUG,
+        "console" => Logger::CRITICAL,
     ]
 ];
 

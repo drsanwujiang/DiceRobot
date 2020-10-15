@@ -75,15 +75,15 @@ class Dice
      * The constructor.
      *
      * @param string $order Order
-     * @param int|null $defaultSurfaceNumber Default surface number in chat settings
+     * @param int $defaultSurfaceNumber Default surface number in chat settings
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
      */
-    public function __construct(string $order = "", int $defaultSurfaceNumber = NULL)
+    public function __construct(string $order = "", int $defaultSurfaceNumber = 100)
     {
         $this->order = $order;
-        $this->defaultSurfaceNumber = $defaultSurfaceNumber ?? 100;
+        $this->defaultSurfaceNumber = $defaultSurfaceNumber < 1 ? 100 : $defaultSurfaceNumber;
         // Set default expression
         $this->expression = "D{$this->defaultSurfaceNumber}";
         $this->expressions[] = "D{$this->defaultSurfaceNumber}";
