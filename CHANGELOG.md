@@ -1,5 +1,43 @@
 # Changelog
 
+## 2.0.0 - 2020-10-14
+
+### Added
+- Introduce coroutine
+- Introduce container (PHP-DI)
+- Introduce log system (Monolog)
+- Introduce Saber as HTTP client
+- Adapt Mirai API HTTP
+- Support action alias
+- Support at
+- Generate names (.name)
+- Dice pool (.w)
+
+### Fixed
+- Identify more incorrect dicing expressions
+
+### Changed
+- Run as PHP-CLI memory-resident application, driven by Swoole
+- Complete DTO adaptation
+- Restore all default settings to constants
+- Load resources in the initialization, and save regularly
+- Replaceable number parameters in the replies are now descriptive names
+- Help (.help) now supports specific order
+
+### Refactored
+- Repartition the application logic into several modules
+- Compliance with IoC
+- Unified action logic
+- Unified resources
+- Optimize exception capture
+- Optimize dice and subexpression logic
+- Optimize all the action logic
+- Optimize all the regular expressions
+
+### Removed
+- cURL extension requirement
+
+
 ## 1.4.0 - 2020-09-16
 
 ### Changed

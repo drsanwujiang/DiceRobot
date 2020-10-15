@@ -1,2 +1,3 @@
-/card
-/config
+/vendor/
+
+/composer.lock
