@@ -22,7 +22,7 @@ use DiceRobot\Util\Convertor;
 class ReportFactory
 {
     /** @var string[] Report mapping */
-    private const REPORT_MAPPING = [
+    protected const REPORT_MAPPING = [
         "BotInvitedJoinGroupRequestEvent" => BotInvitedJoinGroupRequestEvent::class,
         "BotJoinGroupEvent" => BotJoinGroupEvent::class,
         "BotLeaveEventKick" => BotLeaveEventKick::class,

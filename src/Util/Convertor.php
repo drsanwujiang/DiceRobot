@@ -23,16 +23,14 @@ class Convertor
      * @param string $default
      *
      * @return mixed|null
-     *
-     * @noinspection PhpDocMissingThrowsInspection
      */
     public static function toCustomInstance(object $object, string $className, string $default)
     {
-        $instance = new $className();
-        $ref = new ReflectionClass($className);
-
         try
         {
+            $ref = new ReflectionClass($className);
+            $instance = new $className();
+
             foreach ($ref->getProperties() as $property)
             {
                 $name = $property->getName();

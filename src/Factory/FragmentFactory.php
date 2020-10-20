@@ -20,7 +20,7 @@ use DiceRobot\Util\Convertor;
 class FragmentFactory
 {
     /** @var string[] Fragment mapping */
-    private const FRAGMENT_MAPPING = [
+    protected const FRAGMENT_MAPPING = [
         "App" => App::class,
         "At" => At::class,
         "AtAll" => AtAll::class,
@@ -39,7 +39,7 @@ class FragmentFactory
     ];
 
     /** @var string[] Parsable fragment mapping */
-    private const PARSABLE_FRAGMENT_MAPPING = [
+    protected const PARSABLE_FRAGMENT_MAPPING = [
         "at" => At::class,
         "atall" => AtAll::class,
         "face" => Face::class,

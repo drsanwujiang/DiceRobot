@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-use Co\Http\Server;
 use DI\ContainerBuilder;
-use DiceRobot\App;
+use DiceRobot\{App, Server};
 
 Co\run(function () {
     $containerBuilder = new ContainerBuilder();

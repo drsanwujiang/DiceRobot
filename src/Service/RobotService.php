@@ -17,13 +17,19 @@ use Selective\Config\Configuration;
 class RobotService
 {
     /** @var Robot Robot */
-    private Robot $robot;
+    protected Robot $robot;
 
     /** @var Friend[] Friend list */
-    private array $friends;
+    protected array $friends = [];
 
     /** @var Group[] Group list */
-    private array $groups;
+    protected array $groups = [];
+
+    /** @var int Friends count */
+    protected int $friendsCount = 0;
+
+    /** @var int Groups count */
+    protected int $groupsCount = 0;
 
     /**
      * The constructor.
@@ -34,7 +40,7 @@ class RobotService
     {
         $this->robot = new Robot();
         $this->robot->id = $config->getInt("mirai.robot.id");
-        $this->robot->nickname = "";  // TODO: Update robot's profile
+        $this->robot->nickname = "Unknown";
         $this->robot->authKey = $config->getString("mirai.robot.authKey");
     }
 
@@ -60,6 +66,8 @@ class RobotService
 
             $this->friends[$_friend->id] = $_friend;
         }
+
+        $this->friendsCount = count($friends);
     }
 
     /**
@@ -76,6 +84,8 @@ class RobotService
 
             $this->groups[$_group->id] = $_group;
         }
+
+        $this->groupsCount = count($groups);
     }
 
     /**
@@ -140,5 +150,21 @@ class RobotService
     public function getGroup(int $groupId): ?Group
     {
         return $this->groups[$groupId] ?? NULL;
+    }
+
+    /**
+     * @return int
+     */
+    public function getFriendsCount(): int
+    {
+        return $this->friendsCount;
+    }
+
+    /**
+     * @return int
+     */
+    public function getGroupsCount(): int
+    {
+        return $this->groupsCount;
     }
 }

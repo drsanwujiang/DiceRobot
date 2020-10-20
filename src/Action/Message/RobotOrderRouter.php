@@ -37,7 +37,7 @@ use Selective\Config\Configuration;
 class RobotOrderRouter extends MessageAction
 {
     /** @var string[] Order mapping */
-    private const ORDER_MAPPING = [
+    protected const ORDER_MAPPING = [
         "about" => About::class,
         "start" => Start::class,
         "stop" => Stop::class,
@@ -50,7 +50,7 @@ class RobotOrderRouter extends MessageAction
     ];
 
     /** @var ContainerInterface Container */
-    private ContainerInterface $container;
+    protected ContainerInterface $container;
 
     /**
      * @inheritDoc

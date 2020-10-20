@@ -24,6 +24,7 @@ use DiceRobot\Util\Convertor;
  */
 class Dnd extends MessageAction
 {
+    /** @var string DND generate rule */
     protected const DND_GENERATE_RULE = "4D6K3";
 
     /**

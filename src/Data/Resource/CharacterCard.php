@@ -16,7 +16,7 @@ use DiceRobot\Exception\CharacterCardException\ItemNotExistException;
  */
 class CharacterCard extends Resource
 {
-    private const ATTRIBUTE_ENG_NAMES = [
+    protected const ATTRIBUTE_ENG_NAMES = [
         "STR" => "力量", "CON" => "体质", "SIZ" => "体型",
         "DEX" => "敏捷",  "APP" => "外貌", "INT" => "智力",
         "IDEA" => "灵感", "POW" => "意志", "EDU" => "教育",

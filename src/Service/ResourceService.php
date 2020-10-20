@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Data\Resource\{CharacterCard, ChatSettings, CheckRule, Reference};
+use DiceRobot\Data\Resource\{CharacterCard, ChatSettings, CheckRule, Reference, Statistics};
 use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Exception\CharacterCardException\LostException as CharacterCardLostException;
 use DiceRobot\Exception\CheckRuleException\LostException as CheckRuleLostException;
@@ -24,22 +24,25 @@ use Selective\Config\Configuration;
 class ResourceService
 {
     /** @var LoggerInterface */
-    private LoggerInterface $logger;
+    protected LoggerInterface $logger;
 
     /** @var array */
-    private array $directories;
+    protected array $directories;
 
     /** @var CharacterCard[] */
-    private array $characterCards = [];
+    protected array $characterCards = [];
 
     /** @var ChatSettings[][] */
-    private array $chatSettings = [ "friend" => [], "group" => [] ];
+    protected array $chatSettings = [ "friend" => [], "group" => [] ];
 
     /** @var Reference[] */
-    private array $references = [];
+    protected array $references = [];
 
     /** @var CheckRule[] */
-    private array $checkRules = [];
+    protected array $checkRules = [];
+
+    /** @var Statistics */
+    protected Statistics $statistics;
 
     /**
      * The constructor.
@@ -119,6 +122,7 @@ class ResourceService
             $this->loadChatSettings();
             $this->loadReferences();
             $this->loadCheckRules();
+            $this->loadStatistics();
         }
         catch (RuntimeException $e)
         {
@@ -146,6 +150,7 @@ class ResourceService
             $this->saveChatSettings();
             //$this->saveReferences();
             //$this->saveCheckRules();
+            $this->saveStatistics();
         }
         catch (RuntimeException $e)
         {
@@ -161,9 +166,11 @@ class ResourceService
     }
 
     /**
+     * Load character cards.
+     *
      * @throws RuntimeException
      */
-    private function loadCharacterCards(): void
+    protected function loadCharacterCards(): void
     {
         $d = dir($this->directories["card"]);
 
@@ -176,9 +183,11 @@ class ResourceService
     }
 
     /**
+     * Load chat settings.
+     *
      * @throws RuntimeException
      */
-    private function loadChatSettings(): void
+    protected function loadChatSettings(): void
     {
         foreach (["friend", "group"] as $type)
         {
@@ -194,9 +203,11 @@ class ResourceService
     }
 
     /**
+     * Load references.
+     *
      * @throws RuntimeException
      */
-    private function loadReferences(): void
+    protected function loadReferences(): void
     {
         $d = dir($this->directories["reference"]);
 
@@ -209,9 +220,11 @@ class ResourceService
     }
 
     /**
+     * Load check rules.
+     *
      * @throws RuntimeException
      */
-    private function loadCheckRules(): void
+    protected function loadCheckRules(): void
     {
         $d = dir($this->directories["rule"]);
 
@@ -224,18 +237,37 @@ class ResourceService
     }
 
     /**
+     * Load statistics.
+     */
+    protected function loadStatistics(): void
+    {
+        try
+        {
+            $this->statistics = new Statistics(File::getFile("{$this->directories["config"]}/statistics.json"));
+        }
+        catch (RuntimeException $e)
+        {
+            $this->statistics = new Statistics([]);
+        }
+    }
+
+    /**
+     * Save character cards.
+     *
      * @throws RuntimeException
      */
-    private function saveCharacterCards(): void
+    protected function saveCharacterCards(): void
     {
         foreach ($this->characterCards as $cardId => $card)
             File::putFile("{$this->directories["card"]}/{$cardId}.json", (string) $card);
     }
 
     /**
+     * Save chat settings.
+     *
      * @throws RuntimeException
      */
-    private function saveChatSettings(): void
+    protected function saveChatSettings(): void
     {
         foreach (["friend", "group"] as $type)
             foreach ($this->chatSettings[$type] as $chatId => $chatSettings)
@@ -243,26 +275,40 @@ class ResourceService
     }
 
     /**
-     * @throws RuntimeException
+     * Save references.
      *
-     * @noinspection PhpUnusedPrivateMethodInspection
+     * @throws RuntimeException
      */
-    private function saveReferences(): void
+    protected function saveReferences(): void
     {
         foreach ($this->references as $name => $reference)
             File::putFile("{$this->directories["reference"]}/{$name}.json", (string) $reference);
     }
 
     /**
+     * Save check rules.
+     *
      * @throws RuntimeException
      */
-    private function saveCheckRules(): void
+    protected function saveCheckRules(): void
     {
         foreach ($this->checkRules as $ruleId => $rule)
             File::putFile("{$this->directories["rule"]}/{$ruleId}.json", (string) $rule);
     }
 
     /**
+     * Save statistics.
+     *
+     * @throws RuntimeException
+     */
+    protected function saveStatistics(): void
+    {
+        File::putFile("{$this->directories["config"]}/statistics.json", (string) $this->statistics);
+    }
+
+    /**
+     * Set character card.
+     *
      * @param int $cardId
      * @param CharacterCard $card
      */
@@ -272,6 +318,8 @@ class ResourceService
     }
 
     /**
+     * Get character card.
+     *
      * @param int $cardId
      *
      * @return CharacterCard
@@ -287,6 +335,8 @@ class ResourceService
     }
 
     /**
+     * Get chat settings.
+     *
      * @param string $chatType
      * @param int $chatId
      *
@@ -306,6 +356,8 @@ class ResourceService
     }
 
     /**
+     * Get reference.
+     *
      * @param string $referenceKey
      *
      * @return Reference
@@ -321,6 +373,8 @@ class ResourceService
     }
 
     /**
+     * Get check rule.
+     *
      * @param int $ruleId
      *
      * @return CheckRule
@@ -333,5 +387,15 @@ class ResourceService
             throw new CheckRuleLostException();
 
         return $this->checkRules[$ruleId];
+    }
+
+    /**
+     * Get statistics.
+     *
+     * @return Statistics
+     */
+    public function getStatistics(): Statistics
+    {
+        return $this->statistics;
     }
 }

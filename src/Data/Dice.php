@@ -112,7 +112,7 @@ class Dice
      *
      * @throws DiceNumberOverstepException|ExpressionInvalidException|SurfaceNumberOverstepException
      */
-    private function parseOrder(): void
+    protected function parseOrder(): void
     {
         preg_match("/^(?:([hs])\s*)?(?:([bp])\s*)?/i", $this->order, $matches);
         $order = (string) preg_replace("/^([hs]\s*)?([bp]\s*)?/i", "", $this->order);
@@ -146,7 +146,7 @@ class Dice
      *
      * @throws DiceNumberOverstepException|ExpressionInvalidException|SurfaceNumberOverstepException
      */
-    private function parseExpression(string $expression): void
+    protected function parseExpression(string $expression): void
     {
         // Check expression
         if (preg_match("/([dk+\-*])\\1+/i", $expression) ||  // Duplicated symbol
@@ -203,7 +203,7 @@ class Dice
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      */
-    private function getResult(): void
+    protected function getResult(): void
     {
         if ($this->bpType)
             $this->bp();
@@ -216,7 +216,7 @@ class Dice
      *
      * @throws DiceNumberOverstepException
      */
-    private function bp(): void
+    protected function bp(): void
     {
         // Check range
         if ($this->bpDiceNumber < 1 || $this->bpDiceNumber > static::$maxDiceNumber)
@@ -239,7 +239,7 @@ class Dice
      *
      * @throws ExpressionErrorException|ExpressionInvalidException
      */
-    private function calculate(): void
+    protected function calculate(): void
     {
         $arithmeticExpression = $this->toArithmeticExpression();
 
@@ -268,7 +268,7 @@ class Dice
      *
      * @return string Result expression
      */
-    private function toResultExpression(): string
+    protected function toResultExpression(): string
     {
         $expressions = $this->expressions;
 
@@ -283,7 +283,7 @@ class Dice
      *
      * @return string Arithmetic expression
      */
-    private function toArithmeticExpression(): string
+    protected function toArithmeticExpression(): string
     {
         $expressions = $this->expressions;
 

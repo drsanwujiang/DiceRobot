@@ -34,6 +34,6 @@ abstract class Resource
      */
     public function __toString(): string
     {
-        return json_encode($this->data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        return (string) json_encode($this->data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 }

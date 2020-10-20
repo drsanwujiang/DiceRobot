@@ -7,5 +7,5 @@
  */
 $settings["reply"] = [
     "sampleReply" => "这是一个示例~",
-    "sampleReplyWithParameters" => "这是{&1}带有参数的{&2}示例~",
+    "sampleReplyWithParameters" => "这是{&参数1}带有参数的{&参数2}示例~",
 ];

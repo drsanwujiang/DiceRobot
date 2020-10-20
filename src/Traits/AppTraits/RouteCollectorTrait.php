@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Traits;
+namespace DiceRobot\Traits\AppTraits;
 
 use DiceRobot\Data\Report\{Event, Message};
 
