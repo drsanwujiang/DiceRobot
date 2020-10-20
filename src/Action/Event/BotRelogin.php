@@ -58,17 +58,13 @@ class BotRelogin extends EventAction
         {
             $this->logger->warning("Session unauthorized, code {$code}. Try to initialize.");
 
-            // Try to initialize API service
-            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()))
+            // Try to initialize API service, then update robot service
+            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->app->updateRobot())
             {
-                // Update robot service
-                if ($this->app->updateRobot())
-                {
-                    if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()))
-                        $this->app->setStatus(AppStatusEnum::RUNNING());
+                if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()))
+                    $this->app->setStatus(AppStatusEnum::RUNNING());
 
-                    return;
-                }
+                return;
             }
         }
 

@@ -54,7 +54,7 @@ class BotInvitedJoinGroupRequest extends EventAction
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    private function queryGroup(): bool
+    protected function queryGroup(): bool
     {
         return $this->api->queryGroup(
             $this->event->groupId,

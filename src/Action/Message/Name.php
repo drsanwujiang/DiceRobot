@@ -137,7 +137,7 @@ class Name extends MessageAction
      *
      * @return string Name
      */
-    private function draw(array $names, int $count = 1): string
+    protected function draw(array $names, int $count = 1): string
     {
         return Random::draw($names, $count, "");
     }

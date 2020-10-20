@@ -5,7 +5,7 @@ DiceRobot，一个基于 [Swoole](https://www.swoole.com/) 的 TRPG 骰子机器
 
 ## 如果你是 Master
 
-DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传统 PHP 环境带来的包袱，享受协程和高并发带来的快乐的同时，依旧随心所欲地对机器人的代码进行修改，达到你想要的效果。
+DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传统 PHP 环境带来的包袱，享受协程和高并发带来的优势的同时，依旧随心所欲地对机器人的代码进行修改，达到你想要的效果。
 
 目前，DiceRobot 可被部署在使用了以下框架及插件的机器人上：
 
@@ -18,6 +18,8 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 无需 Docker、Apache 等环境，没有复杂的设置，部署 DiceRobot 十分简单！
 
 如果你追求极致简洁的一键部署，那么只需几分钟，就可以直接使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以使用 Composer 安装。
+
+
 
 ### 自定义
 
@@ -39,7 +41,8 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 在 [指令](https://docs.drsanwujiang.com/dicerobot/use/order) 页面可以查阅所有指令的详细说明，使用 [.help](https://docs.drsanwujiang.com/dicerobot/use/order#help) 指令同样可以。
 
-### 就这些了
+
+## 就这些了
 
 有任何意见建议或想法，都可以直接在 GitHub 提交 Issue，或者发邮件联系我：[drsanwujiang@gmail.com](mailto:drsanwujiang@gmail.com) 。
 

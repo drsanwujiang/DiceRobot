@@ -1,13 +1,14 @@
 # Changelog
 
-## 2.0.0 - 2020-10-14
+## 2.0.0 - 2020-10-20
 
 ### Added
 - Introduce coroutine
 - Introduce container (PHP-DI)
 - Introduce log system (Monolog)
-- Introduce Saber as HTTP client
+- Introduce HTTP client (Saber)
 - Adapt Mirai API HTTP
+- Web APIs
 - Support action alias
 - Support at
 - Generate names (.name)

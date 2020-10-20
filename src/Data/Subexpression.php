@@ -87,7 +87,7 @@ class Subexpression
      *
      * @throws ExpressionInvalidException
      */
-    private function parseExpression(): void
+    protected function parseExpression(): void
     {
         if (preg_match("/^([1-9][0-9]*)D([1-9][0-9]*)(?:K([1-9][0-9]*))?$/", $this->expression, $matches))
         {
@@ -106,7 +106,7 @@ class Subexpression
      *
      * @throws DiceNumberOverstepException|ExpressionInvalidException|SurfaceNumberOverstepException
      */
-    private function checkRange(): void
+    protected function checkRange(): void
     {
         if ($this->diceNumber < 1 || $this->diceNumber > static::$maxDiceNumber)
             throw new DiceNumberOverstepException();
@@ -121,7 +121,7 @@ class Subexpression
     /**
      * Roll a dice determined by this subexpression and calculate summary.
      */
-    private function roll(): void
+    protected function roll(): void
     {
         // xDy
         if (is_null($this->kNumber))

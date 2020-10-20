@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, JrrpResponse, KowtowResponse, QueryGroupResponse,
-    SanityCheckResponse, SubmitGroupResponse, UpdateCardResponse, UpdateRobotResponse};
+use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, GetNicknameResponse, JrrpResponse, KowtowResponse,
+    QueryGroupResponse, SanityCheckResponse, SubmitGroupResponse, UpdateCardResponse, UpdateRobotResponse};
 use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Factory\LoggerFactory;
@@ -26,13 +26,13 @@ use Swlib\Saber;
 class ApiService
 {
     /** @var LoggerInterface Logger */
-    private LoggerInterface $logger;
+    protected LoggerInterface $logger;
 
     /** @var Saber[] Client pools */
-    private array $pools;
+    protected array $pools;
 
     /** @var string Mirai API HTTP plugin session key */
-    private string $sessionKey = "";
+    protected string $sessionKey = "";
 
     /**
      * The constructor.
@@ -53,7 +53,7 @@ class ApiService
                 "use_pool" => true,
                 "headers" => [
                     "Content-Type" => ContentType::JSON,
-                    "User-Agent" => "DiceRobot/" . $config->getString("dicerobot.version")
+                    "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
                 ],
                 "before" => function (Saber\Request $request) {
                     $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
@@ -67,7 +67,7 @@ class ApiService
                 "use_pool" => true,
                 "headers" => [
                     "Content-Type" => ContentType::JSON,
-                    "User-Agent" => "DiceRobot/" . $config->getString("dicerobot.version")
+                    "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
                 ],
                 "before" => function (Saber\Request $request) {
                     $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
@@ -140,7 +140,7 @@ class ApiService
      *
      * @throws MiraiApiException
      */
-    private function mRequest(array $options): array
+    protected function mRequest(array $options): array
     {
         try
         {
@@ -165,10 +165,11 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException
      */
-    private function dRequest(array $options): array
+    protected function dRequest(array $options): array
     {
         try
         {
+            $options["headers"]["Timestamp"] = time();
             $response = $this->pools[1]->request($options);
         }
         /**
@@ -564,10 +565,7 @@ class ApiService
     {
         $options = [
             "uri" => "/dicerobot/v2/robot/{$robotId}",
-            "method" => "PATCH",
-            "headers" => [
-                "Timestamp" => time()
-            ]
+            "method" => "PATCH"
         ];
 
         return new UpdateRobotResponse($this->dRequest($options));
@@ -610,13 +608,27 @@ class ApiService
 
         $options = [
             "uri" => $url,
-            "method" => "GET",
-            "headers" => [
-                "Timestamp" => time()
-            ]
+            "method" => "GET"
         ];
 
         return new AuthorizeResponse($this->dRequest($options));
+    }
+
+    /**
+     * @param int $robotId QQ ID of the robot
+     *
+     * @return GetNicknameResponse
+     *
+     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     */
+    public function getNickname(int $robotId): GetNicknameResponse
+    {
+        $options = [
+            "uri" => "/dicerobot/v2/robot/{$robotId}/nickname",
+            "method" => "GET"
+        ];
+
+        return new GetNicknameResponse($this->dRequest($options));
     }
 
     /**
@@ -635,8 +647,7 @@ class ApiService
             "uri" => "/dicerobot/v2/group/{$groupId}",
             "method" => "GET",
             "headers" => [
-                "Timestamp" => time(),
-                "Authorization" => "Bearer " . $auth
+                "Authorization" => "Bearer {$auth}"
             ]
         ];
 
@@ -660,8 +671,7 @@ class ApiService
             "uri" => "/dicerobot/v2/group/{$groupId}",
             "method" => "PUT",
             "headers" => [
-                "Timestamp" => time(),
-                "Authorization" => "Bearer " . $auth
+                "Authorization" => "Bearer {$auth}"
             ]
         ];
 
@@ -684,8 +694,7 @@ class ApiService
             "uri" => "/dicerobot/v2/card/{$cardId}",
             "method" => "GET",
             "headers" => [
-                "Timestamp" => time(),
-                "Authorization" => "Bearer " . $auth
+                "Authorization" => "Bearer {$auth}"
             ]
         ];
 
@@ -710,8 +719,7 @@ class ApiService
             "uri" => "/dicerobot/v2/card/{$cardId}",
             "method" => "PATCH",
             "headers" => [
-                "Timestamp" => time(),
-                "Authorization" => "Bearer " . $auth
+                "Authorization" => "Bearer {$auth}"
             ],
             "data" => [
                 "attribute" => $attribute,
@@ -740,8 +748,7 @@ class ApiService
             "uri" => "/dicerobot/v2/card/{$cardId}/sc",
             "method" => "PATCH",
             "headers" => [
-                "Timestamp" => time(),
-                "Authorization" => "Bearer " . $auth
+                "Authorization" => "Bearer {$auth}"
             ],
             "data" => [
                 "check_result" => $checkResult,
@@ -765,10 +772,7 @@ class ApiService
     {
         $options = [
             "uri" => "/dicerobot/v2/user/{$userId}/jrrp",
-            "method" => "GET",
-            "headers" => [
-                "Timestamp" => time()
-            ]
+            "method" => "GET"
         ];
 
         return new JrrpResponse($this->dRequest($options));
@@ -787,10 +791,7 @@ class ApiService
     {
         $options = [
             "uri" => "/dicerobot/v2/user/{$userId}/kowtow",
-            "method" => "GET",
-            "headers" => [
-                "Timestamp" => time()
-            ]
+            "method" => "GET"
         ];
 
         return new KowtowResponse($this->dRequest($options));

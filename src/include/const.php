@@ -17,12 +17,16 @@ namespace DiceRobot;
 
 use Monolog\Logger;
 
-/** Current version */
-const DICEROBOT_VERSION = "2.0.0-alpha";
+/** @var string Current version */
+const DICEROBOT_VERSION = "2.0.0-beta";
 
+/** @var string Root directory */
+define("DICEROBOT_STARTUP", time());
+
+/** @var string Root directory */
 define("DICEROBOT_ROOT", dirname(dirname(__DIR__)));
 
-/** Default config */
+/** @var array Default config */
 const DEFAULT_CONFIG = [
     "root" => DICEROBOT_ROOT,
     "config" => DICEROBOT_ROOT . "/config",

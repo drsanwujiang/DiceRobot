@@ -20,7 +20,7 @@ use Selective\Config\Configuration;
 class LoggerFactory
 {
     /** @var Logger Logger */
-    private Logger $logger;
+    protected Logger $logger;
 
     /**
      * The constructor.

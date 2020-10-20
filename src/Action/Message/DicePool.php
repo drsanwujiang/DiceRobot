@@ -29,6 +29,9 @@ class DicePool extends MessageAction
 {
     /**
      * @inheritDoc
+     *
+     * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException|OrderErrorException
+     * @throws SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {

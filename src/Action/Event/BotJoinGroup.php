@@ -75,7 +75,7 @@ class BotJoinGroup extends EventAction
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    private function queryGroup(): bool
+    protected function queryGroup(): bool
     {
         return $this->api->queryGroup($this->event->group->id, $this->api->auth($this->robot->getId())->token)->state;
     }
