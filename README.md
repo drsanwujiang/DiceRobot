@@ -1,5 +1,10 @@
 # DiceRobot
 
+[![Actions Status](https://github.com/drsanwujiang/DiceRobot/workflows/PHP%20Composer/badge.svg)](https://github.com/drsanwujiang/DiceRobot/actions)
+[![Latest Stable Version](https://poser.pugx.org/drsanwujiang/dicerobot/v)](https://packagist.org/packages/drsanwujiang/dicerobot)
+[![Latest Unstable Version](https://poser.pugx.org/drsanwujiang/dicerobot/v/unstable)](https://packagist.org/packages/drsanwujiang/dicerobot)
+[![License](https://poser.pugx.org/drsanwujiang/dicerobot/license)](https://packagist.org/packages/drsanwujiang/dicerobot)
+
 DiceRobot，一个基于 [Swoole](https://www.swoole.com/) 的 TRPG 骰子机器人。
 
 

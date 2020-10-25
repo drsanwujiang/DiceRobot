@@ -3,9 +3,21 @@
 use Monolog\Logger;
 
 /**
+ * 在这里填写 DiceRobot 监听的端口
+ */
+$settings["dicerobot"] = [
+    "server" => [
+        "port" => 9500
+    ],
+];
+
+/**
  * 在这里填写机器人的 QQ 号，以及 Mirai API HTTP 插件中的 Auth Key
  */
 $settings["mirai"] = [
+    "server" => [
+        "port" => 8080
+    ],
     "robot" => [
         "id" => 10000,
         "authKey" => "12345678"
@@ -20,21 +32,4 @@ $settings["log"] = [
         "file" => Logger::NOTICE,
         "console" => Logger::CRITICAL,
     ]
-];
-
-/**
- * 在这里自定义设置，目前支持以下选项的设置
- */
-$settings["order"] = [
-    /** 最大骰子个数，默认 100 */
-    "maxDiceNumber" => 100,
-
-    /** 最大骰子面数，默认 1000 */
-    "maxSurfaceNumber" => 1000,
-
-    /** 人物卡生成次数最大值，默认 20 */
-    "maxCharacterCardGenerateCount" => 20,
-
-    /** 指令重复次数最大值，默认 100 */
-    "maxRepeatTimes" => 100,
 ];

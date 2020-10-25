@@ -60,9 +60,9 @@ class RobotService
         foreach ($friends as $friend)
         {
             $_friend = new Friend();
-            $_friend->id = $friend["id"] ?? 0;
-            $_friend->nickname = $friend["nickname"] ?? "";
-            $_friend->remark = $friend["remark"] ?? "";
+            $_friend->id = (int) ($friend["id"] ?? 0);
+            $_friend->nickname = (string) ($friend["nickname"] ?? "");
+            $_friend->remark = (string) ($friend["remark"] ?? "");
 
             $this->friends[$_friend->id] = $_friend;
         }
@@ -78,9 +78,9 @@ class RobotService
         foreach ($groups as $group)
         {
             $_group = new Group();
-            $_group->id = $group["id"] ?? 0;
-            $_group->name = $group["name"] ?? "";
-            $_group->permission = $group["permission"] ?? "";
+            $_group->id = (int) ($group["id"] ?? 0);
+            $_group->name = (string) ($group["name"] ?? "");
+            $_group->permission = (string) ($group["permission"] ?? "");
 
             $this->groups[$_group->id] = $_group;
         }
