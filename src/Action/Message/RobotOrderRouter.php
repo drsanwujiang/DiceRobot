@@ -89,8 +89,9 @@ class RobotOrderRouter extends MessageAction
     {
         list($match, $subOrder) = $this->parseOrder();
 
-        if (!$this->checkOrder($match))
+        if (!$this->checkOrder($match)) {
             return;
+        }
 
         $actionName = static::ORDER_MAPPING[$match];
 
@@ -113,8 +114,9 @@ class RobotOrderRouter extends MessageAction
      */
     public function checkActive(): bool
     {
-        if (preg_match("/^(start|on)/i", $this->order))
+        if (preg_match("/^(start|on)/i", $this->order)) {
             return true;
+        }
 
         // True by default
         return $this->chatSettings->getBool("active") ?? true;
@@ -129,8 +131,9 @@ class RobotOrderRouter extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([a-z]+)(?:[\s]+(.+))?$/", $this->order, $matches))
+        if (!preg_match("/^([a-z]+)(?:[\s]+(.+))?$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string $match */
         $match = $matches[1];
@@ -149,8 +152,7 @@ class RobotOrderRouter extends MessageAction
      */
     protected function checkOrder(string $match): bool
     {
-        if (!array_key_exists($match, self::ORDER_MAPPING))
-        {
+        if (!array_key_exists($match, self::ORDER_MAPPING)) {
             $this->reply = $this->config->getString("reply.robotOrderUnknown");
 
             return false;

@@ -45,6 +45,7 @@ trait StatisticsTrait
         $this->statisticsCounts = array_fill(0, 6, 0);
         $this->currentCount = $this->statistics->getInt("sum");
 
+        // Update timeline and counts every 10 minutes
         Timer::tick(600000, function () {
             $this->updateTimeline();
             array_shift($this->statisticsCounts);
@@ -83,9 +84,10 @@ trait StatisticsTrait
     {
         $this->statistics->addOrderCount($order);
 
-        if ($messageType == FriendMessage::class)
+        if ($messageType == FriendMessage::class) {
             $this->statistics->addFriendCount($sender->id);
-        elseif ($messageType == GroupMessage::class && $sender instanceof GroupSender)
+        } elseif ($messageType == GroupMessage::class && $sender instanceof GroupSender) {
             $this->statistics->addGroupCount($sender->group->id);
+        }
     }
 }

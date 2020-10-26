@@ -35,8 +35,9 @@ class Name extends MessageAction
     {
         list($language, $generateCount) = $this->parseOrder();
 
-        if (!$this->checkRange($generateCount))
+        if (!$this->checkRange($generateCount)) {
             return;
+        }
 
         $this->reply =
             Convertor::toCustomString(
@@ -57,8 +58,9 @@ class Name extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^(cn|en|jp)?\s*([1-9][0-9]*)?$/i", $this->order, $matches))
+        if (!preg_match("/^(cn|en|jp)?\s*([1-9][0-9]*)?$/i", $this->order, $matches)) {
             throw new OrderErrorException();
+        }
 
         /** @var string $language */
         $language = empty($matches[1]) ? "cn" : strtolower($matches[1]);
@@ -77,8 +79,7 @@ class Name extends MessageAction
      */
     protected function checkRange(int $generateCount): bool
     {
-        if ($generateCount > $this->config->getInt("order.maxGenerateCount"))
-        {
+        if ($generateCount > $this->config->getInt("order.maxGenerateCount")) {
             $this->reply = $this->reply =
                 Convertor::toCustomString(
                     $this->config->getString("reply.nameGenerateCountOverstep"),
@@ -112,8 +113,7 @@ class Name extends MessageAction
             $reference->getArray("items.{$language}.lastName");
         $names = [];
 
-        while ($count--)
-        {
+        while ($count--) {
             $firstName = $this->draw($firstNames);
             $lastName = $language == "cn" ? $this->draw($lastNames, 2) : $this->draw($lastNames);
             $names[] =

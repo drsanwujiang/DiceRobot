@@ -105,46 +105,45 @@ class Server
         $requestUri = $request->server["request_uri"] ?? "";
         $content = (string) ($request->getContent() ?? "");
 
-        if ($requestMethod == "OPTIONS")
+        if ($requestMethod == "OPTIONS") {
             $this->preflight($response);
-        elseif ($requestMethod == "POST")
-        {
-            if ($requestUri == "/report")
+        } elseif ($requestMethod == "POST") {
+            if ($requestUri == "/report") {
                 $this->report($content, $response);
-            elseif ($requestUri == "/heartbeat")
+            } elseif ($requestUri == "/heartbeat") {
                 $this->heartbeat($response);
-            else
+            } else {
                 $this->notFound($response);
-        }
-        elseif ($requestMethod == "GET")
-        {
-            if ($requestUri == "/connect")
+            }
+        } elseif ($requestMethod == "GET") {
+            if ($requestUri == "/connect") {
                 $this->connect($response);
-            elseif ($requestUri == "/profile")
+            } elseif ($requestUri == "/profile") {
                 $this->profile($response);
-            elseif ($requestUri == "/status")
+            } elseif ($requestUri == "/status") {
                 $this->status($response);
-            elseif ($requestUri == "/statistics")
+            } elseif ($requestUri == "/statistics") {
                 $this->statistics($response);
-            elseif ($requestUri == "/pause")
+            } elseif ($requestUri == "/pause") {
                 $this->pause($response);
-            elseif ($requestUri == "/run")
+            } elseif ($requestUri == "/run") {
                 $this->run($response);
-            elseif ($requestUri == "/reload")
+            } elseif ($requestUri == "/reload") {
                 $this->webReload($response);
-            elseif ($requestUri == "/stop")
+            } elseif ($requestUri == "/stop") {
                 $this->webStop($response);
-            elseif ($requestUri == "/mirai/status")
+            } elseif ($requestUri == "/mirai/status") {
                 $this->miraiStatus($response);
-            elseif ($requestUri == "/mirai/start")
+            } elseif ($requestUri == "/mirai/start") {
                 $this->startMirai($response);
-            elseif ($requestUri == "/mirai/stop")
+            } elseif ($requestUri == "/mirai/stop") {
                 $this->stopMirai($response);
-            else
+            } else {
                 $this->notFound($response);
-        }
-        else
+            }
+        } else {
             $this->notFound($response);
+        }
     }
 
     /**
@@ -212,7 +211,7 @@ class Server
     {
         $this->logger->info("Server received HTTP request, connect to application.");
 
-        $this->responseFactory->create(0, NULL, $response)->end();
+        $this->responseFactory->create(0, null, $response)->end();
     }
 
     /**
@@ -260,7 +259,7 @@ class Server
 
         $code = $this->app->pause();
 
-        $this->responseFactory->create($code, NULL, $response)->end();
+        $this->responseFactory->create($code, null, $response)->end();
     }
 
     /**
@@ -272,7 +271,7 @@ class Server
 
         $code = $this->app->run();
 
-        $this->responseFactory->create($code, NULL, $response)->end();
+        $this->responseFactory->create($code, null, $response)->end();
     }
 
     /**
@@ -284,7 +283,7 @@ class Server
 
         $code = $this->app->reload();
 
-        $this->responseFactory->create($code, NULL, $response)->end();
+        $this->responseFactory->create($code, null, $response)->end();
     }
 
     /**
@@ -296,7 +295,7 @@ class Server
 
         $code = $this->app->stop();
 
-        $this->responseFactory->create($code, NULL, $response)->end();
+        $this->responseFactory->create($code, null, $response)->end();
 
         $this->logger->notice("Server exited.");
 
@@ -314,14 +313,15 @@ class Server
 
         extract(System::exec("/bin/systemctl status mirai"), EXTR_OVERWRITE);
 
-        if ($code == 4)
+        if ($code == 4) {
             $status = -2;
-        elseif ($code == 3)
+        } elseif ($code == 3) {
             $status = -1;
-        elseif ($code == 0)
+        } elseif ($code == 0) {
             $status = 0;
-        else
+        } else {
             $status = -3;
+        }
 
         $this->responseFactory->create(0, ["status" => $status], $response)->end();
     }
@@ -338,22 +338,22 @@ class Server
 
         extract(System::exec("/bin/systemctl start mirai"), EXTR_OVERWRITE);
 
-        if ($code == 0)
-            $this->responseFactory->create($code, NULL, $response)->end();
-        else
-        {
+        if ($code == 0) {
+            $this->responseFactory->create($code, null, $response)->end();
+        } else {
             $this->logger->critical(
                 "Failed to start Mirai. Code {$code}, signal {$signal}, output message: {$output}"
             );
 
-            if ($code == 5)
-                $this->responseFactory->create(-2000, NULL, $response)->end();
-            else
+            if ($code == 5) {
+                $this->responseFactory->create(-2000, null, $response)->end();
+            } else {
                 $this->responseFactory->create(
                     -2001,
                     ["code" => $code, "signal" => $signal, "output" => $output],
                     $response
                 )->end();
+            }
         }
     }
 
@@ -369,22 +369,22 @@ class Server
 
         extract(System::exec("/bin/systemctl stop mirai"), EXTR_OVERWRITE);
 
-        if ($code == 0)
-            $this->responseFactory->create($code, NULL, $response)->end();
-        else
-        {
+        if ($code == 0) {
+            $this->responseFactory->create($code, null, $response)->end();
+        } else {
             $this->logger->critical(
                 "Failed to stop Mirai. Code {$code}, signal {$signal}, output message: {$output}"
             );
 
-            if ($code == 5)
-                $this->responseFactory->create(-2010, NULL, $response)->end();
-            else
+            if ($code == 5) {
+                $this->responseFactory->create(-2010, null, $response)->end();
+            } else {
                 $this->responseFactory->create(
                     -2011,
                     ["code" => $code, "signal" => $signal, "output" => $output],
                     $response
                 )->end();
+            }
         }
     }
 

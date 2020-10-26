@@ -50,8 +50,9 @@ class Hello extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^$/", $this->order))
+        if (!preg_match("/^$/", $this->order)) {
             throw new OrderErrorException;
+        }
 
         return [];
     }

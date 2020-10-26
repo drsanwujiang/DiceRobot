@@ -32,10 +32,10 @@ class Dice
     public string $order;
 
     /** @var string|null Visibility type of dicing. H: Private, S: Only display final result */
-    public ?string $vType = NULL;
+    public ?string $vType = null;
 
     /** @var string|null Bonus/Punishment dice type. B: Bonus dice, P: Punishment dice */
-    public ?string $bpType = NULL;
+    public ?string $bpType = null;
 
     /** @var int Bonus/Punishment dice number */
     public int $bpDiceNumber;
@@ -101,8 +101,9 @@ class Dice
      */
     public function __clone()
     {
-        foreach ($this->subexpressions as &$subexpression)
+        foreach ($this->subexpressions as &$subexpression) {
             $subexpression = clone $subexpression;
+        }
 
         $this->getResult();
     }
@@ -116,26 +117,25 @@ class Dice
     {
         preg_match("/^(?:([hs])\s*)?(?:([bp])\s*)?/i", $this->order, $matches);
         $order = (string) preg_replace("/^([hs]\s*)?([bp]\s*)?/i", "", $this->order);
-        $this->vType = empty($matches[1]) ? NULL : strtoupper($matches[1]);
-        $this->bpType = empty($matches[2]) ? NULL : strtoupper($matches[2]);
+        $this->vType = empty($matches[1]) ? null : strtoupper($matches[1]);
+        $this->bpType = empty($matches[2]) ? null : strtoupper($matches[2]);
 
-        // Bonus/Punishment dice
-        if ($this->bpType)
-        {
+
+        if ($this->bpType) {
+            // Bonus/Punishment dice
             preg_match("/^([1-9][0-9]*)?\s*([\S\s]*)$/i", $order, $matches);
             $this->bpDiceNumber = empty($matches[1]) ? 1 : (int) $matches[1];
             $this->reason = $matches[2];
-        }
-        // Normal dice, parse expressions. Sample: x1Dy1Kz1+x2Dy2+c reason
-        else
-        {
+        } else {
+            // Normal dice, parse expressions. Sample: x1Dy1Kz1+x2Dy2+c reason
             preg_match("/^([0-9DK+\-x*()（）]+)?\s*([\S\s]*)$/i", $order, $matches);
             // Replace Chinese brackets, d, k, x and X
             $expression = str_replace(["（", "）", "x", "X"], ["(", ")", "*", "*"], $matches[1]);
             $this->reason = $matches[2];
 
-            if (!empty($expression))
+            if (!empty($expression)) {
                 $this->parseExpression($expression);
+            }
         }
     }
 
@@ -166,27 +166,26 @@ class Dice
         );
         $subexpressions = [];
 
-        foreach ($expressions as $index => &$splitExpression)
-        {
+        foreach ($expressions as $index => &$splitExpression) {
             // Screen out subexpression (xDy or xDyKz)
-            if (preg_match("/^([1-9][0-9]*)?D([1-9][0-9]*)?(K([1-9][0-9]*)?)?$/i", $splitExpression, $matches))
-            {
+            if (preg_match(
+                "/^([1-9][0-9]*)?D([1-9][0-9]*)?(K([1-9][0-9]*)?)?$/i",
+                $splitExpression,
+                $matches
+            )) {
                 $diceNumber = empty($matches[1]) ? "1" : $matches[1];
                 $surfaceNumber = empty($matches[2]) ? $this->defaultSurfaceNumber : $matches[2];
                 $kNumber = empty($matches[4]) ? "1" : $matches[4];
                 $filledExpression = "{$diceNumber}D{$surfaceNumber}";
                 $splitExpression = ($diceNumber == "1" ? "" : $diceNumber) . "D{$surfaceNumber}";
 
-                if (!empty($matches[3]))
-                {
+                if (!empty($matches[3])) {
                     $filledExpression .= "K{$kNumber}";
                     $splitExpression .= "K{$kNumber}";
                 }
 
                 $subexpressions[$index] = new Subexpression($filledExpression);
-            }
-            elseif (!preg_match("/^[0-9+\-*()]+$/i", $splitExpression))
-            {
+            } elseif (!preg_match("/^[0-9+\-*()]+$/i", $splitExpression)) {
                 $this->reason = $this->order;
 
                 return;
@@ -205,10 +204,11 @@ class Dice
      */
     protected function getResult(): void
     {
-        if ($this->bpType)
+        if ($this->bpType) {
             $this->bp();
-        else
+        } else {
             $this->calculate();
+        }
     }
 
     /**
@@ -219,17 +219,19 @@ class Dice
     protected function bp(): void
     {
         // Check range
-        if ($this->bpDiceNumber < 1 || $this->bpDiceNumber > static::$maxDiceNumber)
+        if ($this->bpDiceNumber < 1 || $this->bpDiceNumber > static::$maxDiceNumber) {
             throw new DiceNumberOverstepException();
+        }
 
         $this->bpResult = Random::generate($this->bpDiceNumber, 10);
         $this->result = $this->subexpressions[0]->result;
         $tensPlace = intdiv($this->result, 10);
 
-        if ($this->bpType === "B" && $tensPlace > min($this->bpResult))
+        if ($this->bpType === "B" && $tensPlace > min($this->bpResult)) {
             $this->result -= ($tensPlace - min($this->bpResult)) * 10;
-        elseif ($this->bpType === "P" && $tensPlace < max($this->bpResult))
+        } elseif ($this->bpType === "P" && $tensPlace < max($this->bpResult)) {
             $this->result += (max($this->bpResult) - $tensPlace) * 10;
+        }
 
         $this->result = min($this->result, 100);  // Prevent result from over range
     }
@@ -244,16 +246,14 @@ class Dice
         $arithmeticExpression = $this->toArithmeticExpression();
 
         // Rest of the possible invalid expression
-        if (preg_match("/^\)|^\*|[0-9]\(|[+\-*]\)|\)[0-9]|\($|[+\-*]$/", $arithmeticExpression))
+        if (preg_match("/^\)|^\*|[0-9]\(|[+\-*]\)|\)[0-9]|\($|[+\-*]$/", $arithmeticExpression)) {
             throw new ExpressionInvalidException();
+        }
 
-        try
-        {
+        try {
             $command = "return {$arithmeticExpression};";
             $this->result = eval($command);
-        }
-        catch (Throwable $t)
-        {
+        } catch (Throwable $t) {
             throw new ExpressionErrorException(
                 $t->getMessage(),
                 $this->order,
@@ -272,8 +272,9 @@ class Dice
     {
         $expressions = $this->expressions;
 
-        foreach ($this->subexpressions as $index => $subexpression)
+        foreach ($this->subexpressions as $index => $subexpression) {
             $expressions[$index] = $subexpression->getResultString();
+        }
 
         return join($expressions);
     }
@@ -287,8 +288,9 @@ class Dice
     {
         $expressions = $this->expressions;
 
-        foreach ($this->subexpressions as $index => $subexpression)
+        foreach ($this->subexpressions as $index => $subexpression) {
             $expressions[$index] = $subexpression->result;
+        }
 
         return join($expressions);
     }
@@ -330,34 +332,31 @@ class Dice
      */
     public function getCompleteExpression(): string
     {
-        // Normal dice
-        if (!$this->bpType)
-        {
+        if (!$this->bpType) {
+            // Normal dice
             $completeExpression = $expression = $this->expression;
 
-            // Full result
-            if ($this->vType !== "S")
-            {
+            if ($this->vType !== "S") {
+                // Full result
                 $resultExpression = $this->toResultExpression();
                 $arithmeticExpression = $this->toArithmeticExpression();
 
                 $completeExpression .= $expression == $resultExpression ? "" : "={$resultExpression}";
                 $completeExpression .= $resultExpression == $arithmeticExpression ? "" : "={$arithmeticExpression}";
                 $completeExpression .= $arithmeticExpression == $this->result ? "" : "={$this->result}";
-            }
-            else
+            } else {
                 $completeExpression .= "={$this->result}";
-        }
-        // B/P dice
-        else
-        {
+            }
+        } else {
+            // B/P dice
             $completeExpression = "{$this->bpType}{$this->bpDiceNumber}";
 
-            // Full result
-            if ($this->vType !== "S")
+            if ($this->vType !== "S") {
+                // Full result
                 $completeExpression .=
                     "={$this->toResultExpression()}" .
                     "[" . static::$bpDiceType[$this->bpType] . ":" . join(" ", $this->bpResult) . "]";
+            }
 
             $completeExpression .= "={$this->result}";
         }

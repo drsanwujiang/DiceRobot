@@ -40,18 +40,15 @@ class BotJoinGroup extends EventAction
      */
     public function __invoke(): void
     {
-        // Group is in black list, quit
-        if ($this->queryGroup())
-        {
+        if ($this->queryGroup()) {
+            // Group is in black list, quit
             $this->api->sendGroupMessage(
                 $this->event->group->id,
                 Convertor::toMessageChain($this->config->getString("reply.botJoinGroupRejected"))
             );
             $this->api->quitGroup($this->event->group->id);
-        }
-        // Send hello message
-        else
-        {
+        } else {
+            // Send hello message
             $message =
                 Convertor::toCustomString(
                     $this->resource->getReference("HelloTemplate")->getString("templates.detail"),

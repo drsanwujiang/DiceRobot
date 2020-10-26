@@ -33,8 +33,9 @@ class Start extends RobotOrderAction
     {
         list($targetId) = $this->parseOrder();
 
-        if (!$this->checkId($targetId) || !$this->checkPermission())
+        if (!$this->checkId($targetId) || !$this->checkPermission()) {
             return;
+        }
 
         $this->chatSettings->set("active", true);
 
@@ -55,11 +56,12 @@ class Start extends RobotOrderAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([0-9]{4,})?$/", $this->order, $matches))
+        if (!preg_match("/^([0-9]{4,})?$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string|null $targetId */
-        $targetId = empty($matches[1]) ? NULL : $matches[1];
+        $targetId = empty($matches[1]) ? null : $matches[1];
 
         return [$targetId];
     }
@@ -72,8 +74,7 @@ class Start extends RobotOrderAction
     protected function checkPermission(): bool
     {
         // Must be the owner or the administrator in the group
-        if ($this->message instanceof GroupMessage && $this->message->sender->permission == "MEMBER")
-        {
+        if ($this->message instanceof GroupMessage && $this->message->sender->permission == "MEMBER") {
             $this->reply = $this->config->getString("reply.robotOrderStartDenied");
 
             return false;

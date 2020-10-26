@@ -104,8 +104,7 @@ class ApiService
         // Create session
         $result = $this->authSession($authKey);
 
-        if (0 != $result->getInt("code", -1))
-        {
+        if (0 != $result->getInt("code", -1)) {
             $this->logger->alert("Initialize API service failed, session not created.");
 
             return false;
@@ -118,8 +117,7 @@ class ApiService
         // Verify session
         $code = $this->verifySession($robotId)->getInt("code", -1);
 
-        if (0 != $code)
-        {
+        if (0 != $code) {
             $this->logger->alert("Initialize API service failed, session unauthorized, code {$code}.");
 
             return false;
@@ -142,12 +140,9 @@ class ApiService
      */
     protected function mRequest(array $options): array
     {
-        try
-        {
+        try {
             $response = $this->pools[0]->request($options);
-        }
-        catch (TransferException $e)  // TODO: catch (TransferException) in PHP 8
-        {
+        } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
             $this->logger->alert("Request Mirai API failed.");
 
             throw new MiraiApiException();
@@ -167,24 +162,21 @@ class ApiService
      */
     protected function dRequest(array $options): array
     {
-        try
-        {
-            $options["headers"]["Timestamp"] = time();
-            $response = $this->pools[1]->request($options);
-        }
         /**
          * DiceRobot API will often return 2xx Success status code, which will not throw ClientException or
          * ServerException, except when request is unauthorized (401), API does not exist (404) or server-side error
          * occurs (50x).
          */
-        catch (ClientException | ServerException $e)
-        {
-            $this->logger->critical("DiceRobot API returned HTTP status code {$e->getResponse()->getStatusCode()}.");
+        try {
+            $options["headers"]["Timestamp"] = time();
+            $response = $this->pools[1]->request($options);
+        } catch (ClientException | ServerException $e) {
+            $this->logger->critical(
+                "DiceRobot API returned HTTP status code {$e->getResponse()->getStatusCode()}."
+            );
 
             throw new InternalErrorException();
-        }
-        catch (TransferException $e)  // TODO: catch (TransferException) in PHP 8
-        {
+        } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
             $this->logger->critical("Request DiceRobot API failed.");
 
             throw new NetworkErrorException();
@@ -193,10 +185,11 @@ class ApiService
         $data = $response->getParsedJsonArray();
 
         // Log error, but not throw exception
-        if (0 != $data["code"])
+        if (0 != $data["code"]) {
             $this->logger->warning(
                 "API server returned unexpected code {$data["code"]}, error message: {$data["message"]}."
             );
+        }
 
         return $data;
     }
@@ -280,12 +273,11 @@ class ApiService
     public function sendFriendMessageAsync(int $target, array $messageChain): void
     {
         go(function () use ($target, $messageChain) {
-            try
-            {
+            try {
                 $this->sendFriendMessage($target, $messageChain);
+            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
+                // Do nothing
             }
-            catch (MiraiApiException $e)  // TODO: catch (MiraiApiException) in PHP 8
-            {}  // Do nothing
         });
     }
 
@@ -322,12 +314,11 @@ class ApiService
     public function sendTempMessageAsync(int $qq, int $group, array $messageChain): void
     {
         go(function () use ($qq, $group, $messageChain) {
-            try
-            {
+            try {
                 $this->sendTempMessage($qq, $group, $messageChain);
+            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
+                // Do nothing
             }
-            catch (MiraiApiException $e)  // TODO: catch (MiraiApiException) in PHP 8
-            {}  // Do nothing
         });
     }
 
@@ -361,12 +352,11 @@ class ApiService
     public function sendGroupMessageAsync(int $target, array $messageChain): void
     {
         go(function () use ($target, $messageChain) {
-            try
-            {
+            try {
                 $this->sendGroupMessage($target, $messageChain);
+            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
+                // Do nothing
             }
-            catch (MiraiApiException $e)  // TODO: catch (MiraiApiException) in PHP 8
-            {}  // Do nothing
         });
     }
 
@@ -579,13 +569,11 @@ class ApiService
     public function updateRobotAsync(int $robotId): void
     {
         go(function () use ($robotId) {
-            try
-            {
+            try {
                 $this->updateRobot($robotId);
+            } catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
+                // Do nothing
             }
-            // TODO: catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
-            catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException $e)
-            {}  // Do nothing
         });
     }
 
@@ -599,12 +587,13 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function auth(int $robotId, int $userId = NULL): AuthorizeResponse
+    public function auth(int $robotId, int $userId = null): AuthorizeResponse
     {
-        if ($userId)
+        if ($userId) {
             $url = "/dicerobot/v2/robot/{$robotId}/auth/{$userId}";
-        else
+        } else {
             $url = "/dicerobot/v2/robot/{$robotId}/auth";
+        }
 
         $options = [
             "uri" => $url,

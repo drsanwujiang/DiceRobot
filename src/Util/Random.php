@@ -27,8 +27,9 @@ class Random
 
         $results = [];
 
-        while ($count--)
+        while ($count--) {
             $results[] = mt_rand(1, $max);
+        }
 
         return $results;
     }
@@ -59,22 +60,23 @@ class Random
      * @return array|string Items
      */
     // TODO: Declare union return type array|string in PHP 8
-    public static function draw(array $target, int $count = 1, $glue = NULL)
+    public static function draw(array $target, int $count = 1, $glue = null)
     {
         $keys = array_rand($target, $count);
         $items = [];
 
-        if (is_int($keys))
+        if (is_int($keys)) {
             $items[] = $target[$keys];
-        else
-        {
-            foreach ($keys as $key)
+        } else {
+            foreach ($keys as $key) {
                 $items[] = $target[$key];
+            }
         }
 
-        if (is_null($glue))
+        if (is_null($glue)) {
             return $items;
-        else
+        } else {
             return join($glue, $items);
+        }
     }
 }

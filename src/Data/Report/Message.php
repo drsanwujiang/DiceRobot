@@ -44,18 +44,16 @@ abstract class Message implements Report
      */
     public function parseMessageChain(): bool
     {
-        foreach ($this->messageChain as $fragmentData)
-        {
+        foreach ($this->messageChain as $fragmentData) {
             $fragment = FragmentFactory::create($fragmentData);
 
-            if ($fragment instanceof Source)
-            {
+            if ($fragment instanceof Source) {
                 $this->source = $fragment;
 
                 continue;
-            }
-            elseif (!($fragment instanceof ParsableFragment))
+            } elseif (!($fragment instanceof ParsableFragment)) {
                 return false;
+            }
 
             $this->message .= $fragment;
         }

@@ -54,10 +54,10 @@ trait ArrayReaderTrait
         $keys = explode(".", $path);
         $value = $this->data;
 
-        foreach ($keys as $key)
-        {
-            if (!array_key_exists($key, $value))
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $value)) {
                 return false;
+            }
 
             $value = $value[$key];
         }
@@ -77,10 +77,10 @@ trait ArrayReaderTrait
         $keys = explode(".", $path);
         $value = $this->data;
 
-        foreach ($keys as $key)
-        {
-            if (!isset($value[$key]))
-                return NULL;
+        foreach ($keys as $key) {
+            if (!isset($value[$key])) {
+                return null;
+            }
 
             $value = $value[$key];
         }

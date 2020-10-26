@@ -39,8 +39,9 @@ abstract class Response
         $this->validate();
 
         // Throw uniform exception
-        if ($this->code != 0)
+        if ($this->code != 0) {
             throw new UnexpectedErrorException();
+        }
 
         $this->parse();
     }

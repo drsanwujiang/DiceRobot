@@ -29,16 +29,16 @@ class SetCOC extends MessageAction
     {
         list($ruleId) = $this->parseOrder();
 
-        if (!$this->checkRange($ruleId))
+        if (!$this->checkRange($ruleId)) {
             return;
+        }
 
         $rule = $this->resource->getCheckRule(
             is_null($ruleId) ? $this->chatSettings->getInt("cocCheckRule") : $ruleId
         );
 
-        // Show rule details
-        if (is_null($ruleId))
-        {
+        if (is_null($ruleId)) {
+            // Show rule details
             $this->reply =
                 Convertor::toCustomString(
                     $this->config->getString("reply.setCocCurrentRule"),
@@ -48,10 +48,8 @@ class SetCOC extends MessageAction
                         "规则介绍" => $rule->getString("introduction")
                     ]
                 );
-        }
-        // Change rule
-        else
-        {
+        } else {
+            // Change rule
             $this->chatSettings->set("cocCheckRule", $ruleId);
 
             $this->reply =
@@ -73,11 +71,12 @@ class SetCOC extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([0-9]*)?$/", $this->order, $matches))
+        if (!preg_match("/^([0-9]*)?$/", $this->order, $matches)) {
             return [-1];
+        }
 
         /** @var int|null $ruleId */
-        $ruleId = empty($matches[1]) ? NULL : (int) $matches[1];
+        $ruleId = empty($matches[1]) ? null : (int) $matches[1];
 
         return [$ruleId];
     }
@@ -91,8 +90,7 @@ class SetCOC extends MessageAction
      */
     protected function checkRange(?int $ruleId): bool
     {
-        if (!is_null($ruleId) && $ruleId < 0)
-        {
+        if (!is_null($ruleId) && $ruleId < 0) {
             $this->reply = $this->config->getString("reply.setCocRuleIdError");
 
             return false;

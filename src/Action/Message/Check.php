@@ -50,8 +50,9 @@ class Check extends MessageAction
 
         list($checkValue, $heading) = $this->getCheckValue($item, $repeat);
 
-        if (!$this->checkRange($checkValue, $repeat))
+        if (!$this->checkRange($checkValue, $repeat)){
             return;
+        }
 
         $this->reply = trim(
             $heading .
@@ -59,10 +60,8 @@ class Check extends MessageAction
             $this->check($bp, $addition, $checkValue, $repeat)
         );
 
-        if ($private)
-        {
-            if (!($this->message instanceof GroupMessage))
-            {
+        if ($private) {
+            if (!($this->message instanceof GroupMessage)) {
                 $this->sendPrivateMessage(
                     Convertor::toCustomString(
                         $this->config->getString("reply.checkPrivatelyHeading"),
@@ -80,9 +79,9 @@ class Check extends MessageAction
                             "检定次数" => $repeat
                         ]
                     );
-            }
-            else
+            } else {
                 $this->reply = $this->config->getString("reply.checkPrivatelyNotInGroup");
+            }
         }
     }
 
@@ -99,8 +98,9 @@ class Check extends MessageAction
             "/^(h)?\s*([bp](?:\s*[1-9][0-9]*)?\s+)?([\x{4e00}-\x{9fa5}a-z0-9\s]+)\s*((?:[+-][1-9][0-9]*\s*)*)(?:#([1-9][0-9]*)?)?$/ui",
             $this->order,
             $matches
-        ))
+        )) {
             throw new OrderErrorException;
+        }
 
         /** @var bool $private */
         $private = !empty($matches[1]);
@@ -128,8 +128,7 @@ class Check extends MessageAction
      */
     protected function getCheckValue(string $item, int $repeat): array
     {
-        if (is_numeric($item))
-        {
+        if (is_numeric($item)) {
             $checkValue = (int) $item;
             $heading =
                 Convertor::toCustomString(
@@ -140,19 +139,14 @@ class Check extends MessageAction
                         "检定项目" => ""
                     ]
                 );
-        }
-        else
-        {
+        } else {
             $card = $this->resource->getCharacterCard(
                 $this->chatSettings->getCharacterCardId($this->message->sender->id)
             );
 
-            try
-            {
+            try {
                 $checkValue = $card->getAttribute($item);
-            }
-            catch (ItemNotExistException $e)
-            {
+            } catch (ItemNotExistException $e) {
                 $checkValue = $card->getSkill($item);
             }
 
@@ -188,14 +182,13 @@ class Check extends MessageAction
      */
     protected function checkRange(int $checkValue, int $repeat): bool
     {
-        if ($checkValue < 1)
-        {
+        if ($checkValue < 1) {
             $this->reply = $this->config->getString("reply.checkValueInvalid");
 
             return false;
-        }
-        elseif ($repeat < 1 || $repeat > $this->config->getInt("order.maxRepeatTimes"))
+        } elseif ($repeat < 1 || $repeat > $this->config->getInt("order.maxRepeatTimes")) {
             throw new RepeatTimeOverstepException();
+        }
 
         return true;
     }
@@ -217,8 +210,7 @@ class Check extends MessageAction
     {
         $detail = "";
 
-        while ($repeat--)
-        {
+        while ($repeat--) {
             $dice = isset($dice) ? clone $dice : new Dice("{$bp} D{$addition}", 100);
 
             // Adjust result

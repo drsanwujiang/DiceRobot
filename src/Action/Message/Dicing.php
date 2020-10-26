@@ -71,10 +71,8 @@ class Dicing extends MessageAction
             $detail
         );
 
-        if ($vType === "H")
-        {
-            if ($this->message instanceof GroupMessage)
-            {
+        if ($vType === "H") {
+            if ($this->message instanceof GroupMessage) {
                 $this->sendPrivateMessage(
                     Convertor::toCustomString(
                         $this->config->getString("reply.dicingPrivatelyHeading"),
@@ -92,9 +90,9 @@ class Dicing extends MessageAction
                             "掷骰次数" => $repeat
                         ]
                     );
-            }
-            else
+            } else {
                 $this->reply = $this->config->getString("reply.dicingPrivatelyNotInGroup");
+            }
         }
     }
 
@@ -123,8 +121,9 @@ class Dicing extends MessageAction
      */
     protected function checkRange(int $repeat): void
     {
-        if ($repeat < 1 || $repeat > $this->config->getInt("order.maxRepeatTimes"))
+        if ($repeat < 1 || $repeat > $this->config->getInt("order.maxRepeatTimes")) {
             throw new RepeatTimeOverstepException();
+        }
     }
 
     /**
@@ -142,13 +141,12 @@ class Dicing extends MessageAction
     {
         $detail = "";
 
-        while ($repeat--)
-        {
+        while ($repeat--) {
             $dice = isset($dice) ?
                 clone $dice : new Dice($expression, $this->chatSettings->getInt("defaultSurfaceNumber"));
             $detail .= $dice->getCompleteExpression() . "\n";
         }
 
-        return [$dice->vType ?? NULL, $dice->reason ?? "", $detail];
+        return [$dice->vType ?? null, $dice->reason ?? "", $detail];
     }
 }

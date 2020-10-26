@@ -47,9 +47,11 @@ final class GetCardResponse extends Response
      */
     protected function validate(): void
     {
-        if ($this->code == -1000)
+        if ($this->code == -1000) {
             throw new NotFoundException();
-        elseif ($this->code == -1001)
+        }
+        elseif ($this->code == -1001) {
             throw new FormatInvalidException();
+        }
     }
 }

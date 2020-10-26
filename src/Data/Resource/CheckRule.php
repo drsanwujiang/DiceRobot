@@ -48,24 +48,24 @@ class CheckRule extends Resource
         {
             $condition = str_replace(["{&result}", "{&value}", " "], [$result, $value, ""], $condition);
 
-            if (preg_match("/.*[a-z]+.*/i", $condition))
+            if (preg_match("/.*[a-z]+.*/i", $condition)) {
                 throw new DangerousException();
+            }
 
-            try
-            {
+            try {
                 $evalCommand = "return $condition;";
                 $evalResult = eval($evalCommand);
-            }
-            catch (Throwable $t) // TODO: catch (Throwable) in PHP 8
-            {
+            } catch (Throwable $t) {  // TODO: catch (Throwable) in PHP 8
                 throw new InvalidException();
             }
 
-            if (!is_bool($evalResult))
+            if (!is_bool($evalResult)) {
                 throw new InvalidException();
+            }
 
-            if ($evalResult)
+            if ($evalResult) {
                 return $level;
+            }
         }
 
         throw new MatchFailedException();

@@ -25,12 +25,12 @@ class Set extends MessageAction
     {
         list($defaultSurfaceNumber) = $this->parseOrder();
 
-        if (!$this->checkRange($defaultSurfaceNumber))
+        if (!$this->checkRange($defaultSurfaceNumber)) {
             return;
+        }
 
-        // Set the default dice surface number of this chat
-        if ($defaultSurfaceNumber)
-        {
+        if ($defaultSurfaceNumber) {
+            // Set the default dice surface number of this chat
             $this->chatSettings->set("defaultSurfaceNumber", $defaultSurfaceNumber);
 
             $this->reply =
@@ -41,11 +41,9 @@ class Set extends MessageAction
                         "默认骰子面数" => $defaultSurfaceNumber
                     ]
                 );
-        }
-        // Reset the default dice surface number of this chat to the default value of the robot
-        else
-        {
-            $this->chatSettings->set("defaultSurfaceNumber", NULL);
+        } else {
+            // Reset the default dice surface number of this chat to the default value of the robot
+            $this->chatSettings->set("defaultSurfaceNumber", null);
 
             $this->reply =
                 Convertor::toCustomString(
@@ -64,11 +62,12 @@ class Set extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches))
+        if (!preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches)) {
             return [-1];
+        }
 
         /** @var int|null $defaultSurfaceNumber */
-        $defaultSurfaceNumber = empty($matches[1]) ? NULL : (int) $matches[1];
+        $defaultSurfaceNumber = empty($matches[1]) ? null : (int) $matches[1];
 
         return [$defaultSurfaceNumber];
     }

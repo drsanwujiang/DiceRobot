@@ -33,9 +33,8 @@ class BindCard extends MessageAction
     {
         list($cardId) = $this->parseOrder();
 
-        // Bind character card
-        if ($cardId)
-        {
+        if ($cardId) {
+            // Bind character card
             $this->sendMessage($this->config->getString("reply.bindCardPending"));
 
             // Import character card
@@ -44,10 +43,7 @@ class BindCard extends MessageAction
             $this->chatSettings->setCharacterCardId($this->message->sender->id, $cardId);
 
             $this->reply = $this->config->getString("reply.bindCardSuccess");
-        }
-        // Unbind character card
-        else
-        {
+        } else {
             //Unset character card ID
             $this->chatSettings->setCharacterCardId($this->message->sender->id);
 
@@ -64,8 +60,9 @@ class BindCard extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches))
+        if (!preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var int $cardId */
         $cardId = (int) ($matches[1] ?? "");

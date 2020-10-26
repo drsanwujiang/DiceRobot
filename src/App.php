@@ -86,8 +86,7 @@ class App
     protected function initialize(): void
     {
         /** Primary initialization */
-        if (!$this->resource->initialize())
-        {
+        if (!$this->resource->initialize()) {
             $this->status = AppStatusEnum::STOPPED();
 
             $this->logger->emergency("Initialize application failed.");
@@ -169,20 +168,22 @@ class App
             "counts" => $this->statisticsCounts
         ];
 
-        foreach (["orders", "groups", "friends"] as $type)
-        {
+        foreach (["orders", "groups", "friends"] as $type) {
             arsort($statistics[$type], SORT_NUMERIC);
             $statistics[$type] = array_slice($statistics[$type], 0, 5, true);
         }
 
-        foreach ($statistics["orders"] as $order => $value)
+        foreach ($statistics["orders"] as $order => $value) {
             $data["orders"][] = [$order, $value];
+        }
 
-        foreach ($statistics["groups"] as $id => $value)
+        foreach ($statistics["groups"] as $id => $value) {
             $data["groups"][] = [$id, $this->robot->getGroup($id)->name ?? "[Unknown Group]", $value];
+        }
 
-        foreach ($statistics["friends"] as $id => $value)
+        foreach ($statistics["friends"] as $id => $value) {
             $data["friends"][] = [$id, $this->robot->getFriend($id)->nickname ?? "[Unknown Friend]", $value];
+        }
 
         return [0, $data];
     }
@@ -194,12 +195,13 @@ class App
      */
     public function pause(): int
     {
-        // Application is already paused
-        if ($this->getStatus()->equals(AppStatusEnum::PAUSED()))
+        if ($this->getStatus()->equals(AppStatusEnum::PAUSED())) {
+            // Application is already paused
             return -1000;
-        // Cannot be paused
-        elseif ($this->getStatus()->lessThan(AppStatusEnum::PAUSED()))
+        } elseif ($this->getStatus()->lessThan(AppStatusEnum::PAUSED())) {
+            // Cannot be paused
             return -1001;
+        }
 
         $this->setStatus(AppStatusEnum::PAUSED());
 
@@ -213,32 +215,26 @@ class App
      */
     public function run(): int
     {
-        // Application is already running
-        if ($this->getStatus()->equals(AppStatusEnum::RUNNING()))
+        if ($this->getStatus()->equals(AppStatusEnum::RUNNING())) {
+            // Application is already running
             return -1010;
-        // Cannot be rerun
-        elseif (!$this->getStatus()->equals(AppStatusEnum::PAUSED()))
+        } elseif (!$this->getStatus()->equals(AppStatusEnum::PAUSED())) {
+            // Cannot be rerun
             return -1011;
+        }
 
-        try
-        {
+        try {
             // Initialize API service, then update robot service
-            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->updateRobot())
-            {
+            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->updateRobot()) {
                 $this->setStatus(AppStatusEnum::RUNNING());
 
                 $this->logger->notice("Application rerun.");
 
                 return 0;
-            }
-            else
-            {
+            } else {
                 $this->logger->critical("Rerun application failed.");
             }
-        }
-        // Call Mirai APIs failed
-        catch (MiraiApiException $e)  // TODO: catch (MiraiApiException) in PHP 8
-        {
+        } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Rerun application failed, unable to call Mirai API.");
         }
 
@@ -260,8 +256,7 @@ class App
         $newConfig = $configuration->all();
 
         // Config should not be empty, or the custom settings is invalid
-        if (!empty($newConfig))
-        {
+        if (!empty($newConfig)) {
             $reflectionClass = new ReflectionClass(Configuration::class);
             $property = $reflectionClass->getProperty("data");
             $property->setAccessible(true);
@@ -275,9 +270,7 @@ class App
             $this->logger->notice("Application reloaded.");
 
             return 0;
-        }
-        else
-        {
+        } else {
             $this->logger->notice("Reload application failed.");
 
             return -1020;

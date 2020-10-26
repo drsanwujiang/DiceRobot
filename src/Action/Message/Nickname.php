@@ -31,9 +31,8 @@ class Nickname extends MessageAction
     {
         list($nickname) = $this->parseOrder();
 
-        // Set nickname
-        if (!empty($nickname))
-        {
+        if (!empty($nickname)) {
+            // Set nickname
             $this->chatSettings->setNickname($this->message->sender->id, $nickname);
 
             $this->reply =
@@ -44,10 +43,8 @@ class Nickname extends MessageAction
                         "新昵称" => $nickname
                     ]
                 );
-        }
-        // Unset nickname
-        else
-        {
+        } else {
+            // Unset nickname
             $this->chatSettings->setNickname($this->message->sender->id);
 
             $this->reply =
@@ -69,8 +66,9 @@ class Nickname extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^(.*)$/", $this->order, $matches))
+        if (!preg_match("/^(.*)$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string $nickname */
         $nickname = $matches[1];

@@ -33,8 +33,9 @@ class Help extends MessageAction
 
         $reference = $this->resource->getReference("HelpTemplate");
 
-        if (!$this->checkOrder($order, $reference))
+        if (!$this->checkOrder($order, $reference)) {
             return;
+        }
 
         $actualOrder = $reference->getString("items.mapping.{$order}");
 
@@ -50,8 +51,9 @@ class Help extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^\.?([a-z ]+)?$/i", $this->order, $matches))
+        if (!preg_match("/^\.?([a-z ]+)?$/i", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         $order = $matches[1] ?? "";
 
@@ -68,14 +70,11 @@ class Help extends MessageAction
      */
     protected function checkOrder(string $order, Reference $reference): bool
     {
-        if (empty($order))
-        {
+        if (empty($order)) {
             $this->reply = $reference->getString("templates.detail");
 
             return false;
-        }
-        elseif (empty($reference->get("items.mapping.{$order}")))
-        {
+        } elseif (empty($reference->get("items.mapping.{$order}"))) {
             $this->reply = $this->config->getString("reply.helpOrderUnknown");
 
             return false;

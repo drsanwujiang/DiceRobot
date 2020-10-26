@@ -34,7 +34,8 @@ final class UpdateCardResponse extends Response
      */
     protected function validate(): void
     {
-        if ($this->code == -1012)
+        if ($this->code == -1012) {
             throw new PermissionDeniedException();
+        }
     }
 }

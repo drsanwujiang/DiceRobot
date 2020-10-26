@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 - 2020-10-20
+## 2.0.0 - 2020-10-26
 
 ### Added
 - Introduce coroutine
@@ -18,6 +18,7 @@
 - Identify more incorrect dicing expressions
 
 ### Changed
+- Published as composer library
 - Run as PHP-CLI memory-resident application, driven by Swoole
 - Complete DTO adaptation
 - Restore all default settings to constants

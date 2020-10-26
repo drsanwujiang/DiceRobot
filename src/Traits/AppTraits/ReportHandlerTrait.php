@@ -50,33 +50,29 @@ trait ReportHandlerTrait
      */
     public function report(string $reportContent): void
     {
+        $this->logger->debug("Receive report, content: {$reportContent}");
+
         $this->logger->info("Report started.");
 
-        /** Validate */
-        if (!is_object($reportData = json_decode($reportContent)))
-        {
+        // Validate
+        if (!is_object($reportData = json_decode($reportContent))) {
             $this->logger->error("Report failed, JSON decode error.");
 
             return;
-        }
-        elseif (!$this->validate($report = ReportFactory::create($reportData)))
-        {
+        } elseif (!$this->validate($report = ReportFactory::create($reportData))) {
             $this->logger->info("Report skipped, unsupported report.");
 
             return;
         }
 
-        try
-        {
-            /** Report */
-            if ($report instanceof Event)
+        try {
+            // Report
+            if ($report instanceof Event) {
                 $this->event($report);
-            elseif ($report instanceof Message)
+            } elseif ($report instanceof Message) {
                 $this->message($report);
-        }
-        // Call Mirai APIs failed
-        catch (MiraiApiException $e)  // TODO: catch (MiraiApiException) in PHP 8
-        {
+            }
+        } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Report failed, unable to call Mirai API.");
         }
     }
@@ -89,15 +85,13 @@ trait ReportHandlerTrait
     protected function event(Event $event): void
     {
         // Check application status
-        if ($this->getStatus()->lessThan(AppStatusEnum::RUNNING()))
-        {
+        if ($this->getStatus()->lessThan(AppStatusEnum::RUNNING())) {
             $this->logger->info("Report skipped. Application status {$this->getStatus()}.");
 
             return;
         }
 
-        if (empty($actionName = $this->matchEvent($event)))
-        {
+        if (empty($actionName = $this->matchEvent($event))) {
             $this->logger->info("Report skipped, matching miss.");
 
             return;
@@ -108,23 +102,15 @@ trait ReportHandlerTrait
             "event" => $event
         ]);
 
-        try
-        {
+        try {
             $action();
 
             $this->logger->info("Report finished.");
-        }
-            // Action interrupted, log error
-        catch (DiceRobotException $e)
-        {
+        } catch (DiceRobotException $e) {  // Action interrupted, log error
             // TODO: $e::class, $action->event::class, $action::class in PHP 8
             $this->logger->error(
-                "Report failed, " .
-                get_class($e) .
-                " occurred when handling " .
-                get_class($action->event) .
-                " and executing " .
-                get_class($action)
+                "Report failed, " . get_class($e) . " occurred when handling " . get_class($action->event) .
+                " and executing " . get_class($action)
             );
         }
     }
@@ -139,15 +125,13 @@ trait ReportHandlerTrait
     protected function message(Message $message): void
     {
         // Check application status
-        if (!$this->getStatus()->equals(AppStatusEnum::RUNNING()))
-        {
+        if (!$this->getStatus()->equals(AppStatusEnum::RUNNING())) {
             $this->logger->info("Report skipped. Application status {$this->getStatus()}.");
 
             return;
         }
 
-        if (!$message->parseMessageChain())
-        {
+        if (!$message->parseMessageChain()) {
             $this->logger->error("Report failed, parse message error.");
 
             return;
@@ -155,8 +139,7 @@ trait ReportHandlerTrait
 
         list($filter, $at) = $this->filter($message);
 
-        if (!$filter)
-        {
+        if (!$filter) {
             $this->logger->info("Report skipped, filter miss.");
 
             return;
@@ -164,8 +147,7 @@ trait ReportHandlerTrait
 
         list($match, $order, $actionName) = $this->matchMessage($message);
 
-        if (empty($actionName))
-        {
+        if (empty($actionName)) {
             $this->logger->info("Report skipped, matching miss.");
 
             return;
@@ -181,59 +163,55 @@ trait ReportHandlerTrait
 
         $this->addCount($match, get_class($message), $message->sender);
 
-        if (!$action->checkActive())
-        {
+        if (!$action->checkActive()) {
             $this->logger->info("Report finished, robot inactive.");
 
             return;
         }
 
-        try
-        {
+        try {
             $action();
 
             // Send reply if set
-            if (!empty($action->reply))
-            {
-                if ($action->message instanceof FriendMessage)
+            if (!empty($action->reply)) {
+                if ($action->message instanceof FriendMessage) {
                     $this->api->sendFriendMessage(
                         $action->message->sender->id,
                         Convertor::toMessageChain($action->reply)
                     );
-                elseif ($action->message instanceof GroupMessage)
+                } elseif ($action->message instanceof GroupMessage) {
                     $this->api->sendGroupMessage(
                         $action->message->sender->group->id,
                         Convertor::toMessageChain($action->reply)
                     );
-                elseif ($action->message instanceof TempMessage)
+                } elseif ($action->message instanceof TempMessage) {
                     $this->api->sendTempMessage(
                         $action->message->sender->id,
                         $action->message->sender->group->id,
                         Convertor::toMessageChain($action->reply)
                     );
+                }
             }
 
             $this->logger->info("Report finished.");
-        }
-        // Action interrupted, send error message to group/user
-        catch (DiceRobotException $e)
-        {
-            if ($action->message instanceof FriendMessage)
+        } catch (DiceRobotException $e) {  // Action interrupted, send error message to group/user
+            if ($action->message instanceof FriendMessage) {
                 $this->api->sendFriendMessage(
                     $action->message->sender->id,
                     Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
                 );
-            elseif ($action->message instanceof GroupMessage)
+            } elseif ($action->message instanceof GroupMessage) {
                 $this->api->sendGroupMessage(
                     $action->message->sender->group->id,
                     Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
                 );
-            elseif ($action->message instanceof TempMessage)
+            } elseif ($action->message instanceof TempMessage) {
                 $this->api->sendTempMessage(
                     $action->message->sender->id,
                     $action->message->sender->group->id,
                     Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
                 );
+            }
 
             // TODO: $e::class, $action->message::class, $action::class in PHP 8
             $this->logger->info(
@@ -241,8 +219,9 @@ trait ReportHandlerTrait
                 get_class($action->message) . " and executing " . get_class($action)
             );
 
-            if (!empty($e->extraMessage))
+            if (!empty($e->extraMessage)) {
                 $this->logger->error("Extra message: {$e->extraMessage}.");
+            }
         }
     }
 
@@ -269,7 +248,8 @@ trait ReportHandlerTrait
     {
         if (preg_match(
             "/^(?:\[mirai:at:([1-9][0-9]*),.*?])?\s*[.。]\s*([\S\s]+)/",
-            (string) $message, $matches
+            (string) $message,
+            $matches
         )) {
             $message->message = "." . trim($matches[2]);
 
@@ -277,12 +257,13 @@ trait ReportHandlerTrait
             $at = $targetId == (string) $this->robot->getId();
 
             // At others
-            if (!empty($targetId) && !$at)
-                return [false, NULL];
+            if (!empty($targetId) && !$at) {
+                return [false, null];
+            }
 
             return [true, $at];
         }
 
-        return [false, NULL];
+        return [false, null];
     }
 }

@@ -37,23 +37,20 @@ trait HeartbeatHandlerTrait
     {
         $this->logger->info("Heartbeat started.");
 
-        /** Validate */
-        if (!$this->getStatus()->equals(AppStatusEnum::RUNNING()))
-        {
+        // Validate
+        if (!$this->getStatus()->equals(AppStatusEnum::RUNNING())) {
             $this->logger->info("Heartbeat skipped. Application status {$this->getStatus()}.");
 
             return;
         }
 
-        /** Heartbeat */
-        if ($this->resource->saveAll() && $this->checkSession() && $this->updateRobot())
-        {
+        // Heartbeat
+        if ($this->resource->saveAll() && $this->checkSession() && $this->updateRobot()) {
             $this->logger->info("Heartbeat finished.");
-        }
-        else
-        {
-            if ($this->getStatus()->equals(AppStatusEnum::RUNNING()))
+        } else {
+            if ($this->getStatus()->equals(AppStatusEnum::RUNNING())) {
                 $this->setStatus(AppStatusEnum::HOLDING());
+            }
 
             $this->logger->alert("Heartbeat failed. Application status {$this->getStatus()}.");
         }
@@ -66,19 +63,14 @@ trait HeartbeatHandlerTrait
      */
     public function checkSession(): bool
     {
-        try
-        {
+        try {
             // Retry 3 times, for the case that heartbeat happens between BotOfflineEventDropped and BotReloginEvent
-            for ($i = 0; $i < 3; $i++)
-            {
-                if (0 == $code = $this->api->verifySession($this->robot->getId())->getInt("code", -1))
-                {
+            for ($i = 0; $i < 3; $i++) {
+                if (0 == $code = $this->api->verifySession($this->robot->getId())->getInt("code", -1)) {
                     $this->logger->info("Session verified.");
 
                     return true;
-                }
-                else
-                {
+                } else {
                     $this->logger->warning("Session unauthorized, code {$code}. Retry.");
 
                     Co::sleep(1);
@@ -88,18 +80,14 @@ trait HeartbeatHandlerTrait
             $this->logger->error("Session unauthorized, failed to retry. Try to initialize.");
 
             // Try to initialize API service
-            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()))
-            {
+            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId())) {
                 $this->logger->info("Session verified.");
 
                 return true;
-            }
-            else
+            } else {
                 $this->logger->critical("Check session failed.");
-        }
-            // Call Mirai APIs failed
-        catch (MiraiApiException $e)  // TODO: catch (MiraiApiException) in PHP 8
-        {
+            }
+        } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Check session failed, unable to call Mirai API.");
         }
 
@@ -113,24 +101,23 @@ trait HeartbeatHandlerTrait
      */
     public function updateRobot(): bool
     {
-        try
-        {
+        try {
             // Refresh friend list
             $this->robot->updateFriends($this->api->getFriendList()->all());
+
             // Refresh group list
             $this->robot->updateGroups($this->api->getGroupList()->all());
+
             // Refresh robot nickname
             $this->robot->updateNickname($this->api->getNickname($this->robot->getId())->nickname);
+
             // Report to DiceRobot API
             $this->api->updateRobotAsync($this->robot->getId());
 
             $this->logger->info("Robot updated.");
 
             return true;
-        }
-        // Call Mirai APIs failed
-        catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException $e)  // TODO: catch (MiraiApiException) in PHP 8
-        {
+        } catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
             $this->logger->alert("Update robot failed, unable to call Mirai API.");
 
             return false;

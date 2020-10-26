@@ -1,6 +1,6 @@
 {
   "name": "drsanwujiang/dicerobot",
-  "type": "project",
+  "type": "library",
   "description": "A TRPG dice robot based on Swoole.",
   "homepage": "https://tool.drsanwujiang.com/dicerobot/",
   "license": "MIT",
@@ -43,11 +43,5 @@
   },
   "config": {
     "sort-packages": true
-  },
-  "repositories": {
-    "packagist": {
-      "type": "composer",
-      "url": "https://mirrors.aliyun.com/composer/"
-    }
   }
 }

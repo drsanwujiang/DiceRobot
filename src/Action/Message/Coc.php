@@ -55,8 +55,9 @@ class Coc extends MessageAction
     {
         list($version, $generateCount, $detailed) = $this->parseOrder();
 
-        if (!$this->checkRange($generateCount))
+        if (!$this->checkRange($generateCount)){
             return;
+        }
 
         $reference = $this->resource->getReference("COCCharacterCardTemplate");  // Load reference
 
@@ -82,8 +83,9 @@ class Coc extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([6-7]?)\s*(?:([1-9][0-9]*)|(d))?$/i", $this->order, $matches))
+        if (!preg_match("/^([6-7]?)\s*(?:([1-9][0-9]*)|(d))?$/i", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var int $version */
         $version = empty($matches[1]) ? 7 : (int) $matches[1];
@@ -104,8 +106,7 @@ class Coc extends MessageAction
      */
     protected function checkRange(int $generateCount): bool
     {
-        if ($generateCount > $this->config->getInt("order.maxGenerateCount"))
-        {
+        if ($generateCount > $this->config->getInt("order.maxGenerateCount")) {
             $this->reply =
                 Convertor::toCustomString(
                     $this->config->getString("reply.cocGenerateCardCountOverstep"),
@@ -139,12 +140,10 @@ class Coc extends MessageAction
         /** @var Dice[] $dices */
         $dices = [];
 
-        while ($count--)
-        {
+        while ($count--) {
             $results = [];
 
-            for ($i = 0; $i < 9; $i++)
-            {
+            for ($i = 0; $i < 9; $i++) {
                 $dices[$i] = isset($dices[$i]) ? clone $dices[$i] : new Dice(self::COC_GENERATE_RULE[$version][$i]);
                 $results[$i] = $dices[$i]->result;
             }

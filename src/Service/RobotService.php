@@ -57,8 +57,7 @@ class RobotService
      */
     public function updateFriends(array $friends): void
     {
-        foreach ($friends as $friend)
-        {
+        foreach ($friends as $friend) {
             $_friend = new Friend();
             $_friend->id = (int) ($friend["id"] ?? 0);
             $_friend->nickname = (string) ($friend["nickname"] ?? "");
@@ -75,8 +74,7 @@ class RobotService
      */
     public function updateGroups(array $groups): void
     {
-        foreach ($groups as $group)
-        {
+        foreach ($groups as $group) {
             $_group = new Group();
             $_group->id = (int) ($group["id"] ?? 0);
             $_group->name = (string) ($group["name"] ?? "");
@@ -139,7 +137,7 @@ class RobotService
      */
     public function getFriend(int $friendId): ?Friend
     {
-        return $this->friends[$friendId] ?? NULL;
+        return $this->friends[$friendId] ?? null;
     }
 
     /**
@@ -149,7 +147,7 @@ class RobotService
      */
     public function getGroup(int $groupId): ?Group
     {
-        return $this->groups[$groupId] ?? NULL;
+        return $this->groups[$groupId] ?? null;
     }
 
     /**

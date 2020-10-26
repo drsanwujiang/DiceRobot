@@ -39,13 +39,14 @@ trait StatusTrait
     {
         $this->status = $status;
 
-        if ($status->equals(AppStatusEnum::STOPPED()))
+        if ($status->equals(AppStatusEnum::STOPPED())) {
             $this->logger->notice("Application stopped.");
-        elseif ($status->equals(AppStatusEnum::PAUSED()))
+        } elseif ($status->equals(AppStatusEnum::PAUSED())) {
             $this->logger->notice("Application paused.");
-        elseif ($status->equals(AppStatusEnum::RUNNING()))
+        } elseif ($status->equals(AppStatusEnum::RUNNING())) {
             $this->logger->notice("Application running.");
-        elseif ($status->equals(AppStatusEnum::HOLDING()))
+        } elseif ($status->equals(AppStatusEnum::HOLDING())) {
             $this->logger->warning("Application holding.");
+        }
     }
 }

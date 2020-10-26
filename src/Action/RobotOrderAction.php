@@ -32,17 +32,14 @@ abstract class RobotOrderAction extends MessageAction
     {
         $robotId = (string) $this->robot->getId();
 
-        if ($this->message instanceof GroupMessage)
-        {
+        if ($this->message instanceof GroupMessage) {
             // Must at robot if no robot ID
             if (is_null($targetId))
                 return $this->at;
             // Must be the full QQ ID or the last 4 digital number
             else
                 return $targetId == $robotId || $targetId == substr($robotId, -4);
-        }
-        else
-        {
+        } else {
             if (is_null($targetId) || $targetId == $robotId || $targetId == substr($robotId, -4))
                 return true;
 

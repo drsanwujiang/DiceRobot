@@ -36,20 +36,21 @@ class Nickname extends RobotOrderAction
     {
         list($targetId, $nickname) = $this->parseOrder();
 
-        if (!$this->checkId($targetId))
+        if (!$this->checkId($targetId)) {
             return;
+        }
 
         // Change robot's group card
-        if ($this->message instanceof GroupMessage)
+        if ($this->message instanceof GroupMessage) {
             $this->api->setMemberName(
                 $this->message->sender->group->id,
                 $this->robot->getId(),
                 $nickname
             );
+        }
 
         // Set nickname
-        if (!empty($nickname))
-        {
+        if (!empty($nickname)) {
             $this->chatSettings->set("robotNickname", $nickname);
 
             $this->reply =
@@ -59,11 +60,9 @@ class Nickname extends RobotOrderAction
                         "机器人新昵称" => $nickname
                     ]
                 );
-        }
-        // Unset nickname
-        else
-        {
-            $this->chatSettings->set("robotNickname", NULL);
+        } else {
+            // Unset nickname
+            $this->chatSettings->set("robotNickname", null);
 
             $this->reply = $this->config->getString("reply.robotOrderNicknameUnset");
         }
@@ -78,11 +77,12 @@ class Nickname extends RobotOrderAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([0-9]{4,})?\s*(.*)$/", $this->order, $matches))
+        if (!preg_match("/^([0-9]{4,})?\s*(.*)$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string|null $targetId */
-        $targetId = empty($matches[1]) ? NULL : $matches[1];
+        $targetId = empty($matches[1]) ? null : $matches[1];
         /** @var string $nickname */
         $nickname = $matches[2];
 

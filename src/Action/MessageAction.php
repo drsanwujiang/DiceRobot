@@ -98,18 +98,13 @@ abstract class MessageAction implements Action
      */
     private function loadChatSetting(): void
     {
-        if ($this->message instanceof FriendMessage)
-        {
+        if ($this->message instanceof FriendMessage) {
             $chatType = "friend";
             $chatId = $this->message->sender->id;
-        }
-        elseif ($this->message instanceof GroupMessage)
-        {
+        } elseif ($this->message instanceof GroupMessage) {
             $chatType = "group";
             $chatId = $this->message->sender->group->id;
-        }
-        else
-        {
+        } else {
             $chatType = "temp";
             $chatId = 0;
         }
@@ -164,18 +159,20 @@ abstract class MessageAction implements Action
     {
         $nickname = $this->chatSettings->getString("robotNickname");
 
-        if (!empty($nickname))
+        if (!empty($nickname)) {
             return $nickname;
+        }
 
-        if ($this->message instanceof GroupMessage)
+        if ($this->message instanceof GroupMessage) {
             return empty(
-                $nickname = $this->api->getMemberName(
-                    $this->message->sender->group->id,
-                    $this->robot->getId()
-                )->getString("name", "")
+            $nickname = $this->api->getMemberName(
+                $this->message->sender->group->id,
+                $this->robot->getId()
+            )->getString("name", "")
             ) ? $this->robot->getNickname() : $nickname;
-        else
+        } else {
             return $this->robot->getNickname();
+        }
     }
 
     /**
@@ -185,22 +182,23 @@ abstract class MessageAction implements Action
      */
     final protected function sendMessage(string $message): void
     {
-        if ($this->message instanceof FriendMessage)
+        if ($this->message instanceof FriendMessage) {
             $this->api->sendFriendMessageAsync(
                 $this->message->sender->id,
                 Convertor::toMessageChain($message)
             );
-        elseif ($this->message instanceof GroupMessage)
+        } elseif ($this->message instanceof GroupMessage) {
             $this->api->sendGroupMessageAsync(
                 $this->message->sender->group->id,
                 Convertor::toMessageChain($message)
             );
-        elseif ($this->message instanceof TempMessage)
+        } elseif ($this->message instanceof TempMessage) {
             $this->api->sendTempMessageAsync(
                 $this->message->sender->id,
                 $this->message->sender->group->id,
                 Convertor::toMessageChain($message)
             );
+        }
     }
 
     /**
@@ -210,14 +208,15 @@ abstract class MessageAction implements Action
      * @param int|null $userId User ID
      * @param int|null $groupId Group ID
      */
-    final protected function sendPrivateMessage(string $message, int $userId = NULL, int $groupId = NULL): void
+    final protected function sendPrivateMessage(string $message, int $userId = null, int $groupId = null): void
     {
         $userId ??= $this->message->sender->id;
         $groupId ??= $this->message->sender->group->id ?? 0;
 
-        if ($this->robot->hasFriend($userId))
+        if ($this->robot->hasFriend($userId)) {
             $this->api->sendFriendMessageAsync($userId, Convertor::toMessageChain($message));
-        else
+        } else {
             $this->api->sendTempMessageAsync($userId, $groupId, Convertor::toMessageChain($message));
+        }
     }
 }

@@ -37,8 +37,9 @@ class DicePool extends MessageAction
     {
         list($detailed, $diceNumber, $threshold, $reason) = $this->parseOrder();
 
-        if (!$this->checkRange($threshold))
+        if (!$this->checkRange($threshold)) {
             return;
+        }
 
         list($finalResult, $details) = $this->dicing($diceNumber, $threshold);
 
@@ -71,8 +72,13 @@ class DicePool extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^(w?)\s*(?:([1-9][0-9]*)?\s*a\s*([1-9][0-9]*)?)?\s*([\S\s]*)$/i", $this->order, $matches))
+        if (!preg_match(
+            "/^(w?)\s*(?:([1-9][0-9]*)?\s*a\s*([1-9][0-9]*)?)?\s*([\S\s]*)$/i",
+            $this->order,
+            $matches
+        )) {
             throw new OrderErrorException;
+        }
 
         /** @var bool $detailed */
         $detailed = !empty($matches[1]);
@@ -95,8 +101,7 @@ class DicePool extends MessageAction
      */
     protected function checkRange(int $threshold): bool
     {
-        if ($threshold < 5 || $threshold > 10)
-        {
+        if ($threshold < 5 || $threshold > 10) {
             $this->reply = $this->reply = $this->config->getString("reply.dicePoolThresholdOverstep");
 
             return false;
@@ -121,18 +126,18 @@ class DicePool extends MessageAction
         $finalResult = 0;  // The number of results greater than 8
         $details = [];
 
-        while ($diceNumber)
-        {
+        while ($diceNumber) {
             $dice = isset($dice) ? clone $dice : new Dice("{$diceNumber}D", 10);
             $diceNumber = 0;
 
-            foreach ($dice->subexpressions[0]->results as $result)
-            {
-                if ($result >= $threshold)
+            foreach ($dice->subexpressions[0]->results as $result) {
+                if ($result >= $threshold) {
                     $diceNumber++;
+                }
 
-                if ($result >= 8)
+                if ($result >= 8) {
                     $finalResult++;
+                }
             }
 
             $details[] = $dice->subexpressions[0]->getResultString(",");

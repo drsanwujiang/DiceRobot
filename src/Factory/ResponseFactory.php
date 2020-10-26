@@ -138,14 +138,16 @@ class ResponseFactory
             "message" => self::RETURN_MESSAGE[$code] ?? "Unexpected code"
         ];
 
-        if ($data)
+        if ($data) {
             $content["data"] = $data;
+        }
 
         $psrResponse = $this->response
             ->withBody($this->psr17Factory->createStream((string) json_encode($content)));
 
-        if ($code != 0)
+        if ($code != 0) {
             $psrResponse = $psrResponse->withStatus(202);
+        }
 
         return $this->responseMerger->toSwoole($psrResponse, $response);
     }

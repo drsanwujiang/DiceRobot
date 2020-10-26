@@ -32,8 +32,9 @@ class Goodbye extends RobotOrderAction
     {
         list($targetId) = $this->parseOrder();
 
-        if (!$this->checkId($targetId) || !$this->checkPermission())
+        if (!$this->checkId($targetId) || !$this->checkPermission()) {
             return;
+        }
 
         // Send goodbye message
         $this->sendMessage($this->config->getString("reply.robotOrderGoodbye"));
@@ -51,11 +52,12 @@ class Goodbye extends RobotOrderAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([0-9]{4,})?$/", $this->order, $matches))
+        if (!preg_match("/^([0-9]{4,})?$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string|null $targetId */
-        $targetId = empty($matches[1]) ? NULL : $matches[1];
+        $targetId = empty($matches[1]) ? null : $matches[1];
 
         return [$targetId];
     }
@@ -71,18 +73,15 @@ class Goodbye extends RobotOrderAction
     {
         $robotId = (string) $this->robot->getId();
 
-        if ($this->message instanceof GroupMessage)
-        {
+        if ($this->message instanceof GroupMessage) {
             // Must at robot if no robot ID
             if (is_null($targetId))
                 return $this->at;
             // Must be the full QQ ID or the last 4 digital number
             else
                 return $targetId == $robotId || $targetId == substr($robotId, -4);
-        }
-        // Will not go on in private chat
-        else
-        {
+        } else {
+            // Will not go on in private chat
             if (is_null($targetId) || $targetId == $robotId || $targetId == substr($robotId, -4))
                 $this->reply = $this->config->getString("reply.robotOrderGoodbyePrivately'");
 
@@ -98,8 +97,7 @@ class Goodbye extends RobotOrderAction
     protected function checkPermission(): bool
     {
         // Must be the owner or the administrator in the group
-        if ($this->message->sender->permission == "MEMBER")
-        {
+        if ($this->message->sender->permission == "MEMBER") {
             $this->reply = $this->config->getString("reply.robotOrderGoodbyeDenied");
 
             return false;

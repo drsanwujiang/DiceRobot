@@ -24,8 +24,9 @@ class File
      */
     public static function checkDirectory(string $path): void
     {
-        if (!is_readable($path))
+        if (!is_readable($path)) {
             throw new RuntimeException("Directory {$path} exists but cannot be read.");
+        }
     }
 
     /**
@@ -38,8 +39,9 @@ class File
     public static function createDirectory(string $path): void
     {
         // Parent directory is not writable
-        if (!is_writable(dirname($path)) || false === mkdir($path, 0755))
+        if (!is_writable(dirname($path)) || false === mkdir($path, 0755)) {
             throw new RuntimeException("Directory {$path} cannot be created.");
+        }
     }
 
     /**
@@ -53,14 +55,17 @@ class File
      */
     public static function getFile(string $path): array
     {
-        if (!file_exists($path))
+        if (!file_exists($path)) {
             throw new RuntimeException("File {$path} does not exist.");
+        }
 
-        if (false === $jsonString = file_get_contents($path))
+        if (false === $jsonString = file_get_contents($path)) {
             throw new RuntimeException("File {$path} exists but cannot be read.");
+        }
 
-        if (!is_array($content = json_decode($jsonString, true)))
+        if (!is_array($content = json_decode($jsonString, true))) {
             throw new RuntimeException("File {$path} exists but cannot be parsed.");
+        }
 
         return $content;
     }
@@ -76,13 +81,15 @@ class File
     public static function putFile(string $path, string $content): void
     {
         // File or directory is not writable
-        if (file_exists($path) && !is_writable($path))
+        if (file_exists($path) && !is_writable($path)) {
             throw new RuntimeException("File {$path} exists but is not writable.");
-        elseif (!file_exists($path) && !is_writable(dirname($path)))
+        } elseif (!file_exists($path) && !is_writable(dirname($path))) {
             throw new RuntimeException("File {$path} cannot be created, for directory unwritable.");
+        }
 
         // Other writing errors
-        if (false === file_put_contents($path, $content))
+        if (false === file_put_contents($path, $content)) {
             throw new RuntimeException("File {$path} cannot be created, for other reason.");
+        }
     }
 }
