@@ -14,7 +14,7 @@
   "support": {
     "docs": "https://docs.drsanwujiang.com/dicerobot/",
     "issues": "https://github.com/drsanwujiang/DiceRobot/issues",
-    "source": "https://github.com/drsanwujiang/DiceRobot/"
+    "source": "https://github.com/drsanwujiang/DiceRobot"
   },
   "require": {
     "php": "^7.4",

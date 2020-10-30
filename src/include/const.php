@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Constants of DiceRobot.
  *
- * This file contains version (DICEROBOT_VERSION), working directory (DICEROBOT_ROOT) and default config
+ * This file contains version (DICEROBOT_VERSION), startup time (DICEROBOT_STARTUP) and default config
  * (DEFAULT_CONFIG) of DiceRobot.
  *
  * This file should NOT be modified, for it ensures DiceRobot can work in the default mode and behave as expected.
@@ -23,21 +23,8 @@ const DICEROBOT_VERSION = "2.0.0-beta";
 /** @var string Root directory */
 define("DICEROBOT_STARTUP", time());
 
-/** @var string Root directory */
-define("DICEROBOT_ROOT", dirname(dirname(__DIR__)));
-
 /** @var array Default config */
 const DEFAULT_CONFIG = [
-    "root" => DICEROBOT_ROOT,
-    "config" => DICEROBOT_ROOT . "/config",
-    "data" => [
-        "root" => DICEROBOT_ROOT . "/data",
-        "card" => DICEROBOT_ROOT . "/data/card",
-        "config" => DICEROBOT_ROOT . "/data/config",
-        "reference" => DICEROBOT_ROOT . "/data/reference",
-        "rule" => DICEROBOT_ROOT . "/data/rule"
-    ],
-
     "dicerobot" => [
         "version" => DICEROBOT_VERSION,
         "server" => [
@@ -55,18 +42,16 @@ const DEFAULT_CONFIG = [
             "port" => 8080
         ],
         "robot" => [
-            "id" => 10000,
             "authKey" => "12345678"
         ]
     ],
 
     "log" => [
         "channel" => "default",
-        "path" => DICEROBOT_ROOT . "/logs",
         "filename" => "dicerobot.log",
         "level" => [
             "file" => Logger::NOTICE,
-            "console" => Logger::CRITICAL,
+            "console" => Logger::CRITICAL
         ]
     ],
 
@@ -132,7 +117,7 @@ const DEFAULT_CONFIG = [
             2 => "看来你的虔诚很有限的说(￣▽￣)~*不过还是勉强保佑保佑你吧( ･´ω`･ )",
             3 => "看在你还算虔诚的份上，祝你下次出现成功的几率高一点吧ヾ(✿ﾟ▽ﾟ)ノ",
             4 => "你的虔诚感动人家了呢٩(๑>◡<๑)۶祝你接下来好♡运♡连♡连哦~ヾ(✿ﾟ▽ﾟ)ノ",
-            5 => "呐~ヾ(๑╹◡╹)ﾉ「{&机器人昵称}」会一直陪伴在君の身边的哟~☆♪",
+            5 => "呐~ヾ(๑╹◡╹)ﾉ「{&机器人昵称}」会一直陪伴在君の身边的哟~☆♪"
         ],
 
         /* Name */
@@ -212,7 +197,7 @@ const DEFAULT_CONFIG = [
         "diceSurfaceNumberOverstep" => "为什么会有这么多面的骰子啊(　д ) ﾟ ﾟ",
 
         /* File */
-        "fileLost" => "相关文件丢失，无法执行该指令！",
+        "fileLost" => "相关文件丢失，无法执行该指令！"
     ],
 
     "wording" => [

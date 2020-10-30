@@ -31,20 +31,21 @@ class LoggerFactory
     {
         $filenameFormat = "{filename}-{date}";
         $dateFormat = "Y-m-d H:i:s P";
-        $filename = sprintf('%s/%s', $config->getString("log.path"), $config->getString("log.filename"));
 
+        $logger = new Logger("default");
         $formatter = new LineFormatter(null, $dateFormat, false, true);
 
         $streamHandler = new StreamHandler("php://stdout", $config->getInt("log.level.console"));
         $streamHandler->setFormatter($formatter);
-
-        $rotatingFileHandler = new RotatingFileHandler($filename, 0, $config->getInt("log.level.file"));
-        $rotatingFileHandler->setFilenameFormat($filenameFormat, RotatingFileHandler::FILE_PER_DAY);
-        $rotatingFileHandler->setFormatter($formatter);
-
-        $logger = new Logger("default");
         $logger->pushHandler($streamHandler);
-        $logger->pushHandler($rotatingFileHandler);
+
+        if ($path = $config->findString("log.path")) {
+            $filename = sprintf('%s/%s', $path, $config->getString("log.filename"));
+            $rotatingFileHandler = new RotatingFileHandler($filename, 0, $config->getInt("log.level.file"));
+            $rotatingFileHandler->setFilenameFormat($filenameFormat, RotatingFileHandler::FILE_PER_DAY);
+            $rotatingFileHandler->setFormatter($formatter);
+            $logger->pushHandler($rotatingFileHandler);
+        }
 
         $this->logger = $logger;
     }

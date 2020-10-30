@@ -2,23 +2,22 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Traits\AppTraits;
+namespace DiceRobot\Service;
 
 use Cake\Chronos\Chronos;
 use DiceRobot\Data\Report\Contact\{GroupSender, Sender};
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage};
 use DiceRobot\Data\Resource\Statistics;
-use DiceRobot\Service\ResourceService;
 use Swoole\Timer;
 
 /**
- * Trait StatisticsTrait
+ * Class StatisticsService
  *
- * The application statistics trait.
+ * Statistics service.
  *
- * @package DiceRobot\Traits\AppTraits
+ * @package DiceRobot\Service
  */
-trait StatisticsTrait
+class StatisticsService
 {
     /** @var ResourceService Data service */
     protected ResourceService $resource;
@@ -27,32 +26,47 @@ trait StatisticsTrait
     protected Statistics $statistics;
 
     /** @var string[] Statistics timeline */
-    protected array $statisticsTimeline;
+    protected array $timeline;
 
     /** @var int[] Statistics counts */
-    protected array $statisticsCounts;
+    protected array $counts;
 
     /** @var int Current statistics count */
-    protected int $currentCount;
+    protected int $count;
 
     /**
-     * Initialize statistics.
+     * The constructor.
+     *
+     * @param ResourceService $resource
      */
-    protected function initializeStatistics(): void
+    public function __construct(ResourceService $resource)
+    {
+        $this->resource = $resource;
+    }
+
+    /**
+     * Initialize statistics service.
+     *
+     * @return bool
+     */
+    public function initialize(): bool
     {
         $this->statistics = $this->resource->getStatistics();
+
         $this->updateTimeline();
-        $this->statisticsCounts = array_fill(0, 6, 0);
-        $this->currentCount = $this->statistics->getInt("sum");
+        $this->counts = array_fill(0, 6, 0);
+        $this->count = $this->statistics->getInt("sum");
 
         // Update timeline and counts every 10 minutes
         Timer::tick(600000, function () {
             $this->updateTimeline();
-            array_shift($this->statisticsCounts);
+            array_shift($this->counts);
             $currentCount = $this->statistics->getInt("sum");
-            $this->statisticsCounts[] = $currentCount - $this->currentCount;
-            $this->currentCount = $currentCount;
+            $this->counts[] = $currentCount - $this->count;
+            $this->count = $currentCount;
         });
+
+        return true;
     }
 
     /**
@@ -63,7 +77,7 @@ trait StatisticsTrait
         $now = Chronos::now();
         $format = "G:i";
 
-        $this->statisticsTimeline = [
+        $this->timeline = [
             $now->subMinutes(50)->format($format),
             $now->subMinutes(40)->format($format),
             $now->subMinutes(30)->format($format),
@@ -80,7 +94,7 @@ trait StatisticsTrait
      * @param string $messageType
      * @param Sender $sender
      */
-    protected function addCount(string $order, string $messageType, Sender $sender): void
+    public function addCount(string $order, string $messageType, Sender $sender): void
     {
         $this->statistics->addOrderCount($order);
 
@@ -89,5 +103,35 @@ trait StatisticsTrait
         } elseif ($messageType == GroupMessage::class && $sender instanceof GroupSender) {
             $this->statistics->addGroupCount($sender->group->id);
         }
+    }
+
+    /**
+     * Get all the statistics data.
+     *
+     * @return array
+     */
+    public function getAllData(): array
+    {
+        return $this->statistics->all();
+    }
+
+    /**
+     * Get timeline.
+     *
+     * @return string[]
+     */
+    public function getTimeline(): array
+    {
+        return $this->timeline;
+    }
+
+    /**
+     * Get counts.
+     *
+     * @return int[]
+     */
+    public function getCounts(): array
+    {
+        return $this->counts;
     }
 }

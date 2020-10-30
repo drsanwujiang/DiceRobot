@@ -29,18 +29,20 @@ class Nickname extends MessageAction
      */
     public function __invoke(): void
     {
-        list($nickname) = $this->parseOrder();
+        list($newNickname) = $this->parseOrder();
 
-        if (!empty($nickname)) {
+        if (!empty($newNickname)) {
+            $currentNickname = $this->getNickname();
+
             // Set nickname
-            $this->chatSettings->setNickname($this->message->sender->id, $nickname);
+            $this->chatSettings->setNickname($this->message->sender->id, $newNickname);
 
             $this->reply =
                 Convertor::toCustomString(
                     $this->config->getString("reply.nicknameChanged"),
                     [
-                        "昵称" => $this->getNickname(),
-                        "新昵称" => $nickname
+                        "昵称" => $currentNickname,
+                        "新昵称" => $newNickname
                     ]
                 );
         } else {

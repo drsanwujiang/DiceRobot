@@ -8,7 +8,7 @@ use DiceRobot\Data\{Dice, Subexpression};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Factory\LoggerFactory;
-use DiceRobot\Service\{ApiService, ResourceService, RobotService};
+use DiceRobot\Service\{ApiService, ResourceService, RobotService, StatisticsService};
 use DiceRobot\Traits\AppTraits\{StatusTrait, HeartbeatHandlerTrait, ReportHandlerTrait};
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -40,6 +40,9 @@ class App
     /** @var RobotService Robot service */
     protected RobotService $robot;
 
+    /** @var StatisticsService Statistics service */
+    protected StatisticsService $statistics;
+
     /** @var LoggerInterface Logger */
     protected LoggerInterface $logger;
 
@@ -57,6 +60,7 @@ class App
      * @param ApiService $api
      * @param ResourceService $resource
      * @param RobotService $robot
+     * @param StatisticsService $statistics
      * @param LoggerFactory $loggerFactory
      */
     public function __construct(
@@ -65,6 +69,7 @@ class App
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,
+        StatisticsService $statistics,
         LoggerFactory $loggerFactory
     ) {
         $this->status = AppStatusEnum::WAITING();
@@ -73,6 +78,7 @@ class App
         $this->api = $api;
         $this->resource = $resource;
         $this->robot = $robot;
+        $this->statistics = $statistics;
         $this->logger = $loggerFactory->create("Application");
 
         $this->logger->notice("Application started.");
@@ -86,7 +92,7 @@ class App
     protected function initialize(): void
     {
         /** Primary initialization */
-        if (!$this->resource->initialize()) {
+        if (!$this->resource->initialize() || !$this->statistics->initialize()) {
             $this->status = AppStatusEnum::STOPPED();
 
             $this->logger->emergency("Initialize application failed.");
@@ -96,7 +102,6 @@ class App
 
         /** Secondary initialization */
         $this->globalInitialize();  // Global initialization
-        $this->initializeStatistics();
 
         $this->status = AppStatusEnum::HOLDING();
 
@@ -158,14 +163,14 @@ class App
      */
     public function statistics(): array
     {
-        $statistics = $this->statistics->all();
+        $statistics = $this->statistics->getAllData();
         $data = [
             "sum" => $statistics["sum"],
             "orders" => [],
             "groups" => [],
             "friends" => [],
-            "timeline" => $this->statisticsTimeline,
-            "counts" => $this->statisticsCounts
+            "timeline" => $this->statistics->getTimeline(),
+            "counts" => $this->statistics->getCounts()
         ];
 
         foreach (["orders", "groups", "friends"] as $type) {
@@ -247,6 +252,7 @@ class App
      * @return int Result code
      *
      * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function reload(): int
     {

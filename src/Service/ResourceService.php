@@ -27,7 +27,7 @@ class ResourceService
     protected LoggerInterface $logger;
 
     /** @var array */
-    protected array $directories;
+    protected array $directories = [];
 
     /** @var CharacterCard[] */
     protected array $characterCards = [];
@@ -53,9 +53,9 @@ class ResourceService
     public function __construct(LoggerFactory $loggerFactory, Configuration $config)
     {
         $this->logger = $loggerFactory->create("Resource");
-        $this->directories = $config->getArray("data");
-        $this->directories["config.friend"] = $this->directories["config"] . "/friend";
-        $this->directories["config.group"] = $this->directories["config"] . "/group";
+        $this->directories = $config->findArray("data") ?? [];
+        $this->directories["config.friend"] = ($this->directories["config"] ?? "") . "/friend";
+        $this->directories["config.group"] = ($this->directories["config"] ?? "") . "/group";
     }
 
     /**
@@ -160,16 +160,18 @@ class ResourceService
      */
     protected function loadCharacterCards(): void
     {
-        $d = dir($this->directories["card"]);
+        if (isset($this->directories["card"])) {
+            $d = dir($this->directories["card"]);
 
-        while (false !== $f = $d->read()) {
-            if (preg_match("/^([1-9][0-9]{0,5}).json/", $f, $matches)) {
-                $this->characterCards[(int) $matches[1]] =
-                    new CharacterCard(File::getFile("{$this->directories["card"]}/{$f}"));
+            while (false !== $f = $d->read()) {
+                if (preg_match("/^([1-9][0-9]{0,5}).json/", $f, $matches)) {
+                    $this->characterCards[(int) $matches[1]] =
+                        new CharacterCard(File::getFile("{$this->directories["card"]}/{$f}"));
+                }
             }
-        }
 
-        $d->close();
+            $d->close();
+        }
     }
 
     /**
@@ -179,17 +181,19 @@ class ResourceService
      */
     protected function loadChatSettings(): void
     {
-        foreach (["friend", "group"] as $type) {
-            $d = dir($this->directories["config.{$type}"]);
+        if (isset($this->directories["config"])) {
+            foreach (["friend", "group"] as $type) {
+                $d = dir($this->directories["config.{$type}"]);
 
-            while (false !== $f = $d->read()) {
-                if (preg_match("/^([1-9][0-9]{4,9}).json/", $f, $matches)) {
-                    $this->chatSettings[$type][(int) $matches[1]] =
-                        new ChatSettings(File::getFile("{$this->directories["config.{$type}"]}/{$f}"));
+                while (false !== $f = $d->read()) {
+                    if (preg_match("/^([1-9][0-9]{4,9}).json/", $f, $matches)) {
+                        $this->chatSettings[$type][(int) $matches[1]] =
+                            new ChatSettings(File::getFile("{$this->directories["config.{$type}"]}/{$f}"));
+                    }
                 }
-            }
 
-            $d->close();
+                $d->close();
+            }
         }
     }
 
@@ -200,16 +204,18 @@ class ResourceService
      */
     protected function loadReferences(): void
     {
-        $d = dir($this->directories["reference"]);
+        if (isset($this->directories["reference"])) {
+            $d = dir($this->directories["reference"]);
 
-        while (false !== $f = $d->read()) {
-            if (preg_match("/^([a-zA-z]+).json/", $f, $matches)) {
-                $this->references[$matches[1]] =
-                    new Reference(File::getFile("{$this->directories["reference"]}/{$f}"));
+            while (false !== $f = $d->read()) {
+                if (preg_match("/^([a-zA-z]+).json/", $f, $matches)) {
+                    $this->references[$matches[1]] =
+                        new Reference(File::getFile("{$this->directories["reference"]}/{$f}"));
+                }
             }
-        }
 
-        $d->close();
+            $d->close();
+        }
     }
 
     /**
@@ -219,16 +225,18 @@ class ResourceService
      */
     protected function loadCheckRules(): void
     {
-        $d = dir($this->directories["rule"]);
+        if (isset($this->directories["rule"])) {
+            $d = dir($this->directories["rule"]);
 
-        while (false !== $f = $d->read()) {
-            if (preg_match("/^([0-9]{1,2}).json/", $f, $matches)) {
-                $this->checkRules[(int) $matches[1]] =
-                    new CheckRule(File::getFile("{$this->directories["rule"]}/{$f}"));
+            while (false !== $f = $d->read()) {
+                if (preg_match("/^([0-9]{1,2}).json/", $f, $matches)) {
+                    $this->checkRules[(int) $matches[1]] =
+                        new CheckRule(File::getFile("{$this->directories["rule"]}/{$f}"));
+                }
             }
-        }
 
-        $d->close();
+            $d->close();
+        }
     }
 
     /**
@@ -236,10 +244,12 @@ class ResourceService
      */
     protected function loadStatistics(): void
     {
-        try {
-            $this->statistics = new Statistics(File::getFile("{$this->directories["config"]}/statistics.json"));
-        } catch (RuntimeException $e) {
-            $this->statistics = new Statistics([]);
+        if (isset($this->directories["root"])) {
+            try {
+                $this->statistics = new Statistics(File::getFile("{$this->directories["root"]}/statistics.json"));
+            } catch (RuntimeException $e) {
+                $this->statistics = new Statistics([]);
+            }
         }
     }
 
@@ -250,8 +260,10 @@ class ResourceService
      */
     protected function saveCharacterCards(): void
     {
-        foreach ($this->characterCards as $cardId => $card) {
-            File::putFile("{$this->directories["card"]}/{$cardId}.json", (string) $card);
+        if (isset($this->directories["card"])) {
+            foreach ($this->characterCards as $cardId => $card) {
+                File::putFile("{$this->directories["card"]}/{$cardId}.json", (string) $card);
+            }
         }
     }
 
@@ -262,9 +274,11 @@ class ResourceService
      */
     protected function saveChatSettings(): void
     {
-        foreach (["friend", "group"] as $type) {
-            foreach ($this->chatSettings[$type] as $chatId => $chatSettings) {
-                File::putFile("{$this->directories["config.{$type}"]}/{$chatId}.json", (string) $chatSettings);
+        if (isset($this->directories["config"])) {
+            foreach (["friend", "group"] as $type) {
+                foreach ($this->chatSettings[$type] as $chatId => $chatSettings) {
+                    File::putFile("{$this->directories["config.{$type}"]}/{$chatId}.json", (string) $chatSettings);
+                }
             }
         }
     }
@@ -276,8 +290,10 @@ class ResourceService
      */
     protected function saveReferences(): void
     {
-        foreach ($this->references as $name => $reference) {
-            File::putFile("{$this->directories["reference"]}/{$name}.json", (string) $reference);
+        if (isset($this->directories["reference"])) {
+            foreach ($this->references as $name => $reference) {
+                File::putFile("{$this->directories["reference"]}/{$name}.json", (string) $reference);
+            }
         }
     }
 
@@ -288,8 +304,10 @@ class ResourceService
      */
     protected function saveCheckRules(): void
     {
-        foreach ($this->checkRules as $ruleId => $rule) {
-            File::putFile("{$this->directories["rule"]}/{$ruleId}.json", (string) $rule);
+        if (isset($this->directories["rule"])) {
+            foreach ($this->checkRules as $ruleId => $rule) {
+                File::putFile("{$this->directories["rule"]}/{$ruleId}.json", (string) $rule);
+            }
         }
     }
 
@@ -300,7 +318,9 @@ class ResourceService
      */
     protected function saveStatistics(): void
     {
-        File::putFile("{$this->directories["config"]}/statistics.json", (string) $this->statistics);
+        if (isset($this->directories["root"])) {
+            File::putFile("{$this->directories["root"]}/statistics.json", (string) $this->statistics);
+        }
     }
 
     /**

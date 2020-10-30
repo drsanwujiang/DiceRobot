@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\{DiceRobotException, MiraiApiException};
 use DiceRobot\Interfaces\Report;
-use DiceRobot\Service\{ApiService, RobotService};
+use DiceRobot\Service\{ApiService, RobotService, StatisticsService};
 use DiceRobot\Util\Convertor;
 use Psr\Container\ContainerInterface;
 use Selective\Config\Configuration;
@@ -37,11 +37,12 @@ trait ReportHandlerTrait
     /** @var RobotService Robot service */
     protected RobotService $robot;
 
+    /** @var StatisticsService Statistics service */
+    protected StatisticsService $statistics;
+
     use StatusTrait;
 
     use RouteCollectorTrait;
-
-    use StatisticsTrait;
 
     /**
      * Handle message and event report.
@@ -161,7 +162,7 @@ trait ReportHandlerTrait
             "at" => $at
         ]);
 
-        $this->addCount($match, get_class($message), $message->sender);
+        $this->statistics->addCount($match, get_class($message), $message->sender);
 
         if (!$action->checkActive()) {
             $this->logger->info("Report finished, robot inactive.");
