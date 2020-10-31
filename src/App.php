@@ -163,7 +163,7 @@ class App
     /**
      * Get application status.
      *
-     * @return array Result code and data
+     * @return int Result code
      */
     public function status(): int
     {
