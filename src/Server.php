@@ -311,6 +311,9 @@ class Server
         $this->server->shutdown();
     }
 
+    /**
+     * @param Response $response
+     */
     protected function restart(Response $response): void
     {
         $this->logger->notice("Server received HTTP request, restart application.");

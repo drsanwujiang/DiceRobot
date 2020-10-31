@@ -31,6 +31,7 @@ class ResponseFactory
         -1011 => "Application cannot be rerun",
         -1012 => "Rerun application failed",
         -1020 => "Reload application failed",
+        -1040 => "Application cannot be restarted",
 
         -2000 => "Mirai is not setup as service",
         -2001 => "Start Mirai failed",
