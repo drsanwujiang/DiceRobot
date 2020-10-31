@@ -76,9 +76,7 @@ class App
         ResourceService $resource,
         RobotService $robot,
         StatisticsService $statistics,
-        LoggerFactory $loggerFactory,
-        HeartbeatHandler $heartbeatHandler,
-        ReportHandler $reportHandler
+        LoggerFactory $loggerFactory
     ) {
         $this->status = AppStatusEnum::WAITING();
         $this->container = $container;
@@ -88,8 +86,8 @@ class App
         $this->robot = $robot;
         $this->statistics = $statistics;
         $this->logger = $loggerFactory->create("Application");
-        $this->heartbeatHandler = $heartbeatHandler;
-        $this->reportHandler = $reportHandler;
+        $this->heartbeatHandler = $container->get(HeartbeatHandler::class);
+        $this->reportHandler = $container->get(ReportHandler::class);
         $this->logger->notice("Application started.");
 
         $this->initialize();
