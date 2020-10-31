@@ -42,6 +42,7 @@ const DEFAULT_CONFIG = [
             "port" => 8080
         ],
         "robot" => [
+            "id" => 10000,
             "authKey" => "12345678"
         ]
     ],

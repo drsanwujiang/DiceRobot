@@ -250,6 +250,8 @@ class ResourceService
             } catch (RuntimeException $e) {
                 $this->statistics = new Statistics([]);
             }
+        } else {
+            $this->statistics = new Statistics([]);
         }
     }
 

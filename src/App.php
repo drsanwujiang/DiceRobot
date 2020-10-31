@@ -66,8 +66,6 @@ class App
      * @param RobotService $robot
      * @param StatisticsService $statistics
      * @param LoggerFactory $loggerFactory
-     * @param HeartbeatHandler $heartbeatHandler
-     * @param ReportHandler $reportHandler
      */
     public function __construct(
         ContainerInterface $container,
@@ -86,18 +84,17 @@ class App
         $this->robot = $robot;
         $this->statistics = $statistics;
         $this->logger = $loggerFactory->create("Application");
-        $this->heartbeatHandler = $container->get(HeartbeatHandler::class);
-        $this->reportHandler = $container->get(ReportHandler::class);
-        $this->logger->notice("Application started.");
 
-        $this->initialize();
+        $this->logger->notice("Application started.");
     }
 
     /**
      * Initialize application.
      */
-    protected function initialize(): void
+    public function initialize(): void
     {
+        $this->setHandlers();
+
         /** Primary initialization */
         if (!$this->resource->initialize() || !$this->statistics->initialize()) {
             $this->status = AppStatusEnum::STOPPED();
@@ -113,6 +110,15 @@ class App
         $this->status = AppStatusEnum::HOLDING();
 
         $this->logger->notice("Application initialized.");
+    }
+
+    /**
+     * Set default handlers.
+     */
+    protected function setHandlers(): void
+    {
+        $this->heartbeatHandler = $this->container->get(HeartbeatHandler::class);
+        $this->reportHandler = $this->container->get(ReportHandler::class);
     }
 
     /**
