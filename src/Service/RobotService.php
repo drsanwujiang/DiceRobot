@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
+use DiceRobot\Exception\MiraiApiException;
+use DiceRobot\Factory\LoggerFactory;
+use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Data\Contact\{Friend, Group, Robot};
+use Psr\Log\LoggerInterface;
 use Selective\Config\Configuration;
 
 /**
@@ -16,6 +20,12 @@ use Selective\Config\Configuration;
  */
 class RobotService
 {
+    /** @var LoggerInterface Logger */
+    protected LoggerInterface $logger;
+
+    /** @var ApiService API service */
+    protected ApiService $api;
+
     /** @var Robot Robot */
     protected Robot $robot;
 
@@ -34,14 +44,44 @@ class RobotService
     /**
      * The constructor.
      *
+     * @param LoggerFactory $loggerFactory
+     * @param ApiService $api
      * @param Configuration $config
      */
-    public function __construct(Configuration $config)
+    public function __construct(LoggerFactory $loggerFactory, ApiService $api, Configuration $config)
     {
+        $this->logger = $loggerFactory->create("Robot");
+        $this->api = $api;
         $this->robot = new Robot();
         $this->robot->id = $config->getInt("mirai.robot.id");
         $this->robot->nickname = "Unknown";
         $this->robot->authKey = $config->getString("mirai.robot.authKey");
+    }
+
+    /**
+     * Update robot service.
+     *
+     * @return bool
+     */
+    public function update(): bool
+    {
+        try {
+            // Update lists
+            $this->updateFriends($this->api->getFriendList()->all());
+            $this->updateGroups($this->api->getGroupList()->all());
+            $this->updateNickname($this->api->getNickname($this->getId())->nickname);
+
+            // Report to DiceRobot API
+            $this->api->updateRobotAsync($this->getId());
+
+            $this->logger->info("Robot updated.");
+
+            return true;
+        } catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
+            $this->logger->alert("Update robot failed, unable to call Mirai API.");
+
+            return false;
+        }
     }
 
     /**

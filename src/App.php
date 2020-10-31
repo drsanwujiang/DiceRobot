@@ -9,7 +9,9 @@ use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService, StatisticsService};
-use DiceRobot\Traits\AppTraits\{StatusTrait, HeartbeatHandlerTrait, ReportHandlerTrait};
+use DiceRobot\Handlers\HeartbeatHandler;
+use DiceRobot\Handlers\ReportHandler;
+use DiceRobot\Traits\AppTraits\StatusTrait;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -46,11 +48,13 @@ class App
     /** @var LoggerInterface Logger */
     protected LoggerInterface $logger;
 
+    /** @var HeartbeatHandler Heartbeat handler */
+    protected HeartbeatHandler $heartbeatHandler;
+
+    /** @var ReportHandler Report handler */
+    protected ReportHandler $reportHandler;
+
     use StatusTrait;
-
-    use HeartbeatHandlerTrait;
-
-    use ReportHandlerTrait;
 
     /**
      * The constructor.
@@ -62,6 +66,8 @@ class App
      * @param RobotService $robot
      * @param StatisticsService $statistics
      * @param LoggerFactory $loggerFactory
+     * @param HeartbeatHandler $heartbeatHandler
+     * @param ReportHandler $reportHandler
      */
     public function __construct(
         ContainerInterface $container,
@@ -70,7 +76,9 @@ class App
         ResourceService $resource,
         RobotService $robot,
         StatisticsService $statistics,
-        LoggerFactory $loggerFactory
+        LoggerFactory $loggerFactory,
+        HeartbeatHandler $heartbeatHandler,
+        ReportHandler $reportHandler
     ) {
         $this->status = AppStatusEnum::WAITING();
         $this->container = $container;
@@ -80,7 +88,8 @@ class App
         $this->robot = $robot;
         $this->statistics = $statistics;
         $this->logger = $loggerFactory->create("Application");
-
+        $this->heartbeatHandler = $heartbeatHandler;
+        $this->reportHandler = $reportHandler;
         $this->logger->notice("Application started.");
 
         $this->initialize();
@@ -117,6 +126,16 @@ class App
         Subexpression::globalInitialize($this->config);
     }
 
+    /**
+     * Register routes.
+     *
+     * @param array $routes The routes
+     */
+    public function registerRoutes(array $routes): void
+    {
+        $this->reportHandler->registerRoutes($routes);
+    }
+
     /******************************************************************************
      *                              Application APIs                              *
      ******************************************************************************/
@@ -146,14 +165,9 @@ class App
      *
      * @return array Result code and data
      */
-    public function status(): array
+    public function status(): int
     {
-        return [
-            0,
-            [
-                "status" => $this->getStatus()->getValue()
-            ]
-        ];
+        return $this->getStatus()->getValue();
     }
 
     /**
@@ -230,7 +244,7 @@ class App
 
         try {
             // Initialize API service, then update robot service
-            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->updateRobot()) {
+            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
                 $this->setStatus(AppStatusEnum::RUNNING());
 
                 $this->logger->notice("Application rerun.");
@@ -300,5 +314,23 @@ class App
         $this->logger->notice("Application exited.");
 
         return 0;
+    }
+
+    /**
+     * Handle heartbeat.
+     */
+    public function heartbeat(): void
+    {
+        $this->heartbeatHandler->handle();
+    }
+
+    /**
+     * Handle report
+     *
+     * @param string $content Report content
+     */
+    public function report(string $content): void
+    {
+        $this->reportHandler->handle($content);
     }
 }

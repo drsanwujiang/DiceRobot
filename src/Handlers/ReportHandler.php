@@ -2,34 +2,40 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Traits\AppTraits;
+namespace DiceRobot\Handlers;
 
-use DiceRobot\Factory\ReportFactory;
+use DiceRobot\App;
 use DiceRobot\Action\{EventAction, MessageAction};
 use DiceRobot\Data\Report\{Event, InvalidReport, Message};
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\{DiceRobotException, MiraiApiException};
+use DiceRobot\Factory\{LoggerFactory, ReportFactory};
 use DiceRobot\Interfaces\Report;
 use DiceRobot\Service\{ApiService, RobotService, StatisticsService};
+use DiceRobot\Traits\RouteCollectorTrait;
 use DiceRobot\Util\Convertor;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Selective\Config\Configuration;
 
 /**
- * Trait ReportHandlerTrait
+ * Class ReportHandler
  *
- * The report handler trait.
+ * The report handler.
  *
- * @package DiceRobot\Traits
+ * @package DiceRobot\Handlers
  */
-trait ReportHandlerTrait
+class ReportHandler
 {
     /** @var ContainerInterface Container */
     protected ContainerInterface $container;
 
     /** @var Configuration Config */
     protected Configuration $config;
+
+    /** @var App Application */
+    protected App $app;
 
     /** @var ApiService API service */
     protected ApiService $api;
@@ -40,16 +46,46 @@ trait ReportHandlerTrait
     /** @var StatisticsService Statistics service */
     protected StatisticsService $statistics;
 
-    use StatusTrait;
+    /** @var LoggerInterface Logger */
+    protected LoggerInterface $logger;
 
     use RouteCollectorTrait;
+
+    /**
+     * The constructor.
+     *
+     * @param ContainerInterface $container
+     * @param Configuration $config
+     * @param App $app
+     * @param ApiService $api
+     * @param RobotService $robot
+     * @param StatisticsService $statistics
+     * @param LoggerFactory $loggerFactory
+     */
+    public function __construct(
+        ContainerInterface $container,
+        Configuration $config,
+        App $app,
+        ApiService $api,
+        RobotService $robot,
+        StatisticsService $statistics,
+        LoggerFactory $loggerFactory
+    ) {
+        $this->container = $container;
+        $this->config = $config;
+        $this->app = $app;
+        $this->api = $api;
+        $this->robot = $robot;
+        $this->statistics = $statistics;
+        $this->logger = $loggerFactory->create("Handler");
+    }
 
     /**
      * Handle message and event report.
      *
      * @param string $reportContent
      */
-    public function report(string $reportContent): void
+    public function handle(string $reportContent): void
     {
         $this->logger->debug("Receive report, content: {$reportContent}");
 
@@ -86,8 +122,8 @@ trait ReportHandlerTrait
     protected function event(Event $event): void
     {
         // Check application status
-        if ($this->getStatus()->lessThan(AppStatusEnum::RUNNING())) {
-            $this->logger->info("Report skipped. Application status {$this->getStatus()}.");
+        if ($this->app->getStatus()->lessThan(AppStatusEnum::RUNNING())) {
+            $this->logger->info("Report skipped. Application status {$this->app->getStatus()}.");
 
             return;
         }
@@ -126,8 +162,8 @@ trait ReportHandlerTrait
     protected function message(Message $message): void
     {
         // Check application status
-        if (!$this->getStatus()->equals(AppStatusEnum::RUNNING())) {
-            $this->logger->info("Report skipped. Application status {$this->getStatus()}.");
+        if (!$this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
+            $this->logger->info("Report skipped. Application status {$this->app->getStatus()}.");
 
             return;
         }

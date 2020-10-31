@@ -40,7 +40,7 @@ class BotOnline extends EventAction
         $this->logger->notice("Robot is online (login).");
 
         // Try to initialize API service, then update robot service
-        if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->app->updateRobot()) {
+        if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
             if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()))
                 $this->app->setStatus(AppStatusEnum::RUNNING());
 

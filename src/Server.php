@@ -22,9 +22,6 @@ use Swoole\Http\{Request, Response};
  */
 class Server
 {
-    /** @var Configuration Config */
-    protected Configuration $config;
-
     /** @var App Application */
     protected App $app;
 
@@ -51,7 +48,6 @@ class Server
         ResponseFactory $responseFactory,
         LoggerFactory $loggerFactory
     ) {
-        $this->config = $config;
         $this->app = $app;
         $this->responseFactory = $responseFactory;
         $this->logger = $loggerFactory->create("Server");
@@ -233,9 +229,22 @@ class Server
     {
         $this->logger->info("Server received HTTP request, get application status.");
 
-        list($code, $data) = $this->app->status();
+        $appStatus = $this->app->status();
+        $code = -1;
 
-        $this->responseFactory->create($code, $data, $response)->end();
+        extract(System::exec("/bin/systemctl status dicerobot"), EXTR_OVERWRITE);
+
+        if ($code == 4) {
+            $status = -2;
+        } elseif ($code == 3) {
+            $status = -1;
+        } elseif ($code == 0) {
+            $status = 0;
+        } else {
+            $status = -3;
+        }
+
+        $this->responseFactory->create(0, ["app" => $appStatus, "service" => $status], $response)->end();
     }
 
     /**
@@ -300,6 +309,23 @@ class Server
         $this->logger->notice("Server exited.");
 
         $this->server->shutdown();
+    }
+
+    protected function restart(Response $response): void
+    {
+        $this->logger->notice("Server received HTTP request, restart application.");
+
+        $code = -1;
+
+        extract(System::exec("/bin/systemctl status dicerobot"), EXTR_OVERWRITE);
+
+        if ($code != 0) {
+            $this->responseFactory->create(1040, null, $response)->end();
+        } else {
+            $this->responseFactory->create(0, null, $response)->end();
+
+            System::exec("/bin/systemctl restart dicerobot");
+        }
     }
 
     /**
@@ -393,23 +419,23 @@ class Server
      ******************************************************************************/
 
     /**
-     * @param string $content
      * @param Response $response
      */
-    protected function report(string $content, Response $response): void
+    protected function heartbeat(Response $response): void
     {
-        $this->app->report($content);
+        $this->app->heartbeat();
 
         // Respond nothing to Mirai API HTTP
         $this->responseFactory->createEmpty($response)->end();
     }
 
     /**
+     * @param string $content
      * @param Response $response
      */
-    protected function heartbeat(Response $response): void
+    protected function report(string $content, Response $response): void
     {
-        $this->app->heartbeat();
+        $this->app->report($content);
 
         // Respond nothing to Mirai API HTTP
         $this->responseFactory->createEmpty($response)->end();

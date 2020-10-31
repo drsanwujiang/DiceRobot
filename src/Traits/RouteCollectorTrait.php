@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Traits\AppTraits;
+namespace DiceRobot\Traits;
 
 use DiceRobot\Data\Report\{Event, Message};
 
@@ -24,7 +24,7 @@ trait RouteCollectorTrait
     /**
      * Register event and message routes.
      *
-     * @param array $routes
+     * @param array $routes The routes
      */
     public function registerRoutes(array $routes): void
     {
