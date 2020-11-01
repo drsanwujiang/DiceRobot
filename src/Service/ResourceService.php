@@ -44,35 +44,38 @@ class ResourceService
     /** @var Statistics */
     protected Statistics $statistics;
 
+    /** @var bool Loaded */
+    protected bool $isLoaded = false;
+
     /**
      * The constructor.
      *
      * @param LoggerFactory $loggerFactory
-     * @param Configuration $config
      */
-    public function __construct(LoggerFactory $loggerFactory, Configuration $config)
+    public function __construct(LoggerFactory $loggerFactory)
     {
         $this->logger = $loggerFactory->create("Resource");
-        $this->directories = $config->findArray("data") ?? [];
-        $this->directories["config.friend"] = ($this->directories["config"] ?? "") . "/friend";
-        $this->directories["config.group"] = ($this->directories["config"] ?? "") . "/group";
     }
 
     /**
      * Initialize resource service.
      *
-     * @return bool
+     * @param Configuration $config
+     *
+     * @throws RuntimeException
      */
-    public function initialize(): bool
+    public function initialize(Configuration $config): void
     {
+        $this->directories = $config->findArray("data") ?? [];
+        $this->directories["config.friend"] = ($this->directories["config"] ?? "") . "/friend";
+        $this->directories["config.group"] = ($this->directories["config"] ?? "") . "/group";
+
         if ($this->checkDirectories() && $this->loadAll()) {
             $this->logger->notice("Resource service initialized.");
-
-            return true;
         } else {
             $this->logger->alert("Initialize resource service failed.");
 
-            return false;
+            throw new RuntimeException("Initialize resource service failed");
         }
     }
 
@@ -110,12 +113,18 @@ class ResourceService
      */
     public function loadAll(): bool
     {
+        if ($this->isLoaded && !$this->saveAll()) {
+            return false;
+        }
+
         try {
             $this->loadCharacterCards();
             $this->loadChatSettings();
             $this->loadReferences();
             $this->loadCheckRules();
             $this->loadStatistics();
+
+            $this->isLoaded = true;
         } catch (RuntimeException $e) {
             $this->logger->error($e);
             $this->logger->critical("Load resources failed.");

@@ -38,18 +38,22 @@ class ApiService
      * The constructor.
      *
      * @param LoggerFactory $loggerFactory
-     * @param Configuration $config
      */
-    public function __construct(LoggerFactory $loggerFactory, Configuration $config)
+    public function __construct(LoggerFactory $loggerFactory)
     {
         $this->logger = $loggerFactory->create("Api");
+    }
+
+    /**
+     * Initialize API service.
+     *
+     * @param Configuration $config
+     */
+    public function initialize(Configuration $config): void
+    {
         $this->pools = [
             Saber::create([
-                "base_uri" =>
-                    "http://" .
-                    $config->getString("mirai.server.host") .
-                    ":" .
-                    $config->getString("mirai.server.port"),
+                "base_uri" => "http://{$config->getString("mirai.server.host")}:{$config->getString("mirai.server.port")}",
                 "use_pool" => true,
                 "headers" => [
                     "Content-Type" => ContentType::JSON,
@@ -77,10 +81,12 @@ class ApiService
                 }
             ])
         ];
+
+        $this->logger->notice("API service initialized.");
     }
 
     /**
-     * Test if the session key has
+     * Test if the session key exists.
      *
      * @return bool
      */
@@ -90,7 +96,7 @@ class ApiService
     }
 
     /**
-     * Initialize API service.
+     * Initialize Mirai session.
      *
      * @param string $authKey
      * @param int $robotId
@@ -99,13 +105,13 @@ class ApiService
      *
      * @throws MiraiApiException
      */
-    public function initialize(string $authKey, int $robotId): bool
+    public function initSession(string $authKey, int $robotId): bool
     {
         // Create session
         $result = $this->authSession($authKey);
 
         if (0 != $result->getInt("code", -1)) {
-            $this->logger->alert("Initialize API service failed, session not created.");
+            $this->logger->alert("Initialize session failed, session not created.");
 
             return false;
         }
@@ -118,13 +124,13 @@ class ApiService
         $code = $this->verifySession($robotId)->getInt("code", -1);
 
         if (0 != $code) {
-            $this->logger->alert("Initialize API service failed, session unauthorized, code {$code}.");
+            $this->logger->alert("Initialize session failed, session unauthorized, code {$code}.");
 
             return false;
         }
 
         $this->logger->info("Session verified.");
-        $this->logger->notice("API service initialized.");
+        $this->logger->notice("Session initialized.");
 
         return true;
     }

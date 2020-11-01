@@ -101,10 +101,10 @@ class HeartbeatHandler
 
             Co::sleep(1);
 
-            $this->logger->error("Session unauthorized. Try to initialize.");
+            $this->logger->error("Session unauthorized, code {$code}. Try to initialize.");
 
-            // Try to initialize API service
-            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId())) {
+            // Try to initialize session
+            if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId())) {
                 $this->logger->info("Session verified.");
 
                 return true;

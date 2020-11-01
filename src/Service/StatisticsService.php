@@ -34,6 +34,9 @@ class StatisticsService
     /** @var int Current statistics count */
     protected int $count;
 
+    /** @var bool Initialized */
+    protected bool $isInitialized = false;
+
     /**
      * The constructor.
      *
@@ -46,10 +49,8 @@ class StatisticsService
 
     /**
      * Initialize statistics service.
-     *
-     * @return bool
      */
-    public function initialize(): bool
+    public function initialize(): void
     {
         $this->statistics = $this->resource->getStatistics();
 
@@ -57,16 +58,16 @@ class StatisticsService
         $this->counts = array_fill(0, 6, 0);
         $this->count = $this->statistics->getInt("sum");
 
-        // Update timeline and counts every 10 minutes
-        Timer::tick(600000, function () {
-            $this->updateTimeline();
-            array_shift($this->counts);
-            $currentCount = $this->statistics->getInt("sum");
-            $this->counts[] = $currentCount - $this->count;
-            $this->count = $currentCount;
-        });
-
-        return true;
+        if (!$this->isInitialized) {
+            // Update timeline and counts every 10 minutes
+            Timer::tick(600000, function () {
+                $this->updateTimeline();
+                array_shift($this->counts);
+                $currentCount = $this->statistics->getInt("sum");
+                $this->counts[] = $currentCount - $this->count;
+                $this->count = $currentCount;
+            });
+        }
     }
 
     /**

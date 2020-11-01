@@ -6,7 +6,7 @@ namespace DiceRobot;
 
 use DiceRobot\Data\{Dice, Subexpression};
 use DiceRobot\Enum\AppStatusEnum;
-use DiceRobot\Exception\MiraiApiException;
+use DiceRobot\Exception\{MiraiApiException, RuntimeException};
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService, StatisticsService};
 use DiceRobot\Handlers\HeartbeatHandler;
@@ -93,10 +93,13 @@ class App
      */
     public function initialize(): void
     {
-        $this->setHandlers();
-
         /** Primary initialization */
-        if (!$this->resource->initialize() || !$this->statistics->initialize()) {
+        try {
+            $this->api->initialize($this->config);
+            $this->resource->initialize($this->config);
+            $this->robot->initialize($this->config);
+            $this->statistics->initialize();
+        } catch (RuntimeException $e) {
             $this->status = AppStatusEnum::STOPPED();
 
             $this->logger->emergency("Initialize application failed.");
@@ -105,29 +108,16 @@ class App
         }
 
         /** Secondary initialization */
-        $this->globalInitialize();  // Global initialization
+        Dice::globalInitialize($this->config);
+        Subexpression::globalInitialize($this->config);
+
+        /** Set default handlers */
+        $this->heartbeatHandler = $this->container->get(HeartbeatHandler::class);
+        $this->reportHandler = $this->container->get(ReportHandler::class);
 
         $this->status = AppStatusEnum::HOLDING();
 
         $this->logger->notice("Application initialized.");
-    }
-
-    /**
-     * Set default handlers.
-     */
-    protected function setHandlers(): void
-    {
-        $this->heartbeatHandler = $this->container->get(HeartbeatHandler::class);
-        $this->reportHandler = $this->container->get(ReportHandler::class);
-    }
-
-    /**
-     * Initialize static variables.
-     */
-    protected function globalInitialize(): void
-    {
-        Dice::globalInitialize($this->config);
-        Subexpression::globalInitialize($this->config);
     }
 
     /**
@@ -138,6 +128,8 @@ class App
     public function registerRoutes(array $routes): void
     {
         $this->reportHandler->registerRoutes($routes);
+
+        $this->logger->info("Report routes registered.");
     }
 
     /******************************************************************************
@@ -247,8 +239,8 @@ class App
         }
 
         try {
-            // Initialize API service, then update robot service
-            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
+            // Initialize session, then update robot service
+            if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
                 $this->setStatus(AppStatusEnum::RUNNING());
 
                 $this->logger->notice("Application rerun.");
@@ -288,8 +280,8 @@ class App
             // Set new config
             $property->setValue($this->config, $newConfig);
 
-            // Initialize static variables
-            $this->globalInitialize();
+            // Reload logger factory
+            $this->container->get(LoggerFactory::class)->reload($this->config);
 
             $this->logger->notice("Application reloaded.");
 

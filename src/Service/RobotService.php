@@ -46,12 +46,20 @@ class RobotService
      *
      * @param LoggerFactory $loggerFactory
      * @param ApiService $api
-     * @param Configuration $config
      */
-    public function __construct(LoggerFactory $loggerFactory, ApiService $api, Configuration $config)
+    public function __construct(LoggerFactory $loggerFactory, ApiService $api)
     {
         $this->logger = $loggerFactory->create("Robot");
         $this->api = $api;
+    }
+
+    /**
+     * Initialize robot service.
+     *
+     * @param Configuration $config
+     */
+    public function initialize(Configuration $config): void
+    {
         $this->robot = new Robot();
         $this->robot->id = $config->getInt("mirai.robot.id");
         $this->robot->nickname = "Unknown";

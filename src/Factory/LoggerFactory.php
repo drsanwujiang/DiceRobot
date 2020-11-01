@@ -22,6 +22,12 @@ class LoggerFactory
     /** @var Logger Logger */
     protected Logger $logger;
 
+    /** @var StreamHandler Stream handler */
+    protected StreamHandler $streamHandler;
+
+    /** @var RotatingFileHandler Rotating file handler */
+    protected RotatingFileHandler $rotatingFileHandler;
+
     /**
      * The constructor.
      *
@@ -32,22 +38,21 @@ class LoggerFactory
         $filenameFormat = "{filename}-{date}";
         $dateFormat = "Y-m-d H:i:s P";
 
-        $logger = new Logger("default");
+        $this->logger = new Logger("default");
         $formatter = new LineFormatter(null, $dateFormat, false, true);
 
-        $streamHandler = new StreamHandler("php://stdout", $config->getInt("log.level.console"));
-        $streamHandler->setFormatter($formatter);
-        $logger->pushHandler($streamHandler);
+        $this->streamHandler = new StreamHandler("php://stdout", $config->getInt("log.level.console"));
+        $this->streamHandler->setFormatter($formatter);
+        $this->logger->pushHandler($this->streamHandler);
 
         if ($path = $config->findString("log.path")) {
             $filename = sprintf('%s/%s', $path, $config->getString("log.filename"));
-            $rotatingFileHandler = new RotatingFileHandler($filename, 0, $config->getInt("log.level.file"));
-            $rotatingFileHandler->setFilenameFormat($filenameFormat, RotatingFileHandler::FILE_PER_DAY);
-            $rotatingFileHandler->setFormatter($formatter);
-            $logger->pushHandler($rotatingFileHandler);
+            $this->rotatingFileHandler =
+                new RotatingFileHandler($filename, 0, $config->getInt("log.level.file"));
+            $this->rotatingFileHandler->setFilenameFormat($filenameFormat, RotatingFileHandler::FILE_PER_DAY);
+            $this->rotatingFileHandler->setFormatter($formatter);
+            $this->logger->pushHandler($this->rotatingFileHandler);
         }
-
-        $this->logger = $logger;
     }
 
     /**
@@ -60,5 +65,19 @@ class LoggerFactory
     public function create(string $channel): LoggerInterface
     {
         return $this->logger->withName($channel);
+    }
+
+    /**
+     * Reload config.
+     *
+     * @param Configuration $config
+     */
+    public function reload(Configuration $config): void
+    {
+        $this->streamHandler->setLevel($config->getInt("log.level.console"));
+
+        if (isset($this->rotatingFileHandler)) {
+            $this->rotatingFileHandler->setLevel($config->getInt("log.level.file"));
+        }
     }
 }
