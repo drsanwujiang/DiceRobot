@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace DiceRobot\Action;
 
 use DiceRobot\App;
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Interfaces\Action;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
 use Psr\Log\LoggerInterface;
-use Selective\Config\Configuration;
 
 /**
  * Class EventAction
@@ -23,8 +23,8 @@ use Selective\Config\Configuration;
  */
 abstract class EventAction implements Action
 {
-    /** @var Configuration Config */
-    protected Configuration $config;
+    /** @var Config Config */
+    protected Config $config;
 
     /** @var App Application */
     protected App $app;
@@ -47,7 +47,7 @@ abstract class EventAction implements Action
     /**
      * The constructor.
      *
-     * @param Configuration $config
+     * @param COnfig $config
      * @param App $app
      * @param ApiService $api
      * @param ResourceService $resource
@@ -56,7 +56,7 @@ abstract class EventAction implements Action
      * @param Event $event
      */
     public function __construct(
-        Configuration $config,
+        Config $config,
         App $app,
         ApiService $api,
         ResourceService $resource,

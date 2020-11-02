@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, GetNicknameResponse, JrrpResponse, KowtowResponse,
     QueryGroupResponse, SanityCheckResponse, SubmitGroupResponse, UpdateCardResponse, UpdateRobotResponse};
 use DiceRobot\Exception\MiraiApiException;
@@ -11,7 +12,6 @@ use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorExcept
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
 use Selective\ArrayReader\ArrayReader;
-use Selective\Config\Configuration;
 use Swlib\Http\ContentType;
 use Swlib\Http\Exception\{ClientException, ServerException, TransferException};
 use Swlib\Saber;
@@ -47,9 +47,9 @@ class ApiService
     /**
      * Initialize API service.
      *
-     * @param Configuration $config
+     * @param Config $config
      */
-    public function initialize(Configuration $config): void
+    public function initialize(Config $config): void
     {
         $this->pools = [
             Saber::create([

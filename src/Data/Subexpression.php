@@ -7,7 +7,6 @@ namespace DiceRobot\Data;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionInvalidException,
     SurfaceNumberOverstepException};
 use DiceRobot\Util\Random;
-use Selective\Config\Configuration;
 
 /**
  * Class Subexpression
@@ -47,9 +46,9 @@ class Subexpression
      *
      * @GlobalInitialize
      *
-     * @param Configuration $config
+     * @param Config $config
      */
-    public static function globalInitialize(Configuration $config): void
+    public static function globalInitialize(Config $config): void
     {
         static::$maxDiceNumber = $config->getInt("order.maxDiceNumber");
         static::$maxSurfaceNumber = $config->getInt("order.maxSurfaceNumber");

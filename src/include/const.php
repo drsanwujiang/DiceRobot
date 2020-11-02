@@ -167,7 +167,7 @@ const DEFAULT_CONFIG = [
         "botJoinGroupRejected" => "本群已被列入不友好群聊名单，DiceRobot 系列机器人拒绝服务。"
     ],
 
-    "errorMessage" => [
+    "errMsg" => [
         /* General */
         "_generalOrderError" => "指令错误，无法识别！",
         "_generalRepeatTimeOverstep" => "不能重复这么多次啦~",

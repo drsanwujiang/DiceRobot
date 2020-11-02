@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Data\Resource\{CharacterCard, ChatSettings, CheckRule, Reference, Statistics};
+use DiceRobot\Data\Resource\{CharacterCard, ChatSettings, CheckRule, Config, Reference, Statistics};
 use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Exception\CharacterCardException\LostException as CharacterCardLostException;
 use DiceRobot\Exception\CheckRuleException\LostException as CheckRuleLostException;
@@ -12,7 +12,6 @@ use DiceRobot\Exception\FileException\LostException as FileLostException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Util\File;
 use Psr\Log\LoggerInterface;
-use Selective\Config\Configuration;
 
 /**
  * Class ResourceService
@@ -29,20 +28,23 @@ class ResourceService
     /** @var array */
     protected array $directories = [];
 
-    /** @var CharacterCard[] */
-    protected array $characterCards = [];
+    /** @var Config */
+    protected Config $config;
+
+    /** @var Statistics */
+    protected Statistics $statistics;
 
     /** @var ChatSettings[][] */
     protected array $chatSettings = [ "friend" => [], "group" => [] ];
 
-    /** @var Reference[] */
-    protected array $references = [];
+    /** @var CharacterCard[] */
+    protected array $characterCards = [];
 
     /** @var CheckRule[] */
     protected array $checkRules = [];
 
-    /** @var Statistics */
-    protected Statistics $statistics;
+    /** @var Reference[] */
+    protected array $references = [];
 
     /** @var bool Loaded */
     protected bool $isLoaded = false;
@@ -60,15 +62,15 @@ class ResourceService
     /**
      * Initialize resource service.
      *
-     * @param Configuration $config
+     * @param \DiceRobot\Data\Config $config
      *
      * @throws RuntimeException
      */
-    public function initialize(Configuration $config): void
+    public function initialize(\DiceRobot\Data\Config $config): void
     {
-        $this->directories = $config->findArray("data") ?? [];
-        $this->directories["config.friend"] = ($this->directories["config"] ?? "") . "/friend";
-        $this->directories["config.group"] = ($this->directories["config"] ?? "") . "/group";
+        $this->directories = $config->getArray("data");
+        $this->directories["chat.friend"] = ($this->directories["chat"] ?? "") . "/friend";
+        $this->directories["chat.group"] = ($this->directories["chat"] ?? "") . "/group";
 
         if ($this->checkDirectories() && $this->loadAll()) {
             $this->logger->notice("Resource service initialized.");
@@ -118,11 +120,12 @@ class ResourceService
         }
 
         try {
-            $this->loadCharacterCards();
-            $this->loadChatSettings();
-            $this->loadReferences();
-            $this->loadCheckRules();
+            $this->loadConfig();
             $this->loadStatistics();
+            $this->loadChatSettings();
+            $this->loadCharacterCards();
+            $this->loadCheckRules();
+            $this->loadReferences();
 
             $this->isLoaded = true;
         } catch (RuntimeException $e) {
@@ -145,11 +148,12 @@ class ResourceService
     public function saveAll(): bool
     {
         try {
-            $this->saveCharacterCards();
-            $this->saveChatSettings();
-            //$this->saveReferences();
-            //$this->saveCheckRules();
+            $this->saveConfig();
             $this->saveStatistics();
+            $this->saveChatSettings();
+            $this->saveCharacterCards();
+            //$this->saveCheckRules();
+            //$this->saveReferences();
         } catch (RuntimeException $e) {
             $this->logger->error($e);
             $this->logger->critical("Save resources failed.");
@@ -160,6 +164,61 @@ class ResourceService
         $this->logger->info("Resources saved.");
 
         return true;
+    }
+
+    /**
+     * Load config.
+     */
+    protected function loadConfig(): void
+    {
+        if (isset($this->directories["root"])) {
+            try {
+                $this->config = new Config(File::getFile("{$this->directories["root"]}/config.json"));
+            } catch (RuntimeException $e) {
+                $this->config = new Config([]);
+            }
+        } else {
+            $this->config = new Config([]);
+        }
+    }
+
+    /**
+     * Load statistics.
+     */
+    protected function loadStatistics(): void
+    {
+        if (isset($this->directories["root"])) {
+            try {
+                $this->statistics = new Statistics(File::getFile("{$this->directories["root"]}/statistics.json"));
+            } catch (RuntimeException $e) {
+                $this->statistics = new Statistics([]);
+            }
+        } else {
+            $this->statistics = new Statistics([]);
+        }
+    }
+
+    /**
+     * Load chat settings.
+     *
+     * @throws RuntimeException
+     */
+    protected function loadChatSettings(): void
+    {
+        if (isset($this->directories["chat"])) {
+            foreach (["friend", "group"] as $type) {
+                $d = dir($this->directories["chat.{$type}"]);
+
+                while (false !== $f = $d->read()) {
+                    if (preg_match("/^([1-9][0-9]{4,9}).json/", $f, $matches)) {
+                        $this->chatSettings[$type][(int) $matches[1]] =
+                            new ChatSettings(File::getFile("{$this->directories["chat.{$type}"]}/{$f}"));
+                    }
+                }
+
+                $d->close();
+            }
+        }
     }
 
     /**
@@ -176,50 +235,6 @@ class ResourceService
                 if (preg_match("/^([1-9][0-9]{0,5}).json/", $f, $matches)) {
                     $this->characterCards[(int) $matches[1]] =
                         new CharacterCard(File::getFile("{$this->directories["card"]}/{$f}"));
-                }
-            }
-
-            $d->close();
-        }
-    }
-
-    /**
-     * Load chat settings.
-     *
-     * @throws RuntimeException
-     */
-    protected function loadChatSettings(): void
-    {
-        if (isset($this->directories["config"])) {
-            foreach (["friend", "group"] as $type) {
-                $d = dir($this->directories["config.{$type}"]);
-
-                while (false !== $f = $d->read()) {
-                    if (preg_match("/^([1-9][0-9]{4,9}).json/", $f, $matches)) {
-                        $this->chatSettings[$type][(int) $matches[1]] =
-                            new ChatSettings(File::getFile("{$this->directories["config.{$type}"]}/{$f}"));
-                    }
-                }
-
-                $d->close();
-            }
-        }
-    }
-
-    /**
-     * Load references.
-     *
-     * @throws RuntimeException
-     */
-    protected function loadReferences(): void
-    {
-        if (isset($this->directories["reference"])) {
-            $d = dir($this->directories["reference"]);
-
-            while (false !== $f = $d->read()) {
-                if (preg_match("/^([a-zA-z]+).json/", $f, $matches)) {
-                    $this->references[$matches[1]] =
-                        new Reference(File::getFile("{$this->directories["reference"]}/{$f}"));
                 }
             }
 
@@ -249,18 +264,63 @@ class ResourceService
     }
 
     /**
-     * Load statistics.
+     * Load references.
+     *
+     * @throws RuntimeException
      */
-    protected function loadStatistics(): void
+    protected function loadReferences(): void
+    {
+        if (isset($this->directories["reference"])) {
+            $d = dir($this->directories["reference"]);
+
+            while (false !== $f = $d->read()) {
+                if (preg_match("/^([a-zA-z]+).json/", $f, $matches)) {
+                    $this->references[$matches[1]] =
+                        new Reference(File::getFile("{$this->directories["reference"]}/{$f}"));
+                }
+            }
+
+            $d->close();
+        }
+    }
+
+    /**
+     * Save config.
+     *
+     * @throws RuntimeException
+     */
+    protected function saveConfig(): void
     {
         if (isset($this->directories["root"])) {
-            try {
-                $this->statistics = new Statistics(File::getFile("{$this->directories["root"]}/statistics.json"));
-            } catch (RuntimeException $e) {
-                $this->statistics = new Statistics([]);
+            File::putFile("{$this->directories["root"]}/config.json", (string) $this->config);
+        }
+    }
+
+    /**
+     * Save statistics.
+     *
+     * @throws RuntimeException
+     */
+    protected function saveStatistics(): void
+    {
+        if (isset($this->directories["root"])) {
+            File::putFile("{$this->directories["root"]}/statistics.json", (string) $this->statistics);
+        }
+    }
+
+    /**
+     * Save chat settings.
+     *
+     * @throws RuntimeException
+     */
+    protected function saveChatSettings(): void
+    {
+        if (isset($this->directories["chat"])) {
+            foreach (["friend", "group"] as $type) {
+                foreach ($this->chatSettings[$type] as $chatId => $chatSettings) {
+                    File::putFile("{$this->directories["chat.{$type}"]}/{$chatId}.json", (string) $chatSettings);
+                }
             }
-        } else {
-            $this->statistics = new Statistics([]);
         }
     }
 
@@ -274,36 +334,6 @@ class ResourceService
         if (isset($this->directories["card"])) {
             foreach ($this->characterCards as $cardId => $card) {
                 File::putFile("{$this->directories["card"]}/{$cardId}.json", (string) $card);
-            }
-        }
-    }
-
-    /**
-     * Save chat settings.
-     *
-     * @throws RuntimeException
-     */
-    protected function saveChatSettings(): void
-    {
-        if (isset($this->directories["config"])) {
-            foreach (["friend", "group"] as $type) {
-                foreach ($this->chatSettings[$type] as $chatId => $chatSettings) {
-                    File::putFile("{$this->directories["config.{$type}"]}/{$chatId}.json", (string) $chatSettings);
-                }
-            }
-        }
-    }
-
-    /**
-     * Save references.
-     *
-     * @throws RuntimeException
-     */
-    protected function saveReferences(): void
-    {
-        if (isset($this->directories["reference"])) {
-            foreach ($this->references as $name => $reference) {
-                File::putFile("{$this->directories["reference"]}/{$name}.json", (string) $reference);
             }
         }
     }
@@ -323,14 +353,16 @@ class ResourceService
     }
 
     /**
-     * Save statistics.
+     * Save references.
      *
      * @throws RuntimeException
      */
-    protected function saveStatistics(): void
+    protected function saveReferences(): void
     {
-        if (isset($this->directories["root"])) {
-            File::putFile("{$this->directories["root"]}/statistics.json", (string) $this->statistics);
+        if (isset($this->directories["reference"])) {
+            foreach ($this->references as $name => $reference) {
+                File::putFile("{$this->directories["reference"]}/{$name}.json", (string) $reference);
+            }
         }
     }
 
@@ -346,21 +378,23 @@ class ResourceService
     }
 
     /**
-     * Get character card.
+     * Get config.
      *
-     * @param int $cardId
-     *
-     * @return CharacterCard
-     *
-     * @throws CharacterCardLostException
+     * @return Config
      */
-    public function getCharacterCard(int $cardId): CharacterCard
+    public function getConfig(): Config
     {
-        if (!isset($this->characterCards[$cardId])) {
-            throw new CharacterCardLostException();
-        }
+        return $this->config;
+    }
 
-        return $this->characterCards[$cardId];
+    /**
+     * Get statistics.
+     *
+     * @return Statistics
+     */
+    public function getStatistics(): Statistics
+    {
+        return $this->statistics;
     }
 
     /**
@@ -385,21 +419,21 @@ class ResourceService
     }
 
     /**
-     * Get reference.
+     * Get character card.
      *
-     * @param string $referenceKey
+     * @param int $cardId
      *
-     * @return Reference
+     * @return CharacterCard
      *
-     * @throws FileLostException
+     * @throws CharacterCardLostException
      */
-    public function getReference(string $referenceKey): Reference
+    public function getCharacterCard(int $cardId): CharacterCard
     {
-        if (!isset($this->references[$referenceKey])) {
-            throw new FileLostException();
+        if (!isset($this->characterCards[$cardId])) {
+            throw new CharacterCardLostException();
         }
 
-        return $this->references[$referenceKey];
+        return $this->characterCards[$cardId];
     }
 
     /**
@@ -421,12 +455,20 @@ class ResourceService
     }
 
     /**
-     * Get statistics.
+     * Get reference.
      *
-     * @return Statistics
+     * @param string $referenceKey
+     *
+     * @return Reference
+     *
+     * @throws FileLostException
      */
-    public function getStatistics(): Statistics
+    public function getReference(string $referenceKey): Reference
     {
-        return $this->statistics;
+        if (!isset($this->references[$referenceKey])) {
+            throw new FileLostException();
+        }
+
+        return $this->references[$referenceKey];
     }
 }

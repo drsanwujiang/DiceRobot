@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace DiceRobot\Factory;
 
+use DiceRobot\Data\Config;
 use Imefisto\PsrSwoole\ResponseMerger;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
-use Selective\Config\Configuration;
 use Swoole\Http\Response;
 
 /**
@@ -30,7 +30,8 @@ class ResponseFactory
         -1010 => "Application is already running",
         -1011 => "Application cannot be rerun",
         -1012 => "Rerun application failed",
-        -1020 => "Reload application failed",
+        -1020 => "",  // Undefined reload error
+        -1030 => "",  // Undefined stop error
         -1040 => "Application cannot be restarted",
 
         -2000 => "Mirai is not setup as service",
@@ -39,8 +40,8 @@ class ResponseFactory
         -2011 => "Stop Mirai failed",
     ];
 
-    /** @var Configuration Config */
-    protected Configuration $config;
+    /** @var Config Config */
+    protected Config $config;
 
     /** @var Psr17Factory PSR-17 HTTP factory */
     protected Psr17Factory $psr17Factory;
@@ -60,12 +61,12 @@ class ResponseFactory
     /**
      * The constructor.
      *
-     * @param Configuration $config
+     * @param Config $config
      * @param Psr17Factory $psr17Factory
      * @param ResponseMerger $responseMerger
      */
     public function __construct(
-        Configuration $config,
+        Config $config,
         Psr17Factory $psr17Factory,
         ResponseMerger $responseMerger
     ) {

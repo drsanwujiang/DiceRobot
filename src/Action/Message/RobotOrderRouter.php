@@ -6,11 +6,11 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Action\Message\RobotOrder\{About, Goodbye, Nickname, Start, Stop};
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Message;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
 use Psr\Container\ContainerInterface;
-use Selective\Config\Configuration;
 
 /**
  * Class RobotOrderRouter
@@ -55,7 +55,8 @@ class RobotOrderRouter extends MessageAction
     /**
      * @inheritDoc
      *
-     * @param Configuration $config
+     * @param ContainerInterface $container
+     * @param Config $config
      * @param ApiService $api
      * @param ResourceService $resource
      * @param RobotService $robot
@@ -66,7 +67,7 @@ class RobotOrderRouter extends MessageAction
      */
     public function __construct(
         ContainerInterface $container,
-        Configuration $config,
+        Config $config,
         ApiService $apiService,
         ResourceService $dataService,
         RobotService $robotService,

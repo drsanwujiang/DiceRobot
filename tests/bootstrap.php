@@ -1,19 +1,15 @@
 <?php
 
-use DiceRobot\Factory\BootstrapFactory;
+use DiceRobot\{App, Server};
+use DI\Container;
 
 require_once __DIR__ . "/../vendor/autoload.php";
 
 Co\run(function () {
-    // Create App instance
-    $app = BootstrapFactory::createApp();
+    $container = new Container();
+    $app = $container->get(App::class);
+    $server = $container->get(Server::class);
 
-    // Create Server instance
-    $server = BootstrapFactory::createServer();
-
-    // Initialize application
     $app->initialize();
-
-    // Start event loop
     $server->start();
 });

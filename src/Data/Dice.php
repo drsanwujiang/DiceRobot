@@ -7,7 +7,6 @@ namespace DiceRobot\Data;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
 use DiceRobot\Util\Random;
-use Selective\Config\Configuration;
 use Throwable;
 
 /**
@@ -63,9 +62,9 @@ class Dice
      *
      * @GlobalInitialize
      *
-     * @param Configuration $config
+     * @param Config $config
      */
-    public static function globalInitialize(Configuration $config): void
+    public static function globalInitialize(Config $config): void
     {
         static::$maxDiceNumber = $config->getInt("order.maxDiceNumber");
         static::$bpDiceType = $config->getArray("wording.bpDiceType");

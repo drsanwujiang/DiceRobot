@@ -22,23 +22,23 @@ use Exception;
 abstract class DiceRobotException extends Exception
 {
     /** @var string Error message key */
-    protected string $errorMessageKey;
+    protected string $errMsgKey;
 
     /** @var string Extra message */
-    public string $extraMessage;
+    public string $extMsg;
 
     /**
      * The constructor.
      *
-     * @param string $errorMessageKey The error message key
-     * @param string $extraMessage The extra message
+     * @param string $errMsgKey The error message key
+     * @param string $extMsg The extra message
      */
-    public function __construct(string $errorMessageKey, string $extraMessage = "")
+    public function __construct(string $errMsgKey, string $extMsg = "")
     {
         parent::__construct();
 
-        $this->errorMessageKey = $errorMessageKey;
-        $this->extraMessage = $extraMessage;
+        $this->errMsgKey = $errMsgKey;
+        $this->extMsg = $extMsg;
     }
 
     /**
@@ -48,6 +48,6 @@ abstract class DiceRobotException extends Exception
      */
     public function __toString(): string
     {
-        return $this->errorMessageKey;
+        return $this->errMsgKey;
     }
 }

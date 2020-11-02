@@ -6,6 +6,7 @@ namespace DiceRobot\Handlers;
 
 use DiceRobot\App;
 use DiceRobot\Action\{EventAction, MessageAction};
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\{Event, InvalidReport, Message};
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
 use DiceRobot\Enum\AppStatusEnum;
@@ -17,7 +18,6 @@ use DiceRobot\Traits\RouteCollectorTrait;
 use DiceRobot\Util\Convertor;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Selective\Config\Configuration;
 
 /**
  * Class ReportHandler
@@ -31,8 +31,8 @@ class ReportHandler
     /** @var ContainerInterface Container */
     protected ContainerInterface $container;
 
-    /** @var Configuration Config */
-    protected Configuration $config;
+    /** @var Config Config */
+    protected Config $config;
 
     /** @var App Application */
     protected App $app;
@@ -55,7 +55,7 @@ class ReportHandler
      * The constructor.
      *
      * @param ContainerInterface $container
-     * @param Configuration $config
+     * @param Config $config
      * @param App $app
      * @param ApiService $api
      * @param RobotService $robot
@@ -64,7 +64,7 @@ class ReportHandler
      */
     public function __construct(
         ContainerInterface $container,
-        Configuration $config,
+        Config $config,
         App $app,
         ApiService $api,
         RobotService $robot,
@@ -235,18 +235,18 @@ class ReportHandler
             if ($action->message instanceof FriendMessage) {
                 $this->api->sendFriendMessage(
                     $action->message->sender->id,
-                    Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
+                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
                 );
             } elseif ($action->message instanceof GroupMessage) {
                 $this->api->sendGroupMessage(
                     $action->message->sender->group->id,
-                    Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
+                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
                 );
             } elseif ($action->message instanceof TempMessage) {
                 $this->api->sendTempMessage(
                     $action->message->sender->id,
                     $action->message->sender->group->id,
-                    Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
+                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
                 );
             }
 

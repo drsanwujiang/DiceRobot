@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Action;
 
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Message;
 use DiceRobot\Data\Report\Contact\FriendSender;
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
@@ -12,7 +13,6 @@ use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Interfaces\Action;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
 use DiceRobot\Util\Convertor;
-use Selective\Config\Configuration;
 
 /**
  * Class MessageAction
@@ -27,8 +27,8 @@ abstract class MessageAction implements Action
 {
     /** Application services */
 
-    /** @var Configuration Config */
-    protected Configuration $config;
+    /** @var Config Config */
+    protected Config $config;
 
     /** @var ApiService API service */
     protected ApiService $api;
@@ -62,7 +62,7 @@ abstract class MessageAction implements Action
     /**
      * The constructor.
      *
-     * @param Configuration $config
+     * @param Config $config
      * @param ApiService $api
      * @param ResourceService $resource
      * @param RobotService $robot
@@ -72,7 +72,7 @@ abstract class MessageAction implements Action
      * @param bool $at
      */
     public function __construct(
-        Configuration $config,
+        Config $config,
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,

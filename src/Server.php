@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace DiceRobot;
 
 use Co\Http\Server as SwooleServer;
+use DiceRobot\Data\Config;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Factory\ResponseFactory;
 use Psr\Log\LoggerInterface;
-use Selective\Config\Configuration;
 use Swoole\Process;
 use Swoole\Coroutine\System;
 use Swoole\Http\{Request, Response};
@@ -37,13 +37,13 @@ class Server
     /**
      * The constructor.
      *
-     * @param Configuration $config
+     * @param Config $config
      * @param App $app
      * @param ResponseFactory $responseFactory
      * @param LoggerFactory $loggerFactory
      */
     public function __construct(
-        Configuration $config,
+        Config $config,
         App $app,
         ResponseFactory $responseFactory,
         LoggerFactory $loggerFactory
@@ -217,9 +217,9 @@ class Server
     {
         $this->logger->info("Server received HTTP request, get robot profile.");
 
-        list($code, $data) = $this->app->profile();
+        $data = $this->app->profile();
 
-        $this->responseFactory->create($code, $data, $response)->end();
+        $this->responseFactory->create(0, $data, $response)->end();
     }
 
     /**
@@ -229,7 +229,7 @@ class Server
     {
         $this->logger->info("Server received HTTP request, get application status.");
 
-        $appStatus = $this->app->status();
+        list($appStatus) = $this->app->status();
         $code = -1;
 
         extract(System::exec("/bin/systemctl status dicerobot"), EXTR_OVERWRITE);
@@ -254,9 +254,9 @@ class Server
     {
         $this->logger->info("Server received HTTP request, get statistics.");
 
-        list($code, $data) = $this->app->statistics();
+        $data = $this->app->statistics();
 
-        $this->responseFactory->create($code, $data, $response)->end();
+        $this->responseFactory->create(0, $data, $response)->end();
     }
 
     /**

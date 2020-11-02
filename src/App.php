@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot;
 
-use DiceRobot\Data\{Dice, Subexpression};
+use DiceRobot\Data\{Config, Dice, Subexpression};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\{MiraiApiException, RuntimeException};
 use DiceRobot\Factory\LoggerFactory;
@@ -15,7 +15,6 @@ use DiceRobot\Traits\AppTraits\StatusTrait;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
-use Selective\Config\Configuration;
 use Swoole\Timer;
 
 /**
@@ -30,8 +29,8 @@ class App
     /** @var ContainerInterface Container */
     protected ContainerInterface $container;
 
-    /** @var Configuration Config */
-    protected Configuration $config;
+    /** @var Config Config */
+    protected Config $config;
 
     /** @var ApiService API service */
     protected ApiService $api;
@@ -60,7 +59,7 @@ class App
      * The constructor.
      *
      * @param ContainerInterface $container
-     * @param Configuration $config
+     * @param Config $config
      * @param ApiService $api
      * @param ResourceService $resource
      * @param RobotService $robot
@@ -69,7 +68,7 @@ class App
      */
     public function __construct(
         ContainerInterface $container,
-        Configuration $config,
+        Config $config,
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,
@@ -107,6 +106,8 @@ class App
             return;
         }
 
+        $this->loadConfig();
+
         /** Secondary initialization */
         Dice::globalInitialize($this->config);
         Subexpression::globalInitialize($this->config);
@@ -132,6 +133,22 @@ class App
         $this->logger->info("Report routes registered.");
     }
 
+    /**
+     * Load config.
+     */
+    protected function loadConfig(): void
+    {
+        $reflectionClass = new ReflectionClass(Config::class);
+        $property = $reflectionClass->getProperty("data");
+        $property->setAccessible(true);
+
+        // Set new config
+        $property->setValue($this->config, (new Config($this->container, $this->resource->getConfig()))->all());
+
+        // Reload logger factory
+        $this->container->get(LoggerFactory::class)->reload($this->config);
+    }
+
     /******************************************************************************
      *                              Application APIs                              *
      ******************************************************************************/
@@ -139,31 +156,28 @@ class App
     /**
      * Get robot profile.
      *
-     * @return array Result code and data
+     * @return array Result data
      */
     public function profile(): array
     {
         return [
-            0,
-            [
-                "id" => $this->robot->getId(),
-                "nickname" => $this->robot->getNickname(),
-                "friends" => $this->robot->getFriendsCount(),
-                "groups" => $this->robot->getGroupsCount(),
-                "startup" => DICEROBOT_STARTUP,
-                "version" => DICEROBOT_VERSION
-            ]
+            "id" => $this->robot->getId(),
+            "nickname" => $this->robot->getNickname(),
+            "friends" => $this->robot->getFriendsCount(),
+            "groups" => $this->robot->getGroupsCount(),
+            "startup" => DICEROBOT_STARTUP,
+            "version" => DICEROBOT_VERSION
         ];
     }
 
     /**
      * Get application status.
      *
-     * @return int Result code
+     * @return array Result data
      */
-    public function status(): int
+    public function status(): array
     {
-        return $this->getStatus()->getValue();
+        return [$this->getStatus()->getValue()];
     }
 
     /**
@@ -200,7 +214,7 @@ class App
             $data["friends"][] = [$id, $this->robot->getFriend($id)->nickname ?? "[Unknown Friend]", $value];
         }
 
-        return [0, $data];
+        return $data;
     }
 
     /**
@@ -260,37 +274,14 @@ class App
      * Reload the config.
      *
      * @return int Result code
-     *
-     * @noinspection PhpDocMissingThrowsInspection
-     * @noinspection PhpUnhandledExceptionInspection
      */
     public function reload(): int
     {
-        /** @var Configuration $configuration */
-        $configuration = $this->container->make(Configuration::class);
+        $this->loadConfig();
 
-        $newConfig = $configuration->all();
+        $this->logger->notice("Application reloaded.");
 
-        // Config should not be empty, or the custom settings is invalid
-        if (!empty($newConfig)) {
-            $reflectionClass = new ReflectionClass(Configuration::class);
-            $property = $reflectionClass->getProperty("data");
-            $property->setAccessible(true);
-
-            // Set new config
-            $property->setValue($this->config, $newConfig);
-
-            // Reload logger factory
-            $this->container->get(LoggerFactory::class)->reload($this->config);
-
-            $this->logger->notice("Application reloaded.");
-
-            return 0;
-        } else {
-            $this->logger->notice("Reload application failed.");
-
-            return -1020;
-        }
+        return 0;
     }
 
     /**

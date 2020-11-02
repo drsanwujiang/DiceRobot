@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Exception\MiraiApiException;
-use DiceRobot\Factory\LoggerFactory;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Contact\{Friend, Group, Robot};
+use DiceRobot\Exception\MiraiApiException;
+use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
+use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
-use Selective\Config\Configuration;
 
 /**
  * Class RobotService
@@ -56,9 +56,9 @@ class RobotService
     /**
      * Initialize robot service.
      *
-     * @param Configuration $config
+     * @param Config $config
      */
-    public function initialize(Configuration $config): void
+    public function initialize(Config $config): void
     {
         $this->robot = new Robot();
         $this->robot->id = $config->getInt("mirai.robot.id");
