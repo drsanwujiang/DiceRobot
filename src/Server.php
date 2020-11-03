@@ -108,6 +108,8 @@ class Server
                 $this->report($content, $response);
             } elseif ($requestUri == "/heartbeat") {
                 $this->heartbeat($response);
+            } elseif ($requestUri == "/config") {
+                $this->setConfig($content, $response);
             } else {
                 $this->notFound($response);
             }
@@ -120,20 +122,26 @@ class Server
                 $this->status($response);
             } elseif ($requestUri == "/statistics") {
                 $this->statistics($response);
+            } elseif ($requestUri == "/config") {
+                $this->config($response);
             } elseif ($requestUri == "/pause") {
                 $this->pause($response);
             } elseif ($requestUri == "/run") {
                 $this->run($response);
             } elseif ($requestUri == "/reload") {
-                $this->webReload($response);
+                $this->reload($response);
             } elseif ($requestUri == "/stop") {
-                $this->webStop($response);
+                $this->stop($response);
+            } elseif ($requestUri == "/restart") {
+                $this->restart($response);
             } elseif ($requestUri == "/mirai/status") {
                 $this->miraiStatus($response);
             } elseif ($requestUri == "/mirai/start") {
                 $this->startMirai($response);
             } elseif ($requestUri == "/mirai/stop") {
                 $this->stopMirai($response);
+            } elseif ($requestUri == "/mirai/restart") {
+                $this->restartMirai($response);
             } else {
                 $this->notFound($response);
             }
@@ -262,6 +270,18 @@ class Server
     /**
      * @param Response $response
      */
+    protected function config(Response $response): void
+    {
+        $this->logger->info("Server received HTTP request, get config.");
+
+        $data = $this->app->config();
+
+        $this->responseFactory->create(0, $data, $response)->end();
+    }
+
+    /**
+     * @param Response $response
+     */
     protected function pause(Response $response): void
     {
         $this->logger->notice("Server received HTTP request, pause application.");
@@ -286,7 +306,7 @@ class Server
     /**
      * @param Response $response
      */
-    protected function webReload(Response $response): void
+    protected function reload(Response $response): void
     {
         $this->logger->notice("Server received HTTP request, reload application.");
 
@@ -298,7 +318,7 @@ class Server
     /**
      * @param Response $response
      */
-    protected function webStop(Response $response): void
+    protected function stop(Response $response): void
     {
         $this->logger->notice("Server received HTTP request, stop application.");
 
@@ -329,6 +349,19 @@ class Server
 
             System::exec("/bin/systemctl restart dicerobot");
         }
+    }
+
+    /**
+     * @param string $content
+     * @param Response $response
+     */
+    protected function setConfig(string $content, Response $response): void
+    {
+        $this->logger->info("Server received HTTP request, set config.");
+
+        $code = $this->app->setConfig($content);
+
+        $this->responseFactory->create($code, null, $response)->end();
     }
 
     /**
@@ -410,6 +443,37 @@ class Server
             } else {
                 $this->responseFactory->create(
                     -2011,
+                    ["code" => $code, "signal" => $signal, "output" => $output],
+                    $response
+                )->end();
+            }
+        }
+    }
+
+    /**
+     * @param Response $response
+     */
+    protected function restartMirai(Response $response): void
+    {
+        $this->logger->notice("Server received HTTP request, restart Mirai.");
+
+        $code = $signal = -1;
+        $output = "";
+
+        extract(System::exec("/bin/systemctl restart mirai"), EXTR_OVERWRITE);
+
+        if ($code == 0) {
+            $this->responseFactory->create($code, null, $response)->end();
+        } else {
+            $this->logger->critical(
+                "Failed to restart Mirai. Code {$code}, signal {$signal}, output message: {$output}"
+            );
+
+            if ($code == 5) {
+                $this->responseFactory->create(-2020, null, $response)->end();
+            } else {
+                $this->responseFactory->create(
+                    -2021,
                     ["code" => $code, "signal" => $signal, "output" => $output],
                     $response
                 )->end();

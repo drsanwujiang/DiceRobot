@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Handlers;
 
-use Co;
+use Co\System;
 use DiceRobot\App;
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\MiraiApiException;
@@ -99,7 +99,7 @@ class HeartbeatHandler
                 return true;
             }
 
-            Co::sleep(1);
+            System::sleep(1);
 
             $this->logger->error("Session unauthorized, code {$code}. Try to initialize.");
 

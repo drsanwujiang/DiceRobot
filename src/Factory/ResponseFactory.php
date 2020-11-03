@@ -25,19 +25,23 @@ class ResponseFactory
 
         -404 => "Not found",
 
-        -1000 => "Application is already paused",
-        -1001 => "Application cannot be paused",
-        -1010 => "Application is already running",
-        -1011 => "Application cannot be rerun",
-        -1012 => "Rerun application failed",
+        -1000 => "DiceRobot already paused",
+        -1001 => "DiceRobot cannot be paused",
+        -1010 => "DiceRobot already running",
+        -1011 => "DiceRobot cannot be rerun",
+        -1012 => "Rerun DiceRobot failed",
         -1020 => "",  // Undefined reload error
         -1030 => "",  // Undefined stop error
-        -1040 => "Application cannot be restarted",
+        -1040 => "DiceRobot cannot be restarted",
+        -1050 => "Config invalid",
+        -1050 => "Config prohibited",
 
-        -2000 => "Mirai is not setup as service",
+        -2000 => "Mirai not setup as service",
         -2001 => "Start Mirai failed",
-        -2010 => "Mirai is not setup as service",
+        -2010 => "Mirai not setup as service",
         -2011 => "Stop Mirai failed",
+        -2020 => "Mirai not setup as service",
+        -2021 => "Restart Mirai failed",
     ];
 
     /** @var Config Config */
