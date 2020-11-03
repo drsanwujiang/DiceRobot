@@ -185,7 +185,7 @@ class App
     /**
      * Get application statistics.
      *
-     * @return array Result code and data
+     * @return array Result data
      */
     public function statistics(): array
     {
@@ -217,6 +217,16 @@ class App
         }
 
         return $data;
+    }
+
+    /**
+     * Get application config.
+     *
+     * @return array Result data
+     */
+    public function config(): array
+    {
+        return $this->config->all();
     }
 
     /**
@@ -301,6 +311,24 @@ class App
         saber_pool_release();
 
         $this->logger->notice("Application exited.");
+
+        return 0;
+    }
+
+    /**
+     * Set application config.
+     *
+     * @param string $content Config content
+     *
+     * @return int Result code
+     */
+    public function setConfig(string $content): int
+    {
+        if (!is_array($data = json_decode($content, true))) {
+            return -1050;
+        } elseif (false === $this->resource->getConfig()->setConfig($data)) {
+            return -1051;
+        }
 
         return 0;
     }

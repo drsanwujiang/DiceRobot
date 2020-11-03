@@ -48,7 +48,7 @@ class Kowtow extends MessageAction
                 ]
             ) .
             Convertor::toCustomString(
-                $this->config->getString("reply.kowtowLevel.{$level}"),
+                $this->config->getString("reply.kowtowLevel{$level}"),
                 [
                     "机器人昵称" => $this->getRobotNickname()
                 ]

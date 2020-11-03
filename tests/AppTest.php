@@ -19,5 +19,7 @@ class AppTest extends TestCase
         $app->initialize();
 
         $this->assertEquals(AppStatusEnum::HOLDING(), $app->getStatus());
+
+        $app->stop();
     }
 }
