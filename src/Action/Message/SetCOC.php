@@ -23,6 +23,8 @@ use DiceRobot\Util\Convertor;
 class SetCOC extends MessageAction
 {
     /**
+     * @inheritDoc
+     *
      * @throws LostException
      */
     public function __invoke(): void

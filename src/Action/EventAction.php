@@ -72,4 +72,14 @@ abstract class EventAction implements Action
         $this->logger = $loggerFactory->create("Event");
         $this->event = $event;
     }
+
+    /**
+     * Check whether this event should be listened.
+     *
+     * @return bool Listened
+     */
+    protected function checkListen(): bool
+    {
+        return true;
+    }
 }

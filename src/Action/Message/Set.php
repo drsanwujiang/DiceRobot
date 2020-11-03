@@ -21,6 +21,9 @@ use DiceRobot\Util\Convertor;
  */
 class Set extends MessageAction
 {
+    /**
+     * @inheritDoc
+     */
     public function __invoke(): void
     {
         list($defaultSurfaceNumber) = $this->parseOrder();

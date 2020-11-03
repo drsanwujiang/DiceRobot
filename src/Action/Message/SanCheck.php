@@ -33,6 +33,8 @@ use DiceRobot\Util\Convertor;
 class SanCheck extends MessageAction
 {
     /**
+     * @inheritDoc
+     *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException|InternalErrorException
      * @throws ItemNotExistException|LostException|NetworkErrorException|NotBoundException|OrderErrorException
      * @throws SurfaceNumberOverstepException|UnexpectedErrorException

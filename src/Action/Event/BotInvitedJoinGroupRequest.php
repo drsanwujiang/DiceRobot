@@ -37,18 +37,60 @@ class BotInvitedJoinGroupRequest extends EventAction
      */
     public function __invoke(): void
     {
-        // If this group is delinquent, reject the request
+        if (!$this->checkListen()) {
+            return;
+        }
+
+        $operation = $this->checkApprove() ? 0 : 1;
+        $message = "";
+
+        if ($operation == 0 && $this->checkRejectWhenDelinquent() && $this->queryGroup()) {
+            // Group is in black list, reject the request
+            $operation = 1;
+            $message = $this->config->getString("reply.botInvitedJoinGroupRequestRejected");
+        }
+
         $this->api->respondToBotInvitedJoinGroupRequestEvent(
             $this->event->eventId,
             $this->event->fromId,
             $this->event->groupId,
-            (int) $delinquent = $this->queryGroup(),
-            $delinquent ? $this->config->getString("reply.botInvitedJoinGroupRequestRejected") : ""
+            $operation,
+            $message
         );
     }
 
     /**
-     * Query if this group is delinquent.
+     * @inheritDoc
+     *
+     * @return bool Listened
+     */
+    protected function checkListen(): bool
+    {
+        return $this->config->getBool("strategy.listenBotInvitedJoinGroupRequestEvent");
+    }
+
+    /**
+     * Check whether this request should be approved.
+     *
+     * @return bool Approved
+     */
+    protected function checkApprove(): bool
+    {
+        return $this->config->getBool("strategy.approveGroupRequest");
+    }
+
+    /**
+     * Check whether this request should be rejected when the group is delinquent.
+     *
+     * @return bool Rejected
+     */
+    protected function checkRejectWhenDelinquent(): bool
+    {
+        return $this->config->getBool("strategy.rejectDelinquentGroupRequest");
+    }
+
+    /**
+     * Query whether this group is delinquent.
      *
      * @return bool Delinquent
      *

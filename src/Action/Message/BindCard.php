@@ -65,7 +65,7 @@ class BindCard extends MessageAction
         }
 
         /** @var int $cardId */
-        $cardId = (int) ($matches[1] ?? "");
+        $cardId = (int) ($matches[1] ?? 0);
 
         return [$cardId];
     }

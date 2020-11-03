@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Traits;
 
 use DiceRobot\Data\Report\{Event, Message};
+use const DiceRobot\DEFAULT_ROUTES;
 
 /**
  * Trait RouteCollectorTrait
@@ -26,10 +27,10 @@ trait RouteCollectorTrait
      *
      * @param array $routes The routes
      */
-    public function registerRoutes(array $routes): void
+    public function registerRoutes(array $routes = []): void
     {
-        $this->eventRoutes = $routes["event"] ?? [];
-        $this->messageRoutes = $routes["message"] ?? [];
+        $this->eventRoutes = array_replace_recursive(DEFAULT_ROUTES["event"], $routes["event"] ?? []);
+        $this->messageRoutes = array_replace_recursive(DEFAULT_ROUTES["message"], $routes["message"] ?? []);
     }
 
     /**

@@ -40,14 +40,18 @@ class BotJoinGroup extends EventAction
      */
     public function __invoke(): void
     {
-        if ($this->queryGroup()) {
+        if (!$this->checkListen()) {
+            return;
+        }
+
+        if ($this->queryGroup() && $this->checkQuitWhenDelinquent()) {
             // Group is in black list, quit
             $this->api->sendGroupMessage(
                 $this->event->group->id,
                 Convertor::toMessageChain($this->config->getString("reply.botJoinGroupRejected"))
             );
             $this->api->quitGroup($this->event->group->id);
-        } else {
+        } elseif ($this->checkSendHelloMessage()) {
             // Send hello message
             $message =
                 Convertor::toCustomString(
@@ -63,6 +67,36 @@ class BotJoinGroup extends EventAction
                 Convertor::toMessageChain($message)
             );
         }
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return bool Listened
+     */
+    protected function checkListen(): bool
+    {
+        return $this->config->getBool("strategy.listenBotJoinGroupEvent");
+    }
+
+    /**
+     * Check whether the robot should quit the group when it is delinquent.
+     *
+     * @return bool
+     */
+    protected function checkQuitWhenDelinquent(): bool
+    {
+        return $this->config->getBool("strategy.quitDelinquentGroup");
+    }
+
+    /**
+     * Check whether the robot should send hello message when joining a group.
+     *
+     * @return bool
+     */
+    protected function checkSendHelloMessage(): bool
+    {
+        return $this->config->getBool("strategy.sendHelloMessage");
     }
 
     /**

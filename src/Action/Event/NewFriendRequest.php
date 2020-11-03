@@ -36,11 +36,40 @@ class NewFriendRequest extends EventAction
      */
     public function __invoke(): void
     {
+        if (!$this->checkListen()) {
+            return;
+        }
+
+        $operation = $this->checkApprove() ? 0 : 1;
+        $message = "";
+
         // Approve request by default
         $this->api->respondToNewFriendRequestEvent(
             $this->event->eventId,
             $this->event->fromId,
-            $this->event->groupId
+            $this->event->groupId,
+            $operation,
+            $message
         );
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return bool Listened
+     */
+    protected function checkListen(): bool
+    {
+        return $this->config->getBool("strategy.listenNewFriendRequestEvent");
+    }
+
+    /**
+     * Check whether this request should be approved.
+     *
+     * @return bool Approved
+     */
+    protected function checkApprove(): bool
+    {
+        return $this->config->getBool("strategy.approveFriendRequest");
     }
 }

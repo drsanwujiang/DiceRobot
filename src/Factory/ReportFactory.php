@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Factory;
 
 use DiceRobot\Data\Report\InvalidReport;
-use DiceRobot\Data\Report\Event\{BotInvitedJoinGroupRequestEvent, BotJoinGroupEvent, BotLeaveEventKick,
+use DiceRobot\Data\Report\Event\{BotInvitedJoinGroupRequestEvent, BotJoinGroupEvent, BotLeaveEventKick, BotMuteEvent,
     BotOfflineEventActive, BotOfflineEventDropped, BotOfflineEventForce, BotOnlineEvent, BotReloginEvent,
     NewFriendRequestEvent};
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
@@ -26,6 +26,7 @@ class ReportFactory
         "BotInvitedJoinGroupRequestEvent" => BotInvitedJoinGroupRequestEvent::class,
         "BotJoinGroupEvent" => BotJoinGroupEvent::class,
         "BotLeaveEventKick" => BotLeaveEventKick::class,
+        "BotMuteEvent" => BotMuteEvent::class,
         "BotOfflineEventActive" => BotOfflineEventActive::class,
         "BotOfflineEventDropped" => BotOfflineEventDropped::class,
         "BotOfflineEventForce" => BotOfflineEventForce::class,
