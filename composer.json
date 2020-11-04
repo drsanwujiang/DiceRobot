@@ -48,9 +48,7 @@
     }
   },
   "scripts": {
-    "test": [
-      "phpunit"
-    ]
+    "test": "php vendor/phpunit/phpunit/phpunit tests"
   },
   "config": {
     "sort-packages": true
