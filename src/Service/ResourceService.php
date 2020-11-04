@@ -69,8 +69,11 @@ class ResourceService
     public function initialize(\DiceRobot\Data\Config $config): void
     {
         $this->directories = $config->getArray("data");
-        $this->directories["chat.friend"] = ($this->directories["chat"] ?? "") . "/friend";
-        $this->directories["chat.group"] = ($this->directories["chat"] ?? "") . "/group";
+
+        if (isset($this->directories["chat"])) {
+            $this->directories["chat.friend"] = ($this->directories["chat"] ?? "") . "/friend";
+            $this->directories["chat.group"] = ($this->directories["chat"] ?? "") . "/group";
+        }
 
         if ($this->checkDirectories() && $this->loadAll()) {
             $this->logger->notice("Resource service initialized.");
