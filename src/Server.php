@@ -145,6 +145,8 @@ class Server
                 $this->stop($response);
             } elseif ($requestUri == "/restart") {
                 $this->restart($response);
+            } elseif ($requestUri == "/update") {
+                $this->update($response);
             } elseif ($requestUri == "/mirai/status") {
                 $this->miraiStatus($response);
             } elseif ($requestUri == "/mirai/start") {
