@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 - 2020-10-26
+## 2.0.0 - 2020-11-04
 
 ### Added
 - Introduce coroutine
