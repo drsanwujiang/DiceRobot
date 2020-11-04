@@ -20,6 +20,7 @@
     "php": "^7.4",
     "ext-json": "*",
     "ext-swoole": "^4.5.5",
+    "ext-zip": "*",
     "cakephp/chronos": "^2.0",
     "imefisto/psr-swoole-native": "^0.0.2",
     "monolog/monolog": "^2.1",
@@ -44,10 +45,7 @@
   "autoload-dev": {
     "psr-4": {
       "DiceRobot\\Tests\\": "tests"
-    },
-    "files": [
-      "src/include/const.php"
-    ]
+    }
   },
   "scripts": {
     "test": [

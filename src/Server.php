@@ -377,10 +377,12 @@ class Server
             return;
         }
 
+        $this->logger->notice("Root path: {$root}");
+
         $code = $signal = -1;
         $output = "";
 
-        extract(System::exec("/usr/local/bin/composer update --working-dir {$root} --quiet"), EXTR_OVERWRITE);
+        extract(System::exec("/usr/local/bin/composer update --working-dir {$root} --no-ansi --no-interaction --quiet 2>&1"), EXTR_OVERWRITE);
 
         if ($code == 0) {
             $this->responseFactory->create($code, null, $response)->end();

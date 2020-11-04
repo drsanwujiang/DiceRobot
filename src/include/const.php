@@ -18,7 +18,7 @@ namespace DiceRobot;
 use Monolog\Logger;
 
 /** @var string Current version */
-const DICEROBOT_VERSION = "2.0.0-RC";
+const DICEROBOT_VERSION = "2.0.0";
 
 /** @var string Root directory */
 define("DICEROBOT_STARTUP", time());
