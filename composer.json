@@ -1,6 +1,6 @@
 {
   "name": "drsanwujiang/dicerobot",
-  "type": "project",
+  "type": "library",
   "description": "A TRPG dice robot based on Swoole.",
   "homepage": "https://tool.drsanwujiang.com/dicerobot/",
   "license": "MIT",
@@ -14,23 +14,24 @@
   "support": {
     "docs": "https://docs.drsanwujiang.com/dicerobot/",
     "issues": "https://github.com/drsanwujiang/DiceRobot/issues",
-    "source": "https://github.com/drsanwujiang/DiceRobot/"
+    "source": "https://github.com/drsanwujiang/DiceRobot"
   },
   "require": {
     "php": "^7.4",
     "ext-json": "*",
     "ext-swoole": "^4.5.5",
+    "ext-zip": "*",
     "cakephp/chronos": "^2.0",
     "imefisto/psr-swoole-native": "^0.0.2",
     "monolog/monolog": "^2.1",
     "myclabs/php-enum": "^1.7",
     "nyholm/psr7": "^1.3",
     "php-di/php-di": "^6.2",
-    "selective/array-reader": "^0.3.0",
-    "selective/config": "^0.1.1",
+    "selective/array-reader": "^1.0",
     "swlib/saber": "^1.0"
   },
   "require-dev": {
+    "phpunit/phpunit": "^9.4",
     "swoole/ide-helper": "^4.5"
   },
   "autoload": {
@@ -41,13 +42,17 @@
       "src/include/const.php"
     ]
   },
+  "autoload-dev": {
+    "psr-4": {
+      "DiceRobot\\Tests\\": "tests"
+    }
+  },
+  "scripts": {
+    "test": [
+      "phpunit"
+    ]
+  },
   "config": {
     "sort-packages": true
-  },
-  "repositories": {
-    "packagist": {
-      "type": "composer",
-      "url": "https://mirrors.aliyun.com/composer/"
-    }
   }
 }

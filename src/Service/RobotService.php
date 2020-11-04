@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Contact\{Friend, Group, Robot};
-use Selective\Config\Configuration;
+use DiceRobot\Exception\MiraiApiException;
+use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
+use DiceRobot\Factory\LoggerFactory;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class RobotService
@@ -16,6 +20,12 @@ use Selective\Config\Configuration;
  */
 class RobotService
 {
+    /** @var LoggerInterface Logger */
+    protected LoggerInterface $logger;
+
+    /** @var ApiService API service */
+    protected ApiService $api;
+
     /** @var Robot Robot */
     protected Robot $robot;
 
@@ -34,14 +44,52 @@ class RobotService
     /**
      * The constructor.
      *
-     * @param Configuration $config
+     * @param LoggerFactory $loggerFactory
+     * @param ApiService $api
      */
-    public function __construct(Configuration $config)
+    public function __construct(LoggerFactory $loggerFactory, ApiService $api)
+    {
+        $this->logger = $loggerFactory->create("Robot");
+        $this->api = $api;
+    }
+
+    /**
+     * Initialize robot service.
+     *
+     * @param Config $config
+     */
+    public function initialize(Config $config): void
     {
         $this->robot = new Robot();
         $this->robot->id = $config->getInt("mirai.robot.id");
         $this->robot->nickname = "Unknown";
         $this->robot->authKey = $config->getString("mirai.robot.authKey");
+    }
+
+    /**
+     * Update robot service.
+     *
+     * @return bool
+     */
+    public function update(): bool
+    {
+        try {
+            // Update lists
+            $this->updateFriends($this->api->getFriendList()->all());
+            $this->updateGroups($this->api->getGroupList()->all());
+            $this->updateNickname($this->api->getNickname($this->getId())->nickname);
+
+            // Report to DiceRobot API
+            $this->api->updateRobotAsync($this->getId());
+
+            $this->logger->info("Robot updated.");
+
+            return true;
+        } catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
+            $this->logger->alert("Update robot failed, unable to call Mirai API.");
+
+            return false;
+        }
     }
 
     /**
@@ -57,12 +105,11 @@ class RobotService
      */
     public function updateFriends(array $friends): void
     {
-        foreach ($friends as $friend)
-        {
+        foreach ($friends as $friend) {
             $_friend = new Friend();
-            $_friend->id = $friend["id"] ?? 0;
-            $_friend->nickname = $friend["nickname"] ?? "";
-            $_friend->remark = $friend["remark"] ?? "";
+            $_friend->id = (int) ($friend["id"] ?? 0);
+            $_friend->nickname = (string) ($friend["nickname"] ?? "");
+            $_friend->remark = (string) ($friend["remark"] ?? "");
 
             $this->friends[$_friend->id] = $_friend;
         }
@@ -75,12 +122,11 @@ class RobotService
      */
     public function updateGroups(array $groups): void
     {
-        foreach ($groups as $group)
-        {
+        foreach ($groups as $group) {
             $_group = new Group();
-            $_group->id = $group["id"] ?? 0;
-            $_group->name = $group["name"] ?? "";
-            $_group->permission = $group["permission"] ?? "";
+            $_group->id = (int) ($group["id"] ?? 0);
+            $_group->name = (string) ($group["name"] ?? "");
+            $_group->permission = (string) ($group["permission"] ?? "");
 
             $this->groups[$_group->id] = $_group;
         }
@@ -139,7 +185,7 @@ class RobotService
      */
     public function getFriend(int $friendId): ?Friend
     {
-        return $this->friends[$friendId] ?? NULL;
+        return $this->friends[$friendId] ?? null;
     }
 
     /**
@@ -149,7 +195,7 @@ class RobotService
      */
     public function getGroup(int $groupId): ?Group
     {
-        return $this->groups[$groupId] ?? NULL;
+        return $this->groups[$groupId] ?? null;
     }
 
     /**

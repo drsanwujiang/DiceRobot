@@ -2,34 +2,40 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Traits\AppTraits;
+namespace DiceRobot\Handlers;
 
-use DiceRobot\Factory\ReportFactory;
+use DiceRobot\App;
 use DiceRobot\Action\{EventAction, MessageAction};
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\{Event, InvalidReport, Message};
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\{DiceRobotException, MiraiApiException};
+use DiceRobot\Factory\{LoggerFactory, ReportFactory};
 use DiceRobot\Interfaces\Report;
-use DiceRobot\Service\{ApiService, RobotService};
+use DiceRobot\Service\{ApiService, RobotService, StatisticsService};
+use DiceRobot\Traits\RouteCollectorTrait;
 use DiceRobot\Util\Convertor;
 use Psr\Container\ContainerInterface;
-use Selective\Config\Configuration;
+use Psr\Log\LoggerInterface;
 
 /**
- * Trait ReportHandlerTrait
+ * Class ReportHandler
  *
- * The report handler trait.
+ * The report handler.
  *
- * @package DiceRobot\Traits
+ * @package DiceRobot\Handlers
  */
-trait ReportHandlerTrait
+class ReportHandler
 {
     /** @var ContainerInterface Container */
     protected ContainerInterface $container;
 
-    /** @var Configuration Config */
-    protected Configuration $config;
+    /** @var Config Config */
+    protected Config $config;
+
+    /** @var App Application */
+    protected App $app;
 
     /** @var ApiService API service */
     protected ApiService $api;
@@ -37,46 +43,73 @@ trait ReportHandlerTrait
     /** @var RobotService Robot service */
     protected RobotService $robot;
 
-    use StatusTrait;
+    /** @var StatisticsService Statistics service */
+    protected StatisticsService $statistics;
+
+    /** @var LoggerInterface Logger */
+    protected LoggerInterface $logger;
 
     use RouteCollectorTrait;
 
-    use StatisticsTrait;
+    /**
+     * The constructor.
+     *
+     * @param ContainerInterface $container
+     * @param Config $config
+     * @param App $app
+     * @param ApiService $api
+     * @param RobotService $robot
+     * @param StatisticsService $statistics
+     * @param LoggerFactory $loggerFactory
+     */
+    public function __construct(
+        ContainerInterface $container,
+        Config $config,
+        App $app,
+        ApiService $api,
+        RobotService $robot,
+        StatisticsService $statistics,
+        LoggerFactory $loggerFactory
+    ) {
+        $this->container = $container;
+        $this->config = $config;
+        $this->app = $app;
+        $this->api = $api;
+        $this->robot = $robot;
+        $this->statistics = $statistics;
+        $this->logger = $loggerFactory->create("Handler");
+    }
 
     /**
      * Handle message and event report.
      *
      * @param string $reportContent
      */
-    public function report(string $reportContent): void
+    public function handle(string $reportContent): void
     {
+        $this->logger->debug("Receive report, content: {$reportContent}");
+
         $this->logger->info("Report started.");
 
-        /** Validate */
-        if (!is_object($reportData = json_decode($reportContent)))
-        {
+        // Validate
+        if (!is_object($reportData = json_decode($reportContent))) {
             $this->logger->error("Report failed, JSON decode error.");
 
             return;
-        }
-        elseif (!$this->validate($report = ReportFactory::create($reportData)))
-        {
+        } elseif (!$this->validate($report = ReportFactory::create($reportData))) {
             $this->logger->info("Report skipped, unsupported report.");
 
             return;
         }
 
-        try
-        {
-            /** Report */
-            if ($report instanceof Event)
+        try {
+            // Report
+            if ($report instanceof Event) {
                 $this->event($report);
-            elseif ($report instanceof Message)
+            } elseif ($report instanceof Message) {
                 $this->message($report);
-        }
-        // Call Mirai APIs failed
-        catch (MiraiApiException $e)  // TODO: catch (MiraiApiException) in PHP 8
-        {
+            }
+        } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Report failed, unable to call Mirai API.");
         }
     }
@@ -89,15 +122,13 @@ trait ReportHandlerTrait
     protected function event(Event $event): void
     {
         // Check application status
-        if ($this->getStatus()->lessThan(AppStatusEnum::RUNNING()))
-        {
-            $this->logger->info("Report skipped. Application status {$this->getStatus()}.");
+        if ($this->app->getStatus()->lessThan(AppStatusEnum::RUNNING())) {
+            $this->logger->info("Report skipped. Application status {$this->app->getStatus()}.");
 
             return;
         }
 
-        if (empty($actionName = $this->matchEvent($event)))
-        {
+        if (empty($actionName = $this->matchEvent($event))) {
             $this->logger->info("Report skipped, matching miss.");
 
             return;
@@ -108,23 +139,15 @@ trait ReportHandlerTrait
             "event" => $event
         ]);
 
-        try
-        {
+        try {
             $action();
 
             $this->logger->info("Report finished.");
-        }
-            // Action interrupted, log error
-        catch (DiceRobotException $e)
-        {
+        } catch (DiceRobotException $e) {  // Action interrupted, log error
             // TODO: $e::class, $action->event::class, $action::class in PHP 8
             $this->logger->error(
-                "Report failed, " .
-                get_class($e) .
-                " occurred when handling " .
-                get_class($action->event) .
-                " and executing " .
-                get_class($action)
+                "Report failed, " . get_class($e) . " occurred when handling " . get_class($action->event) .
+                " and executing " . get_class($action)
             );
         }
     }
@@ -139,15 +162,13 @@ trait ReportHandlerTrait
     protected function message(Message $message): void
     {
         // Check application status
-        if (!$this->getStatus()->equals(AppStatusEnum::RUNNING()))
-        {
-            $this->logger->info("Report skipped. Application status {$this->getStatus()}.");
+        if (!$this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
+            $this->logger->info("Report skipped. Application status {$this->app->getStatus()}.");
 
             return;
         }
 
-        if (!$message->parseMessageChain())
-        {
+        if (!$message->parseMessageChain()) {
             $this->logger->error("Report failed, parse message error.");
 
             return;
@@ -155,8 +176,7 @@ trait ReportHandlerTrait
 
         list($filter, $at) = $this->filter($message);
 
-        if (!$filter)
-        {
+        if (!$filter) {
             $this->logger->info("Report skipped, filter miss.");
 
             return;
@@ -164,8 +184,7 @@ trait ReportHandlerTrait
 
         list($match, $order, $actionName) = $this->matchMessage($message);
 
-        if (empty($actionName))
-        {
+        if (empty($actionName)) {
             $this->logger->info("Report skipped, matching miss.");
 
             return;
@@ -179,61 +198,57 @@ trait ReportHandlerTrait
             "at" => $at
         ]);
 
-        $this->addCount($match, get_class($message), $message->sender);
+        $this->statistics->addCount($match, get_class($message), $message->sender);
 
-        if (!$action->checkActive())
-        {
+        if (!$action->checkActive()) {
             $this->logger->info("Report finished, robot inactive.");
 
             return;
         }
 
-        try
-        {
+        try {
             $action();
 
             // Send reply if set
-            if (!empty($action->reply))
-            {
-                if ($action->message instanceof FriendMessage)
+            if (!empty($action->reply)) {
+                if ($action->message instanceof FriendMessage) {
                     $this->api->sendFriendMessage(
                         $action->message->sender->id,
                         Convertor::toMessageChain($action->reply)
                     );
-                elseif ($action->message instanceof GroupMessage)
+                } elseif ($action->message instanceof GroupMessage) {
                     $this->api->sendGroupMessage(
                         $action->message->sender->group->id,
                         Convertor::toMessageChain($action->reply)
                     );
-                elseif ($action->message instanceof TempMessage)
+                } elseif ($action->message instanceof TempMessage) {
                     $this->api->sendTempMessage(
                         $action->message->sender->id,
                         $action->message->sender->group->id,
                         Convertor::toMessageChain($action->reply)
                     );
+                }
             }
 
             $this->logger->info("Report finished.");
-        }
-        // Action interrupted, send error message to group/user
-        catch (DiceRobotException $e)
-        {
-            if ($action->message instanceof FriendMessage)
+        } catch (DiceRobotException $e) {  // Action interrupted, send error message to group/user
+            if ($action->message instanceof FriendMessage) {
                 $this->api->sendFriendMessage(
                     $action->message->sender->id,
-                    Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
+                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
                 );
-            elseif ($action->message instanceof GroupMessage)
+            } elseif ($action->message instanceof GroupMessage) {
                 $this->api->sendGroupMessage(
                     $action->message->sender->group->id,
-                    Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
+                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
                 );
-            elseif ($action->message instanceof TempMessage)
+            } elseif ($action->message instanceof TempMessage) {
                 $this->api->sendTempMessage(
                     $action->message->sender->id,
                     $action->message->sender->group->id,
-                    Convertor::toMessageChain($this->config->getString("errorMessage.{$e}"))
+                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
                 );
+            }
 
             // TODO: $e::class, $action->message::class, $action::class in PHP 8
             $this->logger->info(
@@ -241,8 +256,9 @@ trait ReportHandlerTrait
                 get_class($action->message) . " and executing " . get_class($action)
             );
 
-            if (!empty($e->extraMessage))
+            if (!empty($e->extraMessage)) {
                 $this->logger->error("Extra message: {$e->extraMessage}.");
+            }
         }
     }
 
@@ -269,7 +285,8 @@ trait ReportHandlerTrait
     {
         if (preg_match(
             "/^(?:\[mirai:at:([1-9][0-9]*),.*?])?\s*[.。]\s*([\S\s]+)/",
-            (string) $message, $matches
+            (string) $message,
+            $matches
         )) {
             $message->message = "." . trim($matches[2]);
 
@@ -277,12 +294,13 @@ trait ReportHandlerTrait
             $at = $targetId == (string) $this->robot->getId();
 
             // At others
-            if (!empty($targetId) && !$at)
-                return [false, NULL];
+            if (!empty($targetId) && !$at) {
+                return [false, null];
+            }
 
             return [true, $at];
         }
 
-        return [false, NULL];
+        return [false, null];
     }
 }

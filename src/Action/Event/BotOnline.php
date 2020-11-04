@@ -39,9 +39,8 @@ class BotOnline extends EventAction
     {
         $this->logger->notice("Robot is online (login).");
 
-        // Try to initialize API service, then update robot service
-        if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->app->updateRobot())
-        {
+        // Try to initialize session, then update robot service
+        if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
             if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()))
                 $this->app->setStatus(AppStatusEnum::RUNNING());
 
@@ -49,7 +48,8 @@ class BotOnline extends EventAction
         }
 
         // Failed
-        if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING()))
+        if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
             $this->app->setStatus(AppStatusEnum::HOLDING());
+        }
     }
 }

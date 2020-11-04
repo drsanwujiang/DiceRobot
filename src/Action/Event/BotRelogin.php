@@ -40,27 +40,23 @@ class BotRelogin extends EventAction
         $this->logger->notice("Robot is online (relogin).");
 
         // Re-verify session
-        if (0 == $code = $this->api->verifySession($this->robot->getId())->getInt("code", -1))
-        {
+        if (0 == $code = $this->api->verifySession($this->robot->getId())->getInt("code", -1)) {
             $this->logger->info("Session verified.");
 
             // Update robot service
-            if ($this->app->updateRobot())
-            {
-                if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()))
+            if ($this->robot->update()) {
+                if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING())) {
                     $this->app->setStatus(AppStatusEnum::RUNNING());
+                }
 
                 return;
             }
-        }
-        // Re-verify failed
-        else
-        {
+        } else {
+            // Re-verify failed
             $this->logger->warning("Session unauthorized, code {$code}. Try to initialize.");
 
-            // Try to initialize API service, then update robot service
-            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->app->updateRobot())
-            {
+            // Try to initialize session, then update robot service
+            if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
                 if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()))
                     $this->app->setStatus(AppStatusEnum::RUNNING());
 
@@ -69,7 +65,8 @@ class BotRelogin extends EventAction
         }
 
         // Failed
-        if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING()))
+        if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
             $this->app->setStatus(AppStatusEnum::HOLDING());
+        }
     }
 }

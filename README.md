@@ -1,5 +1,10 @@
 # DiceRobot
 
+[![Actions Status](https://github.com/drsanwujiang/DiceRobot/workflows/PHP%20Composer/badge.svg)](https://github.com/drsanwujiang/DiceRobot/actions)
+[![Latest Stable Version](https://poser.pugx.org/drsanwujiang/dicerobot/v)](https://packagist.org/packages/drsanwujiang/dicerobot)
+[![Latest Unstable Version](https://poser.pugx.org/drsanwujiang/dicerobot/v/unstable)](https://packagist.org/packages/drsanwujiang/dicerobot)
+[![License](https://poser.pugx.org/drsanwujiang/dicerobot/license)](https://packagist.org/packages/drsanwujiang/dicerobot)
+
 DiceRobot，一个基于 [Swoole](https://www.swoole.com/) 的 TRPG 骰子机器人。
 
 
@@ -11,19 +16,21 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 * ~~使用 CoolQ 并加载了 [CQHTTP](https://github.com/richardchien/coolq-http-api) 插件的机器人~~（1.0.0 ~ 1.3.2）
 * ~~使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [CQHTTP Mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai) 插件的机器人~~（1.4.0）
-* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http/) 插件的机器人（2.0.0）
+* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http) 插件的机器人（2.0.0）
 
 ### 部署
 
 无需 Docker、Apache 等环境，没有复杂的设置，部署 DiceRobot 十分简单！
 
-如果你追求极致简洁的一键部署，那么只需几分钟，就可以直接使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以使用 Composer 安装。
-
-
+如果你追求极致简洁的 [一键部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#onekey) ，那么只需几分钟，就可以直接使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以基于我们推荐的流程进行 [手动部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#manual) 。
 
 ### 自定义
 
 如果现有的功能无法满足你的需要，那么你可以 [自定义](https://docs.drsanwujiang.com/dicerobot/deploy/customization) DiceRobot。
+
+### 控制面板
+
+你可以 [点击这里](http://tool.drsanwujiang.com/dicerobot/panel/) 使用控制面板来查看 DiceRobot 的运行状态，并管理 DiceRobot。
 
 
 ## 如果你是使用者
@@ -46,7 +53,7 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 有任何意见建议或想法，都可以直接在 GitHub 提交 Issue，或者发邮件联系我：[drsanwujiang@gmail.com](mailto:drsanwujiang@gmail.com) 。
 
-并没有几个人的摸鱼群 824668756，可以来瞎聊~
+~~并没有几个人的~~摸鱼群 824668756，可以来瞎聊~
 
 玩得愉快~
 
@@ -56,6 +63,7 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 DiceRobot 的开发初衷是解决 [Dice!](https://github.com/w4123/Dice) 插件在使用过程中的一些小问题，以及增加了一些功能，所以基本掷骰指令照搬了 Dice! 的指令，一些资源文件（例如 NameTemplate.json）也借用了 Dice! 的代码。
 
 在此感谢 [溯回](https://github.com/w4123) 大佬开发了 Dice!，让 QQ 群跑团方便了许多！
+
 
 ## 许可证
 

@@ -22,7 +22,7 @@ abstract class Resource
      *
      * @param array $data Resource data
      */
-    public function __construct(array $data)
+    public function __construct(array $data = [])
     {
         $this->__constructArrayReader($data);
     }

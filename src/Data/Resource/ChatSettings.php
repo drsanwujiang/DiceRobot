@@ -27,8 +27,8 @@ class ChatSettings extends Resource
 
         $this->data["active"] ??= true;
         $this->data["cocCheckRule"] ??= 0;
-        $this->data["defaultSurfaceNumber"] ??= NULL;
-        $this->data["robotNickname"] ??= NULL;
+        $this->data["defaultSurfaceNumber"] ??= null;
+        $this->data["robotNickname"] ??= null;
 
         $this->data["characterCards"] ??= [];
         $this->data["nicknames"] ??= [];
@@ -51,12 +51,13 @@ class ChatSettings extends Resource
      * @param int $userId User ID
      * @param string|null $nickname User nickname
      */
-    public function setNickname(int $userId, string $nickname = NULL): void
+    public function setNickname(int $userId, string $nickname = null): void
     {
-        if ($nickname)
+        if ($nickname) {
             $this->data["nicknames"][$userId] = $nickname;
-        else
+        } else {
             unset($this->data["nicknames"][$userId]);
+        }
     }
 
     /**
@@ -65,12 +66,13 @@ class ChatSettings extends Resource
      * @param int $userId User ID
      * @param int|null $cardId Character card ID
      */
-    public function setCharacterCardId(int $userId, int $cardId = NULL): void
+    public function setCharacterCardId(int $userId, int $cardId = null): void
     {
-        if ($cardId)
+        if ($cardId) {
             $this->data["characterCards"][$userId] = $cardId;
-        else
+        } else {
             unset($this->data["characterCards"][$userId]);
+        }
     }
 
     /**
@@ -82,8 +84,9 @@ class ChatSettings extends Resource
      */
     public function getNickname(int $userId): ?string
     {
-        if (!$this->has("nicknames.{$userId}"))
-            return NULL;
+        if (!$this->has("nicknames.{$userId}")) {
+            return null;
+        }
 
         return $this->getString("nicknames.{$userId}");
     }
@@ -99,8 +102,9 @@ class ChatSettings extends Resource
      */
     public function getCharacterCardId(int $userId): int
     {
-        if (!$this->has("characterCards.{$userId}"))
+        if (!$this->has("characterCards.{$userId}")) {
             throw new NotBoundException();
+        }
 
         return $this->getInt("characterCards.{$userId}");
     }

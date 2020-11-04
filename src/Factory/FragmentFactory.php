@@ -80,9 +80,7 @@ class FragmentFactory
             /** @var ParsableFragment $fragment */
             $fragment = new $fragmentType();
             $fragment->fromMiraiCode($code);
-        }
-        else
-        {
+        } else {
             $fragment = new Plain();
             $fragment->fromMiraiCode($code);
         }

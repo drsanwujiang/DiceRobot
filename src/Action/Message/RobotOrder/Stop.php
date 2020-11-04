@@ -32,8 +32,9 @@ class Stop extends Start
     {
         list($robotId) = $this->parseOrder();
 
-        if (!$this->checkId($robotId) || !$this->checkPermission())
+        if (!$this->checkId($robotId) || !$this->checkPermission()) {
             return;
+        }
 
         $this->chatSettings->set("active", false);
 
@@ -53,8 +54,7 @@ class Stop extends Start
     protected function checkPermission(): bool
     {
         // Must be the owner or the administrator in the group
-        if ($this->message instanceof GroupMessage && $this->message->sender->permission == "MEMBER")
-        {
+        if ($this->message instanceof GroupMessage && $this->message->sender->permission == "MEMBER") {
             $this->reply = $this->config->getString("reply.robotOrderStopDenied");
 
             return false;

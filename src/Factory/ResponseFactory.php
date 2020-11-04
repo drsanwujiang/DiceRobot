@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace DiceRobot\Factory;
 
+use DiceRobot\Data\Config;
 use Imefisto\PsrSwoole\ResponseMerger;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
-use Selective\Config\Configuration;
 use Swoole\Http\Response;
 
 /**
@@ -25,21 +25,30 @@ class ResponseFactory
 
         -404 => "Not found",
 
-        -1000 => "Application is already paused",
-        -1001 => "Application cannot be paused",
-        -1010 => "Application is already running",
-        -1011 => "Application cannot be rerun",
-        -1012 => "Rerun application failed",
-        -1020 => "Reload application failed",
+        -1000 => "DiceRobot already paused",
+        -1001 => "DiceRobot cannot be paused",
+        -1010 => "DiceRobot already running",
+        -1011 => "DiceRobot cannot be rerun",
+        -1012 => "Rerun DiceRobot failed",
+        -1020 => "",  // Undefined reload error
+        -1030 => "",  // Undefined stop error
+        -1040 => "DiceRobot cannot be restarted",
+        -1050 => "DiceRobot root undefined or invalid",
+        -1051 => "Composer not found",
+        -1052 => "Update DiceRobot failed",
+        -1060 => "Config invalid",
+        -1061 => "Config prohibited",
 
-        -2000 => "Mirai is not setup as service",
+        -2000 => "Mirai not setup as service",
         -2001 => "Start Mirai failed",
-        -2010 => "Mirai is not setup as service",
+        -2010 => "Mirai not setup as service",
         -2011 => "Stop Mirai failed",
+        -2020 => "Mirai not setup as service",
+        -2021 => "Restart Mirai failed",
     ];
 
-    /** @var Configuration Config */
-    protected Configuration $config;
+    /** @var Config Config */
+    protected Config $config;
 
     /** @var Psr17Factory PSR-17 HTTP factory */
     protected Psr17Factory $psr17Factory;
@@ -59,12 +68,12 @@ class ResponseFactory
     /**
      * The constructor.
      *
-     * @param Configuration $config
+     * @param Config $config
      * @param Psr17Factory $psr17Factory
      * @param ResponseMerger $responseMerger
      */
     public function __construct(
-        Configuration $config,
+        Config $config,
         Psr17Factory $psr17Factory,
         ResponseMerger $responseMerger
     ) {
@@ -138,14 +147,16 @@ class ResponseFactory
             "message" => self::RETURN_MESSAGE[$code] ?? "Unexpected code"
         ];
 
-        if ($data)
+        if ($data) {
             $content["data"] = $data;
+        }
 
         $psrResponse = $this->response
             ->withBody($this->psr17Factory->createStream((string) json_encode($content)));
 
-        if ($code != 0)
+        if ($code != 0) {
             $psrResponse = $psrResponse->withStatus(202);
+        }
 
         return $this->responseMerger->toSwoole($psrResponse, $response);
     }

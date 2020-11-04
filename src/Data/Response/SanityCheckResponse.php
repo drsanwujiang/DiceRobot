@@ -42,7 +42,8 @@ final class SanityCheckResponse extends Response
      */
     protected function validate(): void
     {
-        if ($this->code == -1024)
+        if ($this->code == -1024) {
             throw new PermissionDeniedException();
+        }
     }
 }

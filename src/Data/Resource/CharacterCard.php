@@ -53,8 +53,9 @@ class CharacterCard extends Resource
         $name = strtoupper($name);
         $name = self::ATTRIBUTE_ENG_NAMES[$name] ?? $name;
 
-        if (!$this->has("attributes.{$name}"))
+        if (!$this->has("attributes.{$name}")) {
             throw new ItemNotExistException();
+        }
 
         return $this->getInt("attributes.{$name}");
     }
@@ -72,8 +73,9 @@ class CharacterCard extends Resource
     {
         $name = strtolower($name);
 
-        if (!$this->has("skills.{$name}"))
+        if (!$this->has("skills.{$name}")) {
             throw new ItemNotExistException();
+        }
 
         return $this->getInt("skills.{$name}");
     }

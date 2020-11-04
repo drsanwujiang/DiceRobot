@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Traits\AppTraits;
+namespace DiceRobot\Traits;
 
 use DiceRobot\Data\Report\{Event, Message};
+use const DiceRobot\DEFAULT_ROUTES;
 
 /**
  * Trait RouteCollectorTrait
@@ -16,20 +17,20 @@ use DiceRobot\Data\Report\{Event, Message};
 trait RouteCollectorTrait
 {
     /** @var string[] Event routes */
-    protected array $eventRoutes;
+    protected array $eventRoutes = [];
 
     /** @var array[] Message routes */
-    protected array $messageRoutes;
+    protected array $messageRoutes = [];
 
     /**
      * Register event and message routes.
      *
-     * @param array $routes
+     * @param array $routes The routes
      */
-    public function registerRoutes(array $routes): void
+    public function registerRoutes(array $routes = []): void
     {
-        $this->eventRoutes = $routes["event"] ?? [];
-        $this->messageRoutes = $routes["message"] ?? [];
+        $this->eventRoutes = array_replace_recursive(DEFAULT_ROUTES["event"], $routes["event"] ?? []);
+        $this->messageRoutes = array_replace_recursive(DEFAULT_ROUTES["message"], $routes["message"] ?? []);
     }
 
     /**
@@ -41,13 +42,13 @@ trait RouteCollectorTrait
      */
     protected function matchEvent(Event $event): ?string
     {
-        foreach ($this->eventRoutes as $eventType => $actionName)
-        {
-            if (get_class($event) == $eventType)
+        foreach ($this->eventRoutes as $eventType => $actionName) {
+            if (get_class($event) == $eventType) {
                 return $actionName;
+            }
         }
 
-        return NULL;
+        return null;
     }
 
     /**
@@ -57,15 +58,14 @@ trait RouteCollectorTrait
      */
     protected function matchMessage(Message $message): ?array
     {
-        foreach ($this->messageRoutes as $_ => $routes)
-        {
-            foreach ($routes as $match => $actionName)
-            {
-                if (preg_match("/^\.{$match}\s*([\S\s]*)$/i", (string) $message, $matches))
+        foreach ($this->messageRoutes as $_ => $routes) {
+            foreach ($routes as $match => $actionName) {
+                if (preg_match("/^\.{$match}\s*([\S\s]*)$/i", (string) $message, $matches)) {
                     return [$match, $matches[1], $actionName];
+                }
             }
         }
 
-        return NULL;
+        return null;
     }
 }

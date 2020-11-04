@@ -36,8 +36,9 @@ class Dnd extends MessageAction
     {
         list($generateCount) = $this->parseOrder();
 
-        if (!$this->checkRange($generateCount))
+        if (!$this->checkRange($generateCount)) {
             return;
+        }
 
         $this->reply = trim(
             Convertor::toCustomString(
@@ -59,8 +60,9 @@ class Dnd extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches))
+        if (!preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var int $generateCount */
         $generateCount = empty($matches[1]) ? 1 : (int) $matches[1];
@@ -77,8 +79,7 @@ class Dnd extends MessageAction
      */
     protected function checkRange(int $generateCount): bool
     {
-        if ($generateCount < 1 || $generateCount > $this->config->getInt("order.maxGenerateCount"))
-        {
+        if ($generateCount < 1 || $generateCount > $this->config->getInt("order.maxGenerateCount")) {
             $this->reply =
                 Convertor::toCustomString(
                     $this->config->getString("reply.dndGenerateCardCountOverstep"),
@@ -108,12 +109,10 @@ class Dnd extends MessageAction
         $attributesTemplate =
             $this->resource->getReference("DNDCharacterCardTemplate")->getString("templates.attributes");
 
-        while ($count--)
-        {
+        while ($count--) {
             $results = [];
 
-            for ($i = 0; $i < 6; $i++)
-            {
+            for ($i = 0; $i < 6; $i++) {
                 $dice = isset($dice) ? clone $dice : new Dice(self::DND_GENERATE_RULE);
                 $results[$i] = $dice->result;
             }

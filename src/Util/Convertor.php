@@ -26,30 +26,31 @@ class Convertor
      */
     public static function toCustomInstance(object $object, string $className, string $default)
     {
-        try
-        {
+        try {
             $ref = new ReflectionClass($className);
             $instance = new $className();
 
-            foreach ($ref->getProperties() as $property)
-            {
+            foreach ($ref->getProperties() as $property) {
                 $name = $property->getName();
 
-                if (isset($object->$name))
-                    if ($property->getType()->isBuiltin())
+                if (isset($object->$name)) {
+                    $type = $property->getType();
+
+                    if ($type->isBuiltin()) {
+                        settype($object->$name, $type);
                         $instance->$name = $object->$name;
-                    else
+                    } else {
                         $instance->$name =
                             static::toCustomInstance($object->$name, (string) $property->getType(), $default);
+                    }
+                }
             }
-        }
-        // TODO: catch (Exception) in PHP 8
-        catch (Exception $e)
-        {
-            if (class_exists($default))
+        } catch (Exception $e) {  // TODO: catch (Exception) in PHP 8
+            if (class_exists($default)) {
                 return new $default();
+            }
 
-            return NULL;
+            return null;
         }
 
         return $instance;
@@ -65,8 +66,9 @@ class Convertor
      */
     public static function toCustomString(string $string, array $variables = []): string
     {
-        foreach ($variables as $variable => $value)
+        foreach ($variables as $variable => $value) {
             $string = str_replace("{&{$variable}}", $value, $string);
+        }
 
         return $string;
     }
@@ -88,8 +90,9 @@ class Convertor
         );
         $messageChain = [];
 
-        foreach ($matches as $match)
-                $messageChain[] = FragmentFactory::fromMiraiCode($match)->toMessage();
+        foreach ($matches as $match) {
+            $messageChain[] = FragmentFactory::fromMiraiCode($match)->toMessage();
+        }
 
         return $messageChain;
     }

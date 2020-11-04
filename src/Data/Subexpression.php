@@ -7,7 +7,6 @@ namespace DiceRobot\Data;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionInvalidException,
     SurfaceNumberOverstepException};
 use DiceRobot\Util\Random;
-use Selective\Config\Configuration;
 
 /**
  * Class Subexpression
@@ -34,7 +33,7 @@ class Subexpression
     public int $surfaceNumber;
 
     /** @var int|null K number */
-    public ?int $kNumber = NULL;
+    public ?int $kNumber = null;
 
     /** @var int[] Dicing results */
     public array $results;
@@ -47,9 +46,9 @@ class Subexpression
      *
      * @GlobalInitialize
      *
-     * @param Configuration $config
+     * @param Config $config
      */
-    public static function globalInitialize(Configuration $config): void
+    public static function globalInitialize(Config $config): void
     {
         static::$maxDiceNumber = $config->getInt("order.maxDiceNumber");
         static::$maxSurfaceNumber = $config->getInt("order.maxSurfaceNumber");
@@ -89,16 +88,16 @@ class Subexpression
      */
     protected function parseExpression(): void
     {
-        if (preg_match("/^([1-9][0-9]*)D([1-9][0-9]*)(?:K([1-9][0-9]*))?$/", $this->expression, $matches))
-        {
+        if (preg_match("/^([1-9][0-9]*)D([1-9][0-9]*)(?:K([1-9][0-9]*))?$/", $this->expression, $matches)) {
             $this->diceNumber = (int) $matches[1];
             $this->surfaceNumber = (int) $matches[2];
 
-            if (!empty($matches[3]))
+            if (!empty($matches[3])) {
                 $this->kNumber = (int) $matches[3];
-        }
-        else
+            }
+        } else {
             throw new ExpressionInvalidException();
+        }
     }
 
     /**
@@ -108,14 +107,13 @@ class Subexpression
      */
     protected function checkRange(): void
     {
-        if ($this->diceNumber < 1 || $this->diceNumber > static::$maxDiceNumber)
+        if ($this->diceNumber < 1 || $this->diceNumber > static::$maxDiceNumber) {
             throw new DiceNumberOverstepException();
-
-        if ($this->surfaceNumber < 1 || $this->surfaceNumber > static::$maxSurfaceNumber)
+        } elseif ($this->surfaceNumber < 1 || $this->surfaceNumber > static::$maxSurfaceNumber) {
             throw new SurfaceNumberOverstepException();
-
-        if ($this->kNumber > $this->diceNumber)
+        } elseif ($this->kNumber > $this->diceNumber) {
             throw new ExpressionInvalidException();
+        }
     }
 
     /**
@@ -123,19 +121,17 @@ class Subexpression
      */
     protected function roll(): void
     {
-        // xDy
-        if (is_null($this->kNumber))
-        {
+        if (is_null($this->kNumber)) {
+            // xDy
             $this->results = Random::generate($this->diceNumber, $this->surfaceNumber);
             $this->result = array_sum($this->results);
-        }
-        // xDyKz
-        else
-        {
+        } else {
+            // xDyKz
             $this->results = Random::generate($this->diceNumber, $this->surfaceNumber);
 
-            for ($i = count($this->results); $i > $this->kNumber; $i--)
+            for ($i = count($this->results); $i > $this->kNumber; $i--) {
                 array_splice( $this->results, array_search(min($this->results), $this->results), 1);
+            }
 
             $this->result = array_sum($this->results);
         }
@@ -150,8 +146,9 @@ class Subexpression
      */
     public function getResultString(string $glue = "+"): string
     {
-        if (count($this->results) == 1)
+        if (count($this->results) == 1) {
             return (string) $this->results[0];
+        }
 
         return "(" . join($glue, $this->results) . ")";
     }

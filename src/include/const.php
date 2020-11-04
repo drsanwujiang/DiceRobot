@@ -1,11 +1,11 @@
-<?php
+<?php /** @noinspection PhpFullyQualifiedNameUsageInspection */
 
 declare(strict_types=1);
 
 /**
  * Constants of DiceRobot.
  *
- * This file contains version (DICEROBOT_VERSION), working directory (DICEROBOT_ROOT) and default config
+ * This file contains version (DICEROBOT_VERSION), startup time (DICEROBOT_STARTUP) and default config
  * (DEFAULT_CONFIG) of DiceRobot.
  *
  * This file should NOT be modified, for it ensures DiceRobot can work in the default mode and behave as expected.
@@ -18,26 +18,13 @@ namespace DiceRobot;
 use Monolog\Logger;
 
 /** @var string Current version */
-const DICEROBOT_VERSION = "2.0.0-beta";
+const DICEROBOT_VERSION = "2.0.0";
 
 /** @var string Root directory */
 define("DICEROBOT_STARTUP", time());
 
-/** @var string Root directory */
-define("DICEROBOT_ROOT", dirname(dirname(__DIR__)));
-
 /** @var array Default config */
 const DEFAULT_CONFIG = [
-    "root" => DICEROBOT_ROOT,
-    "config" => DICEROBOT_ROOT . "/config",
-    "data" => [
-        "root" => DICEROBOT_ROOT . "/data",
-        "card" => DICEROBOT_ROOT . "/data/card",
-        "config" => DICEROBOT_ROOT . "/data/config",
-        "reference" => DICEROBOT_ROOT . "/data/reference",
-        "rule" => DICEROBOT_ROOT . "/data/rule"
-    ],
-
     "dicerobot" => [
         "version" => DICEROBOT_VERSION,
         "server" => [
@@ -62,12 +49,27 @@ const DEFAULT_CONFIG = [
 
     "log" => [
         "channel" => "default",
-        "path" => DICEROBOT_ROOT . "/logs",
         "filename" => "dicerobot.log",
         "level" => [
             "file" => Logger::NOTICE,
-            "console" => Logger::CRITICAL,
+            "console" => Logger::CRITICAL
         ]
+    ],
+
+    "strategy" => [
+        "listenBotInvitedJoinGroupRequestEvent" => true,
+        "approveGroupRequest" => true,
+        "rejectDelinquentGroupRequest" => true,
+
+        "listenBotJoinGroupEvent" => true,
+        "quitDelinquentGroup" => true,
+        "sendHelloMessage" => true,
+
+        "listenBotMuteEvent" => true,
+        "quitGroupWhenMuted" => true,
+
+        "listenNewFriendRequestEvent" => true,
+        "approveFriendRequest" => true
     ],
 
     "order" => [
@@ -126,14 +128,12 @@ const DEFAULT_CONFIG = [
 
         /* Kowtow */
         "kowtowHeading" => "[mirai:at:{&发送者QQ}] 唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！\n",
-        "kowtowLevel" => [
-            0 => "哼(▼ヘ▼#)你明明一点都不虔诚，诅咒你下次超级大失败ヽ(#`Д´)ﾉ",
-            1 => "只有这么一点虔诚的话，不天降惩罚于你已是恩赐了喵<(￣ ﹌ ￣)>",
-            2 => "看来你的虔诚很有限的说(￣▽￣)~*不过还是勉强保佑保佑你吧( ･´ω`･ )",
-            3 => "看在你还算虔诚的份上，祝你下次出现成功的几率高一点吧ヾ(✿ﾟ▽ﾟ)ノ",
-            4 => "你的虔诚感动人家了呢٩(๑>◡<๑)۶祝你接下来好♡运♡连♡连哦~ヾ(✿ﾟ▽ﾟ)ノ",
-            5 => "呐~ヾ(๑╹◡╹)ﾉ「{&机器人昵称}」会一直陪伴在君の身边的哟~☆♪",
-        ],
+        "kowtowLevel0" => "哼(▼ヘ▼#)你明明一点都不虔诚，诅咒你下次超级大失败ヽ(#`Д´)ﾉ",
+        "kowtowLevel1" => "只有这么一点虔诚的话，不天降惩罚于你已是恩赐了喵<(￣ ﹌ ￣)>",
+        "kowtowLevel2" => "看来你的虔诚很有限的说(￣▽￣)~*不过还是勉强保佑保佑你吧( ･´ω`･ )",
+        "kowtowLevel3" => "看在你还算虔诚的份上，祝你下次出现成功的几率高一点吧ヾ(✿ﾟ▽ﾟ)ノ",
+        "kowtowLevel4" => "你的虔诚感动人家了呢٩(๑>◡<๑)۶祝你接下来好♡运♡连♡连哦~ヾ(✿ﾟ▽ﾟ)ノ",
+        "kowtowLevel5" => "呐~ヾ(๑╹◡╹)ﾉ「{&机器人昵称}」会一直陪伴在君の身边的哟~☆♪",
 
         /* Name */
         "nameGenerateResult" => "[mirai:at:{&发送者QQ}] 为你寻找到了这些名称：{&名称}",
@@ -177,11 +177,11 @@ const DEFAULT_CONFIG = [
         /* BotInvitedJoinGroupRequest */
         "botInvitedJoinGroupRequestRejected" => "本群已被列入不友好群聊名单，DiceRobot 系列机器人拒绝服务。",
 
-        /* BotInvitedJoinGroupRequest */
+        /* BotJoinGroup */
         "botJoinGroupRejected" => "本群已被列入不友好群聊名单，DiceRobot 系列机器人拒绝服务。"
     ],
 
-    "errorMessage" => [
+    "errMsg" => [
         /* General */
         "_generalOrderError" => "指令错误，无法识别！",
         "_generalRepeatTimeOverstep" => "不能重复这么多次啦~",
@@ -212,7 +212,7 @@ const DEFAULT_CONFIG = [
         "diceSurfaceNumberOverstep" => "为什么会有这么多面的骰子啊(　д ) ﾟ ﾟ",
 
         /* File */
-        "fileLost" => "相关文件丢失，无法执行该指令！",
+        "fileLost" => "相关文件丢失，无法执行该指令！"
     ],
 
     "wording" => [
@@ -238,5 +238,68 @@ const DEFAULT_CONFIG = [
             "success" => "成功",
             "failure" => "失败"
         ]
+    ]
+];
+
+/** @var array Default routes */
+const DEFAULT_ROUTES = [
+    "message" => [
+        10 => [
+            "setcoc" => \DiceRobot\Action\Message\SetCOC::class,
+            "robot" => \DiceRobot\Action\Message\RobotOrderRouter::class,
+            "dismiss" => \DiceRobot\Action\Message\Dismiss::class,  // Alias of .robot goodbye
+        ],
+        20 => [
+            "ra" => \DiceRobot\Action\Message\Check::class,
+            "sc" => \DiceRobot\Action\Message\SanCheck::class,
+
+            "coc" => \DiceRobot\Action\Message\Coc::class,
+            "dnd" => \DiceRobot\Action\Message\Dnd::class,
+
+            "card" => \DiceRobot\Action\Message\BindCard::class,
+            "hp" => \DiceRobot\Action\Message\ChangeAttribute::class,
+            "mp" => \DiceRobot\Action\Message\ChangeAttribute::class,  // Alias
+            "san" => \DiceRobot\Action\Message\ChangeAttribute::class,  // Alias
+
+            "name" => \DiceRobot\Action\Message\Name::class,
+            "nn" => \DiceRobot\Action\Message\Nickname::class,
+
+            "set" => \DiceRobot\Action\Message\Set::class,
+
+            "jrrp" => \DiceRobot\Action\Message\Jrrp::class,
+            "orz" => \DiceRobot\Action\Message\Kowtow::class,
+
+            "bot" =>\DiceRobot\Action\Message\RobotOrderRouter::class,  // Alias of .robot
+
+            "help" => \DiceRobot\Action\Message\Help::class,
+            "hello" => \DiceRobot\Action\Message\Hello::class
+        ],
+        100 => [
+            "r" => \DiceRobot\Action\Message\Dicing::class,
+            "w" => \DiceRobot\Action\Message\DicePool::class,
+        ]
+    ],
+
+    "event" => [
+        \DiceRobot\Data\Report\Event\BotInvitedJoinGroupRequestEvent::class =>
+            \DiceRobot\Action\Event\BotInvitedJoinGroupRequest::class,
+        \DiceRobot\Data\Report\Event\BotJoinGroupEvent::class =>
+            \DiceRobot\Action\Event\BotJoinGroup::class,
+        \DiceRobot\Data\Report\Event\BotLeaveEventKick::class =>
+            \DiceRobot\Action\Event\BotLeaveKick::class,
+        \DiceRobot\Data\Report\Event\BotMuteEvent::class =>
+            \DiceRobot\Action\Event\BotMute::class,
+        \DiceRobot\Data\Report\Event\BotOfflineEventActive::class =>
+            \DiceRobot\Action\Event\BotOfflineActive::class,
+        \DiceRobot\Data\Report\Event\BotOfflineEventDropped::class =>
+            \DiceRobot\Action\Event\BotOfflineDropped::class,
+        \DiceRobot\Data\Report\Event\BotOfflineEventForce::class =>
+            \DiceRobot\Action\Event\BotOfflineForce::class,
+        \DiceRobot\Data\Report\Event\BotOnlineEvent::class =>
+            \DiceRobot\Action\Event\BotOnline::class,
+        \DiceRobot\Data\Report\Event\BotReloginEvent::class =>
+            \DiceRobot\Action\Event\BotRelogin::class,
+        \DiceRobot\Data\Report\Event\NewFriendRequestEvent::class =>
+            \DiceRobot\Action\Event\NewFriendRequest::class
     ]
 ];

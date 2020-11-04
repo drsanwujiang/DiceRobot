@@ -6,11 +6,11 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Action\Message\RobotOrder\{About, Goodbye, Nickname, Start, Stop};
+use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Message;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
 use Psr\Container\ContainerInterface;
-use Selective\Config\Configuration;
 
 /**
  * Class RobotOrderRouter
@@ -55,7 +55,8 @@ class RobotOrderRouter extends MessageAction
     /**
      * @inheritDoc
      *
-     * @param Configuration $config
+     * @param ContainerInterface $container
+     * @param Config $config
      * @param ApiService $api
      * @param ResourceService $resource
      * @param RobotService $robot
@@ -66,7 +67,7 @@ class RobotOrderRouter extends MessageAction
      */
     public function __construct(
         ContainerInterface $container,
-        Configuration $config,
+        Config $config,
         ApiService $apiService,
         ResourceService $dataService,
         RobotService $robotService,
@@ -89,8 +90,9 @@ class RobotOrderRouter extends MessageAction
     {
         list($match, $subOrder) = $this->parseOrder();
 
-        if (!$this->checkOrder($match))
+        if (!$this->checkOrder($match)) {
             return;
+        }
 
         $actionName = static::ORDER_MAPPING[$match];
 
@@ -113,8 +115,9 @@ class RobotOrderRouter extends MessageAction
      */
     public function checkActive(): bool
     {
-        if (preg_match("/^(start|on)/i", $this->order))
+        if (preg_match("/^(start|on)/i", $this->order)) {
             return true;
+        }
 
         // True by default
         return $this->chatSettings->getBool("active") ?? true;
@@ -129,8 +132,9 @@ class RobotOrderRouter extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([a-z]+)(?:[\s]+(.+))?$/", $this->order, $matches))
+        if (!preg_match("/^([a-z]+)(?:[\s]+(.+))?$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string $match */
         $match = $matches[1];
@@ -149,8 +153,7 @@ class RobotOrderRouter extends MessageAction
      */
     protected function checkOrder(string $match): bool
     {
-        if (!array_key_exists($match, self::ORDER_MAPPING))
-        {
+        if (!array_key_exists($match, self::ORDER_MAPPING)) {
             $this->reply = $this->config->getString("reply.robotOrderUnknown");
 
             return false;

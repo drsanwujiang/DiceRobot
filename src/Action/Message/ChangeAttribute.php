@@ -47,8 +47,9 @@ class ChangeAttribute extends MessageAction
 
         list($success, $result, $fullResult) = $this->getResult($expression);
 
-        if (!$success)
+        if (!$success) {
             return;
+        }
 
         // Load card
         $cardId = $this->chatSettings->getCharacterCardId($this->message->sender->id);
@@ -82,14 +83,16 @@ class ChangeAttribute extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^(hp|mp|san)$/i", $this->match, $matches))
+        if (!preg_match("/^(hp|mp|san)$/i", $this->match, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string $attribute */
         $attribute = strtoupper($matches[1]);
 
-        if (!preg_match("/^([+-])\s*(\S+)$/i", $this->order, $matches))
+        if (!preg_match("/^([+-])\s*(\S+)$/i", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string $symbol */
         $symbol = $matches[1];
@@ -117,8 +120,9 @@ class ChangeAttribute extends MessageAction
         $result = $dice->result;
         $fullResult = $dice->getCompleteExpression();
 
-        if (!$success)
+        if (!$success) {
             $this->reply = $this->config->getString("reply.changeAttributeWrongExpression");
+        }
 
         return [$success, $result, $fullResult];
     }

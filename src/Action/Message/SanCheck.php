@@ -33,6 +33,8 @@ use DiceRobot\Util\Convertor;
 class SanCheck extends MessageAction
 {
     /**
+     * @inheritDoc
+     *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException|InternalErrorException
      * @throws ItemNotExistException|LostException|NetworkErrorException|NotBoundException|OrderErrorException
      * @throws SurfaceNumberOverstepException|UnexpectedErrorException
@@ -43,13 +45,13 @@ class SanCheck extends MessageAction
 
         list($successDecrease, $failureDecrease) = $this->getDecreases($successExpression, $failureExpression);
 
-        if (!$this->checkRange($successDecrease, $failureDecrease))
+        if (!$this->checkRange($successDecrease, $failureDecrease)) {
             return;
+        }
 
         list($checkResult, $fullCheckResult) = $this->getCheckResult();
 
-        if (is_null($sanity))
-        {
+        if (is_null($sanity)) {
             list($checkLevel, $decrease, $previousSanity, $currentSanity, $maxSanity) =
                 $this->check($sanity, $successDecrease, $failureDecrease, $checkResult);
 
@@ -66,9 +68,7 @@ class SanCheck extends MessageAction
                         "最大SAN值" => $maxSanity
                     ]
                 );
-        }
-        else
-        {
+        } else {
             list($checkLevel, $decrease) = $this->check($sanity, $successDecrease, $failureDecrease, $checkResult);
 
             $this->reply =
@@ -99,15 +99,16 @@ class SanCheck extends MessageAction
             "/^([0-9DK+\-x*()（）]+)\s*\/\s*([0-9DK+\-x*()（）]+)(?:\s+(-?[1-9][0-9]*))?$/i",
             $this->order,
             $matches
-        ))
+        )) {
             throw new OrderErrorException;
+        }
 
         /** @var string $successExpression */
         $successExpression = $matches[1];
         /** @var string $failureExpression */
         $failureExpression = $matches[2];
         /** @var int|null $sanity */
-        $sanity = empty($matches[3]) ? NULL : (int) $matches[3];
+        $sanity = empty($matches[3]) ? null : (int) $matches[3];
 
         return [$successExpression, $failureExpression, $sanity];
     }
@@ -141,8 +142,7 @@ class SanCheck extends MessageAction
      */
     protected function checkRange(int $successDecrease, int $failureDecrease): bool
     {
-        if ($successDecrease < 0 || $failureDecrease < 0)
-        {
+        if ($successDecrease < 0 || $failureDecrease < 0) {
             $this->reply = $this->config->getString("reply.sanCheckWrongExpression");
 
             return false;
@@ -184,9 +184,8 @@ class SanCheck extends MessageAction
      */
     protected function check(?int $sanity, int $successDecrease, int $failureDecrease, int $checkResult): array
     {
-        // Online sanity check
-        if (is_null($sanity))
-        {
+        if (is_null($sanity)) {
+            // Online sanity check
             $cardId = $this->chatSettings->getCharacterCardId($this->message->sender->id);
             $card = $this->resource->getCharacterCard($cardId);
 
@@ -201,10 +200,8 @@ class SanCheck extends MessageAction
             $maxSanity = 99 - ($card->getSkill("克苏鲁神话") ?? 0);
 
             return [$checkLevel, $decrease, $previousSanity, $currentSanity, $maxSanity];
-        }
-        // Offline sanity check
-        else
-        {
+        } else {
+            // Offline sanity check
             $checkSuccess = $checkResult <= $sanity;
 
             $checkLevel = $checkSuccess ? "success" : "failure";

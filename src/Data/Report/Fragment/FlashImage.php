@@ -22,7 +22,7 @@ final class FlashImage implements Fragment
     public string $url;
 
     /** @var string|null Image local path */
-    public ?string $path = NULL;
+    public ?string $path = null;
 
     /**
      * @inheritDoc

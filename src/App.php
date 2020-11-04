@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace DiceRobot;
 
-use DiceRobot\Data\{Dice, Subexpression};
+use DiceRobot\Data\{Config, Dice, Subexpression};
 use DiceRobot\Enum\AppStatusEnum;
-use DiceRobot\Exception\MiraiApiException;
+use DiceRobot\Exception\{MiraiApiException, RuntimeException};
 use DiceRobot\Factory\LoggerFactory;
-use DiceRobot\Service\{ApiService, ResourceService, RobotService};
-use DiceRobot\Traits\AppTraits\{StatusTrait, HeartbeatHandlerTrait, ReportHandlerTrait};
+use DiceRobot\Service\{ApiService, ResourceService, RobotService, StatisticsService};
+use DiceRobot\Handlers\HeartbeatHandler;
+use DiceRobot\Handlers\ReportHandler;
+use DiceRobot\Traits\AppTraits\StatusTrait;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
-use Selective\Config\Configuration;
 use Swoole\Timer;
 
 /**
@@ -28,8 +29,8 @@ class App
     /** @var ContainerInterface Container */
     protected ContainerInterface $container;
 
-    /** @var Configuration Config */
-    protected Configuration $config;
+    /** @var Config Config */
+    protected Config $config;
 
     /** @var ApiService API service */
     protected ApiService $api;
@@ -40,31 +41,38 @@ class App
     /** @var RobotService Robot service */
     protected RobotService $robot;
 
+    /** @var StatisticsService Statistics service */
+    protected StatisticsService $statistics;
+
     /** @var LoggerInterface Logger */
     protected LoggerInterface $logger;
 
+    /** @var HeartbeatHandler Heartbeat handler */
+    protected HeartbeatHandler $heartbeatHandler;
+
+    /** @var ReportHandler Report handler */
+    protected ReportHandler $reportHandler;
+
     use StatusTrait;
-
-    use HeartbeatHandlerTrait;
-
-    use ReportHandlerTrait;
 
     /**
      * The constructor.
      *
      * @param ContainerInterface $container
-     * @param Configuration $config
+     * @param Config $config
      * @param ApiService $api
      * @param ResourceService $resource
      * @param RobotService $robot
+     * @param StatisticsService $statistics
      * @param LoggerFactory $loggerFactory
      */
     public function __construct(
         ContainerInterface $container,
-        Configuration $config,
+        Config $config,
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,
+        StatisticsService $statistics,
         LoggerFactory $loggerFactory
     ) {
         $this->status = AppStatusEnum::WAITING();
@@ -73,21 +81,24 @@ class App
         $this->api = $api;
         $this->resource = $resource;
         $this->robot = $robot;
+        $this->statistics = $statistics;
         $this->logger = $loggerFactory->create("Application");
 
         $this->logger->notice("Application started.");
-
-        $this->initialize();
     }
 
     /**
      * Initialize application.
      */
-    protected function initialize(): void
+    public function initialize(): void
     {
         /** Primary initialization */
-        if (!$this->resource->initialize())
-        {
+        try {
+            $this->api->initialize($this->config);
+            $this->resource->initialize($this->config);
+            $this->robot->initialize($this->config);
+            $this->statistics->initialize();
+        } catch (RuntimeException $e) {
             $this->status = AppStatusEnum::STOPPED();
 
             $this->logger->emergency("Initialize application failed.");
@@ -95,9 +106,15 @@ class App
             return;
         }
 
+        $this->loadConfig();
+
         /** Secondary initialization */
-        $this->globalInitialize();  // Global initialization
-        $this->initializeStatistics();
+        Dice::globalInitialize($this->config);
+        Subexpression::globalInitialize($this->config);
+
+        /** Set default handlers */
+        $this->heartbeatHandler = $this->container->get(HeartbeatHandler::class);
+        $this->reportHandler = $this->container->get(ReportHandler::class);
 
         $this->status = AppStatusEnum::HOLDING();
 
@@ -105,12 +122,33 @@ class App
     }
 
     /**
-     * Initialize static variables.
+     * Register routes.
+     *
+     * @param array $routes The routes
      */
-    protected function globalInitialize(): void
+    public function registerRoutes(array $routes): void
     {
-        Dice::globalInitialize($this->config);
-        Subexpression::globalInitialize($this->config);
+        $this->reportHandler->registerRoutes($routes);
+
+        $this->logger->info("Report routes registered.");
+    }
+
+    /**
+     * Load config.
+     *
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    protected function loadConfig(): void
+    {
+        $reflectionClass = new ReflectionClass(Config::class);
+        $property = $reflectionClass->getProperty("data");
+        $property->setAccessible(true);
+
+        // Set new config
+        $property->setValue($this->config, (new Config($this->container, $this->resource->getConfig()))->all());
+
+        // Reload logger factory
+        $this->container->get(LoggerFactory::class)->reload($this->config);
     }
 
     /******************************************************************************
@@ -120,71 +158,75 @@ class App
     /**
      * Get robot profile.
      *
-     * @return array Result code and data
+     * @return array Result data
      */
     public function profile(): array
     {
         return [
-            0,
-            [
-                "id" => $this->robot->getId(),
-                "nickname" => $this->robot->getNickname(),
-                "friends" => $this->robot->getFriendsCount(),
-                "groups" => $this->robot->getGroupsCount(),
-                "startup" => DICEROBOT_STARTUP,
-                "version" => DICEROBOT_VERSION
-            ]
+            "id" => $this->robot->getId(),
+            "nickname" => $this->robot->getNickname(),
+            "friends" => $this->robot->getFriendsCount(),
+            "groups" => $this->robot->getGroupsCount(),
+            "startup" => DICEROBOT_STARTUP,
+            "version" => DICEROBOT_VERSION
         ];
     }
 
     /**
      * Get application status.
      *
-     * @return array Result code and data
+     * @return array Result data
      */
     public function status(): array
     {
-        return [
-            0,
-            [
-                "status" => $this->getStatus()->getValue()
-            ]
-        ];
+        return [$this->getStatus()->getValue()];
     }
 
     /**
      * Get application statistics.
      *
-     * @return array Result code and data
+     * @return array Result data
      */
     public function statistics(): array
     {
-        $statistics = $this->statistics->all();
+        $statistics = $this->statistics->getAllData();
         $data = [
             "sum" => $statistics["sum"],
             "orders" => [],
             "groups" => [],
             "friends" => [],
-            "timeline" => $this->statisticsTimeline,
-            "counts" => $this->statisticsCounts
+            "timeline" => $this->statistics->getTimeline(),
+            "counts" => $this->statistics->getCounts()
         ];
 
-        foreach (["orders", "groups", "friends"] as $type)
-        {
+        foreach (["orders", "groups", "friends"] as $type) {
             arsort($statistics[$type], SORT_NUMERIC);
             $statistics[$type] = array_slice($statistics[$type], 0, 5, true);
         }
 
-        foreach ($statistics["orders"] as $order => $value)
+        foreach ($statistics["orders"] as $order => $value) {
             $data["orders"][] = [$order, $value];
+        }
 
-        foreach ($statistics["groups"] as $id => $value)
+        foreach ($statistics["groups"] as $id => $value) {
             $data["groups"][] = [$id, $this->robot->getGroup($id)->name ?? "[Unknown Group]", $value];
+        }
 
-        foreach ($statistics["friends"] as $id => $value)
+        foreach ($statistics["friends"] as $id => $value) {
             $data["friends"][] = [$id, $this->robot->getFriend($id)->nickname ?? "[Unknown Friend]", $value];
+        }
 
-        return [0, $data];
+        return $data;
+    }
+
+    /**
+     * Get application config.
+     *
+     * @return array Result data
+     */
+    public function config(): array
+    {
+        return $this->config->all();
     }
 
     /**
@@ -194,12 +236,13 @@ class App
      */
     public function pause(): int
     {
-        // Application is already paused
-        if ($this->getStatus()->equals(AppStatusEnum::PAUSED()))
+        if ($this->getStatus()->equals(AppStatusEnum::PAUSED())) {
+            // Application is already paused
             return -1000;
-        // Cannot be paused
-        elseif ($this->getStatus()->lessThan(AppStatusEnum::PAUSED()))
+        } elseif ($this->getStatus()->lessThan(AppStatusEnum::PAUSED())) {
+            // Cannot be paused
             return -1001;
+        }
 
         $this->setStatus(AppStatusEnum::PAUSED());
 
@@ -213,32 +256,26 @@ class App
      */
     public function run(): int
     {
-        // Application is already running
-        if ($this->getStatus()->equals(AppStatusEnum::RUNNING()))
+        if ($this->getStatus()->equals(AppStatusEnum::RUNNING())) {
+            // Application is already running
             return -1010;
-        // Cannot be rerun
-        elseif (!$this->getStatus()->equals(AppStatusEnum::PAUSED()))
+        } elseif (!$this->getStatus()->equals(AppStatusEnum::PAUSED())) {
+            // Cannot be rerun
             return -1011;
+        }
 
-        try
-        {
-            // Initialize API service, then update robot service
-            if ($this->api->initialize($this->robot->getAuthKey(), $this->robot->getId()) && $this->updateRobot())
-            {
+        try {
+            // Initialize session, then update robot service
+            if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
                 $this->setStatus(AppStatusEnum::RUNNING());
 
                 $this->logger->notice("Application rerun.");
 
                 return 0;
-            }
-            else
-            {
+            } else {
                 $this->logger->critical("Rerun application failed.");
             }
-        }
-        // Call Mirai APIs failed
-        catch (MiraiApiException $e)  // TODO: catch (MiraiApiException) in PHP 8
-        {
+        } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Rerun application failed, unable to call Mirai API.");
         }
 
@@ -249,39 +286,14 @@ class App
      * Reload the config.
      *
      * @return int Result code
-     *
-     * @noinspection PhpDocMissingThrowsInspection
      */
     public function reload(): int
     {
-        /** @var Configuration $configuration */
-        $configuration = $this->container->make(Configuration::class);
+        $this->loadConfig();
 
-        $newConfig = $configuration->all();
+        $this->logger->notice("Application reloaded.");
 
-        // Config should not be empty, or the custom settings is invalid
-        if (!empty($newConfig))
-        {
-            $reflectionClass = new ReflectionClass(Configuration::class);
-            $property = $reflectionClass->getProperty("data");
-            $property->setAccessible(true);
-
-            // Set new config
-            $property->setValue($this->config, $newConfig);
-
-            // Initialize static variables
-            $this->globalInitialize();
-
-            $this->logger->notice("Application reloaded.");
-
-            return 0;
-        }
-        else
-        {
-            $this->logger->notice("Reload application failed.");
-
-            return -1020;
-        }
+        return 0;
     }
 
     /**
@@ -301,5 +313,41 @@ class App
         $this->logger->notice("Application exited.");
 
         return 0;
+    }
+
+    /**
+     * Set application config.
+     *
+     * @param string $content Config content
+     *
+     * @return int Result code
+     */
+    public function setConfig(string $content): int
+    {
+        if (!is_array($data = json_decode($content, true))) {
+            return -1060;
+        } elseif (false === $this->resource->getConfig()->setConfig($data)) {
+            return -1061;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Handle heartbeat.
+     */
+    public function heartbeat(): void
+    {
+        $this->heartbeatHandler->handle();
+    }
+
+    /**
+     * Handle report
+     *
+     * @param string $content Report content
+     */
+    public function report(string $content): void
+    {
+        $this->reportHandler->handle($content);
     }
 }

@@ -48,7 +48,7 @@ class Kowtow extends MessageAction
                 ]
             ) .
             Convertor::toCustomString(
-                $this->config->getString("reply.kowtowLevel.{$level}"),
+                $this->config->getString("reply.kowtowLevel{$level}"),
                 [
                     "机器人昵称" => $this->getRobotNickname()
                 ]
@@ -64,8 +64,9 @@ class Kowtow extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^$/", $this->order))
+        if (!preg_match("/^$/", $this->order)) {
             throw new OrderErrorException;
+        }
 
         return [];
     }
@@ -79,12 +80,12 @@ class Kowtow extends MessageAction
      */
     protected function getKowtowLevel(int $piety): ?int
     {
-        for ($level = 0; $level < count(self::KOWTOW_LEVEL); $level++)
-        {
-            if ($piety <= self::KOWTOW_LEVEL[$level])
+        for ($level = 0; $level < count(self::KOWTOW_LEVEL); $level++) {
+            if ($piety <= self::KOWTOW_LEVEL[$level]) {
                 return $level;
+            }
         }
 
-        return NULL;
+        return null;
     }
 }

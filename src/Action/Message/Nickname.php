@@ -29,25 +29,24 @@ class Nickname extends MessageAction
      */
     public function __invoke(): void
     {
-        list($nickname) = $this->parseOrder();
+        list($newNickname) = $this->parseOrder();
 
-        // Set nickname
-        if (!empty($nickname))
-        {
-            $this->chatSettings->setNickname($this->message->sender->id, $nickname);
+        if (!empty($newNickname)) {
+            $currentNickname = $this->getNickname();
+
+            // Set nickname
+            $this->chatSettings->setNickname($this->message->sender->id, $newNickname);
 
             $this->reply =
                 Convertor::toCustomString(
                     $this->config->getString("reply.nicknameChanged"),
                     [
-                        "昵称" => $this->getNickname(),
-                        "新昵称" => $nickname
+                        "昵称" => $currentNickname,
+                        "新昵称" => $newNickname
                     ]
                 );
-        }
-        // Unset nickname
-        else
-        {
+        } else {
+            // Unset nickname
             $this->chatSettings->setNickname($this->message->sender->id);
 
             $this->reply =
@@ -69,8 +68,9 @@ class Nickname extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^(.*)$/", $this->order, $matches))
+        if (!preg_match("/^(.*)$/", $this->order, $matches)) {
             throw new OrderErrorException;
+        }
 
         /** @var string $nickname */
         $nickname = $matches[1];
