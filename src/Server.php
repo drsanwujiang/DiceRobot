@@ -22,6 +22,9 @@ use Swoole\Http\{Request, Response};
  */
 class Server
 {
+    /** @var Config Config */
+    protected Config $config;
+
     /** @var App Application */
     protected App $app;
 
@@ -48,21 +51,29 @@ class Server
         ResponseFactory $responseFactory,
         LoggerFactory $loggerFactory
     ) {
+        $this->config = $config;
         $this->app = $app;
         $this->responseFactory = $responseFactory;
         $this->logger = $loggerFactory->create("Server");
 
-        $host = $config->getString("dicerobot.server.host");
-        $port = $config->getInt("dicerobot.server.port");
+        $this->setServer();
+        $this->setSignals();
+        $this->setRoutes();
+    }
+
+    /**
+     * Set HTTP server.
+     */
+    protected function setServer(): void
+    {
+        $host = $this->config->getString("dicerobot.server.host");
+        $port = $this->config->getInt("dicerobot.server.port");
 
         $this->server = new SwooleServer($host, $port);
         $this->server->set([
             "http_parse_post" => false,
             "http_parse_cookie" => false
         ]);
-
-        $this->setSignals();
-        $this->setRoutes();
     }
 
     /**
@@ -348,6 +359,43 @@ class Server
             $this->responseFactory->create(0, null, $response)->end();
 
             System::exec("/bin/systemctl restart dicerobot");
+        }
+    }
+
+    /**
+     * @param Response $response
+     */
+    protected function update(Response $response): void
+    {
+        $this->logger->notice("Server received HTTP request, update DiceRobot.");
+
+        if (!is_dir($root = $this->config->getString("root"))) {
+            $this->responseFactory->create(-1050, null, $response)->end();
+
+            return;
+        }
+
+        $code = $signal = -1;
+        $output = "";
+
+        extract(System::exec("/usr/local/bin/composer update --working-dir {$root} --quiet"), EXTR_OVERWRITE);
+
+        if ($code == 0) {
+            $this->responseFactory->create($code, null, $response)->end();
+        } else {
+            $this->logger->critical(
+                "Failed to update DiceRobot. Code {$code}, signal {$signal}, output message: {$output}"
+            );
+
+            if ($code == 127) {
+                $this->responseFactory->create(-1051, null, $response)->end();
+            } else {
+                $this->responseFactory->create(
+                    -1052,
+                    ["code" => $code, "signal" => $signal, "output" => $output],
+                    $response
+                )->end();
+            }
         }
     }
 

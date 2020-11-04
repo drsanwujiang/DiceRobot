@@ -325,9 +325,9 @@ class App
     public function setConfig(string $content): int
     {
         if (!is_array($data = json_decode($content, true))) {
-            return -1050;
+            return -1060;
         } elseif (false === $this->resource->getConfig()->setConfig($data)) {
-            return -1051;
+            return -1061;
         }
 
         return 0;

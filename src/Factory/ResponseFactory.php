@@ -33,8 +33,11 @@ class ResponseFactory
         -1020 => "",  // Undefined reload error
         -1030 => "",  // Undefined stop error
         -1040 => "DiceRobot cannot be restarted",
-        -1050 => "Config invalid",
-        -1050 => "Config prohibited",
+        -1050 => "DiceRobot root undefined or invalid",
+        -1051 => "Composer not found",
+        -1052 => "Update DiceRobot failed",
+        -1060 => "Config invalid",
+        -1061 => "Config prohibited",
 
         -2000 => "Mirai not setup as service",
         -2001 => "Start Mirai failed",
