@@ -108,6 +108,12 @@ class Server
      */
     public function route(Request $request, Response $response): void
     {
+        if (!preg_match("/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/", $request->header["user-agent"] ?? "")) {
+            $this->notFound($response);
+
+            return;
+        }
+
         $requestMethod = $request->server["request_method"] ?? "";
         $requestUri = $request->server["request_uri"] ?? "";
         $content = (string) ($request->getContent() ?? "");
