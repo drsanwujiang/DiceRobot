@@ -330,6 +330,8 @@ class App
             return -1061;
         }
 
+        $this->loadConfig();
+
         return 0;
     }
 

@@ -48,13 +48,7 @@ class Set extends MessageAction
             // Reset the default dice surface number of this chat to the default value of the robot
             $this->chatSettings->set("defaultSurfaceNumber", null);
 
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.setResetResult"),
-                    [
-                        "默认骰子面数" => $this->config->getInt("order.defaultSurfaceNumber")
-                    ]
-                );
+            $this->reply = $this->config->getString("reply.setResetResult");
         }
     }
 

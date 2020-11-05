@@ -377,8 +377,6 @@ class Server
             return;
         }
 
-        $this->logger->notice("Root path: {$root}");
-
         $code = $signal = -1;
         $output = "";
 

@@ -6,6 +6,8 @@ namespace DiceRobot\Data\Resource;
 
 use DiceRobot\Data\Resource;
 
+use const DiceRobot\DEFAULT_CONFIG;
+
 /**
  * Class Config
  *
@@ -28,7 +30,7 @@ class Config extends Resource
             return false;
         }
 
-        $this->data = array_replace_recursive($this->data, $config);
+        $this->data = $this->checkDefault(array_replace_recursive($this->data, $config));
 
         return true;
     }
@@ -78,5 +80,25 @@ class Config extends Resource
         }
 
         return true;
+    }
+
+    /**
+     * Check whether the config value is same as default config.
+     *
+     * @param array $config
+     *
+     * @return array
+     */
+    protected function checkDefault(array $config): array
+    {
+        foreach ($config as $key => $value) {
+            foreach ($value as $itemKey => $itemValue) {
+                if ($itemValue == DEFAULT_CONFIG[$key][$itemKey]) {
+                    unset($config[$key][$itemKey]);
+                }
+            }
+        }
+
+        return $config;
     }
 }
