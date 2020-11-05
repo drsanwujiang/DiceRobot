@@ -47,6 +47,7 @@ class Kowtow extends MessageAction
                     "虔诚值" => $piety
                 ]
             ) .
+            "\n" .
             Convertor::toCustomString(
                 $this->config->getString("reply.kowtowLevel{$level}"),
                 [
