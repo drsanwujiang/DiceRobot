@@ -1,6 +1,16 @@
 # Changelog
 
 
+## 2.0.1 - 2020-11-05
+
+### Added
+- Web APIs user agent check
+
+### Refactored
+- Optimize config APIs logic
+- Correct some replies
+
+
 ## 2.0.0 - 2020-11-04
 
 ### Added
