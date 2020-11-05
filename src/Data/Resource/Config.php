@@ -30,7 +30,7 @@ class Config extends Resource
             return false;
         }
 
-        $this->data = $this->checkDefault(array_replace_recursive($this->data, $config));
+        $this->data = $this->checkValue(array_replace_recursive($this->data, $config));
 
         return true;
     }
@@ -51,26 +51,20 @@ class Config extends Resource
             }
 
             if ($key === "strategy") {
-                foreach ($value as $sKey => $sValue) {
-                    if (!is_bool($sValue)) {
+                foreach ($value as $itemValue) {
+                    if (!is_bool($itemValue) && !is_null($itemValue)) {
                         return false;
                     }
                 }
             } elseif ($key === "order") {
-                foreach ($value as $oKey => $oValue) {
-                    if (!is_int($oValue)) {
+                foreach ($value as $itemValue) {
+                    if (!is_int($itemValue) && !is_null($itemValue)) {
                         return false;
                     }
                 }
-            } elseif ($key === "reply") {
-                foreach ($value as $rKey => $rValue) {
-                    if (!is_string($rValue)) {
-                        return false;
-                    }
-                }
-            } elseif ($key === "errMsg") {
-                foreach ($value as $eKey => $eValue) {
-                    if (!is_string($eValue)) {
+            } elseif ($key === "reply" || $key === "errMsg") {
+                foreach ($value as $itemValue) {
+                    if (!is_string($itemValue) && !is_null($itemValue)) {
                         return false;
                     }
                 }
@@ -83,17 +77,17 @@ class Config extends Resource
     }
 
     /**
-     * Check whether the config value is same as default config.
+     * Check config value.
      *
      * @param array $config
      *
      * @return array
      */
-    protected function checkDefault(array $config): array
+    protected function checkValue(array $config): array
     {
         foreach ($config as $key => $value) {
             foreach ($value as $itemKey => $itemValue) {
-                if ($itemValue == DEFAULT_CONFIG[$key][$itemKey]) {
+                if ($itemValue === DEFAULT_CONFIG[$key][$itemKey] || is_null($itemValue)) {
                     unset($config[$key][$itemKey]);
                 }
             }
