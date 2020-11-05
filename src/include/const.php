@@ -18,7 +18,7 @@ namespace DiceRobot;
 use Monolog\Logger;
 
 /** @var string Current version */
-const DICEROBOT_VERSION = "2.0.0";
+const DICEROBOT_VERSION = "2.0.1";
 
 /** @var string Root directory */
 define("DICEROBOT_STARTUP", time());
@@ -65,8 +65,8 @@ const DEFAULT_CONFIG = [
         "quitDelinquentGroup" => true,
         "sendHelloMessage" => true,
 
-        "listenBotMuteEvent" => true,
-        "quitGroupWhenMuted" => true,
+        "listenBotMuteEvent" => false,
+        "quitGroupWhenMuted" => false,
 
         "listenNewFriendRequestEvent" => true,
         "approveFriendRequest" => true
@@ -105,9 +105,9 @@ const DEFAULT_CONFIG = [
         "cocGenerateCardCountOverstep" => "COC 人物卡生成次数只能介于1~{&最大生成次数}！",
 
         /* DicePool */
-        "dicePoolThresholdOverstep" => "加骰参数只能介于5~10！",
         "dicePoolReason" => "由于{&原因}，",
         "dicePoolResult" => "{&昵称}骰出了：",
+        "dicePoolThresholdOverstep" => "加骰参数只能介于5~10！",
 
         /* Dicing */
         "dicingPrivately" => "{&昵称}悄悄地进行了{&掷骰次数}次掷骰……",
@@ -127,7 +127,7 @@ const DEFAULT_CONFIG = [
         "jrrpReply" => "{&昵称}今天的人品是……{&人品}！",
 
         /* Kowtow */
-        "kowtowHeading" => "[mirai:at:{&发送者QQ}] 唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！\n",
+        "kowtowHeading" => "[mirai:at:{&发送者QQ}] 唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！",
         "kowtowLevel0" => "哼(▼ヘ▼#)你明明一点都不虔诚，诅咒你下次超级大失败ヽ(#`Д´)ﾉ",
         "kowtowLevel1" => "只有这么一点虔诚的话，不天降惩罚于你已是恩赐了喵<(￣ ﹌ ￣)>",
         "kowtowLevel2" => "看来你的虔诚很有限的说(￣▽￣)~*不过还是勉强保佑保佑你吧( ･´ω`･ )",
@@ -150,7 +150,7 @@ const DEFAULT_CONFIG = [
 
         /* Set */
         "setResult" => "骰子的默认面数现在是：{&默认骰子面数}",
-        "setResetResult" => "骰子的默认面数已重置为Master设定的默认值：{&默认骰子面数}",
+        "setResetResult" => "骰子的默认面数已重置为 100",
         "setDefaultSurfaceNumberInvalid" => "骰子的默认面数只能是介于1~{&最大骰子面数}之间的正整数哦~",
 
         /* SetCOC */
@@ -207,9 +207,9 @@ const DEFAULT_CONFIG = [
 
         /* Dice */
         "diceNumberOverstep" => "被骰子淹没，不知所措……",
+        "diceSurfaceNumberOverstep" => "为什么会有这么多面的骰子啊(　д ) ﾟ ﾟ",
         "diceExpressionError" => "掷骰表达式无法解析！",
         "diceExpressionInvalid" => "掷骰表达式不符合规则！",
-        "diceSurfaceNumberOverstep" => "为什么会有这么多面的骰子啊(　д ) ﾟ ﾟ",
 
         /* File */
         "fileLost" => "相关文件丢失，无法执行该指令！"

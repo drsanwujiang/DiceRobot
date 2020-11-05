@@ -226,7 +226,12 @@ class App
      */
     public function config(): array
     {
-        return $this->config->all();
+        return [
+            "strategy" => $this->config->getArray("strategy"),
+            "order" => $this->config->getArray("order"),
+            "reply" => $this->config->getArray("reply"),
+            "errMsg" => $this->config->getArray("errMsg"),
+        ];
     }
 
     /**
@@ -329,6 +334,8 @@ class App
         } elseif (false === $this->resource->getConfig()->setConfig($data)) {
             return -1061;
         }
+
+        $this->loadConfig();
 
         return 0;
     }

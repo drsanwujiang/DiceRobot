@@ -108,52 +108,65 @@ class Server
      */
     public function route(Request $request, Response $response): void
     {
-        $requestMethod = $request->server["request_method"] ?? "";
-        $requestUri = $request->server["request_uri"] ?? "";
+        $method = $request->server["request_method"] ?? "";
+        $uri = $request->server["request_uri"] ?? "";
         $content = (string) ($request->getContent() ?? "");
 
-        if ($requestMethod == "OPTIONS") {
-            $this->preflight($response);
-        } elseif ($requestMethod == "POST") {
-            if ($requestUri == "/report") {
+        // Mirai APIs
+        if ($method == "POST") {
+            if ($uri == "/report") {
                 $this->report($content, $response);
-            } elseif ($requestUri == "/heartbeat") {
+            } elseif ($uri == "/heartbeat") {
                 $this->heartbeat($response);
-            } elseif ($requestUri == "/config") {
+            }
+        }
+
+        // Check header
+        if (!preg_match("/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/", $request->header["x-dr-client"] ?? "")) {
+            $this->notFound($response);
+
+            return;
+        }
+
+        // Web APIs
+        if ($method == "OPTIONS") {
+            $this->preflight($response);
+        } elseif ($method == "POST") {
+            if ($uri == "/config") {
                 $this->setConfig($content, $response);
             } else {
                 $this->notFound($response);
             }
-        } elseif ($requestMethod == "GET") {
-            if ($requestUri == "/connect") {
+        } elseif ($method == "GET") {
+            if ($uri == "/connect") {
                 $this->connect($response);
-            } elseif ($requestUri == "/profile") {
+            } elseif ($uri == "/profile") {
                 $this->profile($response);
-            } elseif ($requestUri == "/status") {
+            } elseif ($uri == "/status") {
                 $this->status($response);
-            } elseif ($requestUri == "/statistics") {
+            } elseif ($uri == "/statistics") {
                 $this->statistics($response);
-            } elseif ($requestUri == "/config") {
+            } elseif ($uri == "/config") {
                 $this->config($response);
-            } elseif ($requestUri == "/pause") {
+            } elseif ($uri == "/pause") {
                 $this->pause($response);
-            } elseif ($requestUri == "/run") {
+            } elseif ($uri == "/run") {
                 $this->run($response);
-            } elseif ($requestUri == "/reload") {
+            } elseif ($uri == "/reload") {
                 $this->reload($response);
-            } elseif ($requestUri == "/stop") {
+            } elseif ($uri == "/stop") {
                 $this->stop($response);
-            } elseif ($requestUri == "/restart") {
+            } elseif ($uri == "/restart") {
                 $this->restart($response);
-            } elseif ($requestUri == "/update") {
+            } elseif ($uri == "/update") {
                 $this->update($response);
-            } elseif ($requestUri == "/mirai/status") {
+            } elseif ($uri == "/mirai/status") {
                 $this->miraiStatus($response);
-            } elseif ($requestUri == "/mirai/start") {
+            } elseif ($uri == "/mirai/start") {
                 $this->startMirai($response);
-            } elseif ($requestUri == "/mirai/stop") {
+            } elseif ($uri == "/mirai/stop") {
                 $this->stopMirai($response);
-            } elseif ($requestUri == "/mirai/restart") {
+            } elseif ($uri == "/mirai/restart") {
                 $this->restartMirai($response);
             } else {
                 $this->notFound($response);
@@ -376,8 +389,6 @@ class Server
 
             return;
         }
-
-        $this->logger->notice("Root path: {$root}");
 
         $code = $signal = -1;
         $output = "";
