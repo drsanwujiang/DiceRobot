@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 2.0.2 - 2020-11-10
+
+### Fixed
+- Fix a routing bug
+
+
 ## 2.0.1 - 2020-11-05
 
 ### Added
