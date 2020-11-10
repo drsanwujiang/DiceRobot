@@ -116,8 +116,12 @@ class Server
         if ($method == "POST") {
             if ($uri == "/report") {
                 $this->report($content, $response);
+
+                return;
             } elseif ($uri == "/heartbeat") {
                 $this->heartbeat($response);
+
+                return;
             }
         }
 
