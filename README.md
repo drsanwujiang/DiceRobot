@@ -30,7 +30,7 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 ### 控制面板
 
-你可以 [点击这里](http://tool.drsanwujiang.com/dicerobot/panel/) 使用控制面板来查看 DiceRobot 的运行状态，并管理 DiceRobot。
+我们为 DiceRobot 设计了一个功能丰富的 [控制面板](https://docs.drsanwujiang.com/dicerobot/use/panel) ，涵盖了除启动之外的几乎所有常用操作。只需要动动手指，就可以轻松管理和设置 DiceRobot。
 
 
 ## 如果你是使用者
@@ -62,7 +62,7 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 DiceRobot 的开发初衷是解决 [Dice!](https://github.com/w4123/Dice) 插件在使用过程中的一些小问题，以及增加了一些功能，所以基本掷骰指令照搬了 Dice! 的指令，一些资源文件（例如 NameTemplate.json）也借用了 Dice! 的代码。
 
-在此感谢 [溯回](https://github.com/w4123) 大佬开发了 Dice!，让 QQ 群跑团方便了许多！
+在此感谢 [溯洄](https://github.com/w4123) 大佬开发了 Dice!，让 QQ 群跑团方便了许多！
 
 
 ## 许可证
