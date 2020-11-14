@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 2.0.3 - 2020-11-14
+
+### Fixed
+- Fix filter regular expression
+
+
 ## 2.0.2 - 2020-11-10
 
 ### Fixed
