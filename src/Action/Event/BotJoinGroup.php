@@ -108,6 +108,9 @@ class BotJoinGroup extends EventAction
      */
     protected function queryGroup(): bool
     {
-        return $this->api->queryGroup($this->event->group->id, $this->api->auth($this->robot->getId())->token)->state;
+        return $this->api->queryGroup(
+            $this->event->group->id,
+            $this->api->auth($this->robot->getId())->token
+        )->state;
     }
 }

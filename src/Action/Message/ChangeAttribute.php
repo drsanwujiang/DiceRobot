@@ -140,8 +140,11 @@ class ChangeAttribute extends MessageAction
      */
     protected function updateCard(int $cardId, string $attribute, int $change): UpdateCardResponse
     {
-        $response = $this->api->auth($this->robot->getId(), $this->message->sender->id);
-
-        return $this->api->updateCard($cardId, $attribute, $change, $response->token);
+        return $this->api->updateCard(
+            $cardId,
+            $attribute,
+            $change,
+            $this->api->auth($this->robot->getId(), $this->message->sender->id)->token
+        );
     }
 }

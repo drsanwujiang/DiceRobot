@@ -630,19 +630,19 @@ class ApiService
      * Query if the group is delinquent.
      *
      * @param int $groupId Group ID
-     * @param string $auth Access token
+     * @param string $token Access token
      *
      * @return QueryGroupResponse The response
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function queryGroup(int $groupId, string $auth): QueryGroupResponse
+    public function queryGroup(int $groupId, string $token): QueryGroupResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/group/{$groupId}",
             "method" => "GET",
             "headers" => [
-                "Authorization" => "Bearer {$auth}"
+                "Authorization" => "Bearer {$token}"
             ]
         ];
 
@@ -654,19 +654,19 @@ class ApiService
      * to a group.
      *
      * @param int $groupId Delinquent group ID
-     * @param string $auth Access token
+     * @param string $token Access token
      *
      * @return SubmitGroupResponse The response
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function submitGroup(int $groupId, string $auth): SubmitGroupResponse
+    public function submitGroup(int $groupId, string $token): SubmitGroupResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/group/{$groupId}",
             "method" => "PUT",
             "headers" => [
-                "Authorization" => "Bearer {$auth}"
+                "Authorization" => "Bearer {$token}"
             ]
         ];
 
@@ -677,19 +677,19 @@ class ApiService
      * Get character card data.
      *
      * @param int $cardId Character card ID
-     * @param string $auth Access token
+     * @param string $token Access token
      *
      * @return GetCardResponse The response
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function getCard(int $cardId, string $auth): GetCardResponse
+    public function getCard(int $cardId, string $token): GetCardResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/card/{$cardId}",
             "method" => "GET",
             "headers" => [
-                "Authorization" => "Bearer {$auth}"
+                "Authorization" => "Bearer {$token}"
             ]
         ];
 
@@ -702,19 +702,19 @@ class ApiService
      * @param int $cardId Character card ID
      * @param string $attribute Attribute name
      * @param int $change Change in attribute
-     * @param string $auth Access token
+     * @param string $token Access token
      *
      * @return UpdateCardResponse The response
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function updateCard(int $cardId, string $attribute, int $change, string $auth): UpdateCardResponse
+    public function updateCard(int $cardId, string $attribute, int $change, string $token): UpdateCardResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/card/{$cardId}",
             "method" => "PATCH",
             "headers" => [
-                "Authorization" => "Bearer {$auth}"
+                "Authorization" => "Bearer {$token}"
             ],
             "data" => [
                 "attribute" => $attribute,
@@ -731,19 +731,19 @@ class ApiService
      * @param int $cardId Character card ID
      * @param int $checkResult Sanity check result
      * @param array $decreases Sanity decreases
-     * @param string $auth Access token
+     * @param string $token Access token
      *
      * @return SanityCheckResponse The response
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function sanityCheck(int $cardId, int $checkResult, array $decreases, string $auth): SanityCheckResponse
+    public function sanityCheck(int $cardId, int $checkResult, array $decreases, string $token): SanityCheckResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/card/{$cardId}/sc",
             "method" => "PATCH",
             "headers" => [
-                "Authorization" => "Bearer {$auth}"
+                "Authorization" => "Bearer {$token}"
             ],
             "data" => [
                 "check_result" => $checkResult,

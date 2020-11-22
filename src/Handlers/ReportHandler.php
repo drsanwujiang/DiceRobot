@@ -8,14 +8,12 @@ use DiceRobot\App;
 use DiceRobot\Action\{EventAction, MessageAction};
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\{Event, InvalidReport, Message};
-use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\{DiceRobotException, MiraiApiException};
 use DiceRobot\Factory\{LoggerFactory, ReportFactory};
 use DiceRobot\Interfaces\Report;
 use DiceRobot\Service\{ApiService, RobotService, StatisticsService};
 use DiceRobot\Traits\RouteCollectorTrait;
-use DiceRobot\Util\Convertor;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -211,53 +209,22 @@ class ReportHandler
 
             // Send reply if set
             if (!empty($action->reply)) {
-                if ($action->message instanceof FriendMessage) {
-                    $this->api->sendFriendMessage(
-                        $action->message->sender->id,
-                        Convertor::toMessageChain($action->reply)
-                    );
-                } elseif ($action->message instanceof GroupMessage) {
-                    $this->api->sendGroupMessage(
-                        $action->message->sender->group->id,
-                        Convertor::toMessageChain($action->reply)
-                    );
-                } elseif ($action->message instanceof TempMessage) {
-                    $this->api->sendTempMessage(
-                        $action->message->sender->id,
-                        $action->message->sender->group->id,
-                        Convertor::toMessageChain($action->reply)
-                    );
-                }
+                $action->sendMessage($action->reply);
             }
 
             $this->logger->info("Report finished.");
-        } catch (DiceRobotException $e) {  // Action interrupted, send error message to group/user
-            if ($action->message instanceof FriendMessage) {
-                $this->api->sendFriendMessage(
-                    $action->message->sender->id,
-                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
-                );
-            } elseif ($action->message instanceof GroupMessage) {
-                $this->api->sendGroupMessage(
-                    $action->message->sender->group->id,
-                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
-                );
-            } elseif ($action->message instanceof TempMessage) {
-                $this->api->sendTempMessage(
-                    $action->message->sender->id,
-                    $action->message->sender->group->id,
-                    Convertor::toMessageChain($this->config->getString("errMsg.{$e}"))
-                );
-            }
+        } catch (DiceRobotException $e) {
+            // Action interrupted, send error message to group/user
+            $action->sendMessage($this->config->getString("errMsg.{$e}"));
 
             // TODO: $e::class, $action->message::class, $action::class in PHP 8
             $this->logger->info(
                 "Report finished, " . get_class($e) . " occurred when handling " .
-                get_class($action->message) . " and executing " . get_class($action)
+                get_class($action->message) . " and executing " . get_class($action) . "."
             );
 
             if (!empty($e->extraMessage)) {
-                $this->logger->error("Extra message: {$e->extraMessage}.");
+                $this->logger->error("Report finished with extra message: {$e->extraMessage}.");
             }
         }
     }
