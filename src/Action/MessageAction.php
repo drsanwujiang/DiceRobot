@@ -179,8 +179,36 @@ abstract class MessageAction implements Action
      * Send message to message sender.
      *
      * @param string $message Message
+     *
+     * @throws MiraiApiException
      */
-    final protected function sendMessage(string $message): void
+    final public function sendMessage(string $message): void
+    {
+        if ($this->message instanceof FriendMessage) {
+            $this->api->sendFriendMessage(
+                $this->message->sender->id,
+                Convertor::toMessageChain($message)
+            );
+        } elseif ($this->message instanceof GroupMessage) {
+            $this->api->sendGroupMessage(
+                $this->message->sender->group->id,
+                Convertor::toMessageChain($message)
+            );
+        } elseif ($this->message instanceof TempMessage) {
+            $this->api->sendTempMessage(
+                $this->message->sender->id,
+                $this->message->sender->group->id,
+                Convertor::toMessageChain($message)
+            );
+        }
+    }
+
+    /**
+     * Send message to message sender asynchronously.
+     *
+     * @param string $message Message
+     */
+    final public function sendMessageAsync(string $message): void
     {
         if ($this->message instanceof FriendMessage) {
             $this->api->sendFriendMessageAsync(
@@ -207,8 +235,29 @@ abstract class MessageAction implements Action
      * @param string $message Message
      * @param int|null $userId User ID
      * @param int|null $groupId Group ID
+     *
+     * @throws MiraiApiException
      */
     final protected function sendPrivateMessage(string $message, int $userId = null, int $groupId = null): void
+    {
+        $userId ??= $this->message->sender->id;
+        $groupId ??= $this->message->sender->group->id ?? 0;
+
+        if ($this->robot->hasFriend($userId)) {
+            $this->api->sendFriendMessage($userId, Convertor::toMessageChain($message));
+        } else {
+            $this->api->sendTempMessage($userId, $groupId, Convertor::toMessageChain($message));
+        }
+    }
+
+    /**
+     * Send message to friend or temp (may not the message sender) asynchronously.
+     *
+     * @param string $message Message
+     * @param int|null $userId User ID
+     * @param int|null $groupId Group ID
+     */
+    final protected function sendPrivateMessageAsync(string $message, int $userId = null, int $groupId = null): void
     {
         $userId ??= $this->message->sender->id;
         $groupId ??= $this->message->sender->group->id ?? 0;
