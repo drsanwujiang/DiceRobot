@@ -76,7 +76,8 @@ const DEFAULT_CONFIG = [
         "maxDiceNumber" => 100,
         "maxSurfaceNumber" => 1000,
         "maxGenerateCount" => 20,
-        "maxRepeatTimes" => 100
+        "maxRepeatTimes" => 20,
+        "maxReplyCharacter" => 1500
     ],
 
     "reply" => [
@@ -189,7 +190,7 @@ const DEFAULT_CONFIG = [
         /* ApiService */
         "apiInternalError" => "与致远星的联络出现问题QAQ！请稍后再试……",
         "apiNetworkError" => "无法连接到致远星，请检查星际通讯是否正常！",
-        "apiUnexpectedError" => "发生了预料之外的错误……",
+        "apiUnexpectedError" => "致远星意外地拒绝了我们的请求……",
 
         /* CharacterCard */
         "characterCardFormatInvalid" => "人物卡格式错误，请重新创建人物卡！",

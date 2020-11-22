@@ -132,12 +132,12 @@ class RobotOrderRouter extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([a-z]+)(?:[\s]+(.+))?$/", $this->order, $matches)) {
+        if (!preg_match("/^(?:([a-z]+)(?:[\s]+(.+))?)?$/", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 
         /** @var string $match */
-        $match = $matches[1];
+        $match = $matches[1] ?? "about";  // Redirect to about by default
         /** @var string $subOrder */
         $subOrder = $matches[2] ?? "";
 

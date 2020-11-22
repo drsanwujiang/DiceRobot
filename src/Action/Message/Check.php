@@ -62,7 +62,7 @@ class Check extends MessageAction
 
         if ($private) {
             if (!($this->message instanceof GroupMessage)) {
-                $this->sendPrivateMessage(
+                $this->sendPrivateMessageAsync(
                     Convertor::toCustomString(
                         $this->config->getString("reply.checkPrivatelyHeading"),
                         [

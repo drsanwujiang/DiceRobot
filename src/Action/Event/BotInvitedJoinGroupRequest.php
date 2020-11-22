@@ -100,9 +100,7 @@ class BotInvitedJoinGroupRequest extends EventAction
     {
         return $this->api->queryGroup(
             $this->event->groupId,
-            $this->api->auth(
-                $this->robot->getId()
-            )->token
+            $this->api->auth($this->robot->getId())->token
         )->state;
     }
 }

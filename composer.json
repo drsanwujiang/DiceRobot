@@ -19,6 +19,7 @@
   "require": {
     "php": "^7.4",
     "ext-json": "*",
+    "ext-mbstring": "*",
     "ext-swoole": "^4.5.5",
     "ext-zip": "*",
     "cakephp/chronos": "^2.0",

@@ -73,7 +73,7 @@ class Dicing extends MessageAction
 
         if ($vType === "H") {
             if ($this->message instanceof GroupMessage) {
-                $this->sendPrivateMessage(
+                $this->sendPrivateMessageAsync(
                     Convertor::toCustomString(
                         $this->config->getString("reply.dicingPrivatelyHeading"),
                         [
@@ -139,12 +139,24 @@ class Dicing extends MessageAction
      */
     protected function dicing(string $expression, int $repeat): array
     {
+        /** @var Dice[] $dices */
+        $dices = [];
         $detail = "";
 
-        while ($repeat--) {
-            $dice = isset($dice) ?
-                clone $dice : new Dice($expression, $this->chatSettings->getInt("defaultSurfaceNumber"));
-            $detail .= $dice->getCompleteExpression() . "\n";
+        for ($i = 0; $i < $repeat; $i++) {
+            $dices[$repeat] = isset($dices[$repeat + 1]) ?
+                clone $dices[$repeat + 1] :
+                new Dice($expression, $this->chatSettings->getInt("defaultSurfaceNumber"));
+            $detail .= $dices[$repeat]->getCompleteExpression() . "\n";
+        }
+
+        // Simplify the reply
+        if (mb_strlen($detail) > $this->config->getInt("order.maxReplyCharacter")) {
+            $detail = "";
+
+            for ($i = 0; $i < $repeat; $i++) {
+                $detail .= $dices[$repeat]->getCompleteExpression(true) . "\n";
+            }
         }
 
         return [$dice->vType ?? null, $dice->reason ?? "", $detail];

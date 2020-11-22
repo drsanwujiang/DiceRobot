@@ -39,9 +39,7 @@ class BotLeaveKick extends EventAction
         // Submit this group to public database
         $this->api->submitGroup(
             $this->event->group->id,
-            $this->api->auth(
-                $this->robot->getId()
-            )->token
+            $this->api->auth($this->robot->getId())->token
         );
     }
 }

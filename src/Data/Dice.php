@@ -327,15 +327,20 @@ class Dice
     /**
      * Get complete expression according to dice type.
      *
+     * @param bool $simplify Forcedly simplify the result
+     *
      * @return string Complete expression
      */
-    public function getCompleteExpression(): string
+    public function getCompleteExpression(bool $simplify = false): string
     {
         if (!$this->bpType) {
             // Normal dice
             $completeExpression = $expression = $this->expression;
 
-            if ($this->vType !== "S") {
+            if ($this->vType === "S" || $simplify) {
+                // Simplest result
+                $completeExpression .= "={$this->result}";
+            } else {
                 // Full result
                 $resultExpression = $this->toResultExpression();
                 $arithmeticExpression = $this->toArithmeticExpression();
@@ -343,21 +348,21 @@ class Dice
                 $completeExpression .= $expression == $resultExpression ? "" : "={$resultExpression}";
                 $completeExpression .= $resultExpression == $arithmeticExpression ? "" : "={$arithmeticExpression}";
                 $completeExpression .= $arithmeticExpression == $this->result ? "" : "={$this->result}";
-            } else {
-                $completeExpression .= "={$this->result}";
             }
         } else {
             // B/P dice
             $completeExpression = "{$this->bpType}{$this->bpDiceNumber}";
 
-            if ($this->vType !== "S") {
+            if ($this->vType === "S" || $simplify) {
+                // Simplest result
+                $completeExpression .= "={$this->result}";
+            } else {
                 // Full result
                 $completeExpression .=
                     "={$this->toResultExpression()}" .
-                    "[" . static::$bpDiceType[$this->bpType] . ":" . join(" ", $this->bpResult) . "]";
+                    "[" . static::$bpDiceType[$this->bpType] . ":" . join(" ", $this->bpResult) . "]" .
+                    "={$this->result}";
             }
-
-            $completeExpression .= "={$this->result}";
         }
 
         return str_replace("*", "×", $completeExpression);

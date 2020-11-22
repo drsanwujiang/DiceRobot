@@ -224,8 +224,11 @@ class SanCheck extends MessageAction
      */
     protected function updateCard(int $cardId, int $checkResult, array $decreases): SanityCheckResponse
     {
-        $response = $this->api->auth($this->robot->getId(), $this->message->sender->id);
-
-        return $this->api->sanityCheck($cardId, $checkResult, $decreases, $response->token);
+        return $this->api->sanityCheck(
+            $cardId,
+            $checkResult,
+            $decreases,
+            $this->api->auth($this->robot->getId(), $this->message->sender->id)->token
+        );
     }
 }
