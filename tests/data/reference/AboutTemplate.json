@@ -1,0 +1,5 @@
+{
+    "templates": {
+        "detail": "DiceRobot {&DiceRobot版本号}\nMIT License\n©2019-2020 Drsanwujiang\n\nAccount: {&机器人QQ昵称}({&机器人QQ号})\nNickname: {&机器人昵称}"
+    }
+}
