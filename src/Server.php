@@ -6,8 +6,9 @@ namespace DiceRobot;
 
 use Co\Http\Server as SwooleServer;
 use DiceRobot\Data\Config;
-use DiceRobot\Factory\LoggerFactory;
-use DiceRobot\Factory\ResponseFactory;
+use DiceRobot\Enum\AppStatusEnum;
+use DiceRobot\Factory\{LoggerFactory, ResponseFactory};
+use Exception;
 use Psr\Log\LoggerInterface;
 use Swoole\Process;
 use Swoole\Coroutine\System;
@@ -56,24 +57,39 @@ class Server
         $this->responseFactory = $responseFactory;
         $this->logger = $loggerFactory->create("Server");
 
-        $this->setServer();
-        $this->setSignals();
-        $this->setRoutes();
+        // Application successfully initialized
+        if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()) && $this->setServer()) {
+            $this->setSignals();
+            $this->setRoutes();
+        }
     }
 
     /**
      * Set HTTP server.
+     *
+     * @return bool
      */
-    protected function setServer(): void
+    protected function setServer(): bool
     {
         $host = $this->config->getString("dicerobot.server.host");
         $port = $this->config->getInt("dicerobot.server.port");
 
-        $this->server = new SwooleServer($host, $port);
+        try {
+            $this->server = new SwooleServer($host, $port);
+        } catch (Exception $e) {
+            $this->logger->emergency("Server exited unexpectedly. Code {$e->getCode()}, message: {$e->getMessage()}.");
+
+            $this->emergencyStop();
+
+            return false;
+        }
+
         $this->server->set([
             "http_parse_post" => false,
             "http_parse_cookie" => false
         ]);
+
+        return true;
     }
 
     /**
@@ -185,9 +201,28 @@ class Server
      */
     public function start(): void
     {
-        $this->logger->notice("Server started.");
+        if (isset($this->server) && $this->app->getStatus()->equals(AppStatusEnum::HOLDING())) {
+            $this->logger->notice("Server started.");
 
-        $this->server->start();
+            try {
+                $this->server->start();
+            } catch (Exception $e) {
+                // Unexpected exit
+                $this->logger->emergency("Server exited unexpectedly. Code {$e->getCode()}, message: {$e->getMessage()}.");
+
+                $this->emergencyStop();
+            }
+        }
+    }
+
+    /**
+     * Emergency stop.
+     */
+    protected function emergencyStop(): void
+    {
+        $this->logger->notice("Try to stop application...");
+
+        $this->app->stop();
     }
 
     /******************************************************************************

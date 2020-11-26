@@ -30,8 +30,8 @@ class ResponseFactory
         -1010 => "DiceRobot already running",
         -1011 => "DiceRobot cannot be rerun",
         -1012 => "Rerun DiceRobot failed",
-        -1020 => "",  // Undefined reload error
-        -1030 => "",  // Undefined stop error
+        -1020 => "Reload DiceRobot failed",
+        -1030 => "DiceRobot exited non-normally",
         -1040 => "DiceRobot cannot be restarted",
         -1050 => "DiceRobot root undefined or invalid",
         -1051 => "Composer not found",

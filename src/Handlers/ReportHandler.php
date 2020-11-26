@@ -54,7 +54,6 @@ class ReportHandler
      *
      * @param ContainerInterface $container
      * @param Config $config
-     * @param App $app
      * @param ApiService $api
      * @param RobotService $robot
      * @param StatisticsService $statistics
@@ -63,7 +62,6 @@ class ReportHandler
     public function __construct(
         ContainerInterface $container,
         Config $config,
-        App $app,
         ApiService $api,
         RobotService $robot,
         StatisticsService $statistics,
@@ -71,11 +69,20 @@ class ReportHandler
     ) {
         $this->container = $container;
         $this->config = $config;
-        $this->app = $app;
         $this->api = $api;
         $this->robot = $robot;
         $this->statistics = $statistics;
         $this->logger = $loggerFactory->create("Handler");
+    }
+
+    /**
+     * Initialize report handler.
+     *
+     * @param App $app
+     */
+    public function initialize(App $app): void
+    {
+        $this->app = $app;
     }
 
     /**
@@ -191,7 +198,7 @@ class ReportHandler
         /** @var MessageAction $action */
         $action = $this->container->make($actionName, [
             "message" => $message,
-            "match" => $match,
+            "match" => strtolower($match),
             "order" => $order,
             "at" => $at
         ]);

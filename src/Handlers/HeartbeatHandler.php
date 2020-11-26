@@ -39,24 +39,31 @@ class HeartbeatHandler
     /**
      * The constructor.
      *
-     * @param App $app
      * @param ApiService $api
      * @param ResourceService $resource
      * @param RobotService $robot
      * @param LoggerFactory $loggerFactory
      */
     public function __construct(
-        App $app,
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,
         LoggerFactory $loggerFactory
     ) {
-        $this->app = $app;
         $this->api = $api;
         $this->resource = $resource;
         $this->robot = $robot;
         $this->logger = $loggerFactory->create("Handler");
+    }
+
+    /**
+     * Initialize heartbeat handler.
+     *
+     * @param App $app
+     */
+    public function initialize(App $app): void
+    {
+        $this->app = $app;
     }
 
     /**
