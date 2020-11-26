@@ -63,8 +63,12 @@ class File
             throw new RuntimeException("File {$path} exists but cannot be read.");
         }
 
+        // Try to decode the file
         if (!is_array($content = json_decode($jsonString, true))) {
-            throw new RuntimeException("File {$path} exists but cannot be parsed.");
+            // Try to decode as UTF-8 BOM
+            if (!is_array($content = json_decode(ltrim($jsonString, "\xEF\xBB\xBF"), true))) {
+                throw new RuntimeException("File {$path} exists but cannot be parsed.");
+            }
         }
 
         return $content;

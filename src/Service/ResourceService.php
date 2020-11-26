@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Data\Resource\{CharacterCard, ChatSettings, CheckRule, Config, Reference, Statistics};
+use DiceRobot\Data\Resource\{CardDeck, CharacterCard, ChatSettings, CheckRule, Config, Reference, Statistics};
 use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Exception\CharacterCardException\LostException as CharacterCardLostException;
 use DiceRobot\Exception\CheckRuleException\LostException as CheckRuleLostException;
+use DiceRobot\Exception\CardDeckException\NotFoundException as CardDeckNotFoundException;
 use DiceRobot\Exception\FileException\LostException as FileLostException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Util\File;
@@ -28,6 +29,9 @@ class ResourceService
     /** @var array */
     protected array $directories = [];
 
+    /** @var bool Loaded */
+    protected bool $isLoaded = false;
+
     /** @var Config */
     protected Config $config;
 
@@ -46,8 +50,8 @@ class ResourceService
     /** @var Reference[] */
     protected array $references = [];
 
-    /** @var bool Loaded */
-    protected bool $isLoaded = false;
+    /** @var CardDeck[] */
+    protected array $cardDecks = [];
 
     /**
      * The constructor.
@@ -119,6 +123,8 @@ class ResourceService
     public function loadAll(): bool
     {
         if ($this->isLoaded && !$this->saveAll()) {
+            $this->logger->critical("Reload resources failed.");
+
             return false;
         }
 
@@ -129,6 +135,7 @@ class ResourceService
             $this->loadCharacterCards();
             $this->loadCheckRules();
             $this->loadReferences();
+            $this->loadCardDecks();
 
             $this->isLoaded = true;
         } catch (RuntimeException $e) {
@@ -155,8 +162,6 @@ class ResourceService
             $this->saveStatistics();
             $this->saveChatSettings();
             $this->saveCharacterCards();
-            //$this->saveCheckRules();
-            //$this->saveReferences();
         } catch (RuntimeException $e) {
             $this->logger->error($e);
             $this->logger->critical("Save resources failed.");
@@ -213,7 +218,7 @@ class ResourceService
                 $d = dir($this->directories["chat.{$type}"]);
 
                 while (false !== $f = $d->read()) {
-                    if (preg_match("/^([1-9][0-9]{4,9}).json/", $f, $matches)) {
+                    if (preg_match("/^([1-9][0-9]{4,9}).json$/", $f, $matches)) {
                         $this->chatSettings[$type][(int) $matches[1]] =
                             new ChatSettings(File::getFile("{$this->directories["chat.{$type}"]}/{$f}"));
                     }
@@ -235,7 +240,7 @@ class ResourceService
             $d = dir($this->directories["card"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([1-9][0-9]{0,5}).json/", $f, $matches)) {
+                if (preg_match("/^([1-9][0-9]{0,5}).json$/", $f, $matches)) {
                     $this->characterCards[(int) $matches[1]] =
                         new CharacterCard(File::getFile("{$this->directories["card"]}/{$f}"));
                 }
@@ -256,7 +261,7 @@ class ResourceService
             $d = dir($this->directories["rule"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([0-9]{1,2}).json/", $f, $matches)) {
+                if (preg_match("/^([0-9]{1,2}).json$/", $f, $matches)) {
                     $this->checkRules[(int) $matches[1]] =
                         new CheckRule(File::getFile("{$this->directories["rule"]}/{$f}"));
                 }
@@ -277,9 +282,25 @@ class ResourceService
             $d = dir($this->directories["reference"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([a-zA-z]+).json/", $f, $matches)) {
+                if (preg_match("/^([a-zA-z]+).json$/", $f, $matches)) {
                     $this->references[$matches[1]] =
                         new Reference(File::getFile("{$this->directories["reference"]}/{$f}"));
+                }
+            }
+
+            $d->close();
+        }
+    }
+
+    protected function loadCardDecks(): void
+    {
+        if (isset($this->directories["deck"])) {
+            $d = dir($this->directories["deck"]);
+
+            while (false !== $f = $d->read()) {
+                if (preg_match("/^(.+?).json$/", $f, $matches)) {
+                    $this->cardDecks[$matches[1]] =
+                        new CardDeck(File::getFile("{$this->directories["deck"]}/{$f}"));
                 }
             }
 
@@ -337,34 +358,6 @@ class ResourceService
         if (isset($this->directories["card"])) {
             foreach ($this->characterCards as $cardId => $card) {
                 File::putFile("{$this->directories["card"]}/{$cardId}.json", (string) $card);
-            }
-        }
-    }
-
-    /**
-     * Save check rules.
-     *
-     * @throws RuntimeException
-     */
-    protected function saveCheckRules(): void
-    {
-        if (isset($this->directories["rule"])) {
-            foreach ($this->checkRules as $ruleId => $rule) {
-                File::putFile("{$this->directories["rule"]}/{$ruleId}.json", (string) $rule);
-            }
-        }
-    }
-
-    /**
-     * Save references.
-     *
-     * @throws RuntimeException
-     */
-    protected function saveReferences(): void
-    {
-        if (isset($this->directories["reference"])) {
-            foreach ($this->references as $name => $reference) {
-                File::putFile("{$this->directories["reference"]}/{$name}.json", (string) $reference);
             }
         }
     }
@@ -473,5 +466,26 @@ class ResourceService
         }
 
         return $this->references[$referenceKey];
+    }
+
+    /**
+     * Get card deck.
+     *
+     * @param string $publicDeckKey
+     *
+     * @return CardDeck
+     *
+     * @throws CardDeckNotFoundException
+     */
+    public function getCardDeck(string $publicDeckKey): CardDeck
+    {
+        $deck = CardDeck::getCardDeck($publicDeckKey);
+
+        if (is_null($deck)) {
+            throw new CardDeckNotFoundException();
+        }
+
+        // Clone deck to prevent source deck from being modified
+        return clone $deck;
     }
 }

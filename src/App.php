@@ -8,9 +8,8 @@ use DiceRobot\Data\{Config, Dice, Subexpression};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\{MiraiApiException, RuntimeException};
 use DiceRobot\Factory\LoggerFactory;
+use DiceRobot\Handlers\{HeartbeatHandler, ReportHandler};
 use DiceRobot\Service\{ApiService, ResourceService, RobotService, StatisticsService};
-use DiceRobot\Handlers\HeartbeatHandler;
-use DiceRobot\Handlers\ReportHandler;
 use DiceRobot\Traits\AppTraits\StatusTrait;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -44,14 +43,14 @@ class App
     /** @var StatisticsService Statistics service */
     protected StatisticsService $statistics;
 
-    /** @var LoggerInterface Logger */
-    protected LoggerInterface $logger;
-
     /** @var HeartbeatHandler Heartbeat handler */
     protected HeartbeatHandler $heartbeatHandler;
 
     /** @var ReportHandler Report handler */
     protected ReportHandler $reportHandler;
+
+    /** @var LoggerInterface Logger */
+    protected LoggerInterface $logger;
 
     use StatusTrait;
 
@@ -64,6 +63,8 @@ class App
      * @param ResourceService $resource
      * @param RobotService $robot
      * @param StatisticsService $statistics
+     * @param HeartbeatHandler $heartbeatHandler
+     * @param ReportHandler $reportHandler
      * @param LoggerFactory $loggerFactory
      */
     public function __construct(
@@ -73,6 +74,8 @@ class App
         ResourceService $resource,
         RobotService $robot,
         StatisticsService $statistics,
+        HeartbeatHandler $heartbeatHandler,
+        ReportHandler $reportHandler,
         LoggerFactory $loggerFactory
     ) {
         $this->status = AppStatusEnum::WAITING();
@@ -82,6 +85,8 @@ class App
         $this->resource = $resource;
         $this->robot = $robot;
         $this->statistics = $statistics;
+        $this->heartbeatHandler = $heartbeatHandler;
+        $this->reportHandler = $reportHandler;
         $this->logger = $loggerFactory->create("Application");
 
         $this->logger->notice("Application started.");
@@ -99,9 +104,9 @@ class App
             $this->robot->initialize($this->config);
             $this->statistics->initialize();
         } catch (RuntimeException $e) {
-            $this->status = AppStatusEnum::STOPPED();
-
             $this->logger->emergency("Initialize application failed.");
+
+            $this->stop();
 
             return;
         }
@@ -109,12 +114,10 @@ class App
         $this->loadConfig();
 
         /** Secondary initialization */
+        $this->heartbeatHandler->initialize($this);
+        $this->reportHandler->initialize($this);
         Dice::globalInitialize($this->config);
         Subexpression::globalInitialize($this->config);
-
-        /** Set default handlers */
-        $this->heartbeatHandler = $this->container->get(HeartbeatHandler::class);
-        $this->reportHandler = $this->container->get(ReportHandler::class);
 
         $this->status = AppStatusEnum::HOLDING();
 
@@ -288,13 +291,23 @@ class App
     }
 
     /**
-     * Reload the config.
+     * Reload the resources.
      *
      * @return int Result code
      */
     public function reload(): int
     {
+        $this->status = AppStatusEnum::PAUSED();
+
+        if (!$this->resource->loadAll()) {
+            $this->logger->critical("Reload application failed.");
+
+            return -1020;
+        }
+
         $this->loadConfig();
+
+        $this->status = AppStatusEnum::RUNNING();
 
         $this->logger->notice("Application reloaded.");
 
@@ -312,12 +325,17 @@ class App
 
         // Stop, save and release
         Timer::clearAll();
-        $this->resource->saveAll();
         saber_pool_release();
 
-        $this->logger->notice("Application exited.");
+        if ($this->resource->saveAll()) {
+            $this->logger->notice("Application exited.");
 
-        return 0;
+            return 0;
+        } else {
+            $this->logger->alert("Application exited non-normally. Resources and data may not be saved.");
+
+            return -1030;
+        }
     }
 
     /**

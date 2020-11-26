@@ -7,6 +7,8 @@ namespace DiceRobot\Data\Resource;
 use DiceRobot\Data\Resource;
 use DiceRobot\Exception\CharacterCardException\NotBoundException;
 
+use const DiceRobot\DEFAULT_CHAT_SETTINGS;
+
 /**
  * Class ChatSettings
  *
@@ -23,15 +25,29 @@ class ChatSettings extends Resource
      */
     public function __construct(array $data = [])
     {
+        $data = array_replace_recursive(DEFAULT_CHAT_SETTINGS, $data);
+
+        if (is_string($data["cardDeck"])) {
+            $data["cardDeck"] = unserialize($data["cardDeck"]);
+        }
+
         parent::__construct($data);
+    }
 
-        $this->data["active"] ??= true;
-        $this->data["cocCheckRule"] ??= 0;
-        $this->data["defaultSurfaceNumber"] ??= null;
-        $this->data["robotNickname"] ??= null;
+    /**
+     * Return JSON serialized data.
+     *
+     * @return string JSON serialized data
+     */
+    public function __toString(): string
+    {
+        $data = $this->data;
 
-        $this->data["characterCards"] ??= [];
-        $this->data["nicknames"] ??= [];
+        if ($data["cardDeck"] instanceof CardDeck) {
+            $data["cardDeck"] = serialize($this->data["cardDeck"]);
+        }
+
+        return (string) json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 
     /**

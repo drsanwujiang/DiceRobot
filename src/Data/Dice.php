@@ -94,7 +94,7 @@ class Dice
     }
 
     /**
-     * Regenerate result.
+     * Clone dice, and regenerate result.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      */
