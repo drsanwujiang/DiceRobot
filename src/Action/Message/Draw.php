@@ -61,9 +61,9 @@ class Draw extends MessageAction
         // If deck is empty, send message and reset the deck
         if ($empty) {
             $deck->reset();
-        }
 
-        $this->setReply("drawDeckEmpty");
+            $this->setReply("drawDeckEmpty");
+        }
     }
 
     /**

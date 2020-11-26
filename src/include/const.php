@@ -79,7 +79,7 @@ namespace DiceRobot {
             "maxDrawCount" => 10,
             "maxGenerateCount" => 20,
             "maxRepeatTimes" => 20,
-            "maxReplyCharacter" => 1500
+            "maxReplyCharacter" => 1000
         ],
 
         "reply" => [

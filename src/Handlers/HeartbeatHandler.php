@@ -100,7 +100,7 @@ class HeartbeatHandler
     public function prolongSession(): bool
     {
         try {
-            if (0 == $code = $this->api->verifySession($this->robot->getId())->getInt("code", -1)) {
+            if (0 == $code = $this->api->fetchMessage(10)->getInt("code", -1)) {
                 $this->logger->info("Session prolonged.");
 
                 return true;

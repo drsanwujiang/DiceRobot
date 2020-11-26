@@ -80,6 +80,8 @@ class Dicing extends MessageAction
             } else {
                 $this->setReply("dicingPrivateNotInGroup");
             }
+        } else {
+            $this->setRawReply($reply);
         }
     }
 
