@@ -7,6 +7,7 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Resource\CardDeck;
 use DiceRobot\Exception\OrderErrorException;
+use DiceRobot\Exception\CardDeckException\{InvalidException, NotFoundException};
 
 /**
  * Class Deck
@@ -26,6 +27,8 @@ class Deck extends MessageAction
 {
     /**
      * @inheritDoc
+     *
+     * @throws InvalidException|NotFoundException|OrderErrorException
      */
     public function __invoke(): void
     {

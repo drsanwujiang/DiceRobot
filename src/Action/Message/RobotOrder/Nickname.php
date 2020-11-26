@@ -41,7 +41,7 @@ class Nickname extends RobotOrderAction
 
         // Change robot's group card
         if ($this->message instanceof GroupMessage) {
-            $this->api->setMemberName(
+            $this->api->setMemberInfo(
                 $this->message->sender->group->id,
                 $this->robot->getId(),
                 $nickname

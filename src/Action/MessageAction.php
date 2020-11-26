@@ -133,6 +133,8 @@ abstract class MessageAction implements Action
 
     /**
      * Send replies.
+     *
+     * @throws MiraiApiException
      */
     public function sendReplies(): void
     {
@@ -210,7 +212,7 @@ abstract class MessageAction implements Action
 
         if ($this->message instanceof GroupMessage) {
             return empty(
-            $nickname = $this->api->getMemberName(
+            $nickname = $this->api->getMemberInfo(
                 $this->message->sender->group->id,
                 $this->robot->getId()
             )->getString("name", "")

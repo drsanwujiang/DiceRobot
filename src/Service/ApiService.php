@@ -213,7 +213,7 @@ class ApiService
      *
      * @throws MiraiApiException
      */
-    public function authSession(string $authKey): ArrayReader
+    final public function authSession(string $authKey): ArrayReader
     {
         $options = [
             "uri" => "/auth",
@@ -227,44 +227,65 @@ class ApiService
     }
 
     /**
-     * @param int $qq
+     * @param int $robotId
      *
      * @return ArrayReader
      *
      * @throws MiraiApiException
      */
-    public function verifySession(int $qq): ArrayReader
+    final public function verifySession(int $robotId): ArrayReader
     {
         $options = [
             "uri" => "/verify",
             "method" => "POST",
             "data" => [
                 "sessionKey" => $this->sessionKey,
-                "qq" => $qq
+                "qq" => $robotId
             ]
         ];
 
         return new ArrayReader($this->mRequest($options));
     }
 
-    /** Message */
+    /**
+     * @param int $robotId
+     *
+     * @return ArrayReader
+     *
+     * @throws MiraiApiException
+     */
+    final public function releaseSession(int $robotId): ArrayReader
+    {
+        $options = [
+            "uri" => "/release",
+            "method" => "POST",
+            "data" => [
+                "sessionKey" => $this->sessionKey,
+                "qq" => $robotId
+            ]
+        ];
+
+        return new ArrayReader($this->mRequest($options));
+    }
+
+    /** Message sending */
 
     /**
-     * @param int $target
+     * @param int $targetId
      * @param array $messageChain
      *
      * @return ArrayReader
      *
      * @throws MiraiApiException
      */
-    public function sendFriendMessage(int $target, array $messageChain): ArrayReader
+    final public function sendFriendMessage(int $targetId, array $messageChain): ArrayReader
     {
         $options = [
             "uri" => "/sendFriendMessage",
             "method" => "POST",
             "data" => [
                 "sessionKey" => $this->sessionKey,
-                "target" => $target,
+                "target" => $targetId,
                 "messageChain" => $messageChain
             ]
         ];
@@ -273,14 +294,14 @@ class ApiService
     }
 
     /**
-     * @param int $target
+     * @param int $targetId
      * @param array $messageChain
      */
-    public function sendFriendMessageAsync(int $target, array $messageChain): void
+    final public function sendFriendMessageAsync(int $targetId, array $messageChain): void
     {
-        go(function () use ($target, $messageChain) {
+        go(function () use ($targetId, $messageChain) {
             try {
-                $this->sendFriendMessage($target, $messageChain);
+                $this->sendFriendMessage($targetId, $messageChain);
             } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
                 // Do nothing
             }
@@ -288,23 +309,23 @@ class ApiService
     }
 
     /**
-     * @param int $qq
-     * @param int $group
+     * @param int $targetId
+     * @param int $groupId
      * @param array $messageChain
      *
      * @return ArrayReader
      *
      * @throws MiraiApiException
      */
-    public function sendTempMessage(int $qq, int $group, array $messageChain): ArrayReader
+    final public function sendTempMessage(int $targetId, int $groupId, array $messageChain): ArrayReader
     {
         $options = [
             "uri" => "/sendTempMessage",
             "method" => "POST",
             "data" => [
                 "sessionKey" => $this->sessionKey,
-                "qq" => $qq,
-                "group" => $group,
+                "qq" => $targetId,
+                "group" => $groupId,
                 "messageChain" => $messageChain
             ]
         ];
@@ -313,15 +334,15 @@ class ApiService
     }
 
     /**
-     * @param int $qq
-     * @param int $group
+     * @param int $targetId
+     * @param int $groupId
      * @param array $messageChain
      */
-    public function sendTempMessageAsync(int $qq, int $group, array $messageChain): void
+    final public function sendTempMessageAsync(int $targetId, int $groupId, array $messageChain): void
     {
-        go(function () use ($qq, $group, $messageChain) {
+        go(function () use ($targetId, $groupId, $messageChain) {
             try {
-                $this->sendTempMessage($qq, $group, $messageChain);
+                $this->sendTempMessage($targetId, $groupId, $messageChain);
             } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
                 // Do nothing
             }
@@ -329,21 +350,21 @@ class ApiService
     }
 
     /**
-     * @param int $target
+     * @param int $targetId
      * @param array $messageChain
      *
      * @return ArrayReader
      *
      * @throws MiraiApiException
      */
-    public function sendGroupMessage(int $target, array $messageChain): ArrayReader
+    final public function sendGroupMessage(int $targetId, array $messageChain): ArrayReader
     {
         $options = [
             "uri" => "/sendGroupMessage",
             "method" => "POST",
             "data" => [
                 "sessionKey" => $this->sessionKey,
-                "target" => $target,
+                "target" => $targetId,
                 "messageChain" => $messageChain
             ]
         ];
@@ -352,18 +373,54 @@ class ApiService
     }
 
     /**
-     * @param int $target
+     * @param int $targetId
      * @param array $messageChain
      */
-    public function sendGroupMessageAsync(int $target, array $messageChain): void
+    final public function sendGroupMessageAsync(int $targetId, array $messageChain): void
     {
-        go(function () use ($target, $messageChain) {
+        go(function () use ($targetId, $messageChain) {
             try {
-                $this->sendGroupMessage($target, $messageChain);
+                $this->sendGroupMessage($targetId, $messageChain);
             } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
                 // Do nothing
             }
         });
+    }
+
+    /** Message receipt */
+
+    /**
+     * @param int $count
+     *
+     * @return ArrayReader
+     *
+     * @throws MiraiApiException
+     */
+    final public function fetchMessage(int $count): ArrayReader
+    {
+        $options = [
+            "uri" => "/fetchMessage?sessionKey={$this->sessionKey}&count={$count}",
+            "method" => "GET"
+        ];
+
+        return new ArrayReader($this->mRequest($options));
+    }
+
+    /**
+     * @param int $count
+     *
+     * @return ArrayReader
+     *
+     * @throws MiraiApiException
+     */
+    final public function fetchLatestMessage(int $count): ArrayReader
+    {
+        $options = [
+            "uri" => "/fetchLatestMessage?sessionKey={$this->sessionKey}&count={$count}",
+            "method" => "GET"
+        ];
+
+        return new ArrayReader($this->mRequest($options));
     }
 
     /** List */
@@ -373,7 +430,7 @@ class ApiService
      *
      * @throws MiraiApiException
      */
-    public function getFriendList(): ArrayReader
+    final public function getFriendList(): ArrayReader
     {
         $options = [
             "uri" => "/friendList?sessionKey={$this->sessionKey}",
@@ -388,7 +445,7 @@ class ApiService
      *
      * @throws MiraiApiException
      */
-    public function getGroupList(): ArrayReader
+    final public function getGroupList(): ArrayReader
     {
         $options = [
             "uri" => "/groupList?sessionKey={$this->sessionKey}",
@@ -398,23 +455,40 @@ class ApiService
         return new ArrayReader($this->mRequest($options));
     }
 
-    /** Management */
-
     /**
-     * @param int $target
+     * @param int $targetId
      *
      * @return ArrayReader
      *
      * @throws MiraiApiException
      */
-    public function quitGroup(int $target): ArrayReader
+    final public function getGroupMemberList(int $targetId): ArrayReader
+    {
+        $options = [
+            "uri" => "/memberList?sessionKey={$this->sessionKey}&target={$targetId}",
+            "method" => "GET"
+        ];
+
+        return new ArrayReader($this->mRequest($options));
+    }
+
+    /** Management */
+
+    /**
+     * @param int $targetId
+     *
+     * @return ArrayReader
+     *
+     * @throws MiraiApiException
+     */
+    final public function quitGroup(int $targetId): ArrayReader
     {
         $options = [
             "uri" => "/quit",
             "method" => "POST",
             "data" => [
                 "sessionKey" => $this->sessionKey,
-                "target" => $target
+                "target" => $targetId
             ]
         ];
 
@@ -422,17 +496,17 @@ class ApiService
     }
 
     /**
-     * @param int $target
+     * @param int $targetId
      * @param int $memberId
      *
      * @return ArrayReader
      *
      * @throws MiraiApiException
      */
-    public function getMemberName(int $target, int $memberId): ArrayReader
+    final public function getMemberInfo(int $targetId, int $memberId): ArrayReader
     {
         $options = [
-            "uri" => "/memberInfo?sessionKey={$this->sessionKey}&target={$target}&memberId={$memberId}",
+            "uri" => "/memberInfo?sessionKey={$this->sessionKey}&target={$targetId}&memberId={$memberId}",
             "method" => "GET"
         ];
 
@@ -440,25 +514,31 @@ class ApiService
     }
 
     /**
-     * @param int $target
+     * @param int $targetId
      * @param int $memberId
-     * @param string $name
+     * @param string|null $name
+     * @param string|null $specialTitle
      *
      * @return ArrayReader
      *
      * @throws MiraiApiException
      */
-    public function setMemberName(int $target, int $memberId, string $name): ArrayReader
-    {
+    final public function setMemberInfo(
+        int $targetId,
+        int $memberId,
+        string $name = null,
+        ?string $specialTitle = null
+    ): ArrayReader {
         $options = [
             "uri" => "/memberInfo",
             "method" => "POST",
             "data" => [
                 "sessionKey" => $this->sessionKey,
-                "target" => $target,
+                "target" => $targetId,
                 "memberId" => $memberId,
                 "info" => [
-                    "name" => $name
+                    "name" => $name,
+                    "specialTitle" => $specialTitle
                 ]
             ]
         ];
@@ -479,7 +559,7 @@ class ApiService
      *
      * @throws MiraiApiException
      */
-    public function respondToNewFriendRequestEvent(
+    final public function respondToNewFriendRequestEvent(
         int $eventId,
         int $fromId,
         int $groupId,
@@ -513,7 +593,7 @@ class ApiService
      *
      * @throws MiraiApiException
      */
-    public function respondToBotInvitedJoinGroupRequestEvent(
+    final public function respondToBotInvitedJoinGroupRequestEvent(
         int $eventId,
         int $fromId,
         int $groupId,
@@ -557,7 +637,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function updateRobot(int $robotId): UpdateRobotResponse
+    final public function updateRobot(int $robotId): UpdateRobotResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/robot/{$robotId}",
@@ -572,7 +652,7 @@ class ApiService
      *
      * @param int $robotId QQ ID of the robot
      */
-    public function updateRobotAsync(int $robotId): void
+    final public function updateRobotAsync(int $robotId): void
     {
         go(function () use ($robotId) {
             try {
@@ -593,7 +673,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function auth(int $robotId, int $userId = null): AuthorizeResponse
+    final public function auth(int $robotId, int $userId = null): AuthorizeResponse
     {
         if ($userId) {
             $url = "/dicerobot/v2/robot/{$robotId}/auth/{$userId}";
@@ -616,7 +696,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function getNickname(int $robotId): GetNicknameResponse
+    final public function getNickname(int $robotId): GetNicknameResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/robot/{$robotId}/nickname",
@@ -636,7 +716,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function queryGroup(int $groupId, string $token): QueryGroupResponse
+    final public function queryGroup(int $groupId, string $token): QueryGroupResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/group/{$groupId}",
@@ -660,7 +740,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function submitGroup(int $groupId, string $token): SubmitGroupResponse
+    final public function submitGroup(int $groupId, string $token): SubmitGroupResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/group/{$groupId}",
@@ -683,7 +763,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function getCard(int $cardId, string $token): GetCardResponse
+    final public function getCard(int $cardId, string $token): GetCardResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/card/{$cardId}",
@@ -708,7 +788,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function updateCard(int $cardId, string $attribute, int $change, string $token): UpdateCardResponse
+    final public function updateCard(int $cardId, string $attribute, int $change, string $token): UpdateCardResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/card/{$cardId}",
@@ -737,7 +817,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function sanityCheck(int $cardId, int $checkResult, array $decreases, string $token): SanityCheckResponse
+    final public function sanityCheck(int $cardId, int $checkResult, array $decreases, string $token): SanityCheckResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/card/{$cardId}/sc",
@@ -763,7 +843,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function jrrp(int $userId): JrrpResponse
+    final public function jrrp(int $userId): JrrpResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/user/{$userId}/jrrp",
@@ -782,7 +862,7 @@ class ApiService
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
-    public function kowtow(int $userId): KowtowResponse
+    final public function kowtow(int $userId): KowtowResponse
     {
         $options = [
             "uri" => "/dicerobot/v2/user/{$userId}/kowtow",
