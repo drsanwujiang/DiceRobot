@@ -30,8 +30,9 @@ final class Face implements ParsableFragment
      */
     public function fromMiraiCode(string $code): bool
     {
-        if (!preg_match("/^\[mirai:face:([1-9][0-9]*)(?:,(.*?))?]$/i", $code, $matches))
+        if (!preg_match("/^\[mirai:face:([1-9][0-9]*)(?:,(.+?))?]$/i", $code, $matches)) {
             return false;
+        }
 
         $this->faceId = (int) $matches[1];
         $this->name = empty($matches[2]) ? "" : $matches[2];

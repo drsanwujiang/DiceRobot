@@ -11,6 +11,8 @@ use DiceRobot\Interfaces\Fragment;
  *
  * Describe a parsable fragment of Mirai message chain, which can be serialized to (or deserialized from) Mirai code.
  *
+ * @link https://github.com/mamoe/mirai/blob/master/docs/mirai-code-specification.md
+ *
  * @package DiceRobot\Interfaces\Fragment
  */
 interface ParsableFragment extends Fragment

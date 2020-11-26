@@ -18,7 +18,7 @@ final class At implements ParsableFragment
     /** @var int At target ID */
     public int $target;
 
-    /** @var string Displayed text */
+    /** @var string|null Displayed text */
     public string $display;
 
     /**
@@ -30,11 +30,12 @@ final class At implements ParsableFragment
      */
     public function fromMiraiCode(string $code): bool
     {
-        if (!preg_match("/^\[mirai:at:([1-9][0-9]*)(?:,(.*?))?]$/i", $code, $matches))
+        if (!preg_match("/^\[mirai:at:([1-9][0-9]*)(?:,(.*?))?]$/i", $code, $matches)) {
             return false;
+        }
 
         $this->target = (int) $matches[1];
-        $this->display = empty($matches[2]) ? "" : $matches[2];
+        $this->display = (string) ($matches[2] ?? "");
 
         return true;
     }

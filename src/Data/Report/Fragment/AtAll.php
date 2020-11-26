@@ -24,8 +24,9 @@ final class AtAll implements ParsableFragment
      */
     public function fromMiraiCode(string $code): bool
     {
-        if (!preg_match("/^\[mirai:atall]$/i", $code))
+        if (!preg_match("/^\[mirai:atall]$/i", $code)) {
             return false;
+        }
 
         return true;
     }
