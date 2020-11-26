@@ -55,7 +55,7 @@ class Nickname extends RobotOrderAction
 
             $this->reply =
                 Convertor::toCustomString(
-                    $this->config->getString("reply.robotOrderNicknameChanged"),
+                    $this->config->getString("reply.robotOrderNicknameSet"),
                     [
                         "机器人新昵称" => $nickname
                     ]
@@ -81,11 +81,13 @@ class Nickname extends RobotOrderAction
             throw new OrderErrorException;
         }
 
-        /** @var string|null $targetId */
         $targetId = empty($matches[1]) ? null : $matches[1];
-        /** @var string $nickname */
         $nickname = $matches[2];
 
+        /**
+         * @var string|null $targetId Targeted robot ID
+         * @var string $nickname Robot nickname
+         */
         return [$targetId, $nickname];
     }
 }

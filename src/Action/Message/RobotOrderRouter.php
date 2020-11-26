@@ -136,11 +136,13 @@ class RobotOrderRouter extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var string $match */
-        $match = $matches[1] ?? "about";  // Redirect to about by default
-        /** @var string $subOrder */
+        $match = strtolower($matches[1] ?? "about");  // Redirect to about by default
         $subOrder = $matches[2] ?? "";
 
+        /**
+         * @var string $match Robot order match
+         * @var string $subOrder Sub-order
+         */
         return [$match, $subOrder];
     }
 

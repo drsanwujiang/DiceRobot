@@ -80,15 +80,17 @@ class DicePool extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var bool $detailed */
         $detailed = !empty($matches[1]);
-        /** @var int $diceNumber */
         $diceNumber = empty($matches[2]) ? 10 : (int) $matches[2];
-        /** @var int $threshold */
         $threshold = empty($matches[3]) ? 10 : (int) $matches[3];
-        /** @var string $reason */
         $reason = $matches[4];
 
+        /**
+         * @var bool $detailed Detailed process flag
+         * @var int $diceNumber Dice number
+         * @var int $threshold Threshold of result
+         * @var string $reason Reason
+         */
         return [$detailed, $diceNumber, $threshold, $reason];
     }
 

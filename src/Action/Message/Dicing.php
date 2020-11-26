@@ -104,11 +104,13 @@ class Dicing extends MessageAction
     protected function parseOrder(): array
     {
         preg_match("/^([\S\s]*?)(?:#([1-9][0-9]*))?$/", $this->order, $matches);
-        /** @var string $expression */
         $expression = $matches[1];
-        /** @var int $repeat */
         $repeat = empty($matches[2]) ? 1 : (int) $matches[2];
 
+        /**
+         * @var string $expression Dicing expression
+         * @var int $repeat Count of repetition
+         */
         return [$expression, $repeat];
     }
 

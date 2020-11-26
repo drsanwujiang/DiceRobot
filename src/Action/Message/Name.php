@@ -62,11 +62,13 @@ class Name extends MessageAction
             throw new OrderErrorException();
         }
 
-        /** @var string $language */
         $language = empty($matches[1]) ? "cn" : strtolower($matches[1]);
-        /** @var int $generateCount */
         $generateCount = empty($matches[2]) ? 1 : (int) $matches[2];
 
+        /**
+         * @var string $language Language
+         * @var int $generateCount Count of generation
+         */
         return [$language, $generateCount];
     }
 

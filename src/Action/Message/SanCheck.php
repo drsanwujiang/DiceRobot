@@ -103,13 +103,15 @@ class SanCheck extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var string $successExpression */
         $successExpression = $matches[1];
-        /** @var string $failureExpression */
         $failureExpression = $matches[2];
-        /** @var int|null $sanity */
         $sanity = empty($matches[3]) ? null : (int) $matches[3];
 
+        /**
+         * @var string $successExpression Expression when check succeeded
+         * @var string $failureExpression Expression when check failed
+         * @var int|null $sanity Sanity to check
+         */
         return [$successExpression, $failureExpression, $sanity];
     }
 

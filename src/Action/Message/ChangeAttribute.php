@@ -87,18 +87,20 @@ class ChangeAttribute extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var string $attribute */
         $attribute = strtoupper($matches[1]);
 
         if (!preg_match("/^([+-])\s*(\S+)$/i", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 
-        /** @var string $symbol */
         $symbol = $matches[1];
-        /** @var string $expression */
         $expression = $matches[2];
 
+        /**
+         * @var string $attribute Attribute name
+         * @var string $symbol Addition/Subtraction symbol
+         * @var string $expression Dicing expression
+         */
         return [$attribute, $symbol, $expression];
     }
 

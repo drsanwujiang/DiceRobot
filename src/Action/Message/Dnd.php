@@ -64,16 +64,18 @@ class Dnd extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var int $generateCount */
         $generateCount = empty($matches[1]) ? 1 : (int) $matches[1];
 
+        /**
+         * @var int $generateCount Count of generation
+         */
         return [$generateCount];
     }
 
     /**
      * Check the range.
      *
-     * @param int $generateCount Generate count
+     * @param int $generateCount Count of generation
      *
      * @return bool Validity
      */

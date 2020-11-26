@@ -9,7 +9,7 @@ use DiceRobot\Exception\CheckRuleException\LostException;
 use DiceRobot\Util\Convertor;
 
 /**
- * Class SetCOC
+ * Class SetCoc
  *
  * Show description of current rule, or set default COC check rule.
  *
@@ -20,7 +20,7 @@ use DiceRobot\Util\Convertor;
  *
  * @package DiceRobot\Action\Message
  */
-class SetCOC extends MessageAction
+class SetCoc extends MessageAction
 {
     /**
      * @inheritDoc
@@ -56,7 +56,7 @@ class SetCOC extends MessageAction
 
             $this->reply =
                 Convertor::toCustomString(
-                    $this->config->getString("reply.setCocRuleChanged"),
+                    $this->config->getString("reply.setCocRuleSet"),
                     [
                         "规则名称" => $rule->getString("name"),
                         "规则描述" => $rule->getString("description"),
@@ -77,9 +77,11 @@ class SetCOC extends MessageAction
             return [-1];
         }
 
-        /** @var int|null $ruleId */
         $ruleId = empty($matches[1]) ? null : (int) $matches[1];
 
+        /**
+         * @var int|null $ruleId COC check rule ID
+         */
         return [$ruleId];
     }
 

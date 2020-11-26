@@ -38,7 +38,7 @@ class Set extends MessageAction
 
             $this->reply =
                 Convertor::toCustomString(
-                    $this->config->getString("reply.setResult"),
+                    $this->config->getString("reply.setSurfaceNumberSet"),
                     [
 
                         "默认骰子面数" => $defaultSurfaceNumber
@@ -48,7 +48,7 @@ class Set extends MessageAction
             // Reset the default dice surface number of this chat to the default value of the robot
             $this->chatSettings->set("defaultSurfaceNumber", null);
 
-            $this->reply = $this->config->getString("reply.setResetResult");
+            $this->reply = $this->config->getString("reply.setSurfaceNumberReset");
         }
     }
 
@@ -63,9 +63,11 @@ class Set extends MessageAction
             return [-1];
         }
 
-        /** @var int|null $defaultSurfaceNumber */
         $defaultSurfaceNumber = empty($matches[1]) ? null : (int) $matches[1];
 
+        /**
+         * @var int|null $defaultSurfaceNumber Default dice surface number
+         */
         return [$defaultSurfaceNumber];
     }
 
@@ -83,7 +85,7 @@ class Set extends MessageAction
         ) {
             $this->reply =
                 Convertor::toCustomString(
-                    $this->config->getString("reply.setDefaultSurfaceNumberInvalid"),
+                    $this->config->getString("reply.setSurfaceNumberInvalid"),
                     [
                         "最大骰子面数" => $this->config->getInt("order.maxSurfaceNumber")
                     ]

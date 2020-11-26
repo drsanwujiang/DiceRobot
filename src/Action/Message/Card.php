@@ -10,7 +10,7 @@ use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 
 /**
- * Class BindCard
+ * Class Card
  *
  * Bind/Unbind COC character card.
  *
@@ -21,7 +21,7 @@ use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorExcept
  *
  * @package DiceRobot\Action\Message
  */
-class BindCard extends MessageAction
+class Card extends MessageAction
 {
     /**
      * @inheritDoc
@@ -34,19 +34,19 @@ class BindCard extends MessageAction
 
         if ($cardId) {
             // Bind character card
-            $this->sendMessageAsync($this->config->getString("reply.bindCardPending"));
+            $this->sendMessageAsync($this->config->getString("reply.cardPending"));
 
             // Import character card
             $card = new CharacterCard($this->getCard($cardId));
             $this->resource->setCharacterCard($cardId, $card);
             $this->chatSettings->setCharacterCardId($this->message->sender->id, $cardId);
 
-            $this->reply = $this->config->getString("reply.bindCardSuccess");
+            $this->reply = $this->config->getString("reply.cardBind");
         } else {
             //Unset character card ID
             $this->chatSettings->setCharacterCardId($this->message->sender->id);
 
-            $this->reply = $this->config->getString("reply.bindCardUnbind");
+            $this->reply = $this->config->getString("reply.cardUnbind");
         }
     }
 
@@ -63,9 +63,9 @@ class BindCard extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var int $cardId */
-        $cardId = (int) ($matches[1] ?? 0);
-
+        /**
+         * @var int $cardId Character card ID
+         */
         return [$cardId];
     }
 

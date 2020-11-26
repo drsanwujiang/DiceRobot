@@ -87,26 +87,28 @@ class Coc extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var int $version */
         $version = empty($matches[1]) ? 7 : (int) $matches[1];
-        /** @var int $generateCount */
         $generateCount = empty($matches[2]) ? 1 : (int) $matches[2];
-        /** @var bool $detailed */
         $detailed = !empty($matches[3]);
 
+        /**
+         * @var int $version COC version
+         * @var int $generateCount Count of generation
+         * @var bool $detailed Detailed generation flag
+         */
         return [$version, $generateCount, $detailed];
     }
 
     /**
      * Check the range.
      *
-     * @param int $generateCount Generate count
+     * @param int $generateCount Count of generation
      *
      * @return bool Validity
      */
     protected function checkRange(int $generateCount): bool
     {
-        if ($generateCount > $this->config->getInt("order.maxGenerateCount")) {
+        if ($generateCount > $this->config->getInt("order.maxDrawCount")) {
             $this->reply =
                 Convertor::toCustomString(
                     $this->config->getString("reply.cocGenerateCardCountOverstep"),
@@ -125,7 +127,7 @@ class Coc extends MessageAction
      * Generate attributes of character card.
      *
      * @param int $version COC version
-     * @param int $count Generate count
+     * @param int $count Count of generation
      * @param Reference $reference The reference
      *
      * @return string Attributes

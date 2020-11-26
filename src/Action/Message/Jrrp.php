@@ -33,7 +33,7 @@ class Jrrp extends MessageAction
 
         $this->reply =
             Convertor::toCustomString(
-                $this->config->getString("reply.jrrpReply"),
+                $this->config->getString("reply.jrrpResult"),
                 [
                     "昵称" => $this->getNickname(),
                     "人品" => $this->api->jrrp($this->message->sender->id)->jrrp

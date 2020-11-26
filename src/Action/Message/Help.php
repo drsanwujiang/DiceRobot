@@ -55,8 +55,11 @@ class Help extends MessageAction
             throw new OrderErrorException;
         }
 
-        $order = $matches[1] ?? "";
+        $order = strtolower($matches[1] ?? "");
 
+        /**
+         * @var string $order Order to query
+         */
         return [$order];
     }
 

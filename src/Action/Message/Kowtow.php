@@ -40,7 +40,7 @@ class Kowtow extends MessageAction
 
         $this->reply =
             Convertor::toCustomString(
-                $this->config->getString("reply.kowtowHeading"),
+                $this->config->getString("reply.kowtowResult"),
                 [
                     "发送者QQ" => $this->message->sender->id,
                     "机器人昵称" => $this->getRobotNickname(),

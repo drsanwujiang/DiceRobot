@@ -46,7 +46,7 @@ class Check extends MessageAction
      */
     public function __invoke(): void
     {
-        list($private, $bp, $item, $addition, $repeat) = $this->parseOrder();
+        list($private, $bp, $item, $adjustment, $repeat) = $this->parseOrder();
 
         list($checkValue, $heading) = $this->getCheckValue($item, $repeat);
 
@@ -57,7 +57,7 @@ class Check extends MessageAction
         $this->reply = trim(
             $heading .
             ($repeat > 1 ? "\n" : "") .
-            $this->check($bp, $addition, $checkValue, $repeat)
+            $this->check($bp, $adjustment, $checkValue, $repeat)
         );
 
         if ($private) {
@@ -102,18 +102,20 @@ class Check extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var bool $private */
         $private = !empty($matches[1]);
-        /** @var string $bp */
         $bp = $matches[2];
-        /** @var string $item */
         $item = $matches[3];
-        /** @var string $addition */
-        $addition = str_replace(" ", "", $matches[4] ?? "");
-        /** @var int $repeat */
+        $adjustment = str_replace(" ", "", $matches[4] ?? "");
         $repeat = (int) ($matches[5] ?? 1);
 
-        return [$private, $bp, $item, $addition, $repeat];
+        /**
+         * @var bool $private Private check flag
+         * @var string $bp Bonus/Punishment check flag
+         * @var string $item Check item (skill/attribute name or value)
+         * @var string $adjustment Adjustment operations
+         * @var int $repeat
+         */
+        return [$private, $bp, $item, $adjustment, $repeat];
     }
 
     /**
@@ -197,7 +199,7 @@ class Check extends MessageAction
      * Check attribute/skill.
      *
      * @param string $bp B/P order
-     * @param string $addition Additional operations
+     * @param string $adjustment Adjustment operations
      * @param int $checkValue The check value
      * @param int $repeat Repeat time
      *
@@ -206,12 +208,12 @@ class Check extends MessageAction
      * @throws CheckRuleLostException|DangerousException|DiceNumberOverstepException|ExpressionErrorException
      * @throws ExpressionInvalidException|InvalidException|MatchFailedException|SurfaceNumberOverstepException
      */
-    protected function check(string $bp, string $addition, int $checkValue, int $repeat): string
+    protected function check(string $bp, string $adjustment, int $checkValue, int $repeat): string
     {
         $detail = "";
 
         while ($repeat--) {
-            $dice = isset($dice) ? clone $dice : new Dice("{$bp} D{$addition}", 100);
+            $dice = isset($dice) ? clone $dice : new Dice("{$bp} D{$adjustment}", 100);
 
             // Adjust result
             $result = $dice->result < 1 ? 1 : $dice->result;

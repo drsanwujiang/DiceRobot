@@ -60,9 +60,11 @@ class Start extends RobotOrderAction
             throw new OrderErrorException;
         }
 
-        /** @var string|null $targetId */
         $targetId = empty($matches[1]) ? null : $matches[1];
 
+        /**
+         * @var string|null $targetId Targeted robot ID
+         */
         return [$targetId];
     }
 

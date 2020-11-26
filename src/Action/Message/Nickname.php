@@ -39,7 +39,7 @@ class Nickname extends MessageAction
 
             $this->reply =
                 Convertor::toCustomString(
-                    $this->config->getString("reply.nicknameChanged"),
+                    $this->config->getString("reply.nicknameSet"),
                     [
                         "昵称" => $currentNickname,
                         "新昵称" => $newNickname
@@ -72,9 +72,11 @@ class Nickname extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var string $nickname */
         $nickname = $matches[1];
 
+        /**
+         * @var string $nickname Nickname
+         */
         return [$nickname];
     }
 }
