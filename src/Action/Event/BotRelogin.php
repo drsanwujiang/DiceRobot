@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace DiceRobot\Action\Event;
 
-use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\BotReloginEvent;
-use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\MiraiApiException;
 
 /**
@@ -21,7 +19,7 @@ use DiceRobot\Exception\MiraiApiException;
  *
  * @package DiceRobot\Action\Event
  */
-class BotRelogin extends EventAction
+class BotRelogin extends BotOnline
 {
     /**
      * @var BotReloginEvent $event Event
@@ -39,34 +37,6 @@ class BotRelogin extends EventAction
     {
         $this->logger->notice("Robot is online (relogin).");
 
-        // Re-verify session
-        if (0 == $code = $this->api->verifySession($this->robot->getId())->getInt("code", -1)) {
-            $this->logger->info("Session verified.");
-
-            // Update robot service
-            if ($this->robot->update()) {
-                if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING())) {
-                    $this->app->setStatus(AppStatusEnum::RUNNING());
-                }
-
-                return;
-            }
-        } else {
-            // Re-verify failed
-            $this->logger->warning("Session unauthorized, code {$code}. Try to initialize.");
-
-            // Try to initialize session, then update robot service
-            if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
-                if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()))
-                    $this->app->setStatus(AppStatusEnum::RUNNING());
-
-                return;
-            }
-        }
-
-        // Failed
-        if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
-            $this->app->setStatus(AppStatusEnum::HOLDING());
-        }
+        $this->initialize();
     }
 }

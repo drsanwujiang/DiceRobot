@@ -81,7 +81,7 @@ class HeartbeatHandler
         }
 
         // Heartbeat
-        if ($this->resource->saveAll() && $this->checkSession() && $this->robot->update()) {
+        if ($this->resource->saveAll() && $this->prolongSession() && $this->robot->update()) {
             $this->logger->info("Heartbeat finished.");
         } else {
             if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
@@ -93,30 +93,30 @@ class HeartbeatHandler
     }
 
     /**
-     * Check Mirai session status and extend its effective time.
+     * Prolong Mirai session.
      *
      * @return bool
      */
-    public function checkSession(): bool
+    public function prolongSession(): bool
     {
         try {
             if (0 == $code = $this->api->verifySession($this->robot->getId())->getInt("code", -1)) {
-                $this->logger->info("Session verified.");
+                $this->logger->info("Session prolonged.");
 
                 return true;
             }
 
+            $this->logger->error("Failed to prolong session, code {$code}.");
+
             System::sleep(1);
 
-            $this->logger->error("Session unauthorized, code {$code}. Try to initialize.");
+            $this->logger->notice("Try to initialize session.");
 
             // Try to initialize session
             if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId())) {
-                $this->logger->info("Session verified.");
-
                 return true;
             } else {
-                $this->logger->critical("Check session failed.");
+                $this->logger->critical("Failed to initialize session.");
             }
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Check session failed, unable to call Mirai API.");
