@@ -8,7 +8,6 @@ use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Resource\CardDeck;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\CardDeckException\{InvalidException, NotFoundException};
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Draw
@@ -44,7 +43,7 @@ class Draw extends MessageAction
             $deck = $this->chatSettings->get("cardDeck");
 
             if (!is_string($deckName) || !($deck instanceof CardDeck)) {
-                $this->reply = $this->config->getString("reply.deckNotSet");
+                $this->setReply("deckNotSet");
 
                 return;
             }
@@ -54,21 +53,17 @@ class Draw extends MessageAction
 
         list($empty, $result) = $this->draw($deck, $deckName, $drawCount);
 
-        $this->reply = Convertor::toCustomString(
-            $this->config->getString("reply.drawResult"),
-            [
-                "昵称" => $this->getNickname(),
-                "抽牌结果" => trim($result)
-            ]
-        );
+        $this->setReply("drawResult", [
+            "昵称" => $this->getNickname(),
+            "抽牌结果" => $result
+        ]);
 
         // If deck is empty, send message and reset the deck
         if ($empty) {
             $deck->reset();
         }
 
-        // TODO: Multiple replies
-        //$this->reply = $this->config->getString("reply.drawDeckEmpty");
+        $this->setReply("drawDeckEmpty");
     }
 
     /**
@@ -108,16 +103,12 @@ class Draw extends MessageAction
      */
     protected function checkRange(int $drawCount): bool
     {
-        $maxGenerateCount = $this->config->getInt("order.maxGenerateCount");
+        $maxDrawCount = $this->config->getOrder("maxDrawCount");
 
-        if ($drawCount > $maxGenerateCount) {
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.drawCountOverstep"),
-                    [
-                        "最大抽牌次数" => $maxGenerateCount
-                    ]
-                );
+        if ($drawCount > $maxDrawCount) {
+            $this->setReply("drawCountOverstep", [
+                "最大抽牌次数" => $maxDrawCount
+            ]);
 
             return false;
         }
@@ -150,6 +141,6 @@ class Draw extends MessageAction
             }
         }
 
-        return [$empty, trim($result)];
+        return [$empty, rtrim($result)];
     }
 }

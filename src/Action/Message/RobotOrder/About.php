@@ -31,16 +31,15 @@ class About extends MessageAction
     {
         $this->parseOrder();
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->resource->getReference("AboutTemplate")->getString("templates.detail"),
-                [
-                    "DiceRobot版本号" => $this->config->getString("dicerobot.version"),
-                    "机器人QQ昵称" => $this->robot->getNickname(),
-                    "机器人QQ号" => $this->robot->getId(),
-                    "机器人昵称" => $this->getRobotNickname()
-                ]
-            );
+        $this->setRawReply(Convertor::toCustomString(
+            $this->resource->getReference("AboutTemplate")->getString("templates.detail"),
+            [
+                "DiceRobot版本号" => $this->config->getString("dicerobot.version"),
+                "机器人QQ昵称" => $this->robot->getNickname(),
+                "机器人QQ号" => $this->robot->getId(),
+                "机器人昵称" => $this->getRobotNickname()
+            ]
+        ));
     }
 
     /**

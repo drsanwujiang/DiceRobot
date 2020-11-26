@@ -292,6 +292,11 @@ class ResourceService
         }
     }
 
+    /**
+     * Load card decks.
+     *
+     * @throws RuntimeException
+     */
     protected function loadCardDecks(): void
     {
         if (isset($this->directories["deck"])) {

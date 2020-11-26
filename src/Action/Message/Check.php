@@ -48,40 +48,52 @@ class Check extends MessageAction
     {
         list($private, $bp, $item, $adjustment, $repeat) = $this->parseOrder();
 
-        list($checkValue, $heading) = $this->getCheckValue($item, $repeat);
+        list($item, $value, $attributes) = $this->getCheckInfo($item);
 
-        if (!$this->checkRange($checkValue, $repeat)){
+        if (!$this->checkRange($value, $repeat)) {
             return;
         }
 
-        $this->reply = trim(
-            $heading .
-            ($repeat > 1 ? "\n" : "") .
-            $this->check($bp, $adjustment, $checkValue, $repeat)
-        );
+        $nickname = $this->getNickname();
+        $checkDetails = $this->getCheckDetails($bp, $adjustment, $value, $repeat);
+
+        if (empty($item)) {
+            $reply = Convertor::toCustomString($this->config->getReply("checkResult"), [
+                "昵称" => $nickname,
+                "检定次数" => $repeat,
+                "检定项目" => "",
+                "检定详情" => $checkDetails
+            ]);
+        } else {
+            $reply = Convertor::toCustomString($this->config->getReply("checkResultWithAttributes"), [
+                "昵称" => $nickname,
+                "检定次数" => $repeat,
+                "检定项目" => $item,
+                ...$attributes,
+                "检定详情" => $checkDetails
+            ]);
+        }
 
         if ($private) {
-            if (!($this->message instanceof GroupMessage)) {
-                $this->sendPrivateMessageAsync(
-                    Convertor::toCustomString(
-                        $this->config->getString("reply.checkPrivatelyHeading"),
-                        [
-                            "群名" => $this->message->sender->group->name,
-                            "群号" => $this->message->sender->group->id
-                        ]
-                    ) . $this->reply
-                );
-                $this->reply =
-                    Convertor::toCustomString(
-                        $this->config->getString("reply.checkPrivately"),
-                        [
-                            "昵称" => $this->getNickname(),
-                            "检定次数" => $repeat
-                        ]
-                    );
+            if ($this->message instanceof GroupMessage) {
+                $this->sendPrivateMessageAsync(Convertor::toCustomString(
+                    $this->config->getReply("checkPrivateResult"),
+                    [
+                        "群名" => $this->message->sender->group->name,
+                        "群号" => $this->message->sender->group->id,
+                        "检定详情" => $reply
+                    ]
+                ));
+
+                $this->setReply("checkPrivate", [
+                    "昵称" => $nickname,
+                    "检定次数" => $repeat
+                ]);
             } else {
-                $this->reply = $this->config->getString("reply.checkPrivatelyNotInGroup");
+                $this->setReply("checkPrivateNotInGroup");
             }
+        } else {
+            $this->setRawReply($reply);
         }
     }
 
@@ -119,57 +131,42 @@ class Check extends MessageAction
     }
 
     /**
-     * Get the value to be checked and the result heading.
+     * Get check information.
      *
-     * @param string $item The item
-     * @param int $repeat Repeat count
+     * @param string $item The item to be checked.
      *
-     * @return array The value to be checked and the result heading
+     * @return array Real item and value to be checked (and attributes).
      *
      * @throws CharacterCardLostException|ItemNotExistException|NotBoundException
      */
-    protected function getCheckValue(string $item, int $repeat): array
+    protected function getCheckInfo(string $item): array
     {
         if (is_numeric($item)) {
-            $checkValue = (int) $item;
-            $heading =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.checkResultHeading"),
-                    [
-                        "昵称" => $this->getNickname(),
-                        "检定次数" => $repeat,
-                        "检定项目" => ""
-                    ]
-                );
+            return [null, (int) $item];
         } else {
             $card = $this->resource->getCharacterCard(
                 $this->chatSettings->getCharacterCardId($this->message->sender->id)
             );
 
             try {
-                $checkValue = $card->getAttribute($item);
+                $value = $card->getAttribute($item);
             } catch (ItemNotExistException $e) {
-                $checkValue = $card->getSkill($item);
+                $value = $card->getSkill($item);
             }
 
-            $heading =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.checkResultHeadingWithAttributes"),
-                    [
-                        "昵称" => $this->getNickname(),
-                        "检定次数" => $repeat,
-                        "检定项目" => $item,
-                        "当前HP" => $card->getAttribute("HP"),
-                        "当前MP" => $card->getAttribute("MP"),
-                        "当前SAN" => $card->getAttribute("SAN"),
-                        "最大HP" => intval(($card->getAttribute("SIZ") + $card->getAttribute("CON")) / 10),
-                        "最大MP" => intval($card->getAttribute("POW") / 5),
-                        "最大SAN" => 99 - $card->getSkill("克苏鲁神话"),
-                    ]
-                );
+            return [
+                $item,
+                $value,
+                [
+                    "当前HP" => $card->getAttribute("HP"),
+                    "当前MP" => $card->getAttribute("MP"),
+                    "当前SAN" => $card->getAttribute("SAN"),
+                    "最大HP" => intval(($card->getAttribute("SIZ") + $card->getAttribute("CON")) / 10),
+                    "最大MP" => intval($card->getAttribute("POW") / 5),
+                    "最大SAN" => 99 - $card->getSkill("克苏鲁神话")
+                ]
+            ];
         }
-
-        return [$checkValue, $heading];
     }
 
     /**
@@ -185,10 +182,10 @@ class Check extends MessageAction
     protected function checkRange(int $checkValue, int $repeat): bool
     {
         if ($checkValue < 1) {
-            $this->reply = $this->config->getString("reply.checkValueInvalid");
+            $this->setReply("checkValueInvalid");
 
             return false;
-        } elseif ($repeat < 1 || $repeat > $this->config->getInt("order.maxRepeatTimes")) {
+        } elseif ($repeat < 1 || $repeat > $this->config->getOrder("maxRepeatTimes")) {
             throw new RepeatTimeOverstepException();
         }
 
@@ -196,21 +193,22 @@ class Check extends MessageAction
     }
 
     /**
-     * Check attribute/skill.
+     * Get check details.
      *
      * @param string $bp B/P order
      * @param string $adjustment Adjustment operations
      * @param int $checkValue The check value
      * @param int $repeat Repeat time
      *
-     * @return string Check detail.
+     * @return string Check details.
      *
      * @throws CheckRuleLostException|DangerousException|DiceNumberOverstepException|ExpressionErrorException
      * @throws ExpressionInvalidException|InvalidException|MatchFailedException|SurfaceNumberOverstepException
      */
-    protected function check(string $bp, string $adjustment, int $checkValue, int $repeat): string
+    protected function getCheckDetails(string $bp, string $adjustment, int $checkValue, int $repeat): string
     {
-        $detail = "";
+        $details = $repeat > 1 ? "\n" : "";
+        $reply = $this->config->getReply("checkDetail");
 
         while ($repeat--) {
             $dice = isset($dice) ? clone $dice : new Dice("{$bp} D{$adjustment}", 100);
@@ -219,18 +217,15 @@ class Check extends MessageAction
             $result = $dice->result < 1 ? 1 : $dice->result;
             $result = $result > 100 ? 100 : $result;
 
-            $detail .=
-                Convertor::toCustomString(
-                    $this->config->getString("reply.checkResult"),
-                    [
-                        "掷骰结果" => $dice->getCompleteExpression(),
-                        "检定值" => $checkValue,
-                        "检定结果" => $this->getCheckLevel($result, $checkValue)
-                    ]
-                ) . "\n";
+            $details .= Convertor::toCustomString($reply, [
+                "掷骰结果" => $dice->getCompleteExpression(),
+                "检定值" => $checkValue,
+                "检定结果" => $this->getCheckLevel($result, $checkValue)
+            ]);
+            $details .= "\n";
         }
 
-        return $detail;
+        return rtrim($details);
     }
 
     /**

@@ -6,6 +6,7 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
+use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\{DiceRobotException, OrderErrorException};
 use DiceRobot\Exception\FileException\LostException;
 use DiceRobot\Util\Convertor;
@@ -40,15 +41,13 @@ class Dnd extends MessageAction
             return;
         }
 
-        $this->reply = trim(
-            Convertor::toCustomString(
-                $this->config->getString("reply.dndGenerateCardHeading"),
-                [
-                    "发送者QQ" => $this->message->sender->id
-                ]
-            ) . "\n" .
-            $this->generateAttributes($generateCount)
-        );
+        $atSender = ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "";
+
+        $this->setReply("dndGenerateCardHeading", [
+            "@发送者" => $atSender,
+            "发送者QQ" => $this->message->sender->id,
+            "冒险者属性" => $this->generateAttributes($generateCount)
+        ]);
     }
 
     /**
@@ -81,14 +80,12 @@ class Dnd extends MessageAction
      */
     protected function checkRange(int $generateCount): bool
     {
-        if ($generateCount < 1 || $generateCount > $this->config->getInt("order.maxGenerateCount")) {
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.dndGenerateCardCountOverstep"),
-                    [
-                        "最大生成次数" => $this->config->getInt("order.maxGenerateCount")
-                    ]
-                );
+        $maxGenerateCount = $this->config->getOrder("maxGenerateCount");
+
+        if ($generateCount < 1 || $generateCount > $maxGenerateCount) {
+            $this->setReply("dndGenerateCardCountOverstep", [
+                "最大生成次数" => $maxGenerateCount
+            ]);
 
             return false;
         }
@@ -119,21 +116,18 @@ class Dnd extends MessageAction
                 $results[$i] = $dice->result;
             }
 
-            $attributes .=
-                Convertor::toCustomString(
-                    $attributesTemplate,
-                    [
-                        "力量" => $results[0],
-                        "体质" => $results[1],
-                        "敏捷" => $results[2],
-                        "智力" => $results[3],
-                        "感知" => $results[4],
-                        "魅力" => $results[5],
-                        "属性总和" => array_sum($results)
-                    ]
-                ) . "\n";
+            $attributes .= Convertor::toCustomString($attributesTemplate, [
+                "力量" => $results[0],
+                "体质" => $results[1],
+                "敏捷" => $results[2],
+                "智力" => $results[3],
+                "感知" => $results[4],
+                "魅力" => $results[5],
+                "属性总和" => array_sum($results)
+            ]);
+            $attributes .= "\n";
         }
 
-        return $attributes;
+        return rtrim($attributes);
     }
 }

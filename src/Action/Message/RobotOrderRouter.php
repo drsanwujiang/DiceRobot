@@ -105,7 +105,7 @@ class RobotOrderRouter extends MessageAction
 
         $orderAction();
 
-        $this->reply = $orderAction->reply;
+        $this->replies = $orderAction->replies;
     }
 
     /**
@@ -156,7 +156,7 @@ class RobotOrderRouter extends MessageAction
     protected function checkOrder(string $match): bool
     {
         if (!array_key_exists($match, self::ORDER_MAPPING)) {
-            $this->reply = $this->config->getString("reply.robotOrderUnknown");
+            $this->setReply("robotOrderUnknown");
 
             return false;
         }

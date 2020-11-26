@@ -15,7 +15,6 @@ use DiceRobot\Exception\{DiceException\DiceNumberOverstepException,
     OrderErrorException};
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Exception\CharacterCardException\NotBoundException;
-use DiceRobot\Util\Convertor;
 
 /**
  * Class ChangeAttribute
@@ -61,17 +60,13 @@ class ChangeAttribute extends MessageAction
         // Apply change to the character card
         $card->setAttribute($attribute, $response->afterValue);
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->config->getString("reply.changeAttributeResult"),
-                [
-                    "昵称" => $this->getNickname(),
-                    "属性" => $attribute,
-                    "增减" => $this->config->getString("wording.attributeChange.{$symbol}", ),
-                    "变动值" => $fullResult,
-                    "当前值" => $response->afterValue
-                ]
-            );
+        $this->setReply("changeAttributeResult", [
+            "昵称" => $this->getNickname(),
+            "属性" => $attribute,
+            "增减" => $this->config->getString("wording.attributeChange.{$symbol}", ),
+            "变动值" => $fullResult,
+            "当前值" => $response->afterValue
+        ]);
     }
 
     /**
@@ -123,7 +118,7 @@ class ChangeAttribute extends MessageAction
         $fullResult = $dice->getCompleteExpression();
 
         if (!$success) {
-            $this->reply = $this->config->getString("reply.changeAttributeWrongExpression");
+            $this->setReply("changeAttributeWrongExpression");
         }
 
         return [$success, $result, $fullResult];

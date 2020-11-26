@@ -6,7 +6,6 @@ namespace DiceRobot\Action\Message\RobotOrder;
 
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Stop
@@ -38,12 +37,9 @@ class Stop extends Start
 
         $this->chatSettings->set("active", false);
 
-        $this->reply = Convertor::toCustomString(
-            $this->config->getString("reply.robotOrderStop"),
-            [
-                "机器人昵称" => $this->getRobotNickname()
-            ]
-        );
+        $this->setReply("robotOrderStop", [
+            "机器人昵称" => $this->getRobotNickname()
+        ]);
     }
 
     /**
@@ -55,7 +51,7 @@ class Stop extends Start
     {
         // Must be the owner or the administrator in the group
         if ($this->message instanceof GroupMessage && $this->message->sender->permission == "MEMBER") {
-            $this->reply = $this->config->getString("reply.robotOrderStopDenied");
+            $this->setReply("robotOrderStopDenied");
 
             return false;
         }

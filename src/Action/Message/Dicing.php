@@ -52,46 +52,33 @@ class Dicing extends MessageAction
 
         list($vType, $reason, $detail) = $this->dicing($expression, $repeat);
 
-        $this->reply = trim(
-            ($reasonHeading = ($reason == "") ? "" :
-                Convertor::toCustomString(
-                    $this->config->getString("reply.dicingReason"),
-                    [
-                        "原因" => $reason
-                    ]
-                )
-            ).
-            Convertor::toCustomString(
-                $this->config->getString("reply.dicingResult"),
-                [
-                    "昵称" => $this->getNickname()
-                ]
-            ) .
-            ($repeat > 1 ? "\n" : "") .
-            $detail
+        $reply = Convertor::toCustomString(
+            $this->config->getReply(empty($reason) ? "dicingResult" : "dicingResultWithReason"),
+            [
+                "原因" => $reason,
+                "昵称" => $this->getNickname(),
+                "掷骰结果" => $detail
+            ]
         );
 
         if ($vType === "H") {
             if ($this->message instanceof GroupMessage) {
-                $this->sendPrivateMessageAsync(
-                    Convertor::toCustomString(
-                        $this->config->getString("reply.dicingPrivatelyHeading"),
-                        [
-                            "群名" => $this->message->sender->group->name,
-                            "群号" => $this->message->sender->group->id
-                        ]
-                    ) . $this->reply
-                );
-                $this->reply = $reasonHeading .
-                    Convertor::toCustomString(
-                        $this->config->getString("reply.dicingPrivately"),
-                        [
-                            "昵称" => $this->getNickname(),
-                            "掷骰次数" => $repeat
-                        ]
-                    );
+                $this->sendPrivateMessageAsync(Convertor::toCustomString(
+                    $this->config->getReply("dicingPrivateResult"),
+                    [
+                        "群名" => $this->message->sender->group->name,
+                        "群号" => $this->message->sender->group->id,
+                        "掷骰详情" => $reply
+                    ]
+                ));
+
+                $this->setReply(empty($reason) ? "dicingPrivate" : "dicingPrivateWithReason", [
+                    "原因" => $reason,
+                    "昵称" => $this->getNickname(),
+                    "掷骰次数" => $repeat
+                ]);
             } else {
-                $this->reply = $this->config->getString("reply.dicingPrivatelyNotInGroup");
+                $this->setReply("dicingPrivateNotInGroup");
             }
         }
     }
@@ -123,7 +110,7 @@ class Dicing extends MessageAction
      */
     protected function checkRange(int $repeat): void
     {
-        if ($repeat < 1 || $repeat > $this->config->getInt("order.maxRepeatTimes")) {
+        if ($repeat < 1 || $repeat > $this->config->getOrder("maxRepeatTimes")) {
             throw new RepeatTimeOverstepException();
         }
     }
@@ -141,9 +128,9 @@ class Dicing extends MessageAction
      */
     protected function dicing(string $expression, int $repeat): array
     {
+        $detail = $repeat > 1 ? "\n" : "";
         /** @var Dice[] $dices */
         $dices = [];
-        $detail = "";
 
         for ($i = 0; $i < $repeat; $i++) {
             $dices[$repeat] = isset($dices[$repeat + 1]) ?
@@ -153,7 +140,7 @@ class Dicing extends MessageAction
         }
 
         // Simplify the reply
-        if (mb_strlen($detail) > $this->config->getInt("order.maxReplyCharacter")) {
+        if (mb_strlen($detail) > $this->config->getOrder("maxReplyCharacter")) {
             $detail = "";
 
             for ($i = 0; $i < $repeat; $i++) {
@@ -161,6 +148,6 @@ class Dicing extends MessageAction
             }
         }
 
-        return [$dice->vType ?? null, $dice->reason ?? "", $detail];
+        return [$dice->vType ?? null, $dice->reason ?? "", rtrim($detail)];
     }
 }

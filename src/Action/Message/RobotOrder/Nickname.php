@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Message\RobotOrder;
 use DiceRobot\Action\RobotOrderAction;
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Nickname
@@ -53,18 +52,14 @@ class Nickname extends RobotOrderAction
         if (!empty($nickname)) {
             $this->chatSettings->set("robotNickname", $nickname);
 
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.robotOrderNicknameSet"),
-                    [
-                        "机器人新昵称" => $nickname
-                    ]
-                );
+            $this->setReply("robotOrderNicknameSet", [
+                "机器人新昵称" => $nickname
+            ]);
         } else {
             // Unset nickname
             $this->chatSettings->set("robotNickname", null);
 
-            $this->reply = $this->config->getString("reply.robotOrderNicknameUnset");
+            $this->setReply("robotOrderNicknameUnset");
         }
     }
 

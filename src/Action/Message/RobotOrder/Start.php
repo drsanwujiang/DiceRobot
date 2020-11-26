@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Message\RobotOrder;
 use DiceRobot\Action\RobotOrderAction;
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Start
@@ -39,12 +38,9 @@ class Start extends RobotOrderAction
 
         $this->chatSettings->set("active", true);
 
-        $this->reply = Convertor::toCustomString(
-            $this->config->getString("reply.robotOrderStart"),
-            [
-                "机器人昵称" => $this->getRobotNickname()
-            ]
-        );
+        $this->setReply("robotOrderStart", [
+            "机器人昵称" => $this->getRobotNickname()
+        ]);
     }
 
     /**
@@ -77,7 +73,7 @@ class Start extends RobotOrderAction
     {
         // Must be the owner or the administrator in the group
         if ($this->message instanceof GroupMessage && $this->message->sender->permission == "MEMBER") {
-            $this->reply = $this->config->getString("reply.robotOrderStartDenied");
+            $this->setReply("robotOrderStartDenied");
 
             return false;
         }

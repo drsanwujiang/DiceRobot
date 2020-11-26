@@ -34,19 +34,19 @@ class Card extends MessageAction
 
         if ($cardId) {
             // Bind character card
-            $this->sendMessageAsync($this->config->getString("reply.cardPending"));
+            $this->sendMessageAsync($this->config->getReply("cardPending"));
 
             // Import character card
             $card = new CharacterCard($this->getCard($cardId));
             $this->resource->setCharacterCard($cardId, $card);
             $this->chatSettings->setCharacterCardId($this->message->sender->id, $cardId);
 
-            $this->reply = $this->config->getString("reply.cardBind");
+            $this->setReply("cardBind");
         } else {
             //Unset character card ID
             $this->chatSettings->setCharacterCardId($this->message->sender->id);
 
-            $this->reply = $this->config->getString("reply.cardUnbind");
+            $this->setReply("cardUnbind");
         }
     }
 

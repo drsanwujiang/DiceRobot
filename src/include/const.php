@@ -95,17 +95,17 @@ namespace DiceRobot {
             "changeAttributeWrongExpression" => "指令错误！属性值的变动只能是非负整数或掷骰表达式",
 
             /* Check */
-            "checkPrivately" => "{&昵称}悄悄地进行了{&检定次数}次检定……",
-            "checkPrivatelyHeading" => "在{&群名}({&群号})中，",
-            "checkResultHeading" => "{&昵称}进行了{&检定次数}次{&检定项目}检定：",
-            "checkResultHeadingWithAttributes" => "{&昵称}(HP:{&当前HP}/{&最大HP} MP:{&当前MP}/{&最大MP} SAN:{&当前SAN}/{&最大SAN})进行了{&检定次数}次{&检定项目}检定：",
-            "checkResult" => "{&掷骰结果}/{&检定值}，{&检定结果}",
-            "checkPrivatelyNotInGroup" => "咦？为什么要在私聊的时候暗检定",
+            "checkPrivate" => "{&昵称}悄悄地进行了{&检定次数}次检定……",
+            "checkPrivateResult" => "在{&群名}({&群号})中，{&检定详情}",
+            "checkResult" => "{&昵称}进行了{&检定次数}次{&检定项目}检定：{&检定详情}",
+            "checkResultWithAttributes" => "{&昵称}(HP:{&当前HP}/{&最大HP} MP:{&当前MP}/{&最大MP} SAN:{&当前SAN}/{&最大SAN})进行了{&检定次数}次{&检定项目}检定：{&检定详情}",
+            "checkDetail" => "{&掷骰结果}/{&检定值}，{&检定结果}",
+            "checkPrivateNotInGroup" => "咦？为什么要在私聊的时候暗检定",
             "checkValueInvalid" => "属性/技能值非法，不能进行检定！",
 
             /* Coc */
-            "cocGenerateCardHeading" => "[mirai:at:{&发送者QQ}] 以下是你生成的 COC {&COC版本}版 人物卡：",
-            "cocGenerateCardCountOverstep" => "COC 人物卡生成次数只能介于1~{&最大生成次数}！",
+            "cocGenerateResult" => "{&@发送者}以下是你生成的 COC {&COC版本}版 调查员人物卡：\n{&调查员属性}{&调查员详细信息}",
+            "cocGenerateCountOverstep" => "COC 人物卡生成次数只能介于1~{&最大生成次数}！",
 
             /* Deck */
             "deckSet" => "默认牌堆已修改为：{&牌堆名称}",
@@ -115,20 +115,21 @@ namespace DiceRobot {
             "deckNotSet" => "还没有设置默认牌堆，不能这样做哦~",
 
             /* DicePool */
-            "dicePoolReason" => "由于{&原因}，",
-            "dicePoolResult" => "{&昵称}骰出了：",
+            "dicePoolResult" => "{&昵称}骰出了：{&掷骰详情}",
+            "dicePoolResultWithReason" => "由于{&原因}，{&昵称}骰出了：{&掷骰详情}",
             "dicePoolThresholdOverstep" => "加骰参数只能介于5~10！",
 
             /* Dicing */
-            "dicingPrivately" => "{&昵称}悄悄地进行了{&掷骰次数}次掷骰……",
-            "dicingPrivatelyHeading" => "在{&群名}({&群号})中，",
-            "dicingReason" => "由于{&原因}，",
-            "dicingResult" => "{&昵称}骰出了：",
-            "dicingPrivatelyNotInGroup" => "咦？为什么要在私聊的时候暗骰",
+            "dicingPrivate" => "{&昵称}悄悄地进行了{&掷骰次数}次掷骰……",
+            "dicingPrivateWithReason" => "由于{&原因}，{&昵称}悄悄地进行了{&掷骰次数}次掷骰……",
+            "dicingPrivateResult" => "在{&群名}({&群号})中，{&掷骰详情}",
+            "dicingResult" => "{&昵称}骰出了：{&掷骰结果}",
+            "dicingResultWithReason" => "由于{&原因}，{&昵称}骰出了：{&掷骰结果}",
+            "dicingPrivateNotInGroup" => "咦？为什么要在私聊的时候暗骰",
 
             /* Dnd */
-            "dndGenerateCardHeading" => "[mirai:at:{&发送者QQ}] 以下是你生成的 DND 人物卡：",
-            "dndGenerateCardCountOverstep" => "DND 人物卡生成次数只能介于1~{&最大生成次数}！",
+            "dndGenerateResult" => "{&@发送者}以下是你生成的 DND 冒险者人物卡：\n{&冒险者属性}",
+            "dndGenerateCountOverstep" => "DND 人物卡生成次数只能介于1~{&最大生成次数}！",
 
             /* Draw */
             "drawResult" => "来看看{&昵称}抽到了什么：\n{&抽牌结果}",
@@ -142,7 +143,7 @@ namespace DiceRobot {
             "jrrpResult" => "{&昵称}今天的人品是……{&人品}！",
 
             /* Kowtow */
-            "kowtowResult" => "[mirai:at:{&发送者QQ}] 唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！",
+            "kowtowResult" => "[mirai:at:{&发送者QQ}] 唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！\n{&虔诚等级}",
             "kowtowLevel0" => "哼(▼ヘ▼#)你明明一点都不虔诚，诅咒你下次超级大失败ヽ(#`Д´)ﾉ",
             "kowtowLevel1" => "只有这么一点虔诚的话，不天降惩罚于你已是恩赐了喵<(￣ ﹌ ￣)>",
             "kowtowLevel2" => "看来你的虔诚很有限的说(￣▽￣)~*不过还是勉强保佑保佑你吧( ･´ω`･ )",
@@ -158,10 +159,10 @@ namespace DiceRobot {
             "nicknameSet" => "{&昵称}已将自己的昵称修改为{&新昵称}",
             "nicknameUnset" => "{&昵称}解放了自己的真名",
 
-            /* SanCheck */
-            "sanCheckResult" => "{&昵称}进行了 SAN 值检定：{&掷骰结果}/{&原有SAN值}，{&检定结果}\nSAN 值减少{&SAN值减少}点，剩余{&当前SAN值}/{&最大SAN值}点",
-            "sanCheckResultWithSanity" => "{&昵称}进行了 SAN 值检定：{&掷骰结果}/{&原有SAN值}，{&检定结果}\nSAN 值减少{&SAN值减少}点，剩余{&当前SAN值}点",
-            "sanCheckWrongExpression" => "指令错误！SAN 值的损失只能是非负整数或结果非负的掷骰表达式",
+            /* SanityCheck */
+            "sanityCheckResult" => "{&昵称}进行了 SAN 值检定：{&掷骰结果}/{&原有SAN值}，{&检定结果}\nSAN 值减少{&SAN值减少}点，剩余{&当前SAN值}/{&最大SAN值}点",
+            "sanityCheckResultWithSanity" => "{&昵称}进行了 SAN 值检定：{&掷骰结果}/{&原有SAN值}，{&检定结果}\nSAN 值减少{&SAN值减少}点，剩余{&当前SAN值}点",
+            "sanityCheckWrongExpression" => "指令错误！SAN 值的损失只能是非负整数或结果非负的掷骰表达式",
 
             /* Set */
             "setSurfaceNumberSet" => "骰子的默认面数现在是：{&默认骰子面数}",
@@ -184,7 +185,7 @@ namespace DiceRobot {
             "robotOrderNicknameSet" => "从现在起请称呼我为「{&机器人新昵称}」~",
             "robotOrderNicknameUnset" => "真·名·解·放~",
             "robotOrderGoodbye" => "期待与君の再次相遇~",
-            "robotOrderGoodbyePrivately" => "请手动删除我吧！期待与君の再次相遇~",
+            "robotOrderGoodbyePrivate" => "请手动删除我吧！期待与君の再次相遇~",
             "robotOrderGoodbyeDenied" => "只有群主/管理员才可以让人家离开哦~",
 
             /** Event */
@@ -270,7 +271,7 @@ namespace DiceRobot {
             ],
             20 => [
                 "ra" => \DiceRobot\Action\Message\Check::class,
-                "sc" => \DiceRobot\Action\Message\SanCheck::class,
+                "sc" => \DiceRobot\Action\Message\SanityCheck::class,
 
                 "coc" => \DiceRobot\Action\Message\Coc::class,
                 "dnd" => \DiceRobot\Action\Message\Dnd::class,

@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Resource\CardDeck;
 use DiceRobot\Exception\OrderErrorException;
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Deck
@@ -39,12 +38,9 @@ class Deck extends MessageAction
                 $this->chatSettings->set("defaultCardDeck", $subOrder);
                 $this->chatSettings->set("cardDeck", $deck);
 
-                $this->reply = Convertor::toCustomString(
-                    $this->config->getString("reply.deckSet"),
-                    [
-                        "牌堆名称" => $subOrder
-                    ]
-                );
+                $this->setReply("deckSet", [
+                    "牌堆名称" => $subOrder
+                ]);
 
                 break;
             case "reset":
@@ -56,7 +52,7 @@ class Deck extends MessageAction
                 $deck = $this->chatSettings->get("cardDeck");
                 $deck->reset();
 
-                $this->reply = $this->config->getString("reply.deckReset");
+                $this->setReply("deckReset");
 
                 break;
             case "show":
@@ -69,12 +65,9 @@ class Deck extends MessageAction
                 $cardDeck = $this->chatSettings->get("cardDeck");
                 $deck = $cardDeck->getDeck($defaultCardDeck);
 
-                $this->reply = Convertor::toCustomString(
-                    $this->config->getString("reply.deckShowRest"),
-                    [
-                        "卡牌列表" => join(" | ", array_unique($deck->getCards()))
-                    ]
-                );
+                $this->setReply("deckShowRest", [
+                    "卡牌列表" => join(" | ", array_unique($deck->getCards()))
+                ]);
 
                 break;
             case "clear":
@@ -86,7 +79,7 @@ class Deck extends MessageAction
                 $this->chatSettings->set("defaultCardDeck", null);
                 $this->chatSettings->set("cardDeck", null);
 
-                $this->reply = $this->config->getString("reply.deckUnset");
+                $this->setReply("deckUnset");
 
                 break;
         }
@@ -130,7 +123,7 @@ class Deck extends MessageAction
             !is_string($this->chatSettings->get("defaultCardDeck")) ||
             !($this->chatSettings->get("cardDeck") instanceof CardDeck)
         ) {
-            $this->reply = $this->config->getString("reply.deckNotSet");
+            $this->setReply("deckNotSet");
 
             return false;
         }

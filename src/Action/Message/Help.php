@@ -39,7 +39,7 @@ class Help extends MessageAction
 
         $actualOrder = $reference->getString("items.mapping.{$order}");
 
-        $this->reply = $reference->getString("items.order.{$actualOrder}");
+        $this->setRawReply($reference->getString("items.order.{$actualOrder}"));
     }
 
     /**
@@ -74,11 +74,11 @@ class Help extends MessageAction
     protected function checkOrder(string $order, Reference $reference): bool
     {
         if (empty($order)) {
-            $this->reply = $reference->getString("templates.detail");
+            $this->setRawReply($reference->getString("templates.detail"));
 
             return false;
         } elseif (empty($reference->get("items.mapping.{$order}"))) {
-            $this->reply = $this->config->getString("reply.helpOrderUnknown");
+            $this->setReply("helpOrderUnknown");
 
             return false;
         }

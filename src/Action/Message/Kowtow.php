@@ -38,22 +38,15 @@ class Kowtow extends MessageAction
         $piety = $this->api->kowtow($this->message->sender->id)->piety;
         $level = $this->getKowtowLevel($piety);
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->config->getString("reply.kowtowResult"),
-                [
-                    "发送者QQ" => $this->message->sender->id,
-                    "机器人昵称" => $this->getRobotNickname(),
-                    "虔诚值" => $piety
-                ]
-            ) .
-            "\n" .
-            Convertor::toCustomString(
-                $this->config->getString("reply.kowtowLevel{$level}"),
-                [
-                    "机器人昵称" => $this->getRobotNickname()
-                ]
-            );
+        $this->setReply("kowtowResult", [
+            "发送者QQ" => $this->message->sender->id,
+            "机器人昵称" => $this->getRobotNickname(),
+            "虔诚值" => $piety,
+            "虔诚等级" => Convertor::toCustomString($this->config->getReply("kowtowLevel{$level}"), [
+                "机器人昵称" => $this->getRobotNickname()
+            ])
+        ]);
+
     }
 
     /**

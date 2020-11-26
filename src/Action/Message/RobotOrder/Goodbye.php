@@ -85,7 +85,7 @@ class Goodbye extends RobotOrderAction
         } else {
             // Will not go on in private chat
             if (is_null($targetId) || $targetId == $robotId || $targetId == substr($robotId, -4))
-                $this->reply = $this->config->getString("reply.robotOrderGoodbyePrivately'");
+                $this->setReply("robotOrderGoodbyePrivate'");
 
             return false;
         }
@@ -100,7 +100,7 @@ class Goodbye extends RobotOrderAction
     {
         // Must be the owner or the administrator in the group
         if ($this->message->sender->permission == "MEMBER") {
-            $this->reply = $this->config->getString("reply.robotOrderGoodbyeDenied");
+            $this->setReply("robotOrderGoodbyeDenied");
 
             return false;
         }

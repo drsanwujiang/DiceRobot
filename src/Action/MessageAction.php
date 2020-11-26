@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Action;
 
+use Co\System;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Message;
 use DiceRobot\Data\Report\Contact\FriendSender;
@@ -56,8 +57,8 @@ abstract class MessageAction implements Action
     /** @var bool If message sender at robot */
     protected bool $at;
 
-    /** @var string Reply */
-    public string $reply = "";
+    /** @var string[] Replies */
+    public array $replies = [];
 
     /**
      * The constructor.
@@ -130,9 +131,53 @@ abstract class MessageAction implements Action
      */
     abstract protected function parseOrder(): array;
 
+    /**
+     * Send replies.
+     */
+    public function sendReplies(): void
+    {
+        $maxReplyCharacter = $this->config->getOrder("maxReplyCharacter");
+
+        // If the reply length is greater than threshold, slice it and send fragments
+        while (is_string($reply = array_shift($this->replies))) {
+            if (mb_strlen($reply) > $maxReplyCharacter) {
+                $splitReply = mb_str_split($reply, $maxReplyCharacter);
+                $reply = array_shift($splitReply);
+
+                array_unshift($this->replies, ...$splitReply);
+            }
+
+            $this->sendMessage($reply);
+
+            // Sleep 0.5s
+            System::sleep(0.5);
+        }
+    }
+
     /******************************************************************************
      *                          Packaged common functions                         *
      ******************************************************************************/
+
+    /**
+     * Set raw reply.
+     *
+     * @param string $reply Reply.
+     */
+    final protected function setRawReply(string $reply): void
+    {
+        $this->replies[] = $reply;
+    }
+
+    /**
+     * Set reply.
+     *
+     * @param string $replyKey Reply key.
+     * @param array $variables Variables to replace with.
+     */
+    final protected function setReply(string $replyKey, array $variables = []): void
+    {
+        $this->replies[] = Convertor::toCustomString($this->config->getReply($replyKey), $variables);
+    }
 
     /**
      * Get user nickname.

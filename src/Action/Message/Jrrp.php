@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Jrrp
@@ -31,14 +30,10 @@ class Jrrp extends MessageAction
     {
         $this->parseOrder();
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->config->getString("reply.jrrpResult"),
-                [
-                    "昵称" => $this->getNickname(),
-                    "人品" => $this->api->jrrp($this->message->sender->id)->jrrp
-                ]
-            );
+        $this->setReply("jrrpResult", [
+            "昵称" => $this->getNickname(),
+            "人品" => $this->api->jrrp($this->message->sender->id)->jrrp
+        ]);
     }
 
     /**

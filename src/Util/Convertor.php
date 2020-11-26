@@ -18,11 +18,11 @@ class Convertor
     /**
      * Convert JSON object to the custom object.
      *
-     * @param object $object
-     * @param string $className
-     * @param string $default
+     * @param object $object Source JSON object.
+     * @param string $className Class name of the custom instance.
+     * @param string $default Default class name.
      *
-     * @return mixed|null
+     * @return mixed|null Custom instance when succeed, or null when failed.
      */
     public static function toCustomInstance(object $object, string $className, string $default)
     {
@@ -59,10 +59,10 @@ class Convertor
     /**
      * Convert string with parameters to plain text string.
      *
-     * @param string $string
-     * @param array $variables
+     * @param string $string String to be replaced.
+     * @param array $variables Variables to replace with.
      *
-     * @return string
+     * @return string Replaced string.
      */
     public static function toCustomString(string $string, array $variables = []): string
     {
@@ -74,17 +74,17 @@ class Convertor
     }
 
     /**
-     * Convert string (with Mirai code) to message chain.
+     * Convert string-typed messages (may be with Mirai code) to message chain.
      *
-     * @param string $message
+     * @param string $messages String-typed messages.
      *
-     * @return string[]
+     * @return array Parsed message chain.
      */
-    public static function toMessageChain(string $message): array
+    public static function toMessageChain(string $messages): array
     {
         $matches = preg_split(
             "/(\[mirai:\w+:.+?])/i",
-            $message,
+            $messages,
             -1,
             PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
         );

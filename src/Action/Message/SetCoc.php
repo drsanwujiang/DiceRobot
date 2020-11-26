@@ -6,7 +6,6 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Exception\CheckRuleException\LostException;
-use DiceRobot\Util\Convertor;
 
 /**
  * Class SetCoc
@@ -41,28 +40,20 @@ class SetCoc extends MessageAction
 
         if (is_null($ruleId)) {
             // Show rule details
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.setCocCurrentRule"),
-                    [
-                        "规则名称" => $rule->getString("name"),
-                        "规则描述" => $rule->getString("description"),
-                        "规则介绍" => $rule->getString("introduction")
-                    ]
-                );
+            $this->setReply("setCocCurrentRule", [
+                "规则名称" => $rule->getString("name"),
+                "规则描述" => $rule->getString("description"),
+                "规则介绍" => $rule->getString("introduction")
+            ]);
         } else {
             // Change rule
             $this->chatSettings->set("cocCheckRule", $ruleId);
 
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.setCocRuleSet"),
-                    [
-                        "规则名称" => $rule->getString("name"),
-                        "规则描述" => $rule->getString("description"),
-                        "规则介绍" => $rule->getString("introduction")
-                    ]
-                );
+            $this->setReply("setCocRuleSet", [
+                "规则名称" => $rule->getString("name"),
+                "规则描述" => $rule->getString("description"),
+                "规则介绍" => $rule->getString("introduction")
+            ]);
         }
     }
 
@@ -95,7 +86,7 @@ class SetCoc extends MessageAction
     protected function checkRange(?int $ruleId): bool
     {
         if (!is_null($ruleId) && $ruleId < 0) {
-            $this->reply = $this->config->getString("reply.setCocRuleIdError");
+            $this->setReply("setCocRuleIdError");
 
             return false;
         }

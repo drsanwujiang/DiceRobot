@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Set
@@ -36,19 +35,14 @@ class Set extends MessageAction
             // Set the default dice surface number of this chat
             $this->chatSettings->set("defaultSurfaceNumber", $defaultSurfaceNumber);
 
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.setSurfaceNumberSet"),
-                    [
-
-                        "默认骰子面数" => $defaultSurfaceNumber
-                    ]
-                );
+            $this->setReply("setSurfaceNumberSet", [
+                "默认骰子面数" => $defaultSurfaceNumber
+            ]);
         } else {
             // Reset the default dice surface number of this chat to the default value of the robot
             $this->chatSettings->set("defaultSurfaceNumber", null);
 
-            $this->reply = $this->config->getString("reply.setSurfaceNumberReset");
+            $this->setReply("setSurfaceNumberReset");
         }
     }
 
@@ -80,16 +74,12 @@ class Set extends MessageAction
      */
     protected function checkRange(?int $defaultSurfaceNumber): bool
     {
-        if (!is_null($defaultSurfaceNumber) &&
-            ($defaultSurfaceNumber < 1 || $defaultSurfaceNumber > $this->config->getInt("order.maxSurfaceNumber"))
-        ) {
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.setSurfaceNumberInvalid"),
-                    [
-                        "最大骰子面数" => $this->config->getInt("order.maxSurfaceNumber")
-                    ]
-                );
+        $maxSurfaceNumber = $this->config->getOrder("maxSurfaceNumber");
+
+        if (!is_null($defaultSurfaceNumber) && ($defaultSurfaceNumber < 1 || $defaultSurfaceNumber > $maxSurfaceNumber)) {
+            $this->setReply("setSurfaceNumberInvalid", [
+                "最大骰子面数" => $maxSurfaceNumber
+            ]);
 
             return false;
         }

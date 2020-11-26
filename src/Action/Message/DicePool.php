@@ -9,7 +9,6 @@ use DiceRobot\Data\Dice;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
-use DiceRobot\Util\Convertor;
 
 /**
  * Class DicePool
@@ -43,24 +42,13 @@ class DicePool extends MessageAction
 
         list($finalResult, $details) = $this->dicing($diceNumber, $threshold);
 
-        $this->reply =
-            ($reason == "" ? "" :
-                Convertor::toCustomString(
-                    $this->config->getString("reply.dicePoolReason"),
-                    [
-                        "原因" => $reason
-                    ]
-                )
-            ) .
-            Convertor::toCustomString(
-                $this->config->getString("reply.dicePoolResult"),
-                [
-                    "昵称" => $this->getNickname()
-                ]
-            ) .
-            "{$diceNumber}a{$threshold}=" .
-            ($detailed ? "{$details}=" : "") .
-            $finalResult;
+        $detail = "{$diceNumber}a{$threshold}={}" . ($detailed ? "{$details}=" : "") . $finalResult;
+
+        $this->setReply(empty($reason) ? "dicePoolResult" : "dicePoolResultWithReason", [
+            "原因" => $reason,
+            "昵称" => $this->getNickname(),
+            "掷骰详情" => $detail
+        ]);
     }
 
     /**
@@ -104,7 +92,7 @@ class DicePool extends MessageAction
     protected function checkRange(int $threshold): bool
     {
         if ($threshold < 5 || $threshold > 10) {
-            $this->reply = $this->reply = $this->config->getString("reply.dicePoolThresholdOverstep");
+            $this->setReply("dicePoolThresholdOverstep");
 
             return false;
         }

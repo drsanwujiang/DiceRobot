@@ -31,14 +31,13 @@ class Hello extends MessageAction
     {
         $this->parseOrder();
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->resource->getReference("HelloTemplate")->getString("templates.detail"),
-                [
-                    "机器人昵称" => $this->robot->getNickname(),
-                    "机器人QQ号" => $this->robot->getId(),
-                ]
-            );
+        $this->setRawReply(Convertor::toCustomString(
+            $this->resource->getReference("HelloTemplate")->getString("templates.detail"),
+            [
+                "机器人昵称" => $this->robot->getNickname(),
+                "机器人QQ号" => $this->robot->getId(),
+            ]
+        ));
     }
 
     /**

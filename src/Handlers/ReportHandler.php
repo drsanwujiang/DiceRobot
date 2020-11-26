@@ -214,15 +214,12 @@ class ReportHandler
         try {
             $action();
 
-            // Send reply if set
-            if (!empty($action->reply)) {
-                $action->sendMessage($action->reply);
-            }
+            $action->sendReplies();
 
             $this->logger->info("Report finished.");
         } catch (DiceRobotException $e) {
             // Action interrupted, send error message to group/user
-            $action->sendMessage($this->config->getString("errMsg.{$e}"));
+            $action->sendMessage($this->config->getErrMsg((string) $e));
 
             // TODO: $e::class, $action->message::class, $action::class in PHP 8
             $this->logger->info(

@@ -6,6 +6,7 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
+use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Data\Resource\Reference;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
@@ -60,18 +61,16 @@ class Coc extends MessageAction
         }
 
         $reference = $this->resource->getReference("COCCharacterCardTemplate");  // Load reference
+        $attributes = $this->generateAttributes($version, $generateCount, $reference);
+        $details = $detailed ? "\n{$this->generateDetails($reference)}" : "";
+        $atSender = ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "";
 
-        $this->reply = trim(
-            Convertor::toCustomString(
-                $this->config->getString("reply.cocGenerateCardHeading"),
-                [
-                    "发送者QQ" => $this->message->sender->id,
-                    "COC版本" => $version
-                ]
-            ) . "\n" .
-            $this->generateAttributes($version, $generateCount, $reference) .
-            ($detailed ? $this->generateDetails($reference) : "")
-        );
+        $this->setReply("cocGenerateCardHeading", [
+            "@发送者" => $atSender,
+            "COC版本" => $version,
+            "调查员属性" => $attributes,
+            "调查员详细信息" => $details
+        ]);
     }
 
     /**
@@ -108,14 +107,12 @@ class Coc extends MessageAction
      */
     protected function checkRange(int $generateCount): bool
     {
-        if ($generateCount > $this->config->getInt("order.maxDrawCount")) {
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.cocGenerateCardCountOverstep"),
-                    [
-                        "最大生成次数" => $this->config->getInt("order.maxGenerateCount")
-                    ]
-                );
+        $maxGenerateCount = $this->config->getOrder("maxGenerateCount");
+
+        if ($generateCount > $maxGenerateCount) {
+            $this->setReply("cocGenerateCountOverstep", [
+                "最大生成次数" => $maxGenerateCount
+            ]);
 
             return false;
         }
@@ -150,27 +147,24 @@ class Coc extends MessageAction
                 $results[$i] = $dices[$i]->result;
             }
 
-            $attributes .=
-                Convertor::toCustomString(
-                    $attributesTemplate,
-                    [
-                        "力量" => $results[0],
-                        "体质" => $results[1],
-                        "意志" => $results[2],
-                        "敏捷" => $results[3],
-                        "外表" => $results[4],
-                        "体型" => $results[5],
-                        "智力" => $results[6],
-                        "教育" => $results[7],
-                        "财产" => $results[8],  // COC 6
-                        "幸运" => $results[8],  // COC 7
-                        "属性总和" => array_sum($results),
-                        "属性总和-不包括幸运" => array_sum($results) - $results[8]  //  COC 7
-                    ]
-                ) . "\n";
+            $attributes .= Convertor::toCustomString($attributesTemplate, [
+                "力量" => $results[0],
+                "体质" => $results[1],
+                "意志" => $results[2],
+                "敏捷" => $results[3],
+                "外表" => $results[4],
+                "体型" => $results[5],
+                "智力" => $results[6],
+                "教育" => $results[7],
+                "财产" => $results[8],  // COC 6
+                "幸运" => $results[8],  // COC 7
+                "属性总和" => array_sum($results),
+                "属性总和-不包括幸运" => array_sum($results) - $results[8]  //  COC 7
+            ]);
+            $attributes .= "\n";
         }
 
-        return $attributes;
+        return rtrim($attributes);
     }
 
     /**
@@ -185,22 +179,18 @@ class Coc extends MessageAction
      */
     protected function generateDetails(Reference $reference): string
     {
-        return
-            Convertor::toCustomString(
-                $reference->getString("templates.details"),
-                [
-                    "性别" => $this->draw($reference->getArray("items.sex")),
-                    "年龄" => (new Dice(self::COC_GENERATE_RULE["age"]))->result,
-                    "职业" => $this->draw($reference->getArray("items.occupation")),
-                    "个人描述" => $this->draw($reference->getArray("items.profile"), 3),
-                    "思想与信念" => $this->draw($reference->getArray("items.belief")),
-                    "重要之人" => $this->draw($reference->getArray("items.significantPerson")),
-                    "与重要之人的关系" => $this->draw($reference->getArray("items.relationship")),
-                    "意义非凡之地" => $this->draw($reference->getArray("items.meaningfulLocation")),
-                    "宝贵之物" => $this->draw($reference->getArray("items.treasure")),
-                    "特质" => $this->draw($reference->getArray("items.trait"))
-                ]
-            );
+        return Convertor::toCustomString($reference->getString("templates.details"), [
+            "性别" => $this->draw($reference->getArray("items.sex")),
+            "年龄" => (new Dice(self::COC_GENERATE_RULE["age"]))->result,
+            "职业" => $this->draw($reference->getArray("items.occupation")),
+            "个人描述" => $this->draw($reference->getArray("items.profile"), 3),
+            "思想与信念" => $this->draw($reference->getArray("items.belief")),
+            "重要之人" => $this->draw($reference->getArray("items.significantPerson")),
+            "与重要之人的关系" => $this->draw($reference->getArray("items.relationship")),
+            "意义非凡之地" => $this->draw($reference->getArray("items.meaningfulLocation")),
+            "宝贵之物" => $this->draw($reference->getArray("items.treasure")),
+            "特质" => $this->draw($reference->getArray("items.trait"))
+        ]);
     }
 
     /**

@@ -39,14 +39,10 @@ class Name extends MessageAction
             return;
         }
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->config->getString("reply.nameGenerateResult"),
-                [
-                    "发送者QQ" => $this->message->sender->id,
-                    "名称" => $this->generateNames($language, $generateCount)
-                ]
-            );
+        $this->setReply("nameGenerateResult", [
+            "发送者QQ" => $this->message->sender->id,
+            "名称" => $this->generateNames($language, $generateCount)
+        ]);
     }
 
     /**
@@ -81,14 +77,12 @@ class Name extends MessageAction
      */
     protected function checkRange(int $generateCount): bool
     {
-        if ($generateCount > $this->config->getInt("order.maxGenerateCount")) {
-            $this->reply = $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.nameGenerateCountOverstep"),
-                    [
-                        "最大生成次数" => $this->config->getInt("order.maxGenerateCount")
-                    ]
-                );
+        $maxGenerateCount = $this->config->getOrder("maxGenerateCount");
+
+        if ($generateCount > $maxGenerateCount) {
+            $this->setReply("nameGenerateCountOverstep", [
+                "最大生成次数" => $maxGenerateCount
+            ]);
 
             return false;
         }
@@ -118,14 +112,10 @@ class Name extends MessageAction
         while ($count--) {
             $firstName = $this->draw($firstNames);
             $lastName = $language == "cn" ? $this->draw($lastNames, 2) : $this->draw($lastNames);
-            $names[] =
-                Convertor::toCustomString(
-                    $reference->getString("templates.{$language}"),
-                    [
-                        "姓" => $firstName,
-                        "名" => $lastName
-                    ]
-                );
+            $names[] = Convertor::toCustomString($reference->getString("templates.{$language}"), [
+                "姓" => $firstName,
+                "名" => $lastName
+            ]);
         }
 
         return join("，", $names);

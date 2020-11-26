@@ -12,10 +12,9 @@ use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorExcept
 use DiceRobot\Exception\CharacterCardException\{ItemNotExistException, LostException, NotBoundException};
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
-use DiceRobot\Util\Convertor;
 
 /**
- * Class SanCheck
+ * Class SanityCheck
  *
  * Sanity check.
  *
@@ -30,7 +29,7 @@ use DiceRobot\Util\Convertor;
  *
  * @package DiceRobot\Action\Message
  */
-class SanCheck extends MessageAction
+class SanityCheck extends MessageAction
 {
     /**
      * @inheritDoc
@@ -55,34 +54,26 @@ class SanCheck extends MessageAction
             list($checkLevel, $decrease, $previousSanity, $currentSanity, $maxSanity) =
                 $this->check($sanity, $successDecrease, $failureDecrease, $checkResult);
 
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.sanCheckResult"),
-                    [
-                        "昵称" => $this->getNickname(),
-                        "掷骰结果" => $fullCheckResult,
-                        "检定结果" => $this->config->getString("wording.sanCheckLevel.$checkLevel"),
-                        "SAN值减少" => $decrease,
-                        "原有SAN值" => $previousSanity,
-                        "当前SAN值" => $currentSanity,
-                        "最大SAN值" => $maxSanity
-                    ]
-                );
+            $this->setReply("sanCheckResult", [
+                "昵称" => $this->getNickname(),
+                "掷骰结果" => $fullCheckResult,
+                "检定结果" => $this->config->getString("wording.sanCheckLevel.$checkLevel"),
+                "SAN值减少" => $decrease,
+                "原有SAN值" => $previousSanity,
+                "当前SAN值" => $currentSanity,
+                "最大SAN值" => $maxSanity
+            ]);
         } else {
             list($checkLevel, $decrease) = $this->check($sanity, $successDecrease, $failureDecrease, $checkResult);
 
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.sanCheckResultWithSanity"),
-                    [
-                        "昵称" => $this->getNickname(),
-                        "掷骰结果" => $fullCheckResult,
-                        "检定结果" => $this->config->getString("wording.sanCheckLevel.$checkLevel"),
-                        "SAN值减少" => $decrease,
-                        "原有SAN值" => $sanity,
-                        "当前SAN值" => $sanity - $decrease
-                    ]
-                );
+            $this->setReply("sanCheckResultWithSanity", [
+                "昵称" => $this->getNickname(),
+                "掷骰结果" => $fullCheckResult,
+                "检定结果" => $this->config->getString("wording.sanCheckLevel.$checkLevel"),
+                "SAN值减少" => $decrease,
+                "原有SAN值" => $sanity,
+                "当前SAN值" => $sanity - $decrease
+            ]);
         }
     }
 
@@ -145,7 +136,7 @@ class SanCheck extends MessageAction
     protected function checkRange(int $successDecrease, int $failureDecrease): bool
     {
         if ($successDecrease < 0 || $failureDecrease < 0) {
-            $this->reply = $this->config->getString("reply.sanCheckWrongExpression");
+            $this->setReply("sanCheckWrongExpression");
 
             return false;
         }
