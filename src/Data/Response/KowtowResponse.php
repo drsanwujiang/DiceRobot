@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 
 /**
  * Class KowtowResponse
@@ -13,7 +13,7 @@ use DiceRobot\Data\Response;
  *
  * @package DiceRobot\Data\Api\Response
  */
-final class KowtowResponse extends Response
+final class KowtowResponse extends DiceRobotResponse
 {
     /** @var int The piety */
     public int $piety;

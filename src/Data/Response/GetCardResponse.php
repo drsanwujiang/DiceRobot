@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 use DiceRobot\Exception\CharacterCardException\{FormatInvalidException, NotFoundException};
 
 /**
@@ -14,7 +14,7 @@ use DiceRobot\Exception\CharacterCardException\{FormatInvalidException, NotFound
  *
  * @package DiceRobot\Data\Response
  */
-final class GetCardResponse extends Response
+final class GetCardResponse extends DiceRobotResponse
 {
     /** @var int Character card ID */
     public int $id;

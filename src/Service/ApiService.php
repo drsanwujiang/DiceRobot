@@ -1,20 +1,19 @@
-<?php
+<?php /** @noinspection PhpUndefinedClassInspection */
 
 declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Data\Config;
+use DiceRobot\Data\{Config, MiraiResponse};
 use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, GetNicknameResponse, JrrpResponse, KowtowResponse,
     QueryGroupResponse, SanityCheckResponse, SubmitGroupResponse, UpdateCardResponse, UpdateRobotResponse};
 use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
-use Selective\ArrayReader\ArrayReader;
+use Swlib\Saber;
 use Swlib\Http\ContentType;
 use Swlib\Http\Exception\{ClientException, ServerException, TransferException};
-use Swlib\Saber;
 
 /**
  * Class ApiService
@@ -209,11 +208,11 @@ class ApiService
     /**
      * @param string $authKey
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function authSession(string $authKey): ArrayReader
+    final public function authSession(string $authKey): MiraiResponse
     {
         $options = [
             "uri" => "/auth",
@@ -223,17 +222,17 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
      * @param int $robotId
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function verifySession(int $robotId): ArrayReader
+    final public function verifySession(int $robotId): MiraiResponse
     {
         $options = [
             "uri" => "/verify",
@@ -244,17 +243,17 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
      * @param int $robotId
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function releaseSession(int $robotId): ArrayReader
+    final public function releaseSession(int $robotId): MiraiResponse
     {
         $options = [
             "uri" => "/release",
@@ -265,7 +264,7 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /** Message sending */
@@ -274,11 +273,11 @@ class ApiService
      * @param int $targetId
      * @param array $messageChain
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function sendFriendMessage(int $targetId, array $messageChain): ArrayReader
+    final public function sendFriendMessage(int $targetId, array $messageChain): MiraiResponse
     {
         $options = [
             "uri" => "/sendFriendMessage",
@@ -290,7 +289,7 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
@@ -313,11 +312,11 @@ class ApiService
      * @param int $groupId
      * @param array $messageChain
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function sendTempMessage(int $targetId, int $groupId, array $messageChain): ArrayReader
+    final public function sendTempMessage(int $targetId, int $groupId, array $messageChain): MiraiResponse
     {
         $options = [
             "uri" => "/sendTempMessage",
@@ -330,7 +329,7 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
@@ -353,11 +352,11 @@ class ApiService
      * @param int $targetId
      * @param array $messageChain
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function sendGroupMessage(int $targetId, array $messageChain): ArrayReader
+    final public function sendGroupMessage(int $targetId, array $messageChain): MiraiResponse
     {
         $options = [
             "uri" => "/sendGroupMessage",
@@ -369,7 +368,7 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
@@ -392,84 +391,84 @@ class ApiService
     /**
      * @param int $count
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function fetchMessage(int $count): ArrayReader
+    final public function fetchMessage(int $count): MiraiResponse
     {
         $options = [
             "uri" => "/fetchMessage?sessionKey={$this->sessionKey}&count={$count}",
             "method" => "GET"
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
      * @param int $count
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function fetchLatestMessage(int $count): ArrayReader
+    final public function fetchLatestMessage(int $count): MiraiResponse
     {
         $options = [
             "uri" => "/fetchLatestMessage?sessionKey={$this->sessionKey}&count={$count}",
             "method" => "GET"
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /** List */
 
     /**
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function getFriendList(): ArrayReader
+    final public function getFriendList(): MiraiResponse
     {
         $options = [
             "uri" => "/friendList?sessionKey={$this->sessionKey}",
             "method" => "GET"
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function getGroupList(): ArrayReader
+    final public function getGroupList(): MiraiResponse
     {
         $options = [
             "uri" => "/groupList?sessionKey={$this->sessionKey}",
             "method" => "GET"
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
      * @param int $targetId
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function getGroupMemberList(int $targetId): ArrayReader
+    final public function getGroupMemberList(int $targetId): MiraiResponse
     {
         $options = [
             "uri" => "/memberList?sessionKey={$this->sessionKey}&target={$targetId}",
             "method" => "GET"
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /** Management */
@@ -477,11 +476,11 @@ class ApiService
     /**
      * @param int $targetId
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function quitGroup(int $targetId): ArrayReader
+    final public function quitGroup(int $targetId): MiraiResponse
     {
         $options = [
             "uri" => "/quit",
@@ -492,25 +491,25 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
      * @param int $targetId
      * @param int $memberId
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
-    final public function getMemberInfo(int $targetId, int $memberId): ArrayReader
+    final public function getMemberInfo(int $targetId, int $memberId): MiraiResponse
     {
         $options = [
             "uri" => "/memberInfo?sessionKey={$this->sessionKey}&target={$targetId}&memberId={$memberId}",
             "method" => "GET"
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
@@ -519,7 +518,7 @@ class ApiService
      * @param string|null $name
      * @param string|null $specialTitle
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
@@ -528,7 +527,7 @@ class ApiService
         int $memberId,
         string $name = null,
         ?string $specialTitle = null
-    ): ArrayReader {
+    ): MiraiResponse {
         $options = [
             "uri" => "/memberInfo",
             "method" => "POST",
@@ -543,7 +542,7 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /** Event response */
@@ -555,7 +554,7 @@ class ApiService
      * @param int $operate
      * @param string $message
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
@@ -565,7 +564,7 @@ class ApiService
         int $groupId,
         int $operate = 0,
         string $message = ""
-    ): ArrayReader {
+    ): MiraiResponse {
         $options = [
             "uri" => "/resp/newFriendRequestEvent",
             "method" => "POST",
@@ -579,7 +578,7 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**
@@ -589,7 +588,7 @@ class ApiService
      * @param int $operate
      * @param string $message
      *
-     * @return ArrayReader
+     * @return MiraiResponse
      *
      * @throws MiraiApiException
      */
@@ -599,7 +598,7 @@ class ApiService
         int $groupId,
         int $operate = 0,
         string $message = ""
-    ): ArrayReader {
+    ): MiraiResponse {
         $options = [
             "uri" => "/resp/botInvitedJoinGroupRequestEvent",
             "method" => "POST",
@@ -613,7 +612,7 @@ class ApiService
             ]
         ];
 
-        return new ArrayReader($this->mRequest($options));
+        return new MiraiResponse($this->mRequest($options));
     }
 
     /**

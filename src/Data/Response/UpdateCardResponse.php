@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 use DiceRobot\Exception\CharacterCardException\PermissionDeniedException;
 
 /**
@@ -14,7 +14,7 @@ use DiceRobot\Exception\CharacterCardException\PermissionDeniedException;
  *
  * @package DiceRobot\Data\Response
  */
-final class UpdateCardResponse extends Response
+final class UpdateCardResponse extends DiceRobotResponse
 {
     /** @var int Current value */
     public int $afterValue;

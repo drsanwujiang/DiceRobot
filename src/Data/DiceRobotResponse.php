@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DiceRobot\Data;
 
 use DiceRobot\Exception\ApiException\UnexpectedErrorException;
@@ -11,7 +13,7 @@ use DiceRobot\Exception\ApiException\UnexpectedErrorException;
  *
  * @package DiceRobot\Data
  */
-abstract class Response
+abstract class DiceRobotResponse
 {
     /** @var int Return code */
     public int $code;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 
 /**
  * Class JrrpResponse
@@ -13,7 +13,7 @@ use DiceRobot\Data\Response;
  *
  * @package DiceRobot\Data\Api\Response
  */
-final class JrrpResponse extends Response
+final class JrrpResponse extends DiceRobotResponse
 {
     /** @var int Jrrp, aka luck of today */
     public int $jrrp;

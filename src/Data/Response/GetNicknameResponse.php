@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 
 /**
  * Class GetNicknameResponse
@@ -13,7 +13,7 @@ use DiceRobot\Data\Response;
  *
  * @package DiceRobot\Data\Response
  */
-class GetNicknameResponse extends Response
+class GetNicknameResponse extends DiceRobotResponse
 {
     /** @var string Robot nickname */
     public string $nickname;
