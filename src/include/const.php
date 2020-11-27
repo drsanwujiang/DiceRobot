@@ -76,7 +76,7 @@ namespace DiceRobot {
         "order" => [
             "maxDiceNumber" => 100,
             "maxSurfaceNumber" => 1000,
-            "maxDrawCount" => 10,
+            "maxDrawCount" => 20,
             "maxGenerateCount" => 20,
             "maxRepeatTimes" => 20,
             "maxReplyCharacter" => 1000
