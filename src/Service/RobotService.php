@@ -203,13 +203,23 @@ class RobotService
     }
 
     /**
-     * Get robot's Authorization key of Mirai API HTTP plugin.
+     * Get authorization key of Mirai API HTTP plugin.
      *
      * @return string Authorization key.
      */
     public function getAuthKey(): string
     {
         return $this->robot->authKey;
+    }
+
+    /**
+     * Get version of Mirai API HTTP plugin.
+     *
+     * @return string Version.
+     */
+    public function getVersion(): string
+    {
+        return $this->robot->version;
     }
 
     /**

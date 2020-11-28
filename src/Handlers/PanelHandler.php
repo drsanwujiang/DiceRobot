@@ -121,7 +121,10 @@ class PanelHandler
             "friends" => $this->robot->getFriendCount(),
             "groups" => $this->robot->getGroupCount(),
             "startup" => DICEROBOT_STARTUP,
-            "version" => DICEROBOT_VERSION
+            "version" => [
+                "dicerobot" => DICEROBOT_VERSION,
+                "mirai" => $this->robot->getVersion()
+            ]
         ];
 
         return $this->responseFactory->create(0, $data, $response);
