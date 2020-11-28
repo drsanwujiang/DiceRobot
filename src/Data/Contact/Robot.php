@@ -21,4 +21,7 @@ class Robot
 
     /** @var string Authorization key of Mirai API HTTP plugin. */
     public string $authKey;
+
+    /** @var string Version of Mirai API HTTP plugin. */
+    public string $version;
 }

@@ -54,7 +54,7 @@ class MiraiApiHandler
         try {
             $response = $this->pool->request($options);
         } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
-            $this->logger->alert("Request Mirai API failed.");
+            $this->logger->alert("Failed to request Mirai API for network problem.");
 
             throw new MiraiApiException();
         }
@@ -111,6 +111,25 @@ class MiraiApiHandler
      *                                 Mirai APIs                                 *
      ******************************************************************************/
 
+    /** Plugin */
+
+    /**
+     * Get about information of Mirai API HTTP plugin.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function about(): MiraiResponse
+    {
+        $options = [
+            "uri" => "/about",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
     /** Session */
 
     /**
@@ -118,7 +137,7 @@ class MiraiApiHandler
      *
      * @param string $authKey Mirai API HTTP plugin authorization key.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -140,9 +159,9 @@ class MiraiApiHandler
     /**
      * Verify and activate the session, then bind it to a logined robot.
      *
-     * @param int $robotId Robot ID.
+     * @param int $robotId Robot's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -165,9 +184,9 @@ class MiraiApiHandler
     /**
      * Release the session and the corresponding resources.
      *
-     * @param int $robotId Robot ID.
+     * @param int $robotId Robot's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -192,10 +211,10 @@ class MiraiApiHandler
     /**
      * Send message to the specified friend.
      *
-     * @param int $targetId Target friend ID.
+     * @param int $targetId Target friend's ID.
      * @param array $messageChain Message chain.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -219,7 +238,7 @@ class MiraiApiHandler
     /**
      * Send message to the specified friend asynchronously.
      *
-     * @param int $targetId Target friend ID.
+     * @param int $targetId Target friend's ID.
      * @param array $messageChain Message chain.
      *
      * @see MiraiApiHandler::sendFriendMessage()
@@ -238,11 +257,11 @@ class MiraiApiHandler
     /**
      * Send message to the specified temporary chat object.
      *
-     * @param int $targetId Target temporary chat ID.
-     * @param int $groupId Group ID.
+     * @param int $targetId ID of the target temporary chat.
+     * @param int $groupId Group's ID.
      * @param array $messageChain Message chain.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -267,8 +286,8 @@ class MiraiApiHandler
     /**
      * Send message to the specified temporary chat object asynchronously.
      *
-     * @param int $targetId Target temporary chat ID.
-     * @param int $groupId Group ID.
+     * @param int $targetId ID of the target temporary chat.
+     * @param int $groupId Group's ID.
      * @param array $messageChain Message chain.
      *
      * @see MiraiApiHandler::sendTempMessage()
@@ -287,10 +306,10 @@ class MiraiApiHandler
     /**
      * Send message to the specified group.
      *
-     * @param int $targetId Target group ID.
+     * @param int $targetId Target group's ID.
      * @param array $messageChain Message chain.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -314,7 +333,7 @@ class MiraiApiHandler
     /**
      * Send message to the specified group asynchronously.
      *
-     * @param int $targetId Target group ID.
+     * @param int $targetId Target group's ID.
      * @param array $messageChain Message chain.
      *
      * @see MiraiApiHandler::sendGroupMessage()
@@ -333,9 +352,9 @@ class MiraiApiHandler
     /**
      * Recall the specific message.
      *
-     * @param int $messageId Target message ID.
+     * @param int $messageId ID of the target message.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -363,7 +382,7 @@ class MiraiApiHandler
      *
      * @param int $count Message/Event count.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -385,7 +404,7 @@ class MiraiApiHandler
      *
      * @param int $count Message/Event count.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -406,7 +425,7 @@ class MiraiApiHandler
      *
      * @param int $count Message/Event count.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -427,7 +446,7 @@ class MiraiApiHandler
      *
      * @param int $count Message/Event count.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -446,7 +465,7 @@ class MiraiApiHandler
     /**
      * Count the messages and events that robot received and cached.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -467,7 +486,7 @@ class MiraiApiHandler
     /**
      * Get friend list of the robot.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -486,7 +505,7 @@ class MiraiApiHandler
     /**
      * Get group list of the robot.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -507,7 +526,7 @@ class MiraiApiHandler
      *
      * @param int $targetId Target group's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -530,9 +549,9 @@ class MiraiApiHandler
      *
      * @param int $targetId Target group's ID.
      * @param int $memberId Target group member's ID.
-     * @param int $time Ban duration.
+     * @param int $time Muting duration.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -560,7 +579,7 @@ class MiraiApiHandler
      * @param int $targetId Target group's ID.
      * @param int $memberId Target group member's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -588,7 +607,7 @@ class MiraiApiHandler
      * @param int $memberId Target group member's ID.
      * @param string $message Kick message.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -615,7 +634,7 @@ class MiraiApiHandler
      *
      * @param int $targetId Target group's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -640,7 +659,7 @@ class MiraiApiHandler
      *
      * @param int $targetId Target group's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -665,7 +684,7 @@ class MiraiApiHandler
      *
      * @param int $targetId Target group's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -690,7 +709,7 @@ class MiraiApiHandler
      *
      * @param int $targetId Target group's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -717,7 +736,7 @@ class MiraiApiHandler
      * @param bool|null $autoApprove Automatically approve joining request.
      * @param bool|null $anonymousChat Enable anonymous chat.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -756,9 +775,9 @@ class MiraiApiHandler
      * Get group member's information.
      *
      * @param int $targetId Target group's ID.
-     * @param int $memberId Target member's ID.
+     * @param int $memberId Target group member's ID.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -778,11 +797,11 @@ class MiraiApiHandler
      * Set group member's information.
      *
      * @param int $targetId Target group's ID.
-     * @param int $memberId Target member's ID.
-     * @param string|null $name Group member's nickname.
-     * @param string|null $specialTitle Group member's special title.
+     * @param int $memberId Target group member's ID.
+     * @param string|null $name Target group member's nickname.
+     * @param string|null $specialTitle Target group member's special title.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -822,7 +841,7 @@ class MiraiApiHandler
      * @param int $operate Response operation type.
      * @param string $message Reply.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -860,7 +879,7 @@ class MiraiApiHandler
      * @param int $operate Response operation type.
      * @param string $message Reply.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *
@@ -898,7 +917,7 @@ class MiraiApiHandler
      * @param int $operate Response operation type.
      * @param string $message Reply.
      *
-     * @return MiraiResponse The response.
+     * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
      *

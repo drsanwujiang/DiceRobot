@@ -61,12 +61,12 @@ class DiceRobotApiHandler
             $response = $this->pool->request($options);
         } catch (ClientException | ServerException $e) {
             $this->logger->critical(
-                "DiceRobot API returned HTTP status code {$e->getResponse()->getStatusCode()}."
+                "Failed to request DiceRobot API. HTTP status code {$e->getResponse()->getStatusCode()}."
             );
 
             throw new InternalErrorException();
         } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
-            $this->logger->critical("Request DiceRobot API failed.");
+            $this->logger->critical("Failed to request DiceRobot API for network problem.");
 
             throw new NetworkErrorException();
         }
@@ -76,7 +76,7 @@ class DiceRobotApiHandler
         // Log error, but not throw exception
         if (0 != $data["code"]) {
             $this->logger->warning(
-                "API server returned unexpected code {$data["code"]}, error message: {$data["message"]}."
+                "DiceRobot API returned unexpected code {$data["code"]}, error message: {$data["message"]}."
             );
         }
 
@@ -117,7 +117,7 @@ class DiceRobotApiHandler
      *
      * @param int $robotId Robot's ID.
      *
-     * @return UpdateRobotResponse The response.
+     * @return UpdateRobotResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -153,7 +153,7 @@ class DiceRobotApiHandler
      * @param int $robotId Robot's ID.
      * @param int|null $userId User's ID if operation is about user.
      *
-     * @return AuthorizeResponse The response.
+     * @return AuthorizeResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -176,7 +176,7 @@ class DiceRobotApiHandler
     /**
      * @param int $robotId Robot's ID.
      *
-     * @return GetNicknameResponse The response.
+     * @return GetNicknameResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -196,7 +196,7 @@ class DiceRobotApiHandler
      * @param int $groupId Group's ID.
      * @param string $token Access token.
      *
-     * @return QueryGroupResponse The response.
+     * @return QueryGroupResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -220,7 +220,7 @@ class DiceRobotApiHandler
      * @param int $groupId Delinquent group's ID.
      * @param string $token Access token.
      *
-     * @return SubmitGroupResponse The response.
+     * @return SubmitGroupResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -243,7 +243,7 @@ class DiceRobotApiHandler
      * @param int $cardId ID of the character card.
      * @param string $token Access token.
      *
-     * @return GetCardResponse The response.
+     * @return GetCardResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -268,7 +268,7 @@ class DiceRobotApiHandler
      * @param int $change Change in the attribute.
      * @param string $token Access token.
      *
-     * @return UpdateCardResponse The response.
+     * @return UpdateCardResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -297,7 +297,7 @@ class DiceRobotApiHandler
      * @param array $decreases Sanity decreases.
      * @param string $token Access token.
      *
-     * @return SanityCheckResponse The response.
+     * @return SanityCheckResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -323,7 +323,7 @@ class DiceRobotApiHandler
      *
      * @param int $userId User's ID.
      *
-     * @return JrrpResponse The response.
+     * @return JrrpResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
@@ -342,7 +342,7 @@ class DiceRobotApiHandler
      *
      * @param int $userId User's ID.
      *
-     * @return KowtowResponse The response.
+     * @return KowtowResponse Response.
      *
      * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */

@@ -80,7 +80,10 @@ class RobotService
             // Update lists
             $this->updateFriends($this->api->getFriendList()->all());
             $this->updateGroups($this->api->getGroupList()->all());
+
+            // Update robot
             $this->updateNickname($this->api->getNickname($this->getId())->nickname);
+            $this->updateVersion($this->api->about()->getString("data.version"));
 
             // Report to DiceRobot API
             $this->api->updateRobotAsync($this->getId());
@@ -88,11 +91,13 @@ class RobotService
             $this->logger->info("Robot updated.");
 
             return true;
-        } catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
-            $this->logger->alert("Update robot failed, unable to call Mirai API.");
-
-            return false;
+        } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
+            $this->logger->alert("Failed to update robot, unable to call Mirai API.");
+        } catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
+            $this->logger->alert("Failed to update robot, unable to call DiceRobot API.");
         }
+
+        return false;
     }
 
     /**
@@ -103,6 +108,16 @@ class RobotService
     public function updateNickname(string $nickname): void
     {
         $this->robot->nickname = $nickname;
+    }
+
+    /**
+     * Update version of Mirai API HTTP plugin.
+     *
+     * @param string $version Plugin version.
+     */
+    public function updateVersion(string $version): void
+    {
+        $this->robot->version = $version;
     }
 
     /**

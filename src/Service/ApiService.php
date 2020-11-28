@@ -19,6 +19,7 @@ use Psr\Log\LoggerInterface;
  *
  * @package DiceRobot\Service
  *
+ * @method MiraiResponse about()
  * @method MiraiResponse authSession(string $authKey)
  * @method MiraiResponse verifySession(int $robotId)
  * @method MiraiResponse releaseSession(int $robotId)
@@ -67,6 +68,8 @@ class ApiService
 {
     /** @var string[] Mirai APIs. */
     private const MIRAI_APIS = [
+        "about",
+
         "authSession", "verifySession", "releaseSession",
 
         "sendFriendMessage", "sendFriendMessageAsync", "sendTempMessage", "sendTempMessageAsync", "sendGroupMessage",
