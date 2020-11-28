@@ -87,8 +87,8 @@ class ApiService
 
     /** @var string[] DiceRobot APIs. */
     private const DICEROBOT_APIS = [
-        "updateRobot", "authorize", "getNickname", "queryGroup", "submitGroup", "getCard", "updateCard", "sanityCheck",
-        "jrrp", "kowtow"
+        "updateRobot", "updateRobotAsync", "authorize", "getNickname", "queryGroup", "submitGroup", "getCard",
+        "updateCard", "sanityCheck", "jrrp", "kowtow"
     ];
 
     /** @var MiraiApiHandler Mirai API handler. */

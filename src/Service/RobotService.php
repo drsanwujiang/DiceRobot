@@ -65,6 +65,7 @@ class RobotService
         $this->robot->id = $config->getInt("mirai.robot.id");
         $this->robot->nickname = "Unknown";
         $this->robot->authKey = $config->getString("mirai.robot.authKey");
+        $this->robot->version = "Unknown";
     }
 
     /**
@@ -117,7 +118,7 @@ class RobotService
      */
     public function updateVersion(string $version): void
     {
-        $this->robot->version = $version;
+        $this->robot->version = (string) preg_replace("/[a-zA-z]+/", "", $version);
     }
 
     /**
