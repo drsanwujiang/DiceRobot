@@ -78,6 +78,8 @@ class PanelHandler
     public function initialize(Server $server): void
     {
         $this->server = $server;
+
+        $this->logger->info("Panel handler initialized.");
     }
 
     /**

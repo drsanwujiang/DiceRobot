@@ -93,6 +93,14 @@ class App
     }
 
     /**
+     * Destruct application.
+     */
+    public function __destruct()
+    {
+        $this->logger->notice("Application exited.");
+    }
+
+    /**
      * Initialize application.
      */
     public function initialize(): void
@@ -283,11 +291,9 @@ class App
         saber_pool_release();
 
         if ($this->resource->saveAll()) {
-            $this->logger->notice("Application exited.");
-
             return 0;
         } else {
-            $this->logger->alert("Application exited non-normally. Resources and data may not be saved.");
+            $this->logger->alert("Application cannot normally exit. Resources and data may not be saved.");
 
             return -1;
         }

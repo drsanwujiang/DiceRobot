@@ -74,6 +74,14 @@ class Server
     }
 
     /**
+     * Destruct server.
+     */
+    public function __destruct()
+    {
+        $this->logger->notice("Server exited.");
+    }
+
+    /**
      * Set Swoole HTTP server.
      *
      * @return bool Success.
@@ -151,7 +159,7 @@ class Server
      */
     public function stop(): void
     {
-        $this->logger->notice("Server exited.");
+        $this->logger->info("Shutdown Swoole HTTP server...");
 
         $this->server->shutdown();
     }
@@ -161,7 +169,7 @@ class Server
      */
     protected function emergencyStop(): void
     {
-        $this->logger->notice("Try to stop application...");
+        $this->logger->info("Stop application...");
 
         $this->app->stop();
     }

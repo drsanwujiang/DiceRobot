@@ -85,7 +85,7 @@ class ReportHandler
     {
         $this->app = $app;
 
-        $this->logger->info("Heartbeat handler initialized.");
+        $this->logger->info("Report handler initialized.");
     }
 
     /**
