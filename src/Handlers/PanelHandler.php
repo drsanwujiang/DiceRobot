@@ -115,7 +115,7 @@ class PanelHandler
      */
     public function getProfile(Response $response): Response
     {
-        $this->logger->info("Server received HTTP request, get robot profile.");
+        $this->logger->info("HTTP request received, get profile.");
 
         $data = [
             "id" => $this->robot->getId(),
@@ -141,7 +141,7 @@ class PanelHandler
      */
     public function getStatus(Response $response): Response
     {
-        $this->logger->info("Server received HTTP request, get application status.");
+        $this->logger->info("HTTP request received, get application status.");
 
         $appStatus = $this->app->getStatus()->getValue();
         $code = -1;
@@ -210,7 +210,7 @@ class PanelHandler
      */
     public function setConfig(string $content, Response $response): Response
     {
-        $this->logger->info("Server received HTTP request, set config.");
+        $this->logger->info("HTTP request received, set config.");
 
         $code = $this->app->setConfig($content);
 
@@ -330,7 +330,7 @@ class PanelHandler
      */
     public function restart(Response $response): void
     {
-        $this->logger->notice("Server received HTTP request, restart application.");
+        $this->logger->notice("HTTP request received, restart application.");
 
         $code = -1;
 
@@ -356,7 +356,7 @@ class PanelHandler
      */
     public function update(Response $response): Response
     {
-        $this->logger->notice("Server received HTTP request, update DiceRobot.");
+        $this->logger->notice("HTTP request received, update DiceRobot.");
 
         if (!is_dir($root = $this->config->getString("root"))) {
             return $this->responseFactory->create(-1050, null, $response);
@@ -397,7 +397,7 @@ class PanelHandler
      */
     public function getMiraiStatus(Response $response): Response
     {
-        $this->logger->info("Server received HTTP request, get Mirai status.");
+        $this->logger->info("HTTP request received, get Mirai status.");
 
         $code = -1;
 
@@ -427,7 +427,7 @@ class PanelHandler
      */
     public function startMirai(Response $response): Response
     {
-        $this->logger->notice("Server received HTTP request, start Mirai.");
+        $this->logger->notice("HTTP request received, start Mirai.");
 
         $code = $signal = -1;
         $output = "";
@@ -464,7 +464,7 @@ class PanelHandler
      */
     public function stopMirai(Response $response): Response
     {
-        $this->logger->notice("Server received HTTP request, stop Mirai.");
+        $this->logger->notice("HTTP request received, stop Mirai.");
 
         $code = $signal = -1;
         $output = "";
@@ -501,7 +501,7 @@ class PanelHandler
      */
     public function restartMirai(Response $response): Response
     {
-        $this->logger->notice("Server received HTTP request, restart Mirai.");
+        $this->logger->notice("HTTP request received, restart Mirai.");
 
         $code = $signal = -1;
         $output = "";
