@@ -27,24 +27,30 @@ namespace DiceRobot {
     /** @var array Default config. */
     const DEFAULT_CONFIG = [
         "dicerobot" => [
-            "version" => DICEROBOT_VERSION,
+            "api" => [
+                "prefix" => "https://api.drsanwujiang.com"
+            ],
             "server" => [
                 "host" => "0.0.0.0",
                 "port" => 9500
             ],
-            "api" => [
-                "prefix" => "https://api.drsanwujiang.com"
-            ]
+            "service" => [
+                "name" => "dicerobot"
+            ],
+            "version" => DICEROBOT_VERSION
         ],
 
         "mirai" => [
+            "robot" => [
+                "id" => 10000,
+                "authKey" => "12345678"
+            ],
             "server" => [
                 "host" => "127.0.0.1",
                 "port" => 8080
             ],
-            "robot" => [
-                "id" => 10000,
-                "authKey" => "12345678"
+            "service" => [
+                "name" => "mirai"
             ]
         ],
 

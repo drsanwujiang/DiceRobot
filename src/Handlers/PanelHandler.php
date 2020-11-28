@@ -141,7 +141,9 @@ class PanelHandler
         $appStatus = $this->app->getStatus()->getValue();
         $code = -1;
 
-        extract(System::exec("/bin/systemctl status dicerobot"), EXTR_OVERWRITE);
+        extract(System::exec(
+            "/bin/systemctl status {$this->config->getString("dicerobot.service.name")}"
+        ), EXTR_OVERWRITE);
 
         if ($code == 4) {
             $serviceStatus = -2;
@@ -327,14 +329,16 @@ class PanelHandler
 
         $code = -1;
 
-        extract(System::exec("/bin/systemctl status dicerobot"), EXTR_OVERWRITE);
+        extract(System::exec(
+            "/bin/systemctl status {$this->config->getString("dicerobot.service.name")}"
+        ), EXTR_OVERWRITE);
 
         if ($code != 0) {
             $this->responseFactory->create(1040, null, $response)->end();
         } else {
             $this->responseFactory->create(0, null, $response)->end();
 
-            System::exec("/bin/systemctl restart dicerobot");
+            System::exec("/bin/systemctl restart {$this->config->getString("dicerobot.service.name")}");
         }
     }
 
@@ -356,7 +360,9 @@ class PanelHandler
         $code = $signal = -1;
         $output = "";
 
-        extract(System::exec("/usr/local/bin/composer update --working-dir {$root} --no-ansi --no-interaction --quiet 2>&1"), EXTR_OVERWRITE);
+        extract(System::exec(
+            "/usr/local/bin/composer update --working-dir {$root} --no-ansi --no-interaction --quiet 2>&1"
+        ), EXTR_OVERWRITE);
 
         if ($code == 0) {
             return $this->responseFactory->create($code, null, $response);
@@ -390,7 +396,9 @@ class PanelHandler
 
         $code = -1;
 
-        extract(System::exec("/bin/systemctl status mirai"), EXTR_OVERWRITE);
+        extract(System::exec(
+            "/bin/systemctl status {$this->config->getString("mirai.service.name")}"
+        ), EXTR_OVERWRITE);
 
         if ($code == 4) {
             $status = -2;
@@ -419,7 +427,9 @@ class PanelHandler
         $code = $signal = -1;
         $output = "";
 
-        extract(System::exec("/bin/systemctl start mirai"), EXTR_OVERWRITE);
+        extract(System::exec(
+            "/bin/systemctl start {$this->config->getString("mirai.service.name")}"
+        ), EXTR_OVERWRITE);
 
         if ($code == 0) {
             return $this->responseFactory->create($code, null, $response);
@@ -454,7 +464,9 @@ class PanelHandler
         $code = $signal = -1;
         $output = "";
 
-        extract(System::exec("/bin/systemctl stop mirai"), EXTR_OVERWRITE);
+        extract(System::exec(
+            "/bin/systemctl stop {$this->config->getString("mirai.service.name")}"
+        ), EXTR_OVERWRITE);
 
         if ($code == 0) {
             return $this->responseFactory->create($code, null, $response);
@@ -489,7 +501,9 @@ class PanelHandler
         $code = $signal = -1;
         $output = "";
 
-        extract(System::exec("/bin/systemctl restart mirai"), EXTR_OVERWRITE);
+        extract(System::exec(
+            "/bin/systemctl restart {$this->config->getString("mirai.service.name")}"
+        ), EXTR_OVERWRITE);
 
         if ($code == 0) {
             return $this->responseFactory->create($code, null, $response);

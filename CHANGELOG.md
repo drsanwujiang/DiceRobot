@@ -14,6 +14,7 @@
 - Reply length control (#29)
 - Support more Mirai APIs
 - API handlers
+- Custom service name
 
 ### Fixed
 - Fragments regular expressions
