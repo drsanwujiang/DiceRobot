@@ -15,18 +15,18 @@ use DiceRobot\Interfaces\Fragment\ParsableFragment;
  */
 final class Face implements ParsableFragment
 {
-    /** @var int QQ face ID */
+    /** @var int QQ face ID. */
     public int $faceId;
 
-    /** @var string QQ face name */
+    /** @var string QQ face name. */
     public string $name;
 
     /**
      * @inheritDoc
      *
-     * @param string $code Mirai code
+     * @param string $code Mirai code.
      *
-     * @return bool Success
+     * @return bool Success.
      */
     public function fromMiraiCode(string $code): bool
     {
@@ -43,7 +43,7 @@ final class Face implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {
@@ -57,7 +57,7 @@ final class Face implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function toMiraiCode(): string
     {
@@ -67,7 +67,7 @@ final class Face implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function __toString(): string
     {

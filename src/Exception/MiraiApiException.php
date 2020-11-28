@@ -15,5 +15,5 @@ use Exception;
  *
  * @package DiceRobot\Exception
  */
-class MiraiApiException extends Exception
+final class MiraiApiException extends Exception
 {}

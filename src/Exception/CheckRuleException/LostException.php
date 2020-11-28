@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Check rule is lost.
  *
- * @reply checkRuleLost
+ * @errorMessage checkRuleLost
  *
  * @package DiceRobot\Exception\CheckRuleException
  */

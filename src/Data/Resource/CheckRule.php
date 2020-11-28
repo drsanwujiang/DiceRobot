@@ -20,7 +20,7 @@ class CheckRule extends Resource
     /**
      * @inheritDoc
      *
-     * @param array $data Check rule data
+     * @param array $data Check rule data.
      */
     public function __construct(array $data)
     {
@@ -35,10 +35,10 @@ class CheckRule extends Resource
     /**
      * Get check level.
      *
-     * @param int $result Check result
-     * @param int $value Check value
+     * @param int $result Check result.
+     * @param int $value Check value.
      *
-     * @return string Check level
+     * @return string Check level.
      *
      * @throws DangerousException|InvalidException|MatchFailedException
      */

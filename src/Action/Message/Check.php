@@ -46,28 +46,28 @@ class Check extends MessageAction
      */
     public function __invoke(): void
     {
-        list($private, $bp, $item, $adjustment, $repeat) = $this->parseOrder();
+        list($private, $bp, $item, $adjustments, $repetition) = $this->parseOrder();
 
         list($item, $value, $attributes) = $this->getCheckInfo($item);
 
-        if (!$this->checkRange($value, $repeat)) {
+        if (!$this->checkRange($value, $repetition)) {
             return;
         }
 
         $nickname = $this->getNickname();
-        $checkDetails = $this->getCheckDetails($bp, $adjustment, $value, $repeat);
+        $checkDetails = $this->getCheckDetails($bp, $adjustments, $value, $repetition);
 
         if (empty($item)) {
             $reply = Convertor::toCustomString($this->config->getReply("checkResult"), [
                 "昵称" => $nickname,
-                "检定次数" => $repeat,
+                "检定次数" => $repetition,
                 "检定项目" => "",
                 "检定详情" => $checkDetails
             ]);
         } else {
             $reply = Convertor::toCustomString($this->config->getReply("checkResultWithAttributes"), [
                 "昵称" => $nickname,
-                "检定次数" => $repeat,
+                "检定次数" => $repetition,
                 "检定项目" => $item,
                 ...$attributes,
                 "检定详情" => $checkDetails
@@ -87,7 +87,7 @@ class Check extends MessageAction
 
                 $this->setReply("checkPrivate", [
                     "昵称" => $nickname,
-                    "检定次数" => $repeat
+                    "检定次数" => $repetition
                 ]);
             } else {
                 $this->setReply("checkPrivateNotInGroup");
@@ -100,7 +100,7 @@ class Check extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -117,17 +117,17 @@ class Check extends MessageAction
         $private = !empty($matches[1]);
         $bp = $matches[2];
         $item = $matches[3];
-        $adjustment = str_replace(" ", "", $matches[4] ?? "");
-        $repeat = (int) ($matches[5] ?? 1);
+        $adjustments = str_replace(" ", "", $matches[4] ?? "");
+        $repetition = (int) ($matches[5] ?? 1);
 
         /**
-         * @var bool $private Private check flag
-         * @var string $bp Bonus/Punishment check flag
-         * @var string $item Check item (skill/attribute name or value)
-         * @var string $adjustment Adjustment operations
-         * @var int $repeat
+         * @var bool $private Private check flag.
+         * @var string $bp Bonus/Punishment check flag.
+         * @var string $item Check item (skill/attribute name or value).
+         * @var string $adjustments Adjustment operations.
+         * @var int $repetition Repetition count.
          */
-        return [$private, $bp, $item, $adjustment, $repeat];
+        return [$private, $bp, $item, $adjustments, $repetition];
     }
 
     /**
@@ -172,20 +172,20 @@ class Check extends MessageAction
     /**
      * Check the range.
      *
-     * @param int $checkValue The value to be checked
-     * @param int $repeat Repeat count
+     * @param int $value The value to be checked.
+     * @param int $repetition Repetition count.
      *
-     * @return bool Validity
+     * @return bool Validity.
      *
      * @throws RepeatTimeOverstepException
      */
-    protected function checkRange(int $checkValue, int $repeat): bool
+    protected function checkRange(int $value, int $repetition): bool
     {
-        if ($checkValue < 1) {
+        if ($value < 1) {
             $this->setReply("checkValueInvalid");
 
             return false;
-        } elseif ($repeat < 1 || $repeat > $this->config->getOrder("maxRepeatTimes")) {
+        } elseif ($repetition < 1 || $repetition > $this->config->getOrder("maxRepeatTimes")) {
             throw new RepeatTimeOverstepException();
         }
 
@@ -195,23 +195,23 @@ class Check extends MessageAction
     /**
      * Get check details.
      *
-     * @param string $bp B/P order
-     * @param string $adjustment Adjustment operations
-     * @param int $checkValue The check value
-     * @param int $repeat Repeat time
+     * @param string $bp B/P order.
+     * @param string $adjustments Adjustment operations.
+     * @param int $value The value to be checked.
+     * @param int $repetition Repetition count.
      *
      * @return string Check details.
      *
      * @throws CheckRuleLostException|DangerousException|DiceNumberOverstepException|ExpressionErrorException
      * @throws ExpressionInvalidException|InvalidException|MatchFailedException|SurfaceNumberOverstepException
      */
-    protected function getCheckDetails(string $bp, string $adjustment, int $checkValue, int $repeat): string
+    protected function getCheckDetails(string $bp, string $adjustments, int $value, int $repetition): string
     {
-        $details = $repeat > 1 ? "\n" : "";
+        $details = $repetition > 1 ? "\n" : "";
         $reply = $this->config->getReply("checkDetail");
 
-        while ($repeat--) {
-            $dice = isset($dice) ? clone $dice : new Dice("{$bp} D{$adjustment}", 100);
+        while ($repetition--) {
+            $dice = isset($dice) ? clone $dice : new Dice("{$bp} D{$adjustments}", 100);
 
             // Adjust result
             $result = $dice->result < 1 ? 1 : $dice->result;
@@ -219,8 +219,8 @@ class Check extends MessageAction
 
             $details .= Convertor::toCustomString($reply, [
                 "掷骰结果" => $dice->getCompleteExpression(),
-                "检定值" => $checkValue,
-                "检定结果" => $this->getCheckLevel($result, $checkValue)
+                "检定值" => $value,
+                "检定结果" => $this->getCheckLevel($result, $value)
             ]);
             $details .= "\n";
         }
@@ -229,12 +229,12 @@ class Check extends MessageAction
     }
 
     /**
-     * Get check level according to check rule.
+     * Get check level according to the check rule.
      *
-     * @param int $result Check result
-     * @param int $value Check value
+     * @param int $result Check result.
+     * @param int $value The value to be checked.
      *
-     * @return string Check level
+     * @return string Check level.
      *
      * @throws CheckRuleLostException|DangerousException|InvalidException|MatchFailedException
      */

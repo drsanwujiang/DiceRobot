@@ -15,15 +15,15 @@ use DiceRobot\Interfaces\Fragment\ParsableFragment;
  */
 final class Plain implements ParsableFragment
 {
-    /** @var string Plain text */
+    /** @var string Plain text. */
     public string $text;
 
     /**
      * @inheritDoc
      *
-     * @param string $code Mirai code
+     * @param string $code Mirai code.
      *
-     * @return bool Success
+     * @return bool Success.
      */
     public function fromMiraiCode(string $code): bool
     {
@@ -35,7 +35,7 @@ final class Plain implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {
@@ -48,7 +48,7 @@ final class Plain implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function toMiraiCode(): string
     {
@@ -58,7 +58,7 @@ final class Plain implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function __toString(): string
     {

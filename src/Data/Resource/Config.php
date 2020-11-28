@@ -11,7 +11,7 @@ use const DiceRobot\DEFAULT_CONFIG;
 /**
  * Class Config
  *
- * Resource container. DiceRobot config.
+ * Resource container. Panel config.
  *
  * @package DiceRobot\Data\Resource
  */
@@ -20,9 +20,9 @@ class Config extends Resource
     /**
      * Set config.
      *
-     * @param array $config
+     * @param array $config Config data.
      *
-     * @return bool
+     * @return bool Success.
      */
     public function setConfig(array $config): bool
     {
@@ -38,9 +38,9 @@ class Config extends Resource
     /**
      * Check whether the config is valid.
      *
-     * @param array $config
+     * @param array $config Config data.
      *
-     * @return bool
+     * @return bool Validity.
      */
     protected function checkConfig(array $config): bool
     {
@@ -79,9 +79,9 @@ class Config extends Resource
     /**
      * Check config value.
      *
-     * @param array $config
+     * @param array $config Config data.
      *
-     * @return array
+     * @return array Checked config.
      */
     protected function checkValue(array $config): array
     {

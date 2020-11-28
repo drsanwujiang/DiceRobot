@@ -11,11 +11,11 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Card deck cannot be found.
  *
- * @reply cardDeckNotFound
+ * @errorMessage cardDeckNotFound
  *
  * @package DiceRobot\Exception\CardDeckException
  */
-class NotFoundException extends DiceRobotException
+final class NotFoundException extends DiceRobotException
 {
     /**
      * @inheritDoc

@@ -20,7 +20,7 @@ class MiraiResponse
     /**
      * The constructor.
      *
-     * @param array $data Resource data
+     * @param array $data Response data.
      */
     public function __construct(array $data = [])
     {

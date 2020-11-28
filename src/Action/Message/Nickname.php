@@ -53,7 +53,7 @@ class Nickname extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -66,7 +66,7 @@ class Nickname extends MessageAction
         $nickname = $matches[1];
 
         /**
-         * @var string $nickname Nickname
+         * @var string $nickname Nickname.
          */
         return [$nickname];
     }

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace DiceRobot\Data\Resource;
 
 use DiceRobot\Data\{Deck, Resource};
-use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Exception\CardDeckException\{InvalidException, NotFoundException};
+use DiceRobot\Exception\RuntimeException;
 
 /**
  * Class Deck
@@ -17,14 +17,14 @@ use DiceRobot\Exception\CardDeckException\{InvalidException, NotFoundException};
  */
 class CardDeck extends Resource
 {
-    /** @var CardDeck[] */
+    /** @var CardDeck[] $publicDecks Mapping between public deck and the corresponding card deck. */
     protected static array $publicDecks = [];
 
     /**
      * Set card deck.
      *
-     * @param array $deckNames Card deck names
-     * @param CardDeck $deck Card deck
+     * @param array $deckNames Card deck names.
+     * @param CardDeck $deck Card deck.
      */
     protected static function setDeck(array $deckNames, self $deck): void
     {
@@ -40,9 +40,9 @@ class CardDeck extends Resource
     /**
      * Get card deck.
      *
-     * @param string $publicDeckName Public card deck name
+     * @param string $publicDeckName Public card deck name.
      *
-     * @return CardDeck|null Card deck
+     * @return CardDeck|null Card deck.
      */
     public static function getCardDeck(string $publicDeckName): ?self
     {
@@ -52,7 +52,7 @@ class CardDeck extends Resource
     /**
      * @inheritDoc
      *
-     * @param array $data Card deck data
+     * @param array $data Card deck data.
      */
     public function __construct(array $data)
     {
@@ -77,9 +77,9 @@ class CardDeck extends Resource
     /**
      * Parse card decks.
      *
-     * @param array $data Card deck data
+     * @param array $data Card deck data.
      *
-     * @return array Parsed data
+     * @return array Parsed data.
      */
     protected function parseDecks(array $data): array
     {
@@ -99,11 +99,11 @@ class CardDeck extends Resource
     /**
      * Get specific deck of the card deck.
      *
-     * @param string $deckName Deck name
+     * @param string $deckName Deck name.
      *
-     * @return Deck Deck
+     * @return Deck Deck.
      *
-     * @throws InvalidException Deck cannot be found (Card deck incomplete)
+     * @throws InvalidException Deck cannot be found (Card deck incomplete).
      */
     public function getDeck(string $deckName): Deck
     {
@@ -130,12 +130,12 @@ class CardDeck extends Resource
     /**
      * Draw a card from the card deck.
      *
-     * @param string $publicDeckName
+     * @param string $publicDeckName Public deck name.
      *
-     * @return string|bool
+     * @return string|bool Success.
      *
      * @throws InvalidException
-     * @throws NotFoundException Card deck cannot be found
+     * @throws NotFoundException Card deck cannot be found.
      */
     public function draw(string $publicDeckName)
     {
@@ -153,13 +153,13 @@ class CardDeck extends Resource
     /**
      * Draw card(s) from the deck(s).
      *
-     * @param string $deckName
-     * @param bool $isFirst
+     * @param string $deckName Deck name.
+     * @param bool $isFirst Whether the deck is the first (entry).
      *
-     * @return string
+     * @return string Card content.
      *
-     * @throws InvalidException Deck cannot be found (Card deck incomplete)
-     * @throws RuntimeException
+     * @throws InvalidException Deck cannot be found (Card deck incomplete).
+     * @throws RuntimeException Deck empty.
      */
     protected function drawCard(string $deckName, bool $isFirst = false): string
     {

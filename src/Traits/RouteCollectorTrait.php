@@ -5,27 +5,28 @@ declare(strict_types=1);
 namespace DiceRobot\Traits;
 
 use DiceRobot\Data\Report\{Event, Message};
+
 use const DiceRobot\DEFAULT_ROUTES;
 
 /**
  * Trait RouteCollectorTrait
  *
- * The route collector trait.
+ * Route collector trait.
  *
  * @package DiceRobot\Traits
  */
 trait RouteCollectorTrait
 {
-    /** @var string[] Event routes */
+    /** @var string[] Event routes. */
     protected array $eventRoutes = [];
 
-    /** @var array[] Message routes */
+    /** @var array Message routes. */
     protected array $messageRoutes = [];
 
     /**
      * Register event and message routes.
      *
-     * @param array $routes The routes
+     * @param array $routes Routes.
      */
     public function registerRoutes(array $routes = []): void
     {
@@ -36,9 +37,9 @@ trait RouteCollectorTrait
     /**
      * Match event action.
      *
-     * @param Event $event The event
+     * @param Event $event Event.
      *
-     * @return string|null Event action name or null
+     * @return string|null Event action name or null.
      */
     protected function matchEvent(Event $event): ?string
     {
@@ -52,9 +53,11 @@ trait RouteCollectorTrait
     }
 
     /**
-     * @param Message $message The message
+     * Match message action.
      *
-     * @return array|null Match, order and message action name, or null
+     * @param Message $message Message.
+     *
+     * @return array|null Match, order and message action name, or null.
      */
     protected function matchMessage(Message $message): ?array
     {

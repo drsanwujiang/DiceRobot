@@ -25,7 +25,7 @@ use DiceRobot\Util\Convertor;
  */
 class Dnd extends MessageAction
 {
-    /** @var string DND generate rule */
+    /** @var string DND generation rule. */
     protected const DND_GENERATE_RULE = "4D6K3";
 
     /**
@@ -35,9 +35,9 @@ class Dnd extends MessageAction
      */
     public function __invoke(): void
     {
-        list($generateCount) = $this->parseOrder();
+        list($count) = $this->parseOrder();
 
-        if (!$this->checkRange($generateCount)) {
+        if (!$this->checkRange($count)) {
             return;
         }
 
@@ -46,14 +46,14 @@ class Dnd extends MessageAction
         $this->setReply("dndGenerateCardHeading", [
             "@发送者" => $atSender,
             "发送者QQ" => $this->message->sender->id,
-            "冒险者属性" => $this->generateAttributes($generateCount)
+            "冒险者属性" => $this->generateAttributes($count)
         ]);
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -63,26 +63,26 @@ class Dnd extends MessageAction
             throw new OrderErrorException;
         }
 
-        $generateCount = empty($matches[1]) ? 1 : (int) $matches[1];
+        $count = empty($matches[1]) ? 1 : (int) $matches[1];
 
         /**
-         * @var int $generateCount Count of generation
+         * @var int $count Count of generation.
          */
-        return [$generateCount];
+        return [$count];
     }
 
     /**
      * Check the range.
      *
-     * @param int $generateCount Count of generation
+     * @param int $count Count of generation.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
-    protected function checkRange(int $generateCount): bool
+    protected function checkRange(int $count): bool
     {
         $maxGenerateCount = $this->config->getOrder("maxGenerateCount");
 
-        if ($generateCount < 1 || $generateCount > $maxGenerateCount) {
+        if ($count < 1 || $count > $maxGenerateCount) {
             $this->setReply("dndGenerateCardCountOverstep", [
                 "最大生成次数" => $maxGenerateCount
             ]);
@@ -96,9 +96,9 @@ class Dnd extends MessageAction
     /**
      * Generate attributes of character card.
      *
-     * @param int $count Generate count
+     * @param int $count Count of generation.
      *
-     * @return string Attributes
+     * @return string Attributes.
      *
      * @throws LostException
      */

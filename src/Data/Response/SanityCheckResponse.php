@@ -16,13 +16,13 @@ use DiceRobot\Exception\CharacterCardException\PermissionDeniedException;
  */
 final class SanityCheckResponse extends DiceRobotResponse
 {
-    /** @var bool Check success */
+    /** @var bool Check success. */
     public bool $checkSuccess;
 
-    /** @var int Previous sanity */
+    /** @var int Previous sanity. */
     public int $beforeSanity;
 
-    /** @var int Current sanity */
+    /** @var int Current sanity. */
     public int $afterSanity;
 
     /**
@@ -38,7 +38,7 @@ final class SanityCheckResponse extends DiceRobotResponse
     /**
      * @inheritDoc
      *
-     * @throws PermissionDeniedException
+     * @throws PermissionDeniedException User does not have permission to access the character card.
      */
     protected function validate(): void
     {

@@ -6,9 +6,9 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class DicePool
@@ -54,7 +54,7 @@ class DicePool extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -74,10 +74,10 @@ class DicePool extends MessageAction
         $reason = $matches[4];
 
         /**
-         * @var bool $detailed Detailed process flag
-         * @var int $diceNumber Dice number
-         * @var int $threshold Threshold of result
-         * @var string $reason Reason
+         * @var bool $detailed Detailed process flag.
+         * @var int $diceNumber Dice number.
+         * @var int $threshold Threshold of result.
+         * @var string $reason Dicing reason.
          */
         return [$detailed, $diceNumber, $threshold, $reason];
     }
@@ -85,9 +85,9 @@ class DicePool extends MessageAction
     /**
      * Check the range.
      *
-     * @param int $threshold The threshold
+     * @param int $threshold The threshold.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkRange(int $threshold): bool
     {
@@ -103,10 +103,10 @@ class DicePool extends MessageAction
     /**
      * Execute dicing order.
      *
-     * @param int $diceNumber Dice number
-     * @param int $threshold The threshold
+     * @param int $diceNumber Dice number.
+     * @param int $threshold The threshold.
      *
-     * @return array Final result and details
+     * @return array Final result and details.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException

@@ -15,19 +15,19 @@ use DiceRobot\Interfaces\Fragment;
  */
 final class Voice implements Fragment
 {
-    /** @var string Voice ID */
+    /** @var string Voice ID. */
     public string $voiceId;
 
-    /** @var string Voice URL */
+    /** @var string Voice URL. */
     public string $url;
 
-    /** @var string|null Voice local path */
+    /** @var string|null Voice local path. */
     public ?string $path = null;
 
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {

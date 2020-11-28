@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Arithmetic expression is not evaluated correctly. This exception contains the details.
  *
- * @reply diceExpressionError
+ * @errorMessage diceExpressionError
  *
  * @package DiceRobot\Exception\DiceException
  */
@@ -20,15 +20,15 @@ final class ExpressionErrorException extends DiceRobotException
     /**
      * @inheritDoc
      *
-     * @param string $errMessage
-     * @param string $order
-     * @param string $expression
-     * @param string $arithmeticExpression
+     * @param string $errMsg Error message.
+     * @param string $order Dicing order.
+     * @param string $expression Parsed expression.
+     * @param string $arithmeticExpression Parsed arithmetic expression.
      */
-    public function __construct(string $errMessage, string $order, string $expression, string $arithmeticExpression)
+    public function __construct(string $errMsg, string $order, string $expression, string $arithmeticExpression)
     {
         $extraMessage =
-            "DiceRobot catch an arithmetic expression error: {$errMessage}, " .
+            "DiceRobot catch an arithmetic expression error: {$errMsg}, " .
             "dicing order: {$order}, " .
             "parsed expression: {$expression}, " .
             "parsed arithmetic expression: {$arithmeticExpression}";

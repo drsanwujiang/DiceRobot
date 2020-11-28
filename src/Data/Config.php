@@ -23,8 +23,8 @@ class Config
     /**
      * The constructor.
      *
-     * @param ContainerInterface $container
-     * @param Resource\Config|null $config
+     * @param ContainerInterface $container Container.
+     * @param Resource\Config|null $config Panel config.
      */
     public function __construct(ContainerInterface $container, Resource\Config $config = null)
     {

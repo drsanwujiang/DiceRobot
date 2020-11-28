@@ -17,21 +17,21 @@ use DiceRobot\Interfaces\Fragment\ParsableFragment;
  */
 final class Image implements ParsableFragment
 {
-    /** @var string|null Image ID */
+    /** @var string|null Image ID. */
     public ?string $imageId = null;
 
-    /** @var string|null Image URL */
+    /** @var string|null Image URL. */
     public ?string $url = null;
 
-    /** @var string|null Image local path */
+    /** @var string|null Image local path. */
     public ?string $path = null;
 
     /**
      * @inheritDoc
      *
-     * @param string $code Mirai code (extended)
+     * @param string $code Mirai code (extended).
      *
-     * @return bool Success
+     * @return bool Success.
      */
     public function fromMiraiCode(string $code): bool
     {
@@ -49,7 +49,7 @@ final class Image implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {
@@ -64,7 +64,7 @@ final class Image implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function toMiraiCode(): string
     {
@@ -74,7 +74,7 @@ final class Image implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function __toString(): string
     {

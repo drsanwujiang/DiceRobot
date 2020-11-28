@@ -20,7 +20,7 @@ final class UnknownFragment implements Fragment
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {

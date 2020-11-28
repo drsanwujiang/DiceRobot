@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\FileException\LostException;
+use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\{Convertor, Random};
 
 /**
@@ -33,22 +33,22 @@ class Name extends MessageAction
      */
     public function __invoke(): void
     {
-        list($language, $generateCount) = $this->parseOrder();
+        list($language, $count) = $this->parseOrder();
 
-        if (!$this->checkRange($generateCount)) {
+        if (!$this->checkRange($count)) {
             return;
         }
 
         $this->setReply("nameGenerateResult", [
             "发送者QQ" => $this->message->sender->id,
-            "名称" => $this->generateNames($language, $generateCount)
+            "名称" => $this->generateNames($language, $count)
         ]);
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -59,27 +59,27 @@ class Name extends MessageAction
         }
 
         $language = empty($matches[1]) ? "cn" : strtolower($matches[1]);
-        $generateCount = empty($matches[2]) ? 1 : (int) $matches[2];
+        $count = empty($matches[2]) ? 1 : (int) $matches[2];
 
         /**
-         * @var string $language Language
-         * @var int $generateCount Count of generation
+         * @var string $language Language.
+         * @var int $count Count of generation.
          */
-        return [$language, $generateCount];
+        return [$language, $count];
     }
 
     /**
      * Check the range.
      *
-     * @param int $generateCount Generate count
+     * @param int $count Count of generation.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
-    protected function checkRange(int $generateCount): bool
+    protected function checkRange(int $count): bool
     {
         $maxGenerateCount = $this->config->getOrder("maxGenerateCount");
 
-        if ($generateCount > $maxGenerateCount) {
+        if ($count > $maxGenerateCount) {
             $this->setReply("nameGenerateCountOverstep", [
                 "最大生成次数" => $maxGenerateCount
             ]);
@@ -93,10 +93,10 @@ class Name extends MessageAction
     /**
      * Generate names.
      *
-     * @param string $language Targeted language
-     * @param int $count Generate count
+     * @param string $language Targeted language.
+     * @param int $count Count of generation.
      *
-     * @return string Names
+     * @return string Generated names.
      *
      * @throws LostException
      */
@@ -122,12 +122,12 @@ class Name extends MessageAction
     }
 
     /**
-     * Draw name.
+     * Draw name(s).
      *
-     * @param array $names Names
-     * @param int $count Draw count
+     * @param array $names Names.
+     * @param int $count Draw count.
      *
-     * @return string Name
+     * @return string Name(s).
      */
     protected function draw(array $names, int $count = 1): string
     {

@@ -9,7 +9,7 @@ use DiceRobot\Data\Resource;
 /**
  * Class Statistics
  *
- * Resource container. Chat settings.
+ * Resource container. Statistics.
  *
  * @package DiceRobot\Data\Resource
  */
@@ -18,7 +18,7 @@ class Statistics extends Resource
     /**
      * @inheritDoc
      *
-     * @param array $data
+     * @param array $data Statistics data.
      */
     public function __construct(array $data)
     {
@@ -33,7 +33,7 @@ class Statistics extends Resource
     /**
      * Add using order count.
      *
-     * @param string $order
+     * @param string $order Order.
      */
     public function addOrderCount(string $order): void
     {
@@ -45,7 +45,7 @@ class Statistics extends Resource
     /**
      * Add group ordering count.
      *
-     * @param int $groupId
+     * @param int $groupId Group ID.
      */
     public function addGroupCount(int $groupId): void
     {
@@ -56,7 +56,7 @@ class Statistics extends Resource
     /**
      * Add friend ordering count.
      *
-     * @param int $friendId
+     * @param int $friendId Friend ID.
      */
     public function addFriendCount(int $friendId): void
     {

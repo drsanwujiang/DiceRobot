@@ -23,7 +23,7 @@ use DiceRobot\Enum\AppStatusEnum;
 class BotOfflineDropped extends EventAction
 {
     /**
-     * @var BotOfflineEventDropped $event Event
+     * @var BotOfflineEventDropped $event Event.
      *
      * @noinspection PhpDocFieldTypeMismatchInspection
      */

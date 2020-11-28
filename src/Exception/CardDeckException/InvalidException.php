@@ -11,11 +11,11 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Card deck is invalid.
  *
- * @reply cardDeckInvalid
+ * @errorMessage cardDeckInvalid
  *
  * @package DiceRobot\Exception\CardDeckException
  */
-class InvalidException extends DiceRobotException
+final class InvalidException extends DiceRobotException
 {
     /**
      * @inheritDoc

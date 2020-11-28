@@ -60,7 +60,7 @@ class SetCoc extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      */
     protected function parseOrder(): array
     {
@@ -71,7 +71,7 @@ class SetCoc extends MessageAction
         $ruleId = empty($matches[1]) ? null : (int) $matches[1];
 
         /**
-         * @var int|null $ruleId COC check rule ID
+         * @var int|null $ruleId COC check rule ID.
          */
         return [$ruleId];
     }
@@ -79,9 +79,9 @@ class SetCoc extends MessageAction
     /**
      * Check the range.
      *
-     * @param int|null $ruleId Rule ID
+     * @param int|null $ruleId COC check rule ID.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkRange(?int $ruleId): bool
     {

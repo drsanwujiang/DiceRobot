@@ -15,13 +15,13 @@ use DiceRobot\Interfaces\Fragment;
  */
 final class Json implements Fragment
 {
-    /** @var string JSON string */
+    /** @var string JSON string. */
     public string $json;
 
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {

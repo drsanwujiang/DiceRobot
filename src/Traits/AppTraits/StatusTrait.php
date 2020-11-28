@@ -10,22 +10,22 @@ use Psr\Log\LoggerInterface;
 /**
  * Trait StatusTrait
  *
- * The application status trait.
+ * Application status trait.
  *
  * @package DiceRobot\Traits
  */
 trait StatusTrait
 {
-    /** @var AppStatusEnum Current status */
+    /** @var AppStatusEnum Current status. */
     protected AppStatusEnum $status;
 
-    /** @var LoggerInterface Logger */
+    /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
     /**
      * Get status of the application.
      *
-     * @return AppStatusEnum The status
+     * @return AppStatusEnum Status.
      */
     public function getStatus(): AppStatusEnum
     {
@@ -33,7 +33,9 @@ trait StatusTrait
     }
 
     /**
-     * @param AppStatusEnum $status The status
+     * Set status of the application.
+     *
+     * @param AppStatusEnum $status Status.
      */
     public function setStatus(AppStatusEnum $status): void
     {

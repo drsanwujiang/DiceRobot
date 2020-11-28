@@ -15,34 +15,34 @@ use Psr\Log\LoggerInterface;
 /**
  * Class HeartbeatHandler
  *
- * The heartbeat handler.
+ * Heartbeat handler.
  *
  * @package DiceRobot\Handlers
  */
 class HeartbeatHandler
 {
-    /** @var App Application */
+    /** @var App Application. */
     protected App $app;
 
-    /** @var ApiService API service */
+    /** @var ApiService API service. */
     protected ApiService $api;
 
-    /** @var ResourceService Data service */
+    /** @var ResourceService Resource service. */
     protected ResourceService $resource;
 
-    /** @var RobotService Robot service */
+    /** @var RobotService Robot service. */
     protected RobotService $robot;
 
-    /** @var LoggerInterface Logger */
+    /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
     /**
      * The constructor.
      *
-     * @param ApiService $api
-     * @param ResourceService $resource
-     * @param RobotService $robot
-     * @param LoggerFactory $loggerFactory
+     * @param ApiService $api API service.
+     * @param ResourceService $resource Resource service.
+     * @param RobotService $robot Robot service.
+     * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
         ApiService $api,
@@ -53,17 +53,20 @@ class HeartbeatHandler
         $this->api = $api;
         $this->resource = $resource;
         $this->robot = $robot;
+
         $this->logger = $loggerFactory->create("Handler");
     }
 
     /**
      * Initialize heartbeat handler.
      *
-     * @param App $app
+     * @param App $app Application.
      */
     public function initialize(App $app): void
     {
         $this->app = $app;
+
+        $this->logger->info("Heartbeat handler initialized.");
     }
 
     /**
@@ -95,7 +98,7 @@ class HeartbeatHandler
     /**
      * Prolong Mirai session.
      *
-     * @return bool
+     * @return bool Success.
      */
     public function prolongSession(): bool
     {

@@ -6,9 +6,15 @@ namespace DiceRobot\Action;
 
 use DiceRobot\Data\Report\Message\GroupMessage;
 
+/**
+ * Class RobotOrderAction
+ *
+ * Action of robot order.
+ *
+ * @package DiceRobot\Action
+ */
 abstract class RobotOrderAction extends MessageAction
 {
-
     /**
      * @inheritDoc
      */
@@ -17,16 +23,16 @@ abstract class RobotOrderAction extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      */
     abstract protected function parseOrder(): array;
 
     /**
      * Check the targeted robot ID.
      *
-     * @param string|null $targetId Targeted robot ID
+     * @param string|null $targetId Targeted robot ID.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkId(?string $targetId): bool
     {

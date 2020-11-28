@@ -36,7 +36,7 @@ use Psr\Container\ContainerInterface;
  */
 class RobotOrderRouter extends MessageAction
 {
-    /** @var string[] Order mapping */
+    /** @var string[] Order mapping. */
     protected const ORDER_MAPPING = [
         "about" => About::class,
         "start" => Start::class,
@@ -49,21 +49,21 @@ class RobotOrderRouter extends MessageAction
         "dismiss" => Goodbye::class,  // Alias of goodbye
     ];
 
-    /** @var ContainerInterface Container */
+    /** @var ContainerInterface Container. */
     protected ContainerInterface $container;
 
     /**
      * @inheritDoc
      *
-     * @param ContainerInterface $container
-     * @param Config $config
-     * @param ApiService $api
-     * @param ResourceService $resource
-     * @param RobotService $robot
-     * @param Message $message
-     * @param string $match
-     * @param string $order
-     * @param bool $at
+     * @param ContainerInterface $container Container.
+     * @param Config $config DiceRobot config.
+     * @param ApiService $api API service.
+     * @param ResourceService $resource Resource service.
+     * @param RobotService $robot Robot service.
+     * @param Message $message Message.
+     * @param string $match Order match.
+     * @param string $order Order.
+     * @param bool $at If message sender at robot.
      */
     public function __construct(
         ContainerInterface $container,
@@ -111,7 +111,7 @@ class RobotOrderRouter extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return bool Active flag
+     * @return bool Active flag.
      */
     public function checkActive(): bool
     {
@@ -126,7 +126,7 @@ class RobotOrderRouter extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -140,8 +140,8 @@ class RobotOrderRouter extends MessageAction
         $subOrder = $matches[2] ?? "";
 
         /**
-         * @var string $match Robot order match
-         * @var string $subOrder Sub-order
+         * @var string $match Robot order match.
+         * @var string $subOrder Sub-order.
          */
         return [$match, $subOrder];
     }
@@ -149,9 +149,9 @@ class RobotOrderRouter extends MessageAction
     /**
      * Check the order.
      *
-     * @param string $match The match
+     * @param string $match The match.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkOrder(string $match): bool
     {

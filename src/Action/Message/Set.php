@@ -25,18 +25,18 @@ class Set extends MessageAction
      */
     public function __invoke(): void
     {
-        list($defaultSurfaceNumber) = $this->parseOrder();
+        list($default) = $this->parseOrder();
 
-        if (!$this->checkRange($defaultSurfaceNumber)) {
+        if (!$this->checkRange($default)) {
             return;
         }
 
-        if ($defaultSurfaceNumber) {
+        if ($default) {
             // Set the default dice surface number of this chat
-            $this->chatSettings->set("defaultSurfaceNumber", $defaultSurfaceNumber);
+            $this->chatSettings->set("defaultSurfaceNumber", $default);
 
             $this->setReply("setSurfaceNumberSet", [
-                "默认骰子面数" => $defaultSurfaceNumber
+                "默认骰子面数" => $default
             ]);
         } else {
             // Reset the default dice surface number of this chat to the default value of the robot
@@ -49,7 +49,7 @@ class Set extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      */
     protected function parseOrder(): array
     {
@@ -57,26 +57,26 @@ class Set extends MessageAction
             return [-1];
         }
 
-        $defaultSurfaceNumber = empty($matches[1]) ? null : (int) $matches[1];
+        $default = empty($matches[1]) ? null : (int) $matches[1];
 
         /**
-         * @var int|null $defaultSurfaceNumber Default dice surface number
+         * @var int|null $default Default dice surface number.
          */
-        return [$defaultSurfaceNumber];
+        return [$default];
     }
 
     /**
      * Check the range.
      *
-     * @param int|null $defaultSurfaceNumber Default dice surface number
+     * @param int|null $default Default dice surface number.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
-    protected function checkRange(?int $defaultSurfaceNumber): bool
+    protected function checkRange(?int $default): bool
     {
         $maxSurfaceNumber = $this->config->getOrder("maxSurfaceNumber");
 
-        if (!is_null($defaultSurfaceNumber) && ($defaultSurfaceNumber < 1 || $defaultSurfaceNumber > $maxSurfaceNumber)) {
+        if (!is_null($default) && ($default < 1 || $default > $maxSurfaceNumber)) {
             $this->setReply("setSurfaceNumberInvalid", [
                 "最大骰子面数" => $maxSurfaceNumber
             ]);

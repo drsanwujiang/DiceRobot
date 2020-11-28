@@ -15,7 +15,7 @@ use DiceRobot\Data\DiceRobotResponse;
  */
 final class JrrpResponse extends DiceRobotResponse
 {
-    /** @var int Jrrp, aka luck of today */
+    /** @var int Jrrp, aka luck of today. */
     public int $jrrp;
 
     /**

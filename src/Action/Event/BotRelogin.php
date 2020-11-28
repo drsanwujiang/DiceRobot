@@ -22,7 +22,7 @@ use DiceRobot\Exception\MiraiApiException;
 class BotRelogin extends BotOnline
 {
     /**
-     * @var BotReloginEvent $event Event
+     * @var BotReloginEvent $event Event.
      *
      * @noinspection PhpDocFieldTypeMismatchInspection
      */
@@ -37,6 +37,6 @@ class BotRelogin extends BotOnline
     {
         $this->logger->notice("Robot is online (relogin).");
 
-        $this->initialize();
+        $this->init();
     }
 }

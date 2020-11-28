@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace DiceRobot\Data\Report\Contact;
 
 /**
- * Class FriendSender
+ * Class Friend
  *
- * DTO. Friend message sender.
+ * DTO. Friend chat.
  *
  * @package DiceRobot\Data\Report\Contact
  */
-final class FriendSender extends Sender
+final class Friend extends Sender
 {
-    /** @var string Sender nickname */
+    /** @var string Friend's nickname. */
     public string $nickname;
 
-    /** @var string Sender remark */
+    /** @var string Friend's remark. */
     public string $remark;
 }

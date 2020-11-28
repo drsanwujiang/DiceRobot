@@ -21,7 +21,7 @@ class ChatSettings extends Resource
     /**
      * @inheritDoc
      *
-     * @param array $data Chat settings data
+     * @param array $data Chat settings data.
      */
     public function __construct(array $data = [])
     {
@@ -37,7 +37,7 @@ class ChatSettings extends Resource
     /**
      * Return JSON serialized data.
      *
-     * @return string JSON serialized data
+     * @return string JSON serialized data.
      */
     public function __toString(): string
     {
@@ -53,8 +53,8 @@ class ChatSettings extends Resource
     /**
      * Set setting.
      *
-     * @param string $key Setting key
-     * @param mixed $value Setting value
+     * @param string $key Setting key.
+     * @param mixed $value Setting value.
      */
     public function set(string $key, $value): void
     {
@@ -64,8 +64,8 @@ class ChatSettings extends Resource
     /**
      * Set user nickname.
      *
-     * @param int $userId User ID
-     * @param string|null $nickname User nickname
+     * @param int $userId User ID.
+     * @param string|null $nickname User nickname.
      */
     public function setNickname(int $userId, string $nickname = null): void
     {
@@ -79,8 +79,8 @@ class ChatSettings extends Resource
     /**
      * Set user's character card ID.
      *
-     * @param int $userId User ID
-     * @param int|null $cardId Character card ID
+     * @param int $userId User ID.
+     * @param int|null $cardId Character card ID.
      */
     public function setCharacterCardId(int $userId, int $cardId = null): void
     {
@@ -94,9 +94,9 @@ class ChatSettings extends Resource
     /**
      * Get user nickname.
      *
-     * @param int $userId User ID
+     * @param int $userId User ID.
      *
-     * @return string|null User nickname
+     * @return string|null User nickname.
      */
     public function getNickname(int $userId): ?string
     {
@@ -110,11 +110,11 @@ class ChatSettings extends Resource
     /**
      * Get user's character card ID.
      *
-     * @param int $userId User ID
+     * @param int $userId User ID.
      *
-     * @return int Character card ID
+     * @return int Character card ID.
      *
-     * @throws NotBoundException
+     * @throws NotBoundException User has not bound a character card.
      */
     public function getCharacterCardId(int $userId): int
     {

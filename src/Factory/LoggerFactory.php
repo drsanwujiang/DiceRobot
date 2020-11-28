@@ -19,19 +19,19 @@ use Psr\Log\LoggerInterface;
  */
 class LoggerFactory
 {
-    /** @var Logger Logger */
+    /** @var Logger Logger. */
     protected Logger $logger;
 
-    /** @var StreamHandler Stream handler */
+    /** @var StreamHandler Stream handler. */
     protected StreamHandler $streamHandler;
 
-    /** @var RotatingFileHandler Rotating file handler */
+    /** @var RotatingFileHandler Rotating file handler. */
     protected RotatingFileHandler $rotatingFileHandler;
 
     /**
      * The constructor.
      *
-     * @param Config $config
+     * @param Config $config DiceRobot config.
      */
     public function __construct(Config $config)
     {
@@ -59,9 +59,9 @@ class LoggerFactory
     /**
      * Create a logger with same handlers but different channel.
      *
-     * @param string $channel Channel name
+     * @param string $channel Channel name.
      *
-     * @return LoggerInterface The logger
+     * @return LoggerInterface The logger.
      */
     public function create(string $channel): LoggerInterface
     {
@@ -71,7 +71,7 @@ class LoggerFactory
     /**
      * Reload config.
      *
-     * @param Config $config
+     * @param Config $config DiceRobot config.
      */
     public function reload(Config $config): void
     {

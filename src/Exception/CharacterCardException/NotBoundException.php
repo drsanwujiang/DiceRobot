@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Character card is not bound.
  *
- * @reply characterCardNotBound
+ * @errorMessage characterCardNotBound
  *
  * @package DiceRobot\Exception\CharacterCardException
  */

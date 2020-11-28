@@ -6,7 +6,7 @@ namespace DiceRobot\Action\Message\RobotOrder;
 
 use DiceRobot\Action\RobotOrderAction;
 use DiceRobot\Data\Report\Message\GroupMessage;
-use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class Nickname
@@ -29,7 +29,7 @@ class Nickname extends RobotOrderAction
     /**
      * @inheritDoc
      *
-     * @throws MiraiApiException|OrderErrorException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
@@ -41,7 +41,7 @@ class Nickname extends RobotOrderAction
 
         // Change robot's group card
         if ($this->message instanceof GroupMessage) {
-            $this->api->setMemberInfo(
+            $this->api->setGroupMemberInfo(
                 $this->message->sender->group->id,
                 $this->robot->getId(),
                 $nickname
@@ -66,7 +66,7 @@ class Nickname extends RobotOrderAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -80,8 +80,8 @@ class Nickname extends RobotOrderAction
         $nickname = $matches[2];
 
         /**
-         * @var string|null $targetId Targeted robot ID
-         * @var string $nickname Robot nickname
+         * @var string|null $targetId Targeted robot ID.
+         * @var string $nickname Robot nickname.
          */
         return [$targetId, $nickname];
     }

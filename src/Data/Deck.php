@@ -16,19 +16,19 @@ use DiceRobot\Util\Random;
  */
 class Deck
 {
-    /** @var string[] Cards */
+    /** @var string[] Cards. */
     protected array $cards = [];
 
-    /** @var int[] Card counts */
+    /** @var int[] Card counts. */
     protected array $counts = [];
 
-    /** @var int[] Original card counts */
+    /** @var int[] Original card counts. */
     protected array $originalCounts = [];
 
     /**
      * The constructor.
      *
-     * @param array $data Deck data
+     * @param array $data Deck data.
      */
     public function __construct(array $data)
     {
@@ -38,7 +38,7 @@ class Deck
     /**
      * Parse deck.
      *
-     * @param string[] $cards Cards
+     * @param string[] $cards Cards.
      */
     protected function parseDeck(array $cards): void
     {
@@ -58,7 +58,7 @@ class Deck
     /**
      * Get remanent cards number.
      *
-     * @return int Remanent cards number
+     * @return int Remanent cards number.
      */
     public function getCount(): int
     {
@@ -68,7 +68,7 @@ class Deck
     /**
      * Get cards of the deck.
      *
-     * @return string[] Cards
+     * @return string[] Cards.
      */
     public function getCards(): array
     {
@@ -86,9 +86,10 @@ class Deck
     /**
      * Draw a card from this deck.
      *
-     * @return string Card content
+     * @return string Card content.
      *
-     * @throws RuntimeException
+     * @throws RuntimeException Drawing error, but this error should not be thrown, for the statement should be
+     *                          unreachable.
      */
     public function draw(): string
     {

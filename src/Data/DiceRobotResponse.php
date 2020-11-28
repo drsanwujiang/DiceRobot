@@ -15,21 +15,21 @@ use DiceRobot\Exception\ApiException\UnexpectedErrorException;
  */
 abstract class DiceRobotResponse
 {
-    /** @var int Return code */
+    /** @var int Return code. */
     public int $code;
 
-    /** @var string Return message */
+    /** @var string Return message. */
     public string $message;
 
-    /** @var array Requested data */
+    /** @var array Requested data. */
     public array $data;
 
     /**
      * The constructor.
      *
-     * @param array $content Return content
+     * @param array $content Returned content.
      *
-     * @throws UnexpectedErrorException
+     * @throws UnexpectedErrorException API returned an unexpected code.
      */
     public function __construct(array $content)
     {

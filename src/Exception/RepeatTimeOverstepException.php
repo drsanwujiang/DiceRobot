@@ -9,7 +9,7 @@ namespace DiceRobot\Exception;
  *
  * Repeat time oversteps the limit.
  *
- * @reply _generalRepeatTimeOverstep.
+ * @errorMessage _generalRepeatTimeOverstep.
  *
  * @package DiceRobot\Exception
  */

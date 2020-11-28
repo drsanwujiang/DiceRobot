@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace DiceRobot\Handlers;
 
-use DiceRobot\App;
 use DiceRobot\Action\{EventAction, MessageAction};
+use DiceRobot\App;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\{Event, InvalidReport, Message};
 use DiceRobot\Enum\AppStatusEnum;
@@ -20,31 +20,31 @@ use Psr\Log\LoggerInterface;
 /**
  * Class ReportHandler
  *
- * The report handler.
+ * Report handler.
  *
  * @package DiceRobot\Handlers
  */
 class ReportHandler
 {
-    /** @var ContainerInterface Container */
+    /** @var ContainerInterface Container. */
     protected ContainerInterface $container;
 
-    /** @var Config Config */
+    /** @var Config DiceRobot config. */
     protected Config $config;
 
-    /** @var App Application */
+    /** @var App Application. */
     protected App $app;
 
-    /** @var ApiService API service */
+    /** @var ApiService API service. */
     protected ApiService $api;
 
-    /** @var RobotService Robot service */
+    /** @var RobotService Robot service. */
     protected RobotService $robot;
 
-    /** @var StatisticsService Statistics service */
+    /** @var StatisticsService Statistics service. */
     protected StatisticsService $statistics;
 
-    /** @var LoggerInterface Logger */
+    /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
     use RouteCollectorTrait;
@@ -52,12 +52,12 @@ class ReportHandler
     /**
      * The constructor.
      *
-     * @param ContainerInterface $container
-     * @param Config $config
-     * @param ApiService $api
-     * @param RobotService $robot
-     * @param StatisticsService $statistics
-     * @param LoggerFactory $loggerFactory
+     * @param ContainerInterface $container Container.
+     * @param Config $config DiceRobot config.
+     * @param ApiService $api API service.
+     * @param RobotService $robot Robot service.
+     * @param StatisticsService $statistics Statistics service.
+     * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
         ContainerInterface $container,
@@ -72,36 +72,41 @@ class ReportHandler
         $this->api = $api;
         $this->robot = $robot;
         $this->statistics = $statistics;
+
         $this->logger = $loggerFactory->create("Handler");
     }
 
     /**
      * Initialize report handler.
      *
-     * @param App $app
+     * @param App $app Application.
      */
     public function initialize(App $app): void
     {
         $this->app = $app;
+
+        $this->logger->info("Heartbeat handler initialized.");
     }
 
     /**
      * Handle message and event report.
      *
-     * @param string $reportContent
+     * @param string $content Report content.
+     *
+     * @noinspection PhpRedundantCatchClauseInspection
      */
-    public function handle(string $reportContent): void
+    public function handle(string $content): void
     {
-        $this->logger->debug("Receive report, content: {$reportContent}");
+        $this->logger->debug("Receive report, content: {$content}");
 
         $this->logger->info("Report started.");
 
         // Validate
-        if (!is_object($reportData = json_decode($reportContent))) {
+        if (!is_object($data = json_decode($content))) {
             $this->logger->error("Report failed, JSON decode error.");
 
             return;
-        } elseif (!$this->validate($report = ReportFactory::create($reportData))) {
+        } elseif (!$this->validate($report = ReportFactory::create($data))) {
             $this->logger->info("Report skipped, unsupported report.");
 
             return;
@@ -120,7 +125,7 @@ class ReportHandler
     }
 
     /**
-     * @param Event $event
+     * @param Event $event Event.
      *
      * @noinspection PhpRedundantCatchClauseInspection
      */
@@ -158,9 +163,7 @@ class ReportHandler
     }
 
     /**
-     * @param Message $message
-     *
-     * @throws MiraiApiException
+     * @param Message $message Message.
      *
      * @noinspection PhpRedundantCatchClauseInspection
      */
@@ -236,9 +239,9 @@ class ReportHandler
     /**
      * Validate the report.
      *
-     * @param Report $report
+     * @param Report $report Report.
      *
-     * @return bool
+     * @return bool Validity.
      */
     protected function validate(Report $report): bool
     {
@@ -248,9 +251,9 @@ class ReportHandler
     /**
      * Filter the order.
      *
-     * @param Message $message
+     * @param Message $message Message.
      *
-     * @return array Filter and at
+     * @return array Filter and at.
      */
     protected function filter(Message $message): array
     {

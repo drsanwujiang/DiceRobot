@@ -6,7 +6,7 @@ namespace DiceRobot\Action\Message\RobotOrder;
 
 use DiceRobot\Action\RobotOrderAction;
 use DiceRobot\Data\Report\Message\GroupMessage;
-use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class Start
@@ -26,7 +26,7 @@ class Start extends RobotOrderAction
     /**
      * @inheritDoc
      *
-     * @throws MiraiApiException|OrderErrorException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
@@ -46,7 +46,7 @@ class Start extends RobotOrderAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -59,7 +59,7 @@ class Start extends RobotOrderAction
         $targetId = empty($matches[1]) ? null : $matches[1];
 
         /**
-         * @var string|null $targetId Targeted robot ID
+         * @var string|null $targetId Targeted robot ID.
          */
         return [$targetId];
     }
@@ -67,7 +67,7 @@ class Start extends RobotOrderAction
     /**
      * Check the permission of message sender.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkPermission(): bool
     {

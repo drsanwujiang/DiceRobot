@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message\RobotOrder;
 
 use DiceRobot\Data\Report\Message\GroupMessage;
-use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class Stop
@@ -25,7 +25,7 @@ class Stop extends Start
     /**
      * @inheritDoc
      *
-     * @throws MiraiApiException|OrderErrorException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
@@ -45,7 +45,7 @@ class Stop extends Start
     /**
      * @inheritDoc
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkPermission(): bool
     {

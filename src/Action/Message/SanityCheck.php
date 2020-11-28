@@ -7,11 +7,10 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Response\SanityCheckResponse;
-use DiceRobot\Exception\OrderErrorException;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Exception\CharacterCardException\{ItemNotExistException, LostException, NotBoundException};
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class SanityCheck
@@ -34,9 +33,9 @@ class SanityCheck extends MessageAction
     /**
      * @inheritDoc
      *
-     * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException|InternalErrorException
-     * @throws ItemNotExistException|LostException|NetworkErrorException|NotBoundException|OrderErrorException
-     * @throws SurfaceNumberOverstepException|UnexpectedErrorException
+     * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
+     * @throws ItemNotExistException|LostException|NotBoundException|OrderErrorException
+     * @throws SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {
@@ -80,7 +79,7 @@ class SanityCheck extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -99,9 +98,9 @@ class SanityCheck extends MessageAction
         $sanity = empty($matches[3]) ? null : (int) $matches[3];
 
         /**
-         * @var string $successExpression Expression when check succeeded
-         * @var string $failureExpression Expression when check failed
-         * @var int|null $sanity Sanity to check
+         * @var string $successExpression Expression when check succeeded.
+         * @var string $failureExpression Expression when check failed.
+         * @var int|null $sanity Sanity to check.
          */
         return [$successExpression, $failureExpression, $sanity];
     }
@@ -109,10 +108,10 @@ class SanityCheck extends MessageAction
     /**
      * Get decreases of sanity.
      *
-     * @param string $successExpression Expression when checking successful
-     * @param string $failureExpression Expression when checking failed
+     * @param string $successExpression Expression when checking successful.
+     * @param string $failureExpression Expression when checking failed.
      *
-     * @return array Decreases
+     * @return array Decreases.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
@@ -128,10 +127,10 @@ class SanityCheck extends MessageAction
     /**
      * Check the range.
      *
-     * @param int $successDecrease Decrease when checking successful
-     * @param int $failureDecrease Decrease when checking failed
+     * @param int $successDecrease Decrease when checking successful.
+     * @param int $failureDecrease Decrease when checking failed.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkRange(int $successDecrease, int $failureDecrease): bool
     {
@@ -147,7 +146,7 @@ class SanityCheck extends MessageAction
     /**
      * Get check result and complete expression.
      *
-     * @return array Check result and complete expression
+     * @return array Check result and complete expression.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
@@ -163,17 +162,18 @@ class SanityCheck extends MessageAction
     }
 
     /**
-     * Check sanity
+     * Check sanity.
      *
-     * @param int|null $sanity Sanity
-     * @param int $successDecrease Decrease when checking successful
-     * @param int $failureDecrease Decrease when checking failed
-     * @param int $checkResult Check result
+     * @param int|null $sanity Sanity.
+     * @param int $successDecrease Decrease when checking successful.
+     * @param int $failureDecrease Decrease when checking failed.
+     * @param int $checkResult Check result.
      *
-     * @return array Check details
+     * @return array Check details.
      *
-     * @throws InternalErrorException|ItemNotExistException|LostException|NetworkErrorException|NotBoundException
-     * @throws UnexpectedErrorException|
+     * @throws ItemNotExistException
+     * @throws LostException
+     * @throws NotBoundException
      */
     protected function check(?int $sanity, int $successDecrease, int $failureDecrease, int $checkResult): array
     {
@@ -207,13 +207,11 @@ class SanityCheck extends MessageAction
     /**
      * Update the character card.
      *
-     * @param int $cardId Character card ID
-     * @param int $checkResult The check result
-     * @param array $decreases Decreases
+     * @param int $cardId Character card ID.
+     * @param int $checkResult The check result.
+     * @param array $decreases Decreases.
      *
-     * @return SanityCheckResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @return SanityCheckResponse The response.
      */
     protected function updateCard(int $cardId, int $checkResult, array $decreases): SanityCheckResponse
     {
@@ -221,7 +219,7 @@ class SanityCheck extends MessageAction
             $cardId,
             $checkResult,
             $decreases,
-            $this->api->auth($this->robot->getId(), $this->message->sender->id)->token
+            $this->api->authorize($this->robot->getId(), $this->message->sender->id)->token
         );
     }
 }

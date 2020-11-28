@@ -6,8 +6,8 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Resource\CardDeck;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\CardDeckException\{InvalidException, NotFoundException};
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class Deck
@@ -91,7 +91,7 @@ class Deck extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -109,8 +109,8 @@ class Deck extends MessageAction
         }
 
         /**
-         * @var string $order Order
-         * @var string $subOrder Sub-orders
+         * @var string $order Order.
+         * @var string $subOrder Sub-orders.
          */
         return [$order, $subOrder];
     }
@@ -118,7 +118,7 @@ class Deck extends MessageAction
     /**
      * Whether the default card deck has been set.
      *
-     * @return bool
+     * @return bool Validity.
      */
     protected function checkDeck(): bool
     {

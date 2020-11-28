@@ -15,7 +15,7 @@ use DiceRobot\Data\DiceRobotResponse;
  */
 final class KowtowResponse extends DiceRobotResponse
 {
-    /** @var int The piety */
+    /** @var int Piety. */
     public int $piety;
 
     /**

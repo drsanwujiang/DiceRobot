@@ -20,7 +20,7 @@ class CustomConfig
     /**
      * The constructor.
      *
-     * @param array $data Config data
+     * @param array $data Config data.
      */
     public function __construct(array $data = [])
     {

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message\RobotOrder;
 
 use DiceRobot\Action\MessageAction;
-use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
 use DiceRobot\Exception\FileException\LostException;
+use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\Convertor;
 
 /**
@@ -25,7 +25,8 @@ class About extends MessageAction
     /**
      * @inheritDoc
      *
-     * @throws LostException|MiraiApiException|OrderErrorException
+     * @throws LostException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
@@ -45,7 +46,7 @@ class About extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */

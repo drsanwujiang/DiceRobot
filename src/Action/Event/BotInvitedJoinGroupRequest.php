@@ -7,8 +7,6 @@ namespace DiceRobot\Action\Event;
 use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\BotInvitedJoinGroupRequestEvent;
-use DiceRobot\Exception\MiraiApiException;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 
 /**
  * Class BotInvitedJoinGroupRequest
@@ -24,7 +22,7 @@ use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorExcept
 class BotInvitedJoinGroupRequest extends EventAction
 {
     /**
-     * @var BotInvitedJoinGroupRequestEvent $event Event
+     * @var BotInvitedJoinGroupRequestEvent $event Event.
      *
      * @noinspection PhpDocFieldTypeMismatchInspection
      */
@@ -32,8 +30,6 @@ class BotInvitedJoinGroupRequest extends EventAction
 
     /**
      * @inheritDoc
-     *
-     * @throws InternalErrorException|MiraiApiException|NetworkErrorException|UnexpectedErrorException|
      */
     public function __invoke(): void
     {
@@ -47,7 +43,7 @@ class BotInvitedJoinGroupRequest extends EventAction
         if ($operation == 0 && $this->checkRejectWhenDelinquent() && $this->queryGroup()) {
             // Group is in black list, reject the request
             $operation = 1;
-            $message = $this->config->getString("reply.botInvitedJoinGroupRequestRejected");
+            $message = $this->config->getStrategy("botInvitedJoinGroupRequestRejected");
         }
 
         $this->api->respondToBotInvitedJoinGroupRequestEvent(
@@ -62,45 +58,43 @@ class BotInvitedJoinGroupRequest extends EventAction
     /**
      * @inheritDoc
      *
-     * @return bool Listened
+     * @return bool Listen strategy.
      */
     protected function checkListen(): bool
     {
-        return $this->config->getBool("strategy.listenBotInvitedJoinGroupRequestEvent");
+        return $this->config->getStrategy("listenBotInvitedJoinGroupRequestEvent");
     }
 
     /**
      * Check whether this request should be approved.
      *
-     * @return bool Approved
+     * @return bool Strategy.
      */
     protected function checkApprove(): bool
     {
-        return $this->config->getBool("strategy.approveGroupRequest");
+        return $this->config->getStrategy("approveGroupRequest");
     }
 
     /**
      * Check whether this request should be rejected when the group is delinquent.
      *
-     * @return bool Rejected
+     * @return bool Strategy.
      */
     protected function checkRejectWhenDelinquent(): bool
     {
-        return $this->config->getBool("strategy.rejectDelinquentGroupRequest");
+        return $this->config->getStrategy("rejectDelinquentGroupRequest");
     }
 
     /**
      * Query whether this group is delinquent.
      *
-     * @return bool Delinquent
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @return bool Delinquent.
      */
     protected function queryGroup(): bool
     {
         return $this->api->queryGroup(
             $this->event->groupId,
-            $this->api->auth($this->robot->getId())->token
+            $this->api->authorize($this->robot->getId())->token
         )->state;
     }
 }

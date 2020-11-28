@@ -15,7 +15,7 @@ use DiceRobot\Data\DiceRobotResponse;
  */
 final class AuthorizeResponse extends DiceRobotResponse
 {
-    /** @var string JWT token */
+    /** @var string JWT token. */
     public string $token;
 
     /**

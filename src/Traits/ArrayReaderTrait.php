@@ -7,7 +7,7 @@ namespace DiceRobot\Traits;
 /**
  * Trait ArrayReaderTrait
  *
- * The array reader trait.
+ * Array reader trait.
  *
  * This trait is a simple version of ArrayReader in selective/array-reader.
  *

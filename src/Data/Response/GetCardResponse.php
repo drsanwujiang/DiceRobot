@@ -16,16 +16,16 @@ use DiceRobot\Exception\CharacterCardException\{FormatInvalidException, NotFound
  */
 final class GetCardResponse extends DiceRobotResponse
 {
-    /** @var int Character card ID */
+    /** @var int Character card ID. */
     public int $id;
 
-    /** @var int Character card type */
+    /** @var int Character card type. */
     public int $type;
 
-    /** @var array Investigator's attributes */
+    /** @var array Investigator's attributes. */
     public array $attributes;
 
-    /** @var array Investigator's attributes */
+    /** @var array Investigator's attributes. */
     public array $skills;
 
     /**
@@ -42,8 +42,8 @@ final class GetCardResponse extends DiceRobotResponse
     /**
      * @inheritDoc
      *
-     * @throws FormatInvalidException
-     * @throws NotFoundException
+     * @throws FormatInvalidException Character card format invalid.
+     * @throws NotFoundException Character card not found.
      */
     protected function validate(): void
     {

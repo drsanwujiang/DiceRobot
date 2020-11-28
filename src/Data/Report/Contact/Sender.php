@@ -13,6 +13,6 @@ namespace DiceRobot\Data\Report\Contact;
  */
 abstract class Sender
 {
-    /** @var int Sender ID */
+    /** @var int Sender's ID. */
     public int $id;
 }

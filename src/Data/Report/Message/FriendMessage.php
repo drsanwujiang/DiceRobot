@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Report\Message;
 
-use DiceRobot\Data\Report\Contact\FriendSender;
+use DiceRobot\Data\Report\Contact\Friend;
 use DiceRobot\Data\Report\Message;
 
 /**
@@ -16,6 +16,6 @@ use DiceRobot\Data\Report\Message;
  */
 final class FriendMessage extends Message
 {
-    /** @var FriendSender Message sender */
-    public FriendSender $sender;
+    /** @var Friend Message sender. */
+    public Friend $sender;
 }

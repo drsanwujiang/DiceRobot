@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Character card format invalid.
  *
- * @reply characterCardFormatInvalid
+ * @errorMessage characterCardFormatInvalid
  *
  * @package DiceRobot\Exception\CharacterCardException
  */

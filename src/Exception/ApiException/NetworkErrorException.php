@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Unable to connect DiceRobot API server.
  *
- * @reply apiNetworkError
+ * @errorMessage apiNetworkError
  *
  * @package DiceRobot\Exception\ApiException
  */

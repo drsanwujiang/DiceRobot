@@ -6,8 +6,8 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Resource\CardDeck;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\CardDeckException\{InvalidException, NotFoundException};
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class Draw
@@ -32,9 +32,9 @@ class Draw extends MessageAction
      */
     public function __invoke(): void
     {
-        list($deckName, $drawCount) = $this->parseOrder();
+        list($deckName, $count) = $this->parseOrder();
 
-        if (!$this->checkRange($drawCount)) {
+        if (!$this->checkRange($count)) {
             return;
         }
 
@@ -51,7 +51,7 @@ class Draw extends MessageAction
             $deck = $this->resource->getCardDeck($deckName);
         }
 
-        list($empty, $result) = $this->draw($deck, $deckName, $drawCount);
+        list($empty, $result) = $this->draw($deck, $deckName, $count);
 
         $this->setReply("drawResult", [
             "昵称" => $this->getNickname(),
@@ -69,20 +69,20 @@ class Draw extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
     protected function parseOrder(): array
     {
         $deckName = null;
-        $drawCount = 1;
+        $count = 1;
 
         if (preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches)) {
-            $drawCount = (int) ($matches[1] ?? 1);
+            $count = (int) ($matches[1] ?? 1);
         } elseif (preg_match("/^(\S+?)\s+([1-9][0-9]*)$/", $this->order, $matches)) {
             $deckName = $matches[1];
-            $drawCount = (int) $matches[2];
+            $count = (int) $matches[2];
         } elseif (preg_match("/^(\S+?)$/", $this->order, $matches)) {
             $deckName = $matches[1];
         } else {
@@ -90,22 +90,24 @@ class Draw extends MessageAction
         }
 
         /**
-         * @var null $deckName Deck name
-         * @var int $drawCount Count of drawing card
+         * @var null $deckName Deck name.
+         * @var int $count Count of drawing card.
          */
-        return [$deckName, $drawCount];
+        return [$deckName, $count];
     }
 
     /**
-     * @param int $drawCount Count of drawing card
+     * Check the range.
      *
-     * @return bool
+     * @param int $count Count of drawing card.
+     *
+     * @return bool Validity.
      */
-    protected function checkRange(int $drawCount): bool
+    protected function checkRange(int $count): bool
     {
         $maxDrawCount = $this->config->getOrder("maxDrawCount");
 
-        if ($drawCount > $maxDrawCount) {
+        if ($count > $maxDrawCount) {
             $this->setReply("drawCountOverstep", [
                 "最大抽牌次数" => $maxDrawCount
             ]);
@@ -117,20 +119,22 @@ class Draw extends MessageAction
     }
 
     /**
-     * @param CardDeck $deck Card deck to draw from
-     * @param string $deckName Deck name
-     * @param int $drawCount Count of drawing card
+     * Draw card(s) from the card deck.
      *
-     * @return array Empty flag and draw result
+     * @param CardDeck $deck Card deck to draw from.
+     * @param string $deckName Deck name.
+     * @param int $count Count of drawing card.
+     *
+     * @return array Empty flag and draw result.
      *
      * @throws InvalidException|NotFoundException
      */
-    protected function draw(CardDeck $deck, string $deckName, int $drawCount): array
+    protected function draw(CardDeck $deck, string $deckName, int $count): array
     {
         $empty = false;
         $result = "";
 
-        while ($drawCount--) {
+        while ($count--) {
             if (false === $content = $deck->draw($deckName)) {
                 // Deck is empty, stop drawing
                 $empty = true;

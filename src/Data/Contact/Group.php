@@ -13,12 +13,12 @@ namespace DiceRobot\Data\Contact;
  */
 class Group
 {
-    /** @var int Group ID */
+    /** @var int Group's ID. */
     public int $id;
 
-    /** @var string Group name */
+    /** @var string Group's name. */
     public string $name;
 
-    /** @var string Robot's permission in the group */
+    /** @var string Robot's permission. */
     public string $permission;
 }

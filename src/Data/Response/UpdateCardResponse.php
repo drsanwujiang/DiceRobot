@@ -16,7 +16,7 @@ use DiceRobot\Exception\CharacterCardException\PermissionDeniedException;
  */
 final class UpdateCardResponse extends DiceRobotResponse
 {
-    /** @var int Current value */
+    /** @var int Current value. */
     public int $afterValue;
 
     /**
@@ -30,7 +30,7 @@ final class UpdateCardResponse extends DiceRobotResponse
     /**
      * @inheritDoc
      *
-     * @throws PermissionDeniedException
+     * @throws PermissionDeniedException User does not have permission to access the character card.
      */
     protected function validate(): void
     {

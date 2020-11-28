@@ -13,12 +13,12 @@ namespace DiceRobot\Data\Contact;
  */
 class Robot
 {
-    /** @var int Robot ID */
+    /** @var int Robot's ID. */
     public int $id;
 
-    /** @var string Robot nickname */
+    /** @var string Robot's nickname. */
     public string $nickname;
 
-    /** @var string Auth key of Mirai API HTTP */
+    /** @var string Authorization key of Mirai API HTTP plugin. */
     public string $authKey;
 }

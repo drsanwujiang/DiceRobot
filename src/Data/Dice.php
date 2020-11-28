@@ -18,43 +18,43 @@ use Throwable;
  */
 class Dice
 {
-    /** @var int Max dice number */
+    /** @var int Max dice number. */
     protected static int $maxDiceNumber;
 
-    /** @var string[] B/P dice type wording */
+    /** @var string[] B/P dice type wording. */
     protected static array $bpDiceType;
 
-    /** @var int Default dice surface number */
+    /** @var int Default dice surface number. */
     public int $defaultSurfaceNumber;
 
-    /** @var string Order */
+    /** @var string Order. */
     public string $order;
 
-    /** @var string|null Visibility type of dicing. H: Private, S: Only display final result */
+    /** @var string|null Visibility type of dicing. H: Private, S: Only display final result. */
     public ?string $vType = null;
 
-    /** @var string|null Bonus/Punishment dice type. B: Bonus dice, P: Punishment dice */
+    /** @var string|null Bonus/Punishment dice type. B: Bonus dice, P: Punishment dice. */
     public ?string $bpType = null;
 
-    /** @var int Bonus/Punishment dice number */
+    /** @var int Bonus/Punishment dice number. */
     public int $bpDiceNumber;
 
-    /** @var int[] Bonus/Punishment dicing result */
+    /** @var int[] Bonus/Punishment dicing result. */
     public array $bpResult;
 
-    /** @var string Dicing expression */
+    /** @var string Dicing expression. */
     public string $expression;
 
-    /** @var string[] Split dicing expressions */
+    /** @var string[] Split dicing expressions. */
     public array $expressions;
 
-    /** @var Subexpression[] Subexpressions */
+    /** @var Subexpression[] Subexpressions. */
     public array $subexpressions;
 
-    /** @var string Dicing reason */
+    /** @var string Dicing reason. */
     public string $reason;
 
-    /** @var int Dicing result */
+    /** @var int Dicing result. */
     public int $result;
 
     /**
@@ -62,7 +62,7 @@ class Dice
      *
      * @GlobalInitialize
      *
-     * @param Config $config
+     * @param Config $config DiceRobot config.
      */
     public static function globalInitialize(Config $config): void
     {
@@ -73,10 +73,12 @@ class Dice
     /**
      * The constructor.
      *
-     * @param string $order Order
-     * @param int $defaultSurfaceNumber Default surface number in chat settings
+     * @param string $order Dicing order.
+     * @param int $defaultSurfaceNumber Default dice surface number.
      *
-     * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
      */
     public function __construct(string $order = "", int $defaultSurfaceNumber = 100)
@@ -96,7 +98,9 @@ class Dice
     /**
      * Clone dice, and regenerate result.
      *
-     * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws ExpressionInvalidException
      */
     public function __clone()
     {
@@ -110,7 +114,9 @@ class Dice
     /**
      * Parse the order to dice type and dicing expression.
      *
-     * @throws DiceNumberOverstepException|ExpressionInvalidException|SurfaceNumberOverstepException
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionInvalidException
+     * @throws SurfaceNumberOverstepException
      */
     protected function parseOrder(): void
     {
@@ -141,9 +147,11 @@ class Dice
     /**
      * Parse dicing expression to several subexpressions.
      *
-     * @param string $expression Dicing expression
+     * @param string $expression Dicing expression.
      *
-     * @throws DiceNumberOverstepException|ExpressionInvalidException|SurfaceNumberOverstepException
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionInvalidException
+     * @throws SurfaceNumberOverstepException
      */
     protected function parseExpression(string $expression): void
     {
@@ -199,7 +207,9 @@ class Dice
     /**
      * Get result according to the dice type.
      *
-     * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws ExpressionInvalidException
      */
     protected function getResult(): void
     {
@@ -213,7 +223,7 @@ class Dice
     /**
      * Roll bonus/punishment dices and get result.
      *
-     * @throws DiceNumberOverstepException
+     * @throws DiceNumberOverstepException Dice number exceeds max limit.
      */
     protected function bp(): void
     {
@@ -238,7 +248,8 @@ class Dice
     /**
      * Eval arithmetic expression to calculate result.
      *
-     * @throws ExpressionErrorException|ExpressionInvalidException
+     * @throws ExpressionErrorException Expression cannot be successfully evaluated.
+     * @throws ExpressionInvalidException Expression contains characters other than permitted characters.
      */
     protected function calculate(): void
     {
@@ -265,7 +276,7 @@ class Dice
     /**
      * Generate result expression, in which the subexpressions will be replaced with joint dicing results.
      *
-     * @return string Result expression
+     * @return string Result expression.
      */
     protected function toResultExpression(): string
     {
@@ -281,7 +292,7 @@ class Dice
     /**
      * Generate arithmetic expression, in which the subexpressions will be replaced with dicing result.
      *
-     * @return string Arithmetic expression
+     * @return string Arithmetic expression.
      */
     protected function toArithmeticExpression(): string
     {
@@ -297,7 +308,7 @@ class Dice
     /**
      * Get easily readable expression (replace * with ×).
      *
-     * @return string Expression
+     * @return string Expression.
      */
     public function getExpression(): string
     {
@@ -307,7 +318,7 @@ class Dice
     /**
      * Get easily readable result expression (replace * with ×).
      *
-     * @return string Result expression
+     * @return string Result expression.
      */
     public function getResultExpression(): string
     {
@@ -317,7 +328,7 @@ class Dice
     /**
      * Get easily readable arithmetic expression (replace * with ×).
      *
-     * @return string Arithmetic expression
+     * @return string Arithmetic expression.
      */
     public function getArithmeticExpression(): string
     {
@@ -327,9 +338,9 @@ class Dice
     /**
      * Get complete expression according to dice type.
      *
-     * @param bool $simplify Forcedly simplify the result
+     * @param bool $simplify Forcedly simplify the result.
      *
-     * @return string Complete expression
+     * @return string Complete expression.
      */
     public function getCompleteExpression(bool $simplify = false): string
     {

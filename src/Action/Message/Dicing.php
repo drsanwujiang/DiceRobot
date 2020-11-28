@@ -7,9 +7,9 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Report\Message\GroupMessage;
-use DiceRobot\Exception\RepeatTimeOverstepException;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
+use DiceRobot\Exception\RepeatTimeOverstepException;
 use DiceRobot\Util\Convertor;
 
 /**
@@ -46,11 +46,11 @@ class Dicing extends MessageAction
      */
     public function __invoke(): void
     {
-        list($expression, $repeat) = $this->parseOrder();
+        list($expression, $repetition) = $this->parseOrder();
 
-        $this->checkRange($repeat);
+        $this->checkRange($repetition);
 
-        list($vType, $reason, $detail) = $this->dicing($expression, $repeat);
+        list($vType, $reason, $detail) = $this->dicing($expression, $repetition);
 
         $reply = Convertor::toCustomString(
             $this->config->getReply(empty($reason) ? "dicingResult" : "dicingResultWithReason"),
@@ -75,7 +75,7 @@ class Dicing extends MessageAction
                 $this->setReply(empty($reason) ? "dicingPrivate" : "dicingPrivateWithReason", [
                     "原因" => $reason,
                     "昵称" => $this->getNickname(),
-                    "掷骰次数" => $repeat
+                    "掷骰次数" => $repetition
                 ]);
             } else {
                 $this->setReply("dicingPrivateNotInGroup");
@@ -88,31 +88,31 @@ class Dicing extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      */
     protected function parseOrder(): array
     {
         preg_match("/^([\S\s]*?)(?:#([1-9][0-9]*))?$/", $this->order, $matches);
         $expression = $matches[1];
-        $repeat = empty($matches[2]) ? 1 : (int) $matches[2];
+        $repetition = empty($matches[2]) ? 1 : (int) $matches[2];
 
         /**
-         * @var string $expression Dicing expression
-         * @var int $repeat Count of repetition
+         * @var string $expression Dicing expression.
+         * @var int $repetition Count of repetition.
          */
-        return [$expression, $repeat];
+        return [$expression, $repetition];
     }
 
     /**
      * Check the range.
      *
-     * @param int $repeat Repeat count
+     * @param int $repetition Count of repetition.
      *
      * @throws RepeatTimeOverstepException
      */
-    protected function checkRange(int $repeat): void
+    protected function checkRange(int $repetition): void
     {
-        if ($repeat < 1 || $repeat > $this->config->getOrder("maxRepeatTimes")) {
+        if ($repetition < 1 || $repetition > $this->config->getOrder("maxRepeatTimes")) {
             throw new RepeatTimeOverstepException();
         }
     }
@@ -120,33 +120,33 @@ class Dicing extends MessageAction
     /**
      * Execute dicing order.
      *
-     * @param string $expression Dicing expression
-     * @param int $repeat Repeat count
+     * @param string $expression Dicing expression.
+     * @param int $repetition Count of repetition.
      *
-     * @return array Dicing reason and detail
+     * @return array Dicing reason and detail.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
      */
-    protected function dicing(string $expression, int $repeat): array
+    protected function dicing(string $expression, int $repetition): array
     {
-        $detail = $repeat > 1 ? "\n" : "";
+        $detail = $repetition > 1 ? "\n" : "";
         /** @var Dice[] $dices */
         $dices = [];
 
-        for ($i = 0; $i < $repeat; $i++) {
-            $dices[$repeat] = isset($dices[$repeat + 1]) ?
-                clone $dices[$repeat + 1] :
+        for ($i = 0; $i < $repetition; $i++) {
+            $dices[$repetition] = isset($dices[$repetition + 1]) ?
+                clone $dices[$repetition + 1] :
                 new Dice($expression, $this->chatSettings->getInt("defaultSurfaceNumber"));
-            $detail .= $dices[$repeat]->getCompleteExpression() . "\n";
+            $detail .= $dices[$repetition]->getCompleteExpression() . "\n";
         }
 
         // Simplify the reply
         if (mb_strlen($detail) > $this->config->getOrder("maxReplyCharacter")) {
             $detail = "";
 
-            for ($i = 0; $i < $repeat; $i++) {
-                $detail .= $dices[$repeat]->getCompleteExpression(true) . "\n";
+            for ($i = 0; $i < $repetition; $i++) {
+                $detail .= $dices[$repetition]->getCompleteExpression(true) . "\n";
             }
         }
 

@@ -15,13 +15,13 @@ use DiceRobot\Interfaces\Fragment;
  */
 final class Poke implements Fragment
 {
-    /** @var string Poke name */
+    /** @var string Poke name. */
     public string $name;
 
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {

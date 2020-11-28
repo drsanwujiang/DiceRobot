@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Requested file is lost.
  *
- * @reply fileLost
+ * @errorMessage fileLost
  *
  * @package DiceRobot\Exception\FileException
  */

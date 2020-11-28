@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace DiceRobot\Service;
 
 use DiceRobot\Data\Resource\{CardDeck, CharacterCard, ChatSettings, CheckRule, Config, Reference, Statistics};
-use DiceRobot\Exception\RuntimeException;
+use DiceRobot\Exception\CardDeckException\NotFoundException as CardDeckNotFoundException;
 use DiceRobot\Exception\CharacterCardException\LostException as CharacterCardLostException;
 use DiceRobot\Exception\CheckRuleException\LostException as CheckRuleLostException;
-use DiceRobot\Exception\CardDeckException\NotFoundException as CardDeckNotFoundException;
 use DiceRobot\Exception\FileException\LostException as FileLostException;
+use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Util\File;
 use Psr\Log\LoggerInterface;
@@ -23,40 +23,40 @@ use Psr\Log\LoggerInterface;
  */
 class ResourceService
 {
-    /** @var LoggerInterface */
+    /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
-    /** @var array */
+    /** @var array Resource directories. */
     protected array $directories = [];
 
-    /** @var bool Loaded */
+    /** @var bool Whether the resources are loaded. */
     protected bool $isLoaded = false;
 
-    /** @var Config */
+    /** @var Config Panel config. */
     protected Config $config;
 
-    /** @var Statistics */
+    /** @var Statistics Statistics. */
     protected Statistics $statistics;
 
-    /** @var ChatSettings[][] */
+    /** @var ChatSettings[][] Chat settings. */
     protected array $chatSettings = [ "friend" => [], "group" => [] ];
 
-    /** @var CharacterCard[] */
+    /** @var CharacterCard[] Character cards. */
     protected array $characterCards = [];
 
-    /** @var CheckRule[] */
+    /** @var CheckRule[] Check rules. */
     protected array $checkRules = [];
 
-    /** @var Reference[] */
+    /** @var Reference[] References. */
     protected array $references = [];
 
-    /** @var CardDeck[] */
+    /** @var CardDeck[] Card decks. */
     protected array $cardDecks = [];
 
     /**
      * The constructor.
      *
-     * @param LoggerFactory $loggerFactory
+     * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(LoggerFactory $loggerFactory)
     {
@@ -66,9 +66,9 @@ class ResourceService
     /**
      * Initialize resource service.
      *
-     * @param \DiceRobot\Data\Config $config
+     * @param \DiceRobot\Data\Config $config DiceRobot config.
      *
-     * @throws RuntimeException
+     * @throws RuntimeException Failed to initialize resource service.
      */
     public function initialize(\DiceRobot\Data\Config $config): void
     {
@@ -91,7 +91,7 @@ class ResourceService
     /**
      * Check resource directories.
      *
-     * @return bool
+     * @return bool Success.
      */
     public function checkDirectories(): bool
     {
@@ -118,7 +118,7 @@ class ResourceService
     /**
      * Load all the resources.
      *
-     * @return bool
+     * @return bool Success.
      */
     public function loadAll(): bool
     {
@@ -153,7 +153,7 @@ class ResourceService
     /**
      * Save all loaded resources.
      *
-     * @return bool
+     * @return bool Success.
      */
     public function saveAll(): bool
     {
@@ -175,7 +175,7 @@ class ResourceService
     }
 
     /**
-     * Load config.
+     * Load panel config.
      */
     protected function loadConfig(): void
     {
@@ -314,7 +314,7 @@ class ResourceService
     }
 
     /**
-     * Save config.
+     * Save panel config.
      *
      * @throws RuntimeException
      */
@@ -370,8 +370,8 @@ class ResourceService
     /**
      * Set character card.
      *
-     * @param int $cardId
-     * @param CharacterCard $card
+     * @param int $cardId Character card ID.
+     * @param CharacterCard $card Character card.
      */
     public function setCharacterCard(int $cardId, CharacterCard $card): void
     {
@@ -379,9 +379,9 @@ class ResourceService
     }
 
     /**
-     * Get config.
+     * Get panel config.
      *
-     * @return Config
+     * @return Config Panel config.
      */
     public function getConfig(): Config
     {
@@ -391,7 +391,7 @@ class ResourceService
     /**
      * Get statistics.
      *
-     * @return Statistics
+     * @return Statistics Statistics.
      */
     public function getStatistics(): Statistics
     {
@@ -401,10 +401,10 @@ class ResourceService
     /**
      * Get chat settings.
      *
-     * @param string $chatType
-     * @param int $chatId
+     * @param string $chatType Chat type.
+     * @param int $chatId Chat ID.
      *
-     * @return ChatSettings
+     * @return ChatSettings Chat settings.
      */
     public function getChatSettings(string $chatType, int $chatId): ChatSettings
     {
@@ -422,11 +422,11 @@ class ResourceService
     /**
      * Get character card.
      *
-     * @param int $cardId
+     * @param int $cardId Character card ID.
      *
-     * @return CharacterCard
+     * @return CharacterCard Character card.
      *
-     * @throws CharacterCardLostException
+     * @throws CharacterCardLostException Character card file cannot be found.
      */
     public function getCharacterCard(int $cardId): CharacterCard
     {
@@ -440,11 +440,11 @@ class ResourceService
     /**
      * Get check rule.
      *
-     * @param int $ruleId
+     * @param int $ruleId Check rule ID.
      *
-     * @return CheckRule
+     * @return CheckRule Check rule.
      *
-     * @throws CheckRuleLostException
+     * @throws CheckRuleLostException Check rule file cannot be found.
      */
     public function getCheckRule(int $ruleId): CheckRule
     {
@@ -458,11 +458,11 @@ class ResourceService
     /**
      * Get reference.
      *
-     * @param string $referenceKey
+     * @param string $referenceKey Reference key.
      *
-     * @return Reference
+     * @return Reference Reference.
      *
-     * @throws FileLostException
+     * @throws FileLostException Reference file cannot be found.
      */
     public function getReference(string $referenceKey): Reference
     {
@@ -474,13 +474,13 @@ class ResourceService
     }
 
     /**
-     * Get card deck.
+     * Get corresponding card deck of the public deck.
      *
-     * @param string $publicDeckKey
+     * @param string $publicDeckKey Public deck key.
      *
-     * @return CardDeck
+     * @return CardDeck Card deck.
      *
-     * @throws CardDeckNotFoundException
+     * @throws CardDeckNotFoundException Card deck file cannot be found.
      */
     public function getCardDeck(string $publicDeckKey): CardDeck
     {

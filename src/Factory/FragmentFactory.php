@@ -19,8 +19,8 @@ use DiceRobot\Util\Convertor;
  */
 class FragmentFactory
 {
-    /** @var string[] Fragment mapping */
-    protected const FRAGMENT_MAPPING = [
+    /** @var string[] Mapping between fragment and the full name of the corresponding class. */
+    protected const FRAGMENTS = [
         "App" => App::class,
         "At" => At::class,
         "AtAll" => AtAll::class,
@@ -38,8 +38,8 @@ class FragmentFactory
         "UnknownFragment" => UnknownFragment::class
     ];
 
-    /** @var string[] Parsable fragment mapping */
-    protected const PARSABLE_FRAGMENT_MAPPING = [
+    /** @var string[] Mapping between parsable fragment and the full name of the corresponding class. */
+    protected const PARSABLE_FRAGMENTS = [
         "at" => At::class,
         "atall" => AtAll::class,
         "face" => Face::class,
@@ -49,33 +49,33 @@ class FragmentFactory
     ];
 
     /**
-     * Create fragment from JSON parsed object.
+     * Create fragment from parsed JSON object.
      *
-     * @param object $fragmentData JSON parsed object
+     * @param object $data Fragment data (parsed JSON object).
      *
-     * @return Fragment The fragment
+     * @return Fragment The fragment.
      */
-    public static function create(object $fragmentData): Fragment
+    public static function create(object $data): Fragment
     {
-        $type = $fragmentData->type ?? "UnknownFragment";
-        $class = static::FRAGMENT_MAPPING[$type] ?? static::FRAGMENT_MAPPING["UnknownFragment"];
+        $type = $data->type ?? "UnknownFragment";
+        $class = static::FRAGMENTS[$type] ?? static::FRAGMENTS["UnknownFragment"];
 
-        return Convertor::toCustomInstance($fragmentData, $class, static::FRAGMENT_MAPPING["UnknownFragment"]);
+        return Convertor::toCustomInstance($data, $class, static::FRAGMENTS["UnknownFragment"]);
     }
 
     /**
      * Create parsable fragment from Mirai code.
      *
-     * @param string $code Mirai code
+     * @param string $code Mirai code.
      *
-     * @return ParsableFragment The parsable fragment
+     * @return ParsableFragment The parsable fragment.
      */
     public static function fromMiraiCode(string $code): ParsableFragment
     {
         if (preg_match("/^\[mirai:(\w+)(?::.+?)?]$/i", $code, $matches) &&
-            array_key_exists($matches[1], static::PARSABLE_FRAGMENT_MAPPING)
+            array_key_exists($matches[1], static::PARSABLE_FRAGMENTS)
         ) {
-            $fragmentType = static::PARSABLE_FRAGMENT_MAPPING[$matches[1]];
+            $fragmentType = static::PARSABLE_FRAGMENTS[$matches[1]];
 
             /** @var ParsableFragment $fragment */
             $fragment = new $fragmentType();

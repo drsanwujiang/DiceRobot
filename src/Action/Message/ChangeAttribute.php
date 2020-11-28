@@ -7,14 +7,10 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Response\UpdateCardResponse;
-use DiceRobot\Exception\{DiceException\DiceNumberOverstepException,
-    DiceException\ExpressionErrorException,
-    DiceException\ExpressionInvalidException,
-    DiceException\SurfaceNumberOverstepException,
-    DiceRobotException,
-    OrderErrorException};
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
-use DiceRobot\Exception\CharacterCardException\NotBoundException;
+use DiceRobot\Exception\CharacterCardException\{LostException, NotBoundException};
+use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
+    ExpressionInvalidException, SurfaceNumberOverstepException};
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class ChangeAttribute
@@ -37,8 +33,13 @@ class ChangeAttribute extends MessageAction
     /**
      * @inheritDoc
      *
-     * @throws DiceRobotException|InternalErrorException|NetworkErrorException|NotBoundException|OrderErrorException
-     * @throws UnexpectedErrorException
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws ExpressionInvalidException
+     * @throws LostException
+     * @throws NotBoundException
+     * @throws OrderErrorException
+     * @throws SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {
@@ -72,7 +73,7 @@ class ChangeAttribute extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -92,9 +93,9 @@ class ChangeAttribute extends MessageAction
         $expression = $matches[2];
 
         /**
-         * @var string $attribute Attribute name
-         * @var string $symbol Addition/Subtraction symbol
-         * @var string $expression Dicing expression
+         * @var string $attribute Attribute name.
+         * @var string $symbol Addition/Subtraction symbol.
+         * @var string $expression Dicing expression.
          */
         return [$attribute, $symbol, $expression];
     }
@@ -102,9 +103,9 @@ class ChangeAttribute extends MessageAction
     /**
      * Get dicing result and complete expression.
      *
-     * @param string $expression Dicing expression
+     * @param string $expression Dicing expression.
      *
-     * @return array Check result and complete expression
+     * @return array Dicing result and complete expression.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
@@ -127,13 +128,11 @@ class ChangeAttribute extends MessageAction
     /**
      * Update character card.
      *
-     * @param int $cardId Character card ID
-     * @param string $attribute Attribute name
-     * @param int $change The change value
+     * @param int $cardId Character card ID.
+     * @param string $attribute Attribute name.
+     * @param int $change Change value.
      *
-     * @return UpdateCardResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @return UpdateCardResponse The response.
      */
     protected function updateCard(int $cardId, string $attribute, int $change): UpdateCardResponse
     {
@@ -141,7 +140,7 @@ class ChangeAttribute extends MessageAction
             $cardId,
             $attribute,
             $change,
-            $this->api->auth($this->robot->getId(), $this->message->sender->id)->token
+            $this->api->authorize($this->robot->getId(), $this->message->sender->id)->token
         );
     }
 }

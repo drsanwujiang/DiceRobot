@@ -9,7 +9,7 @@ use DiceRobot\Data\Resource;
 /**
  * Class Reference
  *
- * Resource container. The reference.
+ * Resource container. Reference.
  *
  * @package DiceRobot\Data\Resource
  */

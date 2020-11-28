@@ -18,19 +18,19 @@ use DiceRobot\Interfaces\Report;
  */
 abstract class Message implements Report
 {
-    /** @var object[] Mirai message chain */
+    /** @var object[] Mirai message chain. */
     public array $messageChain;
 
-    /** @var string Serialized fragments */
+    /** @var string Serialized fragments. */
     public string $message = "";
 
-    /** @var Source Message source */
+    /** @var Source Message source. */
     public Source $source;
 
     /**
      * Return serialized fragments (aka raw message).
      *
-     * @return string Serialized fragments
+     * @return string Serialized fragments.
      */
     public function __toString()
     {
@@ -40,7 +40,7 @@ abstract class Message implements Report
     /**
      * Parse message chain to serialized fragments.
      *
-     * @return bool Parse success
+     * @return bool Parse success.
      */
     public function parseMessageChain(): bool
     {

@@ -14,17 +14,17 @@ declare(strict_types=1);
  */
 
 namespace {
-    /** @var string Current version */
+    /** @var string Current version. */
     const DICEROBOT_VERSION = "2.0.3";
 
-    /** @var string Root directory */
+    /** @var string Root directory. */
     define("DICEROBOT_STARTUP", time());
 }
 
 namespace DiceRobot {
     use Monolog\Logger;
 
-    /** @var array Default config */
+    /** @var array Default config. */
     const DEFAULT_CONFIG = [
         "dicerobot" => [
             "version" => DICEROBOT_VERSION,
@@ -261,7 +261,7 @@ namespace DiceRobot {
         ]
     ];
 
-    /** @var array Default routes */
+    /** @var array Default routes. */
     const DEFAULT_ROUTES = [
         "message" => [
             10 => [
@@ -327,7 +327,7 @@ namespace DiceRobot {
         ]
     ];
 
-    /** @var array Default chat settings */
+    /** @var array Default chat settings. */
     const DEFAULT_CHAT_SETTINGS = [
         "active" => true,
         "robotNickname" => null,

@@ -8,10 +8,10 @@ use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Data\Resource\Reference;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
 use DiceRobot\Exception\FileException\LostException;
+use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\{Convertor, Random};
 
 /**
@@ -31,7 +31,7 @@ use DiceRobot\Util\{Convertor, Random};
  */
 class Coc extends MessageAction
 {
-    /** @var string[][]|string[] COC generate rule */
+    /** @var string[][]|string[] COC generation rules. */
     protected const COC_GENERATE_RULE = [
         6 => [
             "3D6", "3D6", "3D6",
@@ -54,14 +54,14 @@ class Coc extends MessageAction
      */
     public function __invoke(): void
     {
-        list($version, $generateCount, $detailed) = $this->parseOrder();
+        list($version, $count, $detailed) = $this->parseOrder();
 
-        if (!$this->checkRange($generateCount)){
+        if (!$this->checkRange($count)){
             return;
         }
 
         $reference = $this->resource->getReference("COCCharacterCardTemplate");  // Load reference
-        $attributes = $this->generateAttributes($version, $generateCount, $reference);
+        $attributes = $this->generateAttributes($version, $count, $reference);
         $details = $detailed ? "\n{$this->generateDetails($reference)}" : "";
         $atSender = ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "";
 
@@ -76,7 +76,7 @@ class Coc extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -87,29 +87,29 @@ class Coc extends MessageAction
         }
 
         $version = empty($matches[1]) ? 7 : (int) $matches[1];
-        $generateCount = empty($matches[2]) ? 1 : (int) $matches[2];
+        $count = empty($matches[2]) ? 1 : (int) $matches[2];
         $detailed = !empty($matches[3]);
 
         /**
-         * @var int $version COC version
-         * @var int $generateCount Count of generation
-         * @var bool $detailed Detailed generation flag
+         * @var int $version COC version.
+         * @var int $count Count of generation.
+         * @var bool $detailed Detailed generation flag.
          */
-        return [$version, $generateCount, $detailed];
+        return [$version, $count, $detailed];
     }
 
     /**
      * Check the range.
      *
-     * @param int $generateCount Count of generation
+     * @param int $count Count of generation.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
-    protected function checkRange(int $generateCount): bool
+    protected function checkRange(int $count): bool
     {
         $maxGenerateCount = $this->config->getOrder("maxGenerateCount");
 
-        if ($generateCount > $maxGenerateCount) {
+        if ($count > $maxGenerateCount) {
             $this->setReply("cocGenerateCountOverstep", [
                 "最大生成次数" => $maxGenerateCount
             ]);
@@ -123,11 +123,11 @@ class Coc extends MessageAction
     /**
      * Generate attributes of character card.
      *
-     * @param int $version COC version
-     * @param int $count Count of generation
-     * @param Reference $reference The reference
+     * @param int $version COC version.
+     * @param int $count Count of generation.
+     * @param Reference $reference The reference.
      *
-     * @return string Attributes
+     * @return string Attributes.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
@@ -170,9 +170,9 @@ class Coc extends MessageAction
     /**
      * Generate details of character card.
      *
-     * @param Reference $reference The reference
+     * @param Reference $reference The reference.
      *
-     * @return string Details
+     * @return string Details.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
@@ -196,10 +196,10 @@ class Coc extends MessageAction
     /**
      * Draw items.
      *
-     * @param array $target The target
-     * @param int $count Draw count
+     * @param array $target Item group.
+     * @param int $count Draw count.
      *
-     * @return string Item(s)
+     * @return string Item(s).
      */
     protected function draw(array $target, int $count = 1): string
     {

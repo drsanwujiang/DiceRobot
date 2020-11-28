@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
-use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
+use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\Convertor;
 
 /**
@@ -22,14 +21,13 @@ use DiceRobot\Util\Convertor;
  */
 class Kowtow extends MessageAction
 {
-    /** @var int[] Kowtow levels */
+    /** @var int[] Kowtow levels. */
     protected const KOWTOW_LEVEL = [10, 30, 60, 80, 95, 100];
 
     /**
      * @inheritDoc
      *
-     * @throws InternalErrorException|MiraiApiException|NetworkErrorException|OrderErrorException
-     * @throws UnexpectedErrorException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
@@ -52,7 +50,7 @@ class Kowtow extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -68,9 +66,9 @@ class Kowtow extends MessageAction
     /**
      * Get kowtow level.
      *
-     * @param int $piety Piety
+     * @param int $piety Piety.
      *
-     * @return int|null Level
+     * @return int|null Level.
      */
     protected function getKowtowLevel(int $piety): ?int
     {

@@ -25,31 +25,31 @@ use Swoole\Timer;
  */
 class App
 {
-    /** @var ContainerInterface Container */
+    /** @var ContainerInterface Container. */
     protected ContainerInterface $container;
 
-    /** @var Config Config */
+    /** @var Config DiceRobot config. */
     protected Config $config;
 
-    /** @var ApiService API service */
+    /** @var ApiService API service. */
     protected ApiService $api;
 
-    /** @var ResourceService Data service */
+    /** @var ResourceService Resource service. */
     protected ResourceService $resource;
 
-    /** @var RobotService Robot service */
+    /** @var RobotService Robot service. */
     protected RobotService $robot;
 
-    /** @var StatisticsService Statistics service */
+    /** @var StatisticsService Statistics service. */
     protected StatisticsService $statistics;
 
-    /** @var HeartbeatHandler Heartbeat handler */
+    /** @var HeartbeatHandler Heartbeat handler. */
     protected HeartbeatHandler $heartbeatHandler;
 
-    /** @var ReportHandler Report handler */
+    /** @var ReportHandler Report handler. */
     protected ReportHandler $reportHandler;
 
-    /** @var LoggerInterface Logger */
+    /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
     use StatusTrait;
@@ -57,15 +57,15 @@ class App
     /**
      * The constructor.
      *
-     * @param ContainerInterface $container
-     * @param Config $config
-     * @param ApiService $api
-     * @param ResourceService $resource
-     * @param RobotService $robot
-     * @param StatisticsService $statistics
-     * @param HeartbeatHandler $heartbeatHandler
-     * @param ReportHandler $reportHandler
-     * @param LoggerFactory $loggerFactory
+     * @param ContainerInterface $container Container.
+     * @param Config $config DiceRobot config.
+     * @param ApiService $api API service.
+     * @param ResourceService $resource Resource service.
+     * @param RobotService $robot Robot service.
+     * @param StatisticsService $statistics Statistics service.
+     * @param HeartbeatHandler $heartbeatHandler Heartbeat handler.
+     * @param ReportHandler $reportHandler Report handler.
+     * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
         ContainerInterface $container,
@@ -127,7 +127,7 @@ class App
     /**
      * Register routes.
      *
-     * @param array $routes The routes
+     * @param array $routes Routes.
      */
     public function registerRoutes(array $routes): void
     {
@@ -154,102 +154,57 @@ class App
         $this->container->get(LoggerFactory::class)->reload($this->config);
     }
 
-    /******************************************************************************
-     *                              Application APIs                              *
-     ******************************************************************************/
-
     /**
-     * Get robot profile.
+     * Set panel config.
      *
-     * @return array Result data
+     * @param string $content Panel config content.
+     *
+     * @return int Result code.
      */
-    public function profile(): array
+    public function setConfig(string $content): int
     {
-        return [
-            "id" => $this->robot->getId(),
-            "nickname" => $this->robot->getNickname(),
-            "friends" => $this->robot->getFriendsCount(),
-            "groups" => $this->robot->getGroupsCount(),
-            "startup" => DICEROBOT_STARTUP,
-            "version" => DICEROBOT_VERSION
-        ];
+        if (!is_array($data = json_decode($content, true))) {
+            return -1;
+        } elseif (false === $this->resource->getConfig()->setConfig($data)) {
+            return -2;
+        }
+
+        $this->loadConfig();
+
+        return 0;
     }
 
     /**
-     * Get application status.
-     *
-     * @return array Result data
+     * Handle heartbeat.
      */
-    public function status(): array
+    public function heartbeat(): void
     {
-        return [$this->getStatus()->getValue()];
+        $this->heartbeatHandler->handle();
     }
 
     /**
-     * Get application statistics.
+     * Handle report.
      *
-     * @return array Result data
+     * @param string $content Report content
      */
-    public function statistics(): array
+    public function report(string $content): void
     {
-        $statistics = $this->statistics->getAllData();
-        $data = [
-            "sum" => $statistics["sum"],
-            "orders" => [],
-            "groups" => [],
-            "friends" => [],
-            "timeline" => $this->statistics->getTimeline(),
-            "counts" => $this->statistics->getCounts()
-        ];
-
-        foreach (["orders", "groups", "friends"] as $type) {
-            arsort($statistics[$type], SORT_NUMERIC);
-            $statistics[$type] = array_slice($statistics[$type], 0, 5, true);
-        }
-
-        foreach ($statistics["orders"] as $order => $value) {
-            $data["orders"][] = [$order, $value];
-        }
-
-        foreach ($statistics["groups"] as $id => $value) {
-            $data["groups"][] = [$id, $this->robot->getGroup($id)->name ?? "[Unknown Group]", $value];
-        }
-
-        foreach ($statistics["friends"] as $id => $value) {
-            $data["friends"][] = [$id, $this->robot->getFriend($id)->nickname ?? "[Unknown Friend]", $value];
-        }
-
-        return $data;
-    }
-
-    /**
-     * Get application config.
-     *
-     * @return array Result data
-     */
-    public function config(): array
-    {
-        return [
-            "strategy" => $this->config->getArray("strategy"),
-            "order" => $this->config->getArray("order"),
-            "reply" => $this->config->getArray("reply"),
-            "errMsg" => $this->config->getArray("errMsg"),
-        ];
+        $this->reportHandler->handle($content);
     }
 
     /**
      * Pause application.
      *
-     * @return int Result code
+     * @return int Result code.
      */
     public function pause(): int
     {
         if ($this->getStatus()->equals(AppStatusEnum::PAUSED())) {
             // Application is already paused
-            return -1000;
+            return -1;
         } elseif ($this->getStatus()->lessThan(AppStatusEnum::PAUSED())) {
             // Cannot be paused
-            return -1001;
+            return -2;
         }
 
         $this->setStatus(AppStatusEnum::PAUSED());
@@ -260,16 +215,16 @@ class App
     /**
      * Rerun application.
      *
-     * @return int Result code
+     * @return int Result code.
      */
     public function run(): int
     {
         if ($this->getStatus()->equals(AppStatusEnum::RUNNING())) {
             // Application is already running
-            return -1010;
+            return -1;
         } elseif (!$this->getStatus()->equals(AppStatusEnum::PAUSED())) {
             // Cannot be rerun
-            return -1011;
+            return -2;
         }
 
         try {
@@ -287,13 +242,13 @@ class App
             $this->logger->alert("Rerun application failed, unable to call Mirai API.");
         }
 
-        return -1012;
+        return -3;
     }
 
     /**
      * Reload the resources.
      *
-     * @return int Result code
+     * @return int Result code.
      */
     public function reload(): int
     {
@@ -302,7 +257,7 @@ class App
         if (!$this->resource->loadAll()) {
             $this->logger->critical("Reload application failed.");
 
-            return -1020;
+            return -1;
         }
 
         $this->loadConfig();
@@ -317,7 +272,7 @@ class App
     /**
      * Stop application and release resources.
      *
-     * @return int Result code
+     * @return int Result code.
      */
     public function stop(): int
     {
@@ -334,45 +289,7 @@ class App
         } else {
             $this->logger->alert("Application exited non-normally. Resources and data may not be saved.");
 
-            return -1030;
+            return -1;
         }
-    }
-
-    /**
-     * Set application config.
-     *
-     * @param string $content Config content
-     *
-     * @return int Result code
-     */
-    public function setConfig(string $content): int
-    {
-        if (!is_array($data = json_decode($content, true))) {
-            return -1060;
-        } elseif (false === $this->resource->getConfig()->setConfig($data)) {
-            return -1061;
-        }
-
-        $this->loadConfig();
-
-        return 0;
-    }
-
-    /**
-     * Handle heartbeat.
-     */
-    public function heartbeat(): void
-    {
-        $this->heartbeatHandler->handle();
-    }
-
-    /**
-     * Handle report
-     *
-     * @param string $content Report content
-     */
-    public function report(string $content): void
-    {
-        $this->reportHandler->handle($content);
     }
 }

@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Character card cannot be accessed.
  *
- * @reply characterCardPermissionDenied
+ * @errorMessage characterCardPermissionDenied
  *
  * @package DiceRobot\Exception\CharacterCardException
  */

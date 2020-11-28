@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Resource\CharacterCard;
 use DiceRobot\Exception\OrderErrorException;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 
 /**
  * Class Card
@@ -26,7 +25,7 @@ class Card extends MessageAction
     /**
      * @inheritDoc
      *
-     * @throws InternalErrorException|NetworkErrorException|OrderErrorException|UnexpectedErrorException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
@@ -53,7 +52,7 @@ class Card extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -64,7 +63,7 @@ class Card extends MessageAction
         }
 
         /**
-         * @var int $cardId Character card ID
+         * @var int $cardId Character card ID.
          */
         return [$cardId];
     }
@@ -72,17 +71,15 @@ class Card extends MessageAction
     /**
      * Get character card content.
      *
-     * @param int $cardId Character card ID
+     * @param int $cardId Character card ID.
      *
-     * @return array Card data
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @return array Character card content.
      */
     protected function getCard(int $cardId): array
     {
         return $this->api->getCard(
             $cardId,
-            $this->api->auth($this->robot->getId(), $this->message->sender->id)->token
+            $this->api->authorize($this->robot->getId(), $this->message->sender->id)->token
         )->data;
     }
 }

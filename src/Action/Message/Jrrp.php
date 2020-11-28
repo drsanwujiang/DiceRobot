@@ -6,7 +6,6 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Exception\OrderErrorException;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 
 /**
  * Class Jrrp
@@ -24,7 +23,7 @@ class Jrrp extends MessageAction
     /**
      * @inheritDoc
      *
-     * @throws InternalErrorException|NetworkErrorException|OrderErrorException|UnexpectedErrorException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
@@ -39,7 +38,7 @@ class Jrrp extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */

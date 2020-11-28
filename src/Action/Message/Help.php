@@ -6,8 +6,8 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Resource\Reference;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\FileException\LostException;
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class Help
@@ -45,7 +45,7 @@ class Help extends MessageAction
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
      * @throws OrderErrorException
      */
@@ -58,7 +58,7 @@ class Help extends MessageAction
         $order = strtolower($matches[1] ?? "");
 
         /**
-         * @var string $order Order to query
+         * @var string $order Order to query.
          */
         return [$order];
     }
@@ -66,10 +66,10 @@ class Help extends MessageAction
     /**
      * Check the order.
      *
-     * @param string $order The order
-     * @param Reference $reference The reference
+     * @param string $order The order.
+     * @param Reference $reference The reference.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkOrder(string $order, Reference $reference): bool
     {

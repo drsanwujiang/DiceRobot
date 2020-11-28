@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Check rule is dangerous.
  *
- * @reply checkRuleDangerous
+ * @errorMessage checkRuleDangerous
  *
  * @package DiceRobot\Exception\CheckRuleException
  */
