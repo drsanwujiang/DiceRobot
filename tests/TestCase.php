@@ -9,10 +9,10 @@ use Psr\Container\ContainerInterface;
 
 class TestCase extends \PHPUnit\Framework\TestCase
 {
-    protected function getContainer(): ContainerInterface
+    protected static function getContainer(): ContainerInterface
     {
         $containerBuilder = new ContainerBuilder();
-        $containerBuilder->addDefinitions(__DIR__ . "/config/container.php");
+        $containerBuilder->addDefinitions(__DIR__ . "/skeleton/config/container.php");
 
         return $containerBuilder->build();
     }
