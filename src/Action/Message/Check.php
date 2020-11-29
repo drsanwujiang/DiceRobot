@@ -69,9 +69,8 @@ class Check extends MessageAction
                 "昵称" => $nickname,
                 "检定次数" => $repetition,
                 "检定项目" => $item,
-                ...$attributes,
                 "检定详情" => $checkDetails
-            ]);
+            ] + $attributes);
         }
 
         if ($private) {
@@ -142,7 +141,7 @@ class Check extends MessageAction
     protected function getCheckInfo(string $item): array
     {
         if (is_numeric($item)) {
-            return [null, (int) $item];
+            return [null, (int) $item, null];
         } else {
             $card = $this->resource->getCharacterCard(
                 $this->chatSettings->getCharacterCardId($this->message->sender->id)

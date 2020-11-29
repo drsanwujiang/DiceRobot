@@ -65,7 +65,7 @@ class Coc extends MessageAction
         $details = $detailed ? "\n{$this->generateDetails($reference)}" : "";
         $atSender = ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "";
 
-        $this->setReply("cocGenerateCardHeading", [
+        $this->setReply("cocGenerateResult", [
             "@发送者" => $atSender,
             "COC版本" => $version,
             "调查员属性" => $attributes,

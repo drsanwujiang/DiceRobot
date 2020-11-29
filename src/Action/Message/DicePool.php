@@ -42,7 +42,7 @@ class DicePool extends MessageAction
 
         list($finalResult, $details) = $this->dicing($diceNumber, $threshold);
 
-        $detail = "{$diceNumber}a{$threshold}={}" . ($detailed ? "{$details}=" : "") . $finalResult;
+        $detail = "{$diceNumber}a{$threshold}=" . ($detailed ? "{$details}=" : "") . $finalResult;
 
         $this->setReply(empty($reason) ? "dicePoolResult" : "dicePoolResultWithReason", [
             "原因" => $reason,
@@ -117,7 +117,7 @@ class DicePool extends MessageAction
         $details = [];
 
         while ($diceNumber) {
-            $dice = isset($dice) ? clone $dice : new Dice("{$diceNumber}D", 10);
+            $dice = new Dice("{$diceNumber}D", 10);
             $diceNumber = 0;
 
             foreach ($dice->subexpressions[0]->results as $result) {

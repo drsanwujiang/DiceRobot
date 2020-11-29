@@ -135,10 +135,10 @@ class Dicing extends MessageAction
         $dices = [];
 
         for ($i = 0; $i < $repetition; $i++) {
-            $dices[$repetition] = isset($dices[$repetition + 1]) ?
-                clone $dices[$repetition + 1] :
+            $dices[$i] = isset($dices[$i - 1]) ?
+                clone $dices[$i - 1] :
                 new Dice($expression, $this->chatSettings->getInt("defaultSurfaceNumber"));
-            $detail .= $dices[$repetition]->getCompleteExpression() . "\n";
+            $detail .= $dices[$i]->getCompleteExpression() . "\n";
         }
 
         // Simplify the reply
@@ -146,10 +146,10 @@ class Dicing extends MessageAction
             $detail = "";
 
             for ($i = 0; $i < $repetition; $i++) {
-                $detail .= $dices[$repetition]->getCompleteExpression(true) . "\n";
+                $detail .= $dices[$i]->getCompleteExpression(true) . "\n";
             }
         }
 
-        return [$dice->vType ?? null, $dice->reason ?? "", rtrim($detail)];
+        return [$dices[0]->vType ?? null, $dices[0]->reason ?? "", rtrim($detail)];
     }
 }

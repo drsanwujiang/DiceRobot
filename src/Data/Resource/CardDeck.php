@@ -132,7 +132,7 @@ class CardDeck extends Resource
      *
      * @param string $publicDeckName Public deck name.
      *
-     * @return string|bool Success.
+     * @return string|false Success.
      *
      * @throws InvalidException
      * @throws NotFoundException Card deck cannot be found.
@@ -144,31 +144,28 @@ class CardDeck extends Resource
         }
 
         try {
-            return $this->drawCard($publicDeckName, true);
+            $result = $this->drawCard($this->getDeck($publicDeckName), true);
         } catch (RuntimeException $e) {
-            return false;
+            $result = false;
         }
+
+        return $result;
     }
 
     /**
-     * Draw card(s) from the deck(s).
+     * Draw card from the deck.
      *
-     * @param string $deckName Deck name.
+     * @param Deck $deck Deck.
      * @param bool $isFirst Whether the deck is the first (entry).
      *
      * @return string Card content.
      *
-     * @throws InvalidException Deck cannot be found (Card deck incomplete).
+     * @throws InvalidException
      * @throws RuntimeException Deck empty.
      */
-    protected function drawCard(string $deckName, bool $isFirst = false): string
+    protected function drawCard(Deck $deck, bool $isFirst = false): string
     {
-        $deck = $this->get($deckName);
-
-        if (!($deck instanceof Deck)) {
-            // Sub-deck does not exist, which means the card deck is not valid
-            throw new InvalidException();
-        } elseif ($isFirst && $deck->getCount() <= 0) {
+        if ($isFirst && $deck->getCount() <= 0) {
             // If the deck is the first (entry), check count
             throw new RuntimeException("Deck empty.");
         }
@@ -176,7 +173,7 @@ class CardDeck extends Resource
         $content = $deck->draw();
 
         return (string) preg_replace_callback("/{[&%]?(.+?)}/", function (array $matches) {
-            return $this->drawCard((string) $matches[1]);
+            return $this->drawCard($this->getDeck((string) $matches[1]));
         }, $content);
     }
 }

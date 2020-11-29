@@ -43,7 +43,7 @@ class Draw extends MessageAction
             $deck = $this->chatSettings->get("cardDeck");
 
             if (!is_string($deckName) || !($deck instanceof CardDeck)) {
-                $this->setReply("deckNotSet");
+                $this->setReply("drawDeckNotSet");
 
                 return;
             }
@@ -58,10 +58,13 @@ class Draw extends MessageAction
             "抽牌结果" => $result
         ]);
 
-        // If deck is empty, send message and reset the deck
-        if ($empty) {
+        // If the deck is empty, reset the card deck
+        if ($deck->getDeck($deckName)->getCount() <= 0) {
             $deck->reset();
+        }
 
+        // If the deck is run out of, send message
+        if ($empty) {
             $this->setReply("drawDeckEmpty");
         }
     }

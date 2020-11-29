@@ -31,7 +31,7 @@ class Card extends MessageAction
     {
         list($cardId) = $this->parseOrder();
 
-        if ($cardId) {
+        if ($cardId > 0) {
             // Bind character card
             $this->sendMessageAsync($this->config->getReply("cardPending"));
 
@@ -61,6 +61,8 @@ class Card extends MessageAction
         if (!preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches)) {
             throw new OrderErrorException;
         }
+
+        $cardId = (int) ($matches[1] ?? 0);
 
         /**
          * @var int $cardId Character card ID.

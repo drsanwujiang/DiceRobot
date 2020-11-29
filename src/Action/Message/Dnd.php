@@ -43,7 +43,7 @@ class Dnd extends MessageAction
 
         $atSender = ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "";
 
-        $this->setReply("dndGenerateCardHeading", [
+        $this->setReply("dndGenerateResult", [
             "@发送者" => $atSender,
             "发送者QQ" => $this->message->sender->id,
             "冒险者属性" => $this->generateAttributes($count)
@@ -83,7 +83,7 @@ class Dnd extends MessageAction
         $maxGenerateCount = $this->config->getOrder("maxGenerateCount");
 
         if ($count < 1 || $count > $maxGenerateCount) {
-            $this->setReply("dndGenerateCardCountOverstep", [
+            $this->setReply("dndGenerateCountOverstep", [
                 "最大生成次数" => $maxGenerateCount
             ]);
 

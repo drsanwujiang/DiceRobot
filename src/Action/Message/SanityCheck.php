@@ -53,10 +53,10 @@ class SanityCheck extends MessageAction
             list($checkLevel, $decrease, $previousSanity, $currentSanity, $maxSanity) =
                 $this->check($sanity, $successDecrease, $failureDecrease, $checkResult);
 
-            $this->setReply("sanCheckResult", [
+            $this->setReply("sanityCheckResult", [
                 "昵称" => $this->getNickname(),
                 "掷骰结果" => $fullCheckResult,
-                "检定结果" => $this->config->getString("wording.sanCheckLevel.$checkLevel"),
+                "检定结果" => $this->config->getString("wording.sanityCheckLevel.$checkLevel"),
                 "SAN值减少" => $decrease,
                 "原有SAN值" => $previousSanity,
                 "当前SAN值" => $currentSanity,
@@ -65,10 +65,10 @@ class SanityCheck extends MessageAction
         } else {
             list($checkLevel, $decrease) = $this->check($sanity, $successDecrease, $failureDecrease, $checkResult);
 
-            $this->setReply("sanCheckResultWithSanity", [
+            $this->setReply("sanityCheckResultWithSanity", [
                 "昵称" => $this->getNickname(),
                 "掷骰结果" => $fullCheckResult,
-                "检定结果" => $this->config->getString("wording.sanCheckLevel.$checkLevel"),
+                "检定结果" => $this->config->getString("wording.sanityCheckLevel.$checkLevel"),
                 "SAN值减少" => $decrease,
                 "原有SAN值" => $sanity,
                 "当前SAN值" => $sanity - $decrease
@@ -135,7 +135,7 @@ class SanityCheck extends MessageAction
     protected function checkRange(int $successDecrease, int $failureDecrease): bool
     {
         if ($successDecrease < 0 || $failureDecrease < 0) {
-            $this->setReply("sanCheckWrongExpression");
+            $this->setReply("sanityCheckWrongExpression");
 
             return false;
         }

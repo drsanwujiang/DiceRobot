@@ -15,7 +15,7 @@ declare(strict_types=1);
 
 namespace {
     /** @var string Current version. */
-    const DICEROBOT_VERSION = "2.0.3";
+    const DICEROBOT_VERSION = "2.1.0";
 
     /** @var string Root directory. */
     define("DICEROBOT_STARTUP", time());
@@ -115,7 +115,7 @@ namespace DiceRobot {
 
             /* Deck */
             "deckSet" => "默认牌堆已修改为：{&牌堆名称}",
-            "deckReset" => "【嘭！】牌堆又变回了原来的样子( ﾟ▽ﾟ)/ ",
+            "deckReset" => "【嘭！】牌堆又变回了原来的样子( ﾟ▽ﾟ)/",
             "deckShowRest" => "当前牌堆还剩下这些卡牌：\n{&卡牌列表}",
             "deckUnset" => "牌堆不见惹~",
             "deckNotSet" => "还没有设置默认牌堆，不能这样做哦~",
@@ -141,6 +141,7 @@ namespace DiceRobot {
             "drawResult" => "来看看{&昵称}抽到了什么：\n{&抽牌结果}",
             "drawCountOverstep" => "一次最多只能从牌堆中抽{&最大抽牌次数}张牌哦~",
             "drawDeckEmpty" => "这副牌堆已经一张都没有了(=ﾟωﾟ)=",
+            "drawDeckNotSet" => "需要先设置默认牌堆，才能愉悦地抽牌哟~",
 
             /* Help */
             "helpOrderUnknown" => "咦？找不到这条指令诶……",
@@ -260,7 +261,7 @@ namespace DiceRobot {
                 "UltimateFailure" => "极限失败",
                 "GreatFailure" => "大失败"
             ],
-            "sanCheckLevel" => [
+            "sanityCheckLevel" => [
                 "success" => "成功",
                 "failure" => "失败"
             ]

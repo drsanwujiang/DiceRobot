@@ -120,11 +120,10 @@ class Dice
      */
     protected function parseOrder(): void
     {
-        preg_match("/^(?:([hs])\s*)?(?:([bp])\s*)?/i", $this->order, $matches);
-        $order = (string) preg_replace("/^([hs]\s*)?([bp]\s*)?/i", "", $this->order);
+        preg_match("/^([hs])?\s*([bp])?(.*)\s*$/i", $this->order, $matches);
         $this->vType = empty($matches[1]) ? null : strtoupper($matches[1]);
         $this->bpType = empty($matches[2]) ? null : strtoupper($matches[2]);
-
+        $order = (string) $matches[3];
 
         if ($this->bpType) {
             // Bonus/Punishment dice
