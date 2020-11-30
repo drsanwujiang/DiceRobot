@@ -17,8 +17,8 @@ use DiceRobot\Exception\OrderErrorException;
  * @order draw
  *
  *      Sample: .draw
- *              .draw FGO
  *              .draw 10
+ *              .draw FGO
  *              .draw FGO 10
  *
  * @package DiceRobot\Action\Message
