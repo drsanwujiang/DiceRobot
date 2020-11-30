@@ -15,23 +15,21 @@ use Exception;
  * report handler will catch this exception and send the corresponding message. If exception contains extra message,
  * the message will be logged.
  *
- * @reply
- *
  * @package DiceRobot\Exception
  */
 abstract class DiceRobotException extends Exception
 {
-    /** @var string Error message key */
+    /** @var string Error message key. */
     protected string $errMsgKey;
 
-    /** @var string Extra message */
+    /** @var string Extra message. */
     public string $extMsg;
 
     /**
      * The constructor.
      *
-     * @param string $errMsgKey The error message key
-     * @param string $extMsg The extra message
+     * @param string $errMsgKey Error message key.
+     * @param string $extMsg Extra message.
      */
     public function __construct(string $errMsgKey, string $extMsg = "")
     {
@@ -44,7 +42,7 @@ abstract class DiceRobotException extends Exception
     /**
      * Return error message key.
      *
-     * @return string Error message key
+     * @return string Error message key.
      */
     public function __toString(): string
     {

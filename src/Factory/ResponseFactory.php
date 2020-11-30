@@ -19,8 +19,8 @@ use Swoole\Http\Response;
  */
 class ResponseFactory
 {
-    /** @var string[] Return message */
-    protected const RETURN_MESSAGE = [
+    /** @var string[] Return messages. */
+    protected const RETURN_MESSAGES = [
         0 => "Success",
 
         -404 => "Not found",
@@ -30,8 +30,8 @@ class ResponseFactory
         -1010 => "DiceRobot already running",
         -1011 => "DiceRobot cannot be rerun",
         -1012 => "Rerun DiceRobot failed",
-        -1020 => "",  // Undefined reload error
-        -1030 => "",  // Undefined stop error
+        -1020 => "Reload DiceRobot failed",
+        -1030 => "DiceRobot exited non-normally",
         -1040 => "DiceRobot cannot be restarted",
         -1050 => "DiceRobot root undefined or invalid",
         -1051 => "Composer not found",
@@ -47,30 +47,30 @@ class ResponseFactory
         -2021 => "Restart Mirai failed",
     ];
 
-    /** @var Config Config */
+    /** @var Config DiceRobot config. */
     protected Config $config;
 
-    /** @var Psr17Factory PSR-17 HTTP factory */
+    /** @var Psr17Factory PSR-17 HTTP factory. */
     protected Psr17Factory $psr17Factory;
 
-    /** @var ResponseMerger PSR-7 response merger */
+    /** @var ResponseMerger PSR-7 response merger. */
     protected ResponseMerger $responseMerger;
 
-    /** @var ResponseInterface PSR-7 empty response template */
+    /** @var ResponseInterface PSR-7 empty response template. */
     protected ResponseInterface $emptyResponse;
 
-    /** @var ResponseInterface PSR-7 preflight response template */
+    /** @var ResponseInterface PSR-7 preflight response template. */
     protected ResponseInterface $preflightResponse;
 
-    /** @var ResponseInterface PSR-7 response template */
+    /** @var ResponseInterface PSR-7 response template. */
     protected ResponseInterface $response;
 
     /**
      * The constructor.
      *
-     * @param Config $config
-     * @param Psr17Factory $psr17Factory
-     * @param ResponseMerger $responseMerger
+     * @param Config $config DiceRobot config.
+     * @param Psr17Factory $psr17Factory PSR-17 HTTP factory.
+     * @param ResponseMerger $responseMerger PSR-7 response merger.
      */
     public function __construct(
         Config $config,
@@ -95,9 +95,9 @@ class ResponseFactory
     }
 
     /**
-     * @param Response $response Swoole response
+     * @param Response $response PSR-7 response.
      *
-     * @return Response Merged response
+     * @return Response Merged Swoole response.
      */
     public function createEmpty(Response $response): Response
     {
@@ -105,15 +105,15 @@ class ResponseFactory
     }
 
     /**
-     * @param Response $response Swoole response
+     * @param Response $response PSR-7 response.
      *
-     * @return Response Merged response
+     * @return Response Merged Swoole response.
      */
     public function createNotFound(Response $response): Response
     {
         $content = [
             "code" => -404,
-            "message" => self::RETURN_MESSAGE[-404]
+            "message" => self::RETURN_MESSAGES[-404]
         ];
 
         return $this->responseMerger->toSwoole(
@@ -124,9 +124,9 @@ class ResponseFactory
     }
 
     /**
-     * @param Response $response Swoole response
+     * @param Response $response PSR-7 response.
      *
-     * @return Response Merged response
+     * @return Response Merged Swoole response.
      */
     public function createPreflight(Response $response): Response
     {
@@ -134,17 +134,17 @@ class ResponseFactory
     }
 
     /**
-     * @param int $code Result code
-     * @param array|null $data Return data
-     * @param Response $response Swoole response
+     * @param int $code Result code.
+     * @param array|null $data Return data.
+     * @param Response $response PSR-7 response.
      *
-     * @return Response Merged response
+     * @return Response Merged Swoole response.
      */
     public function create(int $code, ?array $data, Response $response): Response
     {
         $content = [
             "code" => $code,
-            "message" => self::RETURN_MESSAGE[$code] ?? "Unexpected code"
+            "message" => self::RETURN_MESSAGES[$code] ?? "Unexpected code"
         ];
 
         if ($data) {

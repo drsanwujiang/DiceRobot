@@ -20,7 +20,7 @@ class CheckRule extends Resource
     /**
      * @inheritDoc
      *
-     * @param array $data Check rule data
+     * @param array $data Check rule data.
      */
     public function __construct(array $data)
     {
@@ -35,12 +35,14 @@ class CheckRule extends Resource
     /**
      * Get check level.
      *
-     * @param int $result Check result
-     * @param int $value Check value
+     * @param int $result Check result.
+     * @param int $value Check value.
      *
-     * @return string Check level
+     * @return string Check level.
      *
-     * @throws DangerousException|InvalidException|MatchFailedException
+     * @throws DangerousException Check rule has dangerous item.
+     * @throws InvalidException Check rule has invalid item.
+     * @throws MatchFailedException Check rule is imperfect.
      */
     public function getCheckLevel(int $result, int $value): string
     {
@@ -48,7 +50,7 @@ class CheckRule extends Resource
         {
             $condition = str_replace(["{&result}", "{&value}", " "], [$result, $value, ""], $condition);
 
-            if (preg_match("/.*[a-z]+.*/i", $condition)) {
+            if (preg_match("/[a-zA-Z]/", $condition)) {
                 throw new DangerousException();
             }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 
 /**
  * Class AuthorizeResponse
@@ -13,9 +13,9 @@ use DiceRobot\Data\Response;
  *
  * @package DiceRobot\Data\Response
  */
-final class AuthorizeResponse extends Response
+final class AuthorizeResponse extends DiceRobotResponse
 {
-    /** @var string JWT token */
+    /** @var string JWT token. */
     public string $token;
 
     /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 use DiceRobot\Exception\CharacterCardException\{FormatInvalidException, NotFoundException};
 
 /**
@@ -14,18 +14,18 @@ use DiceRobot\Exception\CharacterCardException\{FormatInvalidException, NotFound
  *
  * @package DiceRobot\Data\Response
  */
-final class GetCardResponse extends Response
+final class GetCardResponse extends DiceRobotResponse
 {
-    /** @var int Character card ID */
+    /** @var int Character card ID. */
     public int $id;
 
-    /** @var int Character card type */
+    /** @var int Character card type. */
     public int $type;
 
-    /** @var array Investigator's attributes */
+    /** @var array Investigator's attributes. */
     public array $attributes;
 
-    /** @var array Investigator's attributes */
+    /** @var array Investigator's attributes. */
     public array $skills;
 
     /**
@@ -42,8 +42,8 @@ final class GetCardResponse extends Response
     /**
      * @inheritDoc
      *
-     * @throws FormatInvalidException
-     * @throws NotFoundException
+     * @throws FormatInvalidException Character card format invalid.
+     * @throws NotFoundException Character card not found.
      */
     protected function validate(): void
     {

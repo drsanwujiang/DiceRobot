@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Event;
 use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\BotMuteEvent;
-use DiceRobot\Exception\MiraiApiException;
 
 /**
  * Class BotMute
@@ -32,7 +31,6 @@ class BotMute extends EventAction
     /**
      * @inheritDoc
      *
-     * @throws MiraiApiException
      */
     public function __invoke(): void
     {
@@ -49,20 +47,20 @@ class BotMute extends EventAction
     /**
      * @inheritDoc
      *
-     * @return bool Listened
+     * @return bool Listen strategy.
      */
     protected function checkListen(): bool
     {
-        return $this->config->getBool("strategy.listenBotMuteEvent");
+        return $this->config->getStrategy("listenBotMuteEvent");
     }
 
     /**
      * Check whether the robot should quit the group when muted.
      *
-     * @return bool
+     * @return bool Strategy.
      */
     protected function checkQuitWhenMuted(): bool
     {
-        return $this->config->getBool("strategy.quitGroupWhenMuted");
+        return $this->config->getStrategy("quitGroupWhenMuted");
     }
 }

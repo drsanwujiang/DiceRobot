@@ -18,9 +18,9 @@ class File
     /**
      * Check if the directory is readable.
      *
-     * @param string $path Directory path
+     * @param string $path Directory path.
      *
-     * @throws RuntimeException
+     * @throws RuntimeException Directory is unreadable.
      */
     public static function checkDirectory(string $path): void
     {
@@ -32,9 +32,9 @@ class File
     /**
      * Create directory.
      *
-     * @param string $path Directory path
+     * @param string $path Directory path.
      *
-     * @throws RuntimeException
+     * @throws RuntimeException Parent directory is unwritable.
      */
     public static function createDirectory(string $path): void
     {
@@ -47,11 +47,11 @@ class File
     /**
      * Get file content.
      *
-     * @param string $path File path
+     * @param string $path File path.
      *
-     * @return array File content
+     * @return array File content.
      *
-     * @throws RuntimeException
+     * @throws RuntimeException Failed to get the file.
      */
     public static function getFile(string $path): array
     {
@@ -63,8 +63,12 @@ class File
             throw new RuntimeException("File {$path} exists but cannot be read.");
         }
 
+        // Try to decode the file
         if (!is_array($content = json_decode($jsonString, true))) {
-            throw new RuntimeException("File {$path} exists but cannot be parsed.");
+            // Try to decode as UTF-8 BOM
+            if (!is_array($content = json_decode(ltrim($jsonString, "\xEF\xBB\xBF"), true))) {
+                throw new RuntimeException("File {$path} exists but cannot be parsed.");
+            }
         }
 
         return $content;
@@ -73,10 +77,10 @@ class File
     /**
      * Write content to the file.
      *
-     * @param string $path File path
-     * @param string $content File content
+     * @param string $path File path.
+     * @param string $content File content.
      *
-     * @throws RuntimeException
+     * @throws RuntimeException Failed to put the file.
      */
     public static function putFile(string $path, string $content): void
     {

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace DiceRobot\Exception;
 
-use Exception;
-
 /**
  * Class RuntimeException
  *
@@ -14,12 +12,12 @@ use Exception;
  *
  * @package DiceRobot\Exception
  */
-class RuntimeException extends Exception
+final class RuntimeException extends \RuntimeException
 {
     /**
      * Return error message.
      *
-     * @return string Error message
+     * @return string Error message.
      */
     public function __toString(): string
     {

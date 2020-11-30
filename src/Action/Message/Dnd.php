@@ -6,6 +6,7 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
+use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\{DiceRobotException, OrderErrorException};
 use DiceRobot\Exception\FileException\LostException;
 use DiceRobot\Util\Convertor;
@@ -24,7 +25,7 @@ use DiceRobot\Util\Convertor;
  */
 class Dnd extends MessageAction
 {
-    /** @var string DND generate rule */
+    /** @var string DND generation rule. */
     protected const DND_GENERATE_RULE = "4D6K3";
 
     /**
@@ -34,29 +35,27 @@ class Dnd extends MessageAction
      */
     public function __invoke(): void
     {
-        list($generateCount) = $this->parseOrder();
+        list($count) = $this->parseOrder();
 
-        if (!$this->checkRange($generateCount)) {
+        if (!$this->checkRange($count)) {
             return;
         }
 
-        $this->reply = trim(
-            Convertor::toCustomString(
-                $this->config->getString("reply.dndGenerateCardHeading"),
-                [
-                    "发送者QQ" => $this->message->sender->id
-                ]
-            ) . "\n" .
-            $this->generateAttributes($generateCount)
-        );
+        $atSender = ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "";
+
+        $this->setReply("dndGenerateResult", [
+            "@发送者" => $atSender,
+            "发送者QQ" => $this->message->sender->id,
+            "冒险者属性" => $this->generateAttributes($count)
+        ]);
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
-     * @throws OrderErrorException
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {
@@ -64,29 +63,29 @@ class Dnd extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var int $generateCount */
-        $generateCount = empty($matches[1]) ? 1 : (int) $matches[1];
+        $count = empty($matches[1]) ? 1 : (int) $matches[1];
 
-        return [$generateCount];
+        /**
+         * @var int $count Count of generation.
+         */
+        return [$count];
     }
 
     /**
      * Check the range.
      *
-     * @param int $generateCount Generate count
+     * @param int $count Count of generation.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
-    protected function checkRange(int $generateCount): bool
+    protected function checkRange(int $count): bool
     {
-        if ($generateCount < 1 || $generateCount > $this->config->getInt("order.maxGenerateCount")) {
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.dndGenerateCardCountOverstep"),
-                    [
-                        "最大生成次数" => $this->config->getInt("order.maxGenerateCount")
-                    ]
-                );
+        $maxGenerateCount = $this->config->getOrder("maxGenerateCount");
+
+        if ($count < 1 || $count > $maxGenerateCount) {
+            $this->setReply("dndGenerateCountOverstep", [
+                "最大生成次数" => $maxGenerateCount
+            ]);
 
             return false;
         }
@@ -97,9 +96,9 @@ class Dnd extends MessageAction
     /**
      * Generate attributes of character card.
      *
-     * @param int $count Generate count
+     * @param int $count Count of generation.
      *
-     * @return string Attributes
+     * @return string Attributes.
      *
      * @throws LostException
      */
@@ -117,21 +116,18 @@ class Dnd extends MessageAction
                 $results[$i] = $dice->result;
             }
 
-            $attributes .=
-                Convertor::toCustomString(
-                    $attributesTemplate,
-                    [
-                        "力量" => $results[0],
-                        "体质" => $results[1],
-                        "敏捷" => $results[2],
-                        "智力" => $results[3],
-                        "感知" => $results[4],
-                        "魅力" => $results[5],
-                        "属性总和" => array_sum($results)
-                    ]
-                ) . "\n";
+            $attributes .= Convertor::toCustomString($attributesTemplate, [
+                "力量" => $results[0],
+                "体质" => $results[1],
+                "敏捷" => $results[2],
+                "智力" => $results[3],
+                "感知" => $results[4],
+                "魅力" => $results[5],
+                "属性总和" => array_sum($results)
+            ]);
+            $attributes .= "\n";
         }
 
-        return $attributes;
+        return rtrim($attributes);
     }
 }

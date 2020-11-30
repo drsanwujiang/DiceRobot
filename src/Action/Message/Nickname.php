@@ -6,7 +6,6 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Exception\OrderErrorException;
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Nickname
@@ -37,34 +36,26 @@ class Nickname extends MessageAction
             // Set nickname
             $this->chatSettings->setNickname($this->message->sender->id, $newNickname);
 
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.nicknameChanged"),
-                    [
-                        "昵称" => $currentNickname,
-                        "新昵称" => $newNickname
-                    ]
-                );
+            $this->setReply("nicknameSet", [
+                "昵称" => $currentNickname,
+                "新昵称" => $newNickname
+            ]);
         } else {
             // Unset nickname
             $this->chatSettings->setNickname($this->message->sender->id);
 
-            $this->reply =
-                Convertor::toCustomString(
-                    $this->config->getString("reply.nicknameUnset"),
-                    [
-                        "昵称" => $this->getNickname()
-                    ]
-                );
+            $this->setReply("nicknameUnset", [
+                "昵称" => $this->getNickname()
+            ]);
         }
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
-     * @throws OrderErrorException
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {
@@ -72,9 +63,11 @@ class Nickname extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var string $nickname */
         $nickname = $matches[1];
 
+        /**
+         * @var string $nickname Nickname.
+         */
         return [$nickname];
     }
 }

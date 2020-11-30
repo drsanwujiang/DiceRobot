@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Event;
 use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\BotJoinGroupEvent;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 
 /**
  * Class BotLeaveKick
@@ -31,15 +30,13 @@ class BotLeaveKick extends EventAction
 
     /**
      * @inheritDoc
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
      */
     public function __invoke(): void
     {
         // Submit this group to public database
         $this->api->submitGroup(
             $this->event->group->id,
-            $this->api->auth($this->robot->getId())->token
+            $this->api->authorize($this->robot->getId())->token
         );
     }
 }

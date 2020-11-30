@@ -7,6 +7,8 @@ namespace DiceRobot\Data\Resource;
 use DiceRobot\Data\Resource;
 use DiceRobot\Exception\CharacterCardException\NotBoundException;
 
+use const DiceRobot\DEFAULT_CHAT_SETTINGS;
+
 /**
  * Class ChatSettings
  *
@@ -19,26 +21,40 @@ class ChatSettings extends Resource
     /**
      * @inheritDoc
      *
-     * @param array $data Chat settings data
+     * @param array $data Chat settings data.
      */
     public function __construct(array $data = [])
     {
+        $data = array_replace_recursive(DEFAULT_CHAT_SETTINGS, $data);
+
+        if (is_string($data["cardDeck"])) {
+            $data["cardDeck"] = unserialize($data["cardDeck"]);
+        }
+
         parent::__construct($data);
+    }
 
-        $this->data["active"] ??= true;
-        $this->data["cocCheckRule"] ??= 0;
-        $this->data["defaultSurfaceNumber"] ??= null;
-        $this->data["robotNickname"] ??= null;
+    /**
+     * Return JSON serialized data.
+     *
+     * @return string JSON serialized data.
+     */
+    public function __toString(): string
+    {
+        $data = $this->data;
 
-        $this->data["characterCards"] ??= [];
-        $this->data["nicknames"] ??= [];
+        if ($data["cardDeck"] instanceof CardDeck) {
+            $data["cardDeck"] = serialize($this->data["cardDeck"]);
+        }
+
+        return (string) json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 
     /**
      * Set setting.
      *
-     * @param string $key Setting key
-     * @param mixed $value Setting value
+     * @param string $key Setting key.
+     * @param mixed $value Setting value.
      */
     public function set(string $key, $value): void
     {
@@ -48,8 +64,8 @@ class ChatSettings extends Resource
     /**
      * Set user nickname.
      *
-     * @param int $userId User ID
-     * @param string|null $nickname User nickname
+     * @param int $userId User ID.
+     * @param string|null $nickname User nickname.
      */
     public function setNickname(int $userId, string $nickname = null): void
     {
@@ -63,8 +79,8 @@ class ChatSettings extends Resource
     /**
      * Set user's character card ID.
      *
-     * @param int $userId User ID
-     * @param int|null $cardId Character card ID
+     * @param int $userId User ID.
+     * @param int|null $cardId Character card ID.
      */
     public function setCharacterCardId(int $userId, int $cardId = null): void
     {
@@ -78,9 +94,9 @@ class ChatSettings extends Resource
     /**
      * Get user nickname.
      *
-     * @param int $userId User ID
+     * @param int $userId User ID.
      *
-     * @return string|null User nickname
+     * @return string|null User nickname.
      */
     public function getNickname(int $userId): ?string
     {
@@ -94,11 +110,11 @@ class ChatSettings extends Resource
     /**
      * Get user's character card ID.
      *
-     * @param int $userId User ID
+     * @param int $userId User ID.
      *
-     * @return int Character card ID
+     * @return int Character card ID.
      *
-     * @throws NotBoundException
+     * @throws NotBoundException User has not bound a character card.
      */
     public function getCharacterCardId(int $userId): int
     {

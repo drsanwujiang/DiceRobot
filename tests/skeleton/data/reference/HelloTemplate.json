@@ -1,0 +1,5 @@
+{
+    "templates": {
+        "detail": "{&机器人昵称}很荣幸为你服务~\n你可以使用 .help 查看帮助信息和指令说明\n或者访问 https:\\\\docs.drsanwujiang.com\\dicerobot\\use\\order 查看详细指令说明\n使用 “[mirai:at:{&机器人QQ号}] .robot stop/start” 可以让我休息一下/重新醒来\n如果不再需要我的话，可以使用 “[mirai:at:{&机器人QQ号}] .robot goodbye” 让我们就此别过\n但是请千万不要直接将我踢出群聊，否则本群会被记在小本本上哦~\n\n就这些啦，玩得愉快~"
+    }
+}

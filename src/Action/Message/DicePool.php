@@ -6,10 +6,9 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
-use DiceRobot\Util\Convertor;
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class DicePool
@@ -43,32 +42,21 @@ class DicePool extends MessageAction
 
         list($finalResult, $details) = $this->dicing($diceNumber, $threshold);
 
-        $this->reply =
-            ($reason == "" ? "" :
-                Convertor::toCustomString(
-                    $this->config->getString("reply.dicePoolReason"),
-                    [
-                        "原因" => $reason
-                    ]
-                )
-            ) .
-            Convertor::toCustomString(
-                $this->config->getString("reply.dicePoolResult"),
-                [
-                    "昵称" => $this->getNickname()
-                ]
-            ) .
-            "{$diceNumber}a{$threshold}=" .
-            ($detailed ? "{$details}=" : "") .
-            $finalResult;
+        $detail = "{$diceNumber}a{$threshold}=" . ($detailed ? "{$details}=" : "") . $finalResult;
+
+        $this->setReply(empty($reason) ? "dicePoolResult" : "dicePoolResultWithReason", [
+            "原因" => $reason,
+            "昵称" => $this->getNickname(),
+            "掷骰详情" => $detail
+        ]);
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
-     * @throws OrderErrorException
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {
@@ -80,29 +68,31 @@ class DicePool extends MessageAction
             throw new OrderErrorException;
         }
 
-        /** @var bool $detailed */
         $detailed = !empty($matches[1]);
-        /** @var int $diceNumber */
         $diceNumber = empty($matches[2]) ? 10 : (int) $matches[2];
-        /** @var int $threshold */
         $threshold = empty($matches[3]) ? 10 : (int) $matches[3];
-        /** @var string $reason */
         $reason = $matches[4];
 
+        /**
+         * @var bool $detailed Detailed process flag.
+         * @var int $diceNumber Dice number.
+         * @var int $threshold Threshold of result.
+         * @var string $reason Dicing reason.
+         */
         return [$detailed, $diceNumber, $threshold, $reason];
     }
 
     /**
      * Check the range.
      *
-     * @param int $threshold The threshold
+     * @param int $threshold The threshold.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkRange(int $threshold): bool
     {
         if ($threshold < 5 || $threshold > 10) {
-            $this->reply = $this->reply = $this->config->getString("reply.dicePoolThresholdOverstep");
+            $this->setReply("dicePoolThresholdOverstep");
 
             return false;
         }
@@ -113,10 +103,10 @@ class DicePool extends MessageAction
     /**
      * Execute dicing order.
      *
-     * @param int $diceNumber Dice number
-     * @param int $threshold The threshold
+     * @param int $diceNumber Dice number.
+     * @param int $threshold The threshold.
      *
-     * @return array Final result and details
+     * @return array Final result and details.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
@@ -127,7 +117,7 @@ class DicePool extends MessageAction
         $details = [];
 
         while ($diceNumber) {
-            $dice = isset($dice) ? clone $dice : new Dice("{$diceNumber}D", 10);
+            $dice = new Dice("{$diceNumber}D", 10);
             $diceNumber = 0;
 
             foreach ($dice->subexpressions[0]->results as $result) {

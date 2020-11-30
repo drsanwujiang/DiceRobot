@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Dice number oversteps the limit.
  *
- * @reply diceNumberOverstep
+ * @errorMessage diceNumberOverstep
  *
  * @package DiceRobot\Exception\DiceException
  */

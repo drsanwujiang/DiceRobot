@@ -7,9 +7,9 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Report\Message\GroupMessage;
-use DiceRobot\Exception\RepeatTimeOverstepException;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
+use DiceRobot\Exception\RepetitionOverstepException;
 use DiceRobot\Util\Convertor;
 
 /**
@@ -42,123 +42,114 @@ class Dicing extends MessageAction
      * @inheritDoc
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
-     * @throws RepeatTimeOverstepException|SurfaceNumberOverstepException
+     * @throws RepetitionOverstepException|SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {
-        list($expression, $repeat) = $this->parseOrder();
+        list($expression, $repetition) = $this->parseOrder();
 
-        $this->checkRange($repeat);
+        $this->checkRange($repetition);
 
-        list($vType, $reason, $detail) = $this->dicing($expression, $repeat);
+        list($vType, $reason, $detail) = $this->dicing($expression, $repetition);
 
-        $this->reply = trim(
-            ($reasonHeading = ($reason == "") ? "" :
-                Convertor::toCustomString(
-                    $this->config->getString("reply.dicingReason"),
-                    [
-                        "原因" => $reason
-                    ]
-                )
-            ).
-            Convertor::toCustomString(
-                $this->config->getString("reply.dicingResult"),
-                [
-                    "昵称" => $this->getNickname()
-                ]
-            ) .
-            ($repeat > 1 ? "\n" : "") .
-            $detail
+        $reply = Convertor::toCustomString(
+            $this->config->getReply(empty($reason) ? "dicingResult" : "dicingResultWithReason"),
+            [
+                "原因" => $reason,
+                "昵称" => $this->getNickname(),
+                "掷骰结果" => $detail
+            ]
         );
 
         if ($vType === "H") {
             if ($this->message instanceof GroupMessage) {
-                $this->sendPrivateMessageAsync(
-                    Convertor::toCustomString(
-                        $this->config->getString("reply.dicingPrivatelyHeading"),
-                        [
-                            "群名" => $this->message->sender->group->name,
-                            "群号" => $this->message->sender->group->id
-                        ]
-                    ) . $this->reply
-                );
-                $this->reply = $reasonHeading .
-                    Convertor::toCustomString(
-                        $this->config->getString("reply.dicingPrivately"),
-                        [
-                            "昵称" => $this->getNickname(),
-                            "掷骰次数" => $repeat
-                        ]
-                    );
+                $this->sendPrivateMessageAsync(Convertor::toCustomString(
+                    $this->config->getReply("dicingPrivateResult"),
+                    [
+                        "群名" => $this->message->sender->group->name,
+                        "群号" => $this->message->sender->group->id,
+                        "掷骰详情" => $reply
+                    ]
+                ));
+
+                $this->setReply(empty($reason) ? "dicingPrivate" : "dicingPrivateWithReason", [
+                    "原因" => $reason,
+                    "昵称" => $this->getNickname(),
+                    "掷骰次数" => $repetition
+                ]);
             } else {
-                $this->reply = $this->config->getString("reply.dicingPrivatelyNotInGroup");
+                $this->setReply("dicingPrivateNotInGroup");
             }
+        } else {
+            $this->setRawReply($reply);
         }
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      */
     protected function parseOrder(): array
     {
         preg_match("/^([\S\s]*?)(?:#([1-9][0-9]*))?$/", $this->order, $matches);
-        /** @var string $expression */
         $expression = $matches[1];
-        /** @var int $repeat */
-        $repeat = empty($matches[2]) ? 1 : (int) $matches[2];
+        $repetition = empty($matches[2]) ? 1 : (int) $matches[2];
 
-        return [$expression, $repeat];
+        /**
+         * @var string $expression Dicing expression.
+         * @var int $repetition Count of repetition.
+         */
+        return [$expression, $repetition];
     }
 
     /**
      * Check the range.
      *
-     * @param int $repeat Repeat count
+     * @param int $repetition Count of repetition.
      *
-     * @throws RepeatTimeOverstepException
+     * @throws RepetitionOverstepException Count of repetition oversteps the limit.
      */
-    protected function checkRange(int $repeat): void
+    protected function checkRange(int $repetition): void
     {
-        if ($repeat < 1 || $repeat > $this->config->getInt("order.maxRepeatTimes")) {
-            throw new RepeatTimeOverstepException();
+        if ($repetition < 1 || $repetition > $this->config->getOrder("maxRepetition")) {
+            throw new RepetitionOverstepException();
         }
     }
 
     /**
      * Execute dicing order.
      *
-     * @param string $expression Dicing expression
-     * @param int $repeat Repeat count
+     * @param string $expression Dicing expression.
+     * @param int $repetition Count of repetition.
      *
-     * @return array Dicing reason and detail
+     * @return array Dicing reason and detail.
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
      * @throws SurfaceNumberOverstepException
      */
-    protected function dicing(string $expression, int $repeat): array
+    protected function dicing(string $expression, int $repetition): array
     {
+        $detail = $repetition > 1 ? "\n" : "";
         /** @var Dice[] $dices */
         $dices = [];
-        $detail = "";
 
-        for ($i = 0; $i < $repeat; $i++) {
-            $dices[$repeat] = isset($dices[$repeat + 1]) ?
-                clone $dices[$repeat + 1] :
+        for ($i = 0; $i < $repetition; $i++) {
+            $dices[$i] = isset($dices[$i - 1]) ?
+                clone $dices[$i - 1] :
                 new Dice($expression, $this->chatSettings->getInt("defaultSurfaceNumber"));
-            $detail .= $dices[$repeat]->getCompleteExpression() . "\n";
+            $detail .= $dices[$i]->getCompleteExpression() . "\n";
         }
 
         // Simplify the reply
-        if (mb_strlen($detail) > $this->config->getInt("order.maxReplyCharacter")) {
+        if (mb_strlen($detail) > $this->config->getOrder("maxReplyCharacter")) {
             $detail = "";
 
-            for ($i = 0; $i < $repeat; $i++) {
-                $detail .= $dices[$repeat]->getCompleteExpression(true) . "\n";
+            for ($i = 0; $i < $repetition; $i++) {
+                $detail .= $dices[$i]->getCompleteExpression(true) . "\n";
             }
         }
 
-        return [$dice->vType ?? null, $dice->reason ?? "", $detail];
+        return [$dices[0]->vType ?? null, $dices[0]->reason ?? "", rtrim($detail)];
     }
 }

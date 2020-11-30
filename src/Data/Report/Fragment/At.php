@@ -15,26 +15,27 @@ use DiceRobot\Interfaces\Fragment\ParsableFragment;
  */
 final class At implements ParsableFragment
 {
-    /** @var int At target ID */
+    /** @var int At target ID. */
     public int $target;
 
-    /** @var string Displayed text */
+    /** @var string|null Displayed text. */
     public string $display;
 
     /**
      * @inheritDoc
      *
-     * @param string $code Mirai code
+     * @param string $code Mirai code.
      *
-     * @return bool Success
+     * @return bool Success.
      */
     public function fromMiraiCode(string $code): bool
     {
-        if (!preg_match("/^\[mirai:at:([1-9][0-9]*)(?:,(.*?))?]$/i", $code, $matches))
+        if (!preg_match("/^\[mirai:at:([1-9][0-9]*)(?:,(.*?))?]$/i", $code, $matches)) {
             return false;
+        }
 
         $this->target = (int) $matches[1];
-        $this->display = empty($matches[2]) ? "" : $matches[2];
+        $this->display = (string) ($matches[2] ?? "");
 
         return true;
     }
@@ -42,7 +43,7 @@ final class At implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {
@@ -56,7 +57,7 @@ final class At implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function toMiraiCode(): string
     {
@@ -66,7 +67,7 @@ final class At implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function __toString(): string
     {

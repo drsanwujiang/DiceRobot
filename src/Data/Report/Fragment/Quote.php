@@ -15,25 +15,25 @@ use DiceRobot\Interfaces\Fragment;
  */
 final class Quote implements Fragment
 {
-    /** @var int Origin message ID */
+    /** @var int Origin message ID. */
     public int $id;
 
-    /** @var int Origin group ID */
+    /** @var int Origin group ID. */
     public int $groupId;
 
-    /** @var int Origin sender ID */
+    /** @var int Origin sender ID. */
     public int $senderId;
 
-    /** @var int Origin receiver ID */
+    /** @var int Origin receiver ID. */
     public int $targetId;
 
-    /** @var object[] Origin message chain */
+    /** @var object[] Origin message chain. */
     public array $origin;
 
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {

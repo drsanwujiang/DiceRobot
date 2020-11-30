@@ -6,8 +6,8 @@ namespace DiceRobot\Service;
 
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Contact\{Friend, Group, Robot};
-use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
+use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
 
@@ -20,43 +20,44 @@ use Psr\Log\LoggerInterface;
  */
 class RobotService
 {
-    /** @var LoggerInterface Logger */
-    protected LoggerInterface $logger;
-
-    /** @var ApiService API service */
+    /** @var ApiService API service. */
     protected ApiService $api;
 
-    /** @var Robot Robot */
+    /** @var LoggerInterface Logger. */
+    protected LoggerInterface $logger;
+
+    /** @var Robot Robot. */
     protected Robot $robot;
 
-    /** @var Friend[] Friend list */
+    /** @var Friend[] Friend list. */
     protected array $friends = [];
 
-    /** @var Group[] Group list */
+    /** @var Group[] Group list. */
     protected array $groups = [];
 
-    /** @var int Friends count */
-    protected int $friendsCount = 0;
+    /** @var int Count of friends. */
+    protected int $friendCount = 0;
 
-    /** @var int Groups count */
-    protected int $groupsCount = 0;
+    /** @var int Count of groups. */
+    protected int $groupCount = 0;
 
     /**
      * The constructor.
      *
-     * @param LoggerFactory $loggerFactory
-     * @param ApiService $api
+     * @param LoggerFactory $loggerFactory Logger factory.
+     * @param ApiService $api API service.
      */
     public function __construct(LoggerFactory $loggerFactory, ApiService $api)
     {
-        $this->logger = $loggerFactory->create("Robot");
         $this->api = $api;
+
+        $this->logger = $loggerFactory->create("Robot");
     }
 
     /**
      * Initialize robot service.
      *
-     * @param Config $config
+     * @param Config $config DiceRobot config.
      */
     public function initialize(Config $config): void
     {
@@ -64,12 +65,15 @@ class RobotService
         $this->robot->id = $config->getInt("mirai.robot.id");
         $this->robot->nickname = "Unknown";
         $this->robot->authKey = $config->getString("mirai.robot.authKey");
+        $this->robot->version = "Unknown";
     }
 
     /**
      * Update robot service.
      *
-     * @return bool
+     * @return bool Success.
+     *
+     * @noinspection PhpRedundantCatchClauseInspection
      */
     public function update(): bool
     {
@@ -77,7 +81,10 @@ class RobotService
             // Update lists
             $this->updateFriends($this->api->getFriendList()->all());
             $this->updateGroups($this->api->getGroupList()->all());
+
+            // Update robot
             $this->updateNickname($this->api->getNickname($this->getId())->nickname);
+            $this->updateVersion($this->api->about()->getString("data.version"));
 
             // Report to DiceRobot API
             $this->api->updateRobotAsync($this->getId());
@@ -85,15 +92,19 @@ class RobotService
             $this->logger->info("Robot updated.");
 
             return true;
-        } catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (MiraiApiException | InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
-            $this->logger->alert("Update robot failed, unable to call Mirai API.");
-
-            return false;
+        } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
+            $this->logger->alert("Failed to update robot, unable to call Mirai API.");
+        } catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
+            $this->logger->alert("Failed to update robot, unable to call DiceRobot API.");
         }
+
+        return false;
     }
 
     /**
-     * @param string $nickname
+     * Update robot's nickname
+     *
+     * @param string $nickname Robot's nickname.
      */
     public function updateNickname(string $nickname): void
     {
@@ -101,7 +112,19 @@ class RobotService
     }
 
     /**
-     * @param array $friends
+     * Update version of Mirai API HTTP plugin.
+     *
+     * @param string $version Plugin version.
+     */
+    public function updateVersion(string $version): void
+    {
+        $this->robot->version = (string) preg_replace("/[a-zA-z]+/", "", $version);
+    }
+
+    /**
+     * Update friend list.
+     *
+     * @param array $friends Friend list.
      */
     public function updateFriends(array $friends): void
     {
@@ -114,11 +137,13 @@ class RobotService
             $this->friends[$_friend->id] = $_friend;
         }
 
-        $this->friendsCount = count($friends);
+        $this->friendCount = count($friends);
     }
 
     /**
-     * @param array $groups
+     * Update group list.
+     *
+     * @param array $groups Group list.
      */
     public function updateGroups(array $groups): void
     {
@@ -131,13 +156,15 @@ class RobotService
             $this->groups[$_group->id] = $_group;
         }
 
-        $this->groupsCount = count($groups);
+        $this->groupCount = count($groups);
     }
 
     /**
-     * @param int $friendId
+     * Test whether the friend exists.
      *
-     * @return bool
+     * @param int $friendId Friend ID.
+     *
+     * @return bool Existence.
      */
     public function hasFriend(int $friendId): bool
     {
@@ -145,9 +172,11 @@ class RobotService
     }
 
     /**
-     * @param int $groupId
+     * Test whether the group exists.
      *
-     * @return bool
+     * @param int $groupId Group ID.
+     *
+     * @return bool Existence.
      */
     public function hasGroup(int $groupId): bool
     {
@@ -155,7 +184,9 @@ class RobotService
     }
 
     /**
-     * @return int
+     * Get robot's ID.
+     *
+     * @return int Robot's ID.
      */
     public function getId(): int
     {
@@ -163,7 +194,9 @@ class RobotService
     }
 
     /**
-     * @return string
+     * Get robot's nickname.
+     *
+     * @return string Robot's nickname.
      */
     public function getNickname(): string
     {
@@ -171,7 +204,9 @@ class RobotService
     }
 
     /**
-     * @return string
+     * Get authorization key of Mirai API HTTP plugin.
+     *
+     * @return string Authorization key.
      */
     public function getAuthKey(): string
     {
@@ -179,9 +214,21 @@ class RobotService
     }
 
     /**
-     * @param int $friendId
+     * Get version of Mirai API HTTP plugin.
      *
-     * @return Friend|null
+     * @return string Version.
+     */
+    public function getVersion(): string
+    {
+        return $this->robot->version;
+    }
+
+    /**
+     * Get robot's friend.
+     *
+     * @param int $friendId Friend ID.
+     *
+     * @return Friend|null Friend, or null if it does not exist.
      */
     public function getFriend(int $friendId): ?Friend
     {
@@ -189,9 +236,11 @@ class RobotService
     }
 
     /**
-     * @param int $groupId
+     * Get robot's group.
      *
-     * @return Group|null
+     * @param int $groupId Group ID.
+     *
+     * @return Group|null Group, or null if it does not exist.
      */
     public function getGroup(int $groupId): ?Group
     {
@@ -199,18 +248,22 @@ class RobotService
     }
 
     /**
-     * @return int
+     * Get the count of friends.
+     *
+     * @return int Count of friends.
      */
-    public function getFriendsCount(): int
+    public function getFriendCount(): int
     {
-        return $this->friendsCount;
+        return $this->friendCount;
     }
 
     /**
-     * @return int
+     * Get the count of groups.
+     *
+     * @return int Count of groups.
      */
-    public function getGroupsCount(): int
+    public function getGroupCount(): int
     {
-        return $this->groupsCount;
+        return $this->groupCount;
     }
 }

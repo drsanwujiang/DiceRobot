@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 use DiceRobot\Exception\CharacterCardException\PermissionDeniedException;
 
 /**
@@ -14,15 +14,15 @@ use DiceRobot\Exception\CharacterCardException\PermissionDeniedException;
  *
  * @package DiceRobot\Data\Response
  */
-final class SanityCheckResponse extends Response
+final class SanityCheckResponse extends DiceRobotResponse
 {
-    /** @var bool Check success */
+    /** @var bool Check success. */
     public bool $checkSuccess;
 
-    /** @var int Previous sanity */
+    /** @var int Previous sanity. */
     public int $beforeSanity;
 
-    /** @var int Current sanity */
+    /** @var int Current sanity. */
     public int $afterSanity;
 
     /**
@@ -38,7 +38,7 @@ final class SanityCheckResponse extends Response
     /**
      * @inheritDoc
      *
-     * @throws PermissionDeniedException
+     * @throws PermissionDeniedException User does not have permission to access the character card.
      */
     protected function validate(): void
     {

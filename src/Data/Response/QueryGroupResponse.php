@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 
 /**
  * Class QueryGroupResponse
@@ -13,9 +13,9 @@ use DiceRobot\Data\Response;
  *
  * @package DiceRobot\Data\Response
  */
-final class QueryGroupResponse extends Response
+final class QueryGroupResponse extends DiceRobotResponse
 {
-    /** @var bool Delinquency state */
+    /** @var bool Whether the group is delinquent. */
     public bool $state;
 
     /**

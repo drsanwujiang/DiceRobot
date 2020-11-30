@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * DiceRobot API server returned unexpected code, but HTTP status code is acceptable (2xx).
  *
- * @reply apiUnexpectedError
+ * @errorMessage apiUnexpectedError
  *
  * @package DiceRobot\Exception\ApiException
  */

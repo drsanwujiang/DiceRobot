@@ -15,19 +15,19 @@ use DiceRobot\Interfaces\Fragment;
  */
 final class FlashImage implements Fragment
 {
-    /** @var string Image ID */
+    /** @var string Image ID. */
     public string $imageId;
 
-    /** @var string Image URL */
+    /** @var string Image URL. */
     public string $url;
 
-    /** @var string|null Image local path */
+    /** @var string|null Image local path. */
     public ?string $path = null;
 
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {

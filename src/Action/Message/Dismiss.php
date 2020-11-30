@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Message\RobotOrder\Goodbye;
+use DiceRobot\Action\Message\Robot\Goodbye;
 
 /**
  * Class Dismiss
@@ -20,4 +20,5 @@ use DiceRobot\Action\Message\RobotOrder\Goodbye;
  * @package DiceRobot\Action\Message
  */
 class Dismiss extends Goodbye
-{}
+{
+}

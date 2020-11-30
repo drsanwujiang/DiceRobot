@@ -4,17 +4,13 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Data\Config;
+use DiceRobot\Data\{Config, MiraiResponse};
 use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, GetNicknameResponse, JrrpResponse, KowtowResponse,
     QueryGroupResponse, SanityCheckResponse, SubmitGroupResponse, UpdateCardResponse, UpdateRobotResponse};
-use DiceRobot\Exception\MiraiApiException;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
+use DiceRobot\Exception\{MiraiApiException, RuntimeException};
 use DiceRobot\Factory\LoggerFactory;
+use DiceRobot\Handlers\{DiceRobotApiHandler, MiraiApiHandler};
 use Psr\Log\LoggerInterface;
-use Selective\ArrayReader\ArrayReader;
-use Swlib\Http\ContentType;
-use Swlib\Http\Exception\{ClientException, ServerException, TransferException};
-use Swlib\Saber;
 
 /**
  * Class ApiService
@@ -22,93 +18,153 @@ use Swlib\Saber;
  * API service.
  *
  * @package DiceRobot\Service
+ *
+ * @method MiraiResponse about()
+ * @method MiraiResponse authSession(string $authKey)
+ * @method MiraiResponse verifySession(int $robotId)
+ * @method MiraiResponse releaseSession(int $robotId)
+ * @method MiraiResponse sendFriendMessage(int $targetId, array $messageChain)
+ * @method void sendFriendMessageAsync(int $targetId, array $messageChain)
+ * @method MiraiResponse sendTempMessage(int $targetId, int $groupId, array $messageChain)
+ * @method void sendTempMessageAsync(int $targetId, int $groupId, array $messageChain)
+ * @method MiraiResponse sendGroupMessage(int $targetId, array $messageChain)
+ * @method void sendGroupMessageAsync(int $targetId, array $messageChain)
+ * @method MiraiResponse recallMessage(int $messageId)
+ * @method MiraiResponse fetchMessage(int $count)
+ * @method MiraiResponse fetchLatestMessage(int $count)
+ * @method MiraiResponse peekMessage(int $count)
+ * @method MiraiResponse peekLatestMessage(int $count)
+ * @method MiraiResponse countMessage()
+ * @method MiraiResponse getFriendList()
+ * @method MiraiResponse getGroupList()
+ * @method MiraiResponse getGroupMemberList(int $targetId)
+ * @method MiraiResponse muteGroupMember(int $targetId, int $memberId, int $time)
+ * @method MiraiResponse unmuteGroupMember(int $targetId, int $memberId)
+ * @method MiraiResponse kickGroupMember(int $targetId, int $memberId, string $message)
+ * @method MiraiResponse quitGroup(int $targetId)
+ * @method MiraiResponse muteAllGroupMembers(int $targetId)
+ * @method MiraiResponse unmuteAllGroupMembers(int $targetId)
+ * @method MiraiResponse getGroupConfig(int $targetId)
+ * @method MiraiResponse setGroupConfig(int $targetId, ?string $name = null, ?string $announcement = null, ?bool $confessTalk = null, ?bool $allowMemberInvite = null, ?bool $autoApprove = null, ?bool $anonymousChat = null)
+ * @method MiraiResponse getGroupMemberInfo(int $targetId, int $memberId)
+ * @method MiraiResponse setGroupMemberInfo(int $targetId, int $memberId, ?string $name = null, ?string $specialTitle = null)
+ * @method MiraiResponse respondToNewFriendRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
+ * @method MiraiResponse respondToMemberJoinRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
+ * @method MiraiResponse respondToBotInvitedJoinGroupRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
+ *
+ * @method UpdateRobotResponse updateRobot(int $robotId)
+ * @method void updateRobotAsync(int $robotId)
+ * @method AuthorizeResponse authorize(int $robotId, int $userId = null)
+ * @method GetNicknameResponse getNickname(int $robotId)
+ * @method QueryGroupResponse queryGroup(int $groupId, string $token)
+ * @method SubmitGroupResponse submitGroup(int $groupId, string $token)
+ * @method GetCardResponse getCard(int $cardId, string $token)
+ * @method UpdateCardResponse updateCard(int $cardId, string $attribute, int $change, string $token)
+ * @method SanityCheckResponse sanityCheck(int $cardId, int $checkResult, array $decreases, string $token)
+ * @method JrrpResponse jrrp(int $userId)
+ * @method KowtowResponse kowtow(int $userId)
  */
 class ApiService
 {
-    /** @var LoggerInterface Logger */
+    /** @var string[] Mirai APIs. */
+    private const MIRAI_APIS = [
+        "about",
+
+        "authSession", "verifySession", "releaseSession",
+
+        "sendFriendMessage", "sendFriendMessageAsync", "sendTempMessage", "sendTempMessageAsync", "sendGroupMessage",
+        "sendGroupMessageAsync", "recallMessage",
+
+        "fetchMessage", "fetchLatestMessage", "peekMessage", "peekLatestMessage", "countMessage",
+
+        "getFriendList", "getGroupList", "getGroupMemberList",
+
+        "muteGroupMember", "unmuteGroupMember", "kickGroupMember", "quitGroup", "muteAllGroupMembers",
+        "unmuteAllGroupMembers", "getGroupConfig", "setGroupConfig", "getGroupMemberInfo", "setGroupMemberInfo",
+
+        "respondToNewFriendRequestEvent", "respondToMemberJoinRequestEvent", "respondToBotInvitedJoinGroupRequestEvent"
+    ];
+
+    /** @var string[] DiceRobot APIs. */
+    private const DICEROBOT_APIS = [
+        "updateRobot", "updateRobotAsync", "authorize", "getNickname", "queryGroup", "submitGroup", "getCard",
+        "updateCard", "sanityCheck", "jrrp", "kowtow"
+    ];
+
+    /** @var MiraiApiHandler Mirai API handler. */
+    protected MiraiApiHandler $miraiHandler;
+
+    /** @var DiceRobotApiHandler DiceRobot API handler. */
+    protected DiceRobotApiHandler $diceRobotHandler;
+
+    /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
-
-    /** @var Saber[] Client pools */
-    protected array $pools;
-
-    /** @var string Mirai API HTTP plugin session key */
-    protected string $sessionKey = "";
 
     /**
      * The constructor.
      *
-     * @param LoggerFactory $loggerFactory
+     * @param MiraiApiHandler $miraiHandler Mirai API handler.
+     * @param DiceRobotApiHandler $diceRobotHandler DiceRobot API handler.
+     * @param LoggerFactory $loggerFactory Logger factory.
      */
-    public function __construct(LoggerFactory $loggerFactory)
-    {
+    public function __construct(
+        MiraiApiHandler $miraiHandler,
+        DiceRobotApiHandler $diceRobotHandler,
+        LoggerFactory $loggerFactory
+    ) {
+        $this->miraiHandler = $miraiHandler;
+        $this->diceRobotHandler = $diceRobotHandler;
         $this->logger = $loggerFactory->create("Api");
+    }
+
+    /**
+     * Call methods of the handlers.
+     *
+     * @param string $func Method name.
+     * @param array $arguments Arguments.
+     *
+     * @return mixed Result of calling the method.
+     *
+     * @throws RuntimeException Call to undefined method.
+     */
+    public function __call(string $func, $arguments)
+    {
+        if (in_array($func, self::MIRAI_APIS)) {
+            return $this->miraiHandler->$func(...$arguments);
+        } elseif (in_array($func, self::DICEROBOT_APIS)) {
+            return $this->diceRobotHandler->$func(...$arguments);
+        }
+
+        throw new RuntimeException("Call to undefined method '{$func}'.");
     }
 
     /**
      * Initialize API service.
      *
-     * @param Config $config
+     * @param Config $config DiceRobot config.
      */
     public function initialize(Config $config): void
     {
-        $this->pools = [
-            Saber::create([
-                "base_uri" => "http://{$config->getString("mirai.server.host")}:{$config->getString("mirai.server.port")}",
-                "use_pool" => true,
-                "headers" => [
-                    "Content-Type" => ContentType::JSON,
-                    "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
-                ],
-                "before" => function (Saber\Request $request) {
-                    $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
-                },
-                "after" => function (Saber\Response $response) {
-                    $this->logger->debug("Receive from {$response->getUri()}, content: {$response->getBody()}");
-                }
-            ]),
-            Saber::create([
-                "base_uri" => $config->getString("dicerobot.api.prefix"),
-                "use_pool" => true,
-                "headers" => [
-                    "Content-Type" => ContentType::JSON,
-                    "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
-                ],
-                "before" => function (Saber\Request $request) {
-                    $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
-                },
-                "after" => function (Saber\Response $response) {
-                    $this->logger->debug("Receive from {$response->getUri()}, content: {$response->getBody()}");
-                }
-            ])
-        ];
+        $this->miraiHandler->initialize($config);
+        $this->diceRobotHandler->initialize($config);
 
         $this->logger->notice("API service initialized.");
     }
 
     /**
-     * Test if the session key exists.
-     *
-     * @return bool
-     */
-    public function hasSession(): bool
-    {
-        return !empty($this->sessionKey);
-    }
-
-    /**
      * Initialize Mirai session.
      *
-     * @param string $authKey
-     * @param int $robotId
+     * @param string $authKey Mirai API HTTP plugin authorization key.
+     * @param int $robotId Robot ID.
      *
-     * @return bool
+     * @return bool Success.
      *
      * @throws MiraiApiException
      */
     public function initSession(string $authKey, int $robotId): bool
     {
         // Create session
-        $result = $this->authSession($authKey);
+        $result = $this->miraiHandler->authSession($authKey);
 
         if (0 != $result->getInt("code", -1)) {
             $this->logger->alert("Initialize session failed, session not created.");
@@ -116,12 +172,12 @@ class ApiService
             return false;
         }
 
-        $this->sessionKey = $result->getString("session");
+        $this->miraiHandler->setSession($result->getString("session"));
 
         $this->logger->info("Session created.");
 
         // Verify session
-        $code = $this->verifySession($robotId)->getInt("code", -1);
+        $code = $this->miraiHandler->verifySession($robotId)->getInt("code", -1);
 
         if (0 != $code) {
             $this->logger->alert("Initialize session failed, session unauthorized, code {$code}.");
@@ -133,662 +189,5 @@ class ApiService
         $this->logger->notice("Session initialized.");
 
         return true;
-    }
-
-    /**
-     * Request Mirai API HTTP via pool.
-     *
-     * @param array $options
-     *
-     * @return array
-     *
-     * @throws MiraiApiException
-     */
-    protected function mRequest(array $options): array
-    {
-        try {
-            $response = $this->pools[0]->request($options);
-        } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
-            $this->logger->alert("Request Mirai API failed.");
-
-            throw new MiraiApiException();
-        }
-
-        return $response->getParsedJsonArray();
-    }
-
-    /**
-     * Request DiceRobot API via pool.
-     *
-     * @param array $options
-     *
-     * @return array
-     *
-     * @throws InternalErrorException|NetworkErrorException
-     */
-    protected function dRequest(array $options): array
-    {
-        /**
-         * DiceRobot API will often return 2xx Success status code, which will not throw ClientException or
-         * ServerException, except when request is unauthorized (401), API does not exist (404) or server-side error
-         * occurs (50x).
-         */
-        try {
-            $options["headers"]["Timestamp"] = time();
-            $response = $this->pools[1]->request($options);
-        } catch (ClientException | ServerException $e) {
-            $this->logger->critical(
-                "DiceRobot API returned HTTP status code {$e->getResponse()->getStatusCode()}."
-            );
-
-            throw new InternalErrorException();
-        } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
-            $this->logger->critical("Request DiceRobot API failed.");
-
-            throw new NetworkErrorException();
-        }
-
-        $data = $response->getParsedJsonArray();
-
-        // Log error, but not throw exception
-        if (0 != $data["code"]) {
-            $this->logger->warning(
-                "API server returned unexpected code {$data["code"]}, error message: {$data["message"]}."
-            );
-        }
-
-        return $data;
-    }
-
-    /******************************************************************************
-     *                                  Mirai API                                 *
-     ******************************************************************************/
-
-    /** Session */
-
-    /**
-     * @param string $authKey
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function authSession(string $authKey): ArrayReader
-    {
-        $options = [
-            "uri" => "/auth",
-            "method" => "POST",
-            "data" => [
-                "authKey" => $authKey
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * @param int $qq
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function verifySession(int $qq): ArrayReader
-    {
-        $options = [
-            "uri" => "/verify",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "qq" => $qq
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /** Message */
-
-    /**
-     * @param int $target
-     * @param array $messageChain
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function sendFriendMessage(int $target, array $messageChain): ArrayReader
-    {
-        $options = [
-            "uri" => "/sendFriendMessage",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $target,
-                "messageChain" => $messageChain
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * @param int $target
-     * @param array $messageChain
-     */
-    public function sendFriendMessageAsync(int $target, array $messageChain): void
-    {
-        go(function () use ($target, $messageChain) {
-            try {
-                $this->sendFriendMessage($target, $messageChain);
-            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-                // Do nothing
-            }
-        });
-    }
-
-    /**
-     * @param int $qq
-     * @param int $group
-     * @param array $messageChain
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function sendTempMessage(int $qq, int $group, array $messageChain): ArrayReader
-    {
-        $options = [
-            "uri" => "/sendTempMessage",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "qq" => $qq,
-                "group" => $group,
-                "messageChain" => $messageChain
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * @param int $qq
-     * @param int $group
-     * @param array $messageChain
-     */
-    public function sendTempMessageAsync(int $qq, int $group, array $messageChain): void
-    {
-        go(function () use ($qq, $group, $messageChain) {
-            try {
-                $this->sendTempMessage($qq, $group, $messageChain);
-            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-                // Do nothing
-            }
-        });
-    }
-
-    /**
-     * @param int $target
-     * @param array $messageChain
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function sendGroupMessage(int $target, array $messageChain): ArrayReader
-    {
-        $options = [
-            "uri" => "/sendGroupMessage",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $target,
-                "messageChain" => $messageChain
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * @param int $target
-     * @param array $messageChain
-     */
-    public function sendGroupMessageAsync(int $target, array $messageChain): void
-    {
-        go(function () use ($target, $messageChain) {
-            try {
-                $this->sendGroupMessage($target, $messageChain);
-            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-                // Do nothing
-            }
-        });
-    }
-
-    /** List */
-
-    /**
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function getFriendList(): ArrayReader
-    {
-        $options = [
-            "uri" => "/friendList?sessionKey={$this->sessionKey}",
-            "method" => "GET"
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function getGroupList(): ArrayReader
-    {
-        $options = [
-            "uri" => "/groupList?sessionKey={$this->sessionKey}",
-            "method" => "GET"
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /** Management */
-
-    /**
-     * @param int $target
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function quitGroup(int $target): ArrayReader
-    {
-        $options = [
-            "uri" => "/quit",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $target
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * @param int $target
-     * @param int $memberId
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function getMemberName(int $target, int $memberId): ArrayReader
-    {
-        $options = [
-            "uri" => "/memberInfo?sessionKey={$this->sessionKey}&target={$target}&memberId={$memberId}",
-            "method" => "GET"
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * @param int $target
-     * @param int $memberId
-     * @param string $name
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function setMemberName(int $target, int $memberId, string $name): ArrayReader
-    {
-        $options = [
-            "uri" => "/memberInfo",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $target,
-                "memberId" => $memberId,
-                "info" => [
-                    "name" => $name
-                ]
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /** Event response */
-
-    /**
-     * @param int $eventId
-     * @param int $fromId
-     * @param int $groupId
-     * @param int $operate
-     * @param string $message
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function respondToNewFriendRequestEvent(
-        int $eventId,
-        int $fromId,
-        int $groupId,
-        int $operate = 0,
-        string $message = ""
-    ): ArrayReader {
-        $options = [
-            "uri" => "/resp/newFriendRequestEvent",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "eventId" => $eventId,
-                "fromId" => $fromId,
-                "groupId" => $groupId,
-                "operate" => $operate,
-                "message" => $message
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * @param int $eventId
-     * @param int $fromId
-     * @param int $groupId
-     * @param int $operate
-     * @param string $message
-     *
-     * @return ArrayReader
-     *
-     * @throws MiraiApiException
-     */
-    public function respondToBotInvitedJoinGroupRequestEvent(
-        int $eventId,
-        int $fromId,
-        int $groupId,
-        int $operate = 0,
-        string $message = ""
-    ): ArrayReader {
-        $options = [
-            "uri" => "/resp/botInvitedJoinGroupRequestEvent",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "eventId" => $eventId,
-                "fromId" => $fromId,
-                "groupId" => $groupId,
-                "operate" => $operate,
-                "message" => $message
-            ]
-        ];
-
-        return new ArrayReader($this->mRequest($options));
-    }
-
-    /**
-     * Unimplemented APIs
-     *
-     * Following are the unimplemented APIs of Mirai API HTTP plugin, which will be implemented in the nearly future.
-     */
-
-    public function getRobotInfo() {}
-
-    /******************************************************************************
-     *                                DiceRobot API                               *
-     ******************************************************************************/
-
-    /**
-     * Update robot online info.
-     *
-     * @param int $robotId QQ ID of the robot
-     *
-     * @return UpdateRobotResponse
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function updateRobot(int $robotId): UpdateRobotResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/robot/{$robotId}",
-            "method" => "PATCH"
-        ];
-
-        return new UpdateRobotResponse($this->dRequest($options));
-    }
-
-    /**
-     * Update robot online info asynchronously.
-     *
-     * @param int $robotId QQ ID of the robot
-     */
-    public function updateRobotAsync(int $robotId): void
-    {
-        go(function () use ($robotId) {
-            try {
-                $this->updateRobot($robotId);
-            } catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
-                // Do nothing
-            }
-        });
-    }
-
-    /**
-     * Get access token.
-     *
-     * @param int $robotId QQ ID of the robot
-     * @param int|null $userId QQ ID of message sender
-     *
-     * @return AuthorizeResponse
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function auth(int $robotId, int $userId = null): AuthorizeResponse
-    {
-        if ($userId) {
-            $url = "/dicerobot/v2/robot/{$robotId}/auth/{$userId}";
-        } else {
-            $url = "/dicerobot/v2/robot/{$robotId}/auth";
-        }
-
-        $options = [
-            "uri" => $url,
-            "method" => "GET"
-        ];
-
-        return new AuthorizeResponse($this->dRequest($options));
-    }
-
-    /**
-     * @param int $robotId QQ ID of the robot
-     *
-     * @return GetNicknameResponse
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function getNickname(int $robotId): GetNicknameResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/robot/{$robotId}/nickname",
-            "method" => "GET"
-        ];
-
-        return new GetNicknameResponse($this->dRequest($options));
-    }
-
-    /**
-     * Query if the group is delinquent.
-     *
-     * @param int $groupId Group ID
-     * @param string $token Access token
-     *
-     * @return QueryGroupResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function queryGroup(int $groupId, string $token): QueryGroupResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/group/{$groupId}",
-            "method" => "GET",
-            "headers" => [
-                "Authorization" => "Bearer {$token}"
-            ]
-        ];
-
-        return new QueryGroupResponse($this->dRequest($options));
-    }
-
-    /**
-     * Submit ID of the delinquent group to public database. These group IDs will be queried when DiceRobot is added
-     * to a group.
-     *
-     * @param int $groupId Delinquent group ID
-     * @param string $token Access token
-     *
-     * @return SubmitGroupResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function submitGroup(int $groupId, string $token): SubmitGroupResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/group/{$groupId}",
-            "method" => "PUT",
-            "headers" => [
-                "Authorization" => "Bearer {$token}"
-            ]
-        ];
-
-        return new SubmitGroupResponse($this->dRequest($options));
-    }
-
-    /**
-     * Get character card data.
-     *
-     * @param int $cardId Character card ID
-     * @param string $token Access token
-     *
-     * @return GetCardResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function getCard(int $cardId, string $token): GetCardResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/card/{$cardId}",
-            "method" => "GET",
-            "headers" => [
-                "Authorization" => "Bearer {$token}"
-            ]
-        ];
-
-        return new GetCardResponse($this->dRequest($options));
-    }
-
-    /**
-     * Update character card data.
-     *
-     * @param int $cardId Character card ID
-     * @param string $attribute Attribute name
-     * @param int $change Change in attribute
-     * @param string $token Access token
-     *
-     * @return UpdateCardResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function updateCard(int $cardId, string $attribute, int $change, string $token): UpdateCardResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/card/{$cardId}",
-            "method" => "PATCH",
-            "headers" => [
-                "Authorization" => "Bearer {$token}"
-            ],
-            "data" => [
-                "attribute" => $attribute,
-                "change" => $change
-            ]
-        ];
-
-        return new UpdateCardResponse($this->dRequest($options));
-    }
-
-    /**
-     * Sanity check.
-     *
-     * @param int $cardId Character card ID
-     * @param int $checkResult Sanity check result
-     * @param array $decreases Sanity decreases
-     * @param string $token Access token
-     *
-     * @return SanityCheckResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function sanityCheck(int $cardId, int $checkResult, array $decreases, string $token): SanityCheckResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/card/{$cardId}/sc",
-            "method" => "PATCH",
-            "headers" => [
-                "Authorization" => "Bearer {$token}"
-            ],
-            "data" => [
-                "check_result" => $checkResult,
-                "decreases" => $decreases
-            ]
-        ];
-
-        return new SanityCheckResponse($this->dRequest($options));
-    }
-
-    /**
-     * Jrrp, aka today's luck.
-     *
-     * @param int $userId QQ ID of message sender
-     *
-     * @return JrrpResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function jrrp(int $userId): JrrpResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/user/{$userId}/jrrp",
-            "method" => "GET"
-        ];
-
-        return new JrrpResponse($this->dRequest($options));
-    }
-
-    /**
-     * Kowtow, get piety.
-     *
-     * @param int $userId QQ ID of message sender
-     *
-     * @return KowtowResponse The response
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
-     */
-    public function kowtow(int $userId): KowtowResponse
-    {
-        $options = [
-            "uri" => "/dicerobot/v2/user/{$userId}/kowtow",
-            "method" => "GET"
-        ];
-
-        return new KowtowResponse($this->dRequest($options));
     }
 }

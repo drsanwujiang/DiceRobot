@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Event;
 use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\NewFriendRequestEvent;
-use DiceRobot\Exception\MiraiApiException;
 
 /**
  * Class NewFriendRequest
@@ -23,7 +22,7 @@ use DiceRobot\Exception\MiraiApiException;
 class NewFriendRequest extends EventAction
 {
     /**
-     * @var NewFriendRequestEvent $event Event
+     * @var NewFriendRequestEvent $event Event.
      *
      * @noinspection PhpDocFieldTypeMismatchInspection
      */
@@ -31,8 +30,6 @@ class NewFriendRequest extends EventAction
 
     /**
      * @inheritDoc
-     *
-     * @throws MiraiApiException
      */
     public function __invoke(): void
     {
@@ -56,20 +53,20 @@ class NewFriendRequest extends EventAction
     /**
      * @inheritDoc
      *
-     * @return bool Listened
+     * @return bool Listen strategy.
      */
     protected function checkListen(): bool
     {
-        return $this->config->getBool("strategy.listenNewFriendRequestEvent");
+        return $this->config->getStrategy("listenNewFriendRequestEvent");
     }
 
     /**
      * Check whether this request should be approved.
      *
-     * @return bool Approved
+     * @return bool Strategy.
      */
     protected function checkApprove(): bool
     {
-        return $this->config->getBool("strategy.approveFriendRequest");
+        return $this->config->getBool("approveFriendRequest");
     }
 }

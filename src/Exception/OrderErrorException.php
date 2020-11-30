@@ -9,7 +9,7 @@ namespace DiceRobot\Exception;
  *
  * Failed to parse the order.
  *
- * @reply _generalOrderError
+ * @errorMessage _generalOrderError
  *
  * @package DiceRobot\Exception
  */

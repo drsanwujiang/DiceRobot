@@ -18,16 +18,16 @@ use DiceRobot\Interfaces\Fragment;
  */
 final class Source implements Fragment
 {
-    /** @var int Message ID */
+    /** @var int Message ID. */
     public int $id;
 
-    /** @var int Timestamp */
+    /** @var int Timestamp. */
     public int $time;
 
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {

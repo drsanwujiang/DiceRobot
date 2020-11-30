@@ -6,8 +6,8 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Resource\Reference;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\FileException\LostException;
+use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class Help
@@ -37,17 +37,23 @@ class Help extends MessageAction
             return;
         }
 
-        $actualOrder = $reference->getString("items.mapping.{$order}");
+        $items = $reference->get("templates.mapping.{$order}");
 
-        $this->reply = $reference->getString("items.order.{$actualOrder}");
+        if (is_string($items)) {
+            $this->setRawReply($reference->getString("items.{$items}"));
+        } elseif (is_array($items)) {
+            foreach ($items as $item) {
+                $this->setRawReply($reference->getString("items.{$item}"));
+            }
+        }
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
-     * @throws OrderErrorException
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {
@@ -55,27 +61,30 @@ class Help extends MessageAction
             throw new OrderErrorException;
         }
 
-        $order = $matches[1] ?? "";
+        $order = strtolower($matches[1] ?? "");
 
+        /**
+         * @var string $order Order to query.
+         */
         return [$order];
     }
 
     /**
      * Check the order.
      *
-     * @param string $order The order
-     * @param Reference $reference The reference
+     * @param string $order The order.
+     * @param Reference $reference The reference.
      *
-     * @return bool Validity
+     * @return bool Validity.
      */
     protected function checkOrder(string $order, Reference $reference): bool
     {
         if (empty($order)) {
-            $this->reply = $reference->getString("templates.detail");
+            $this->setRawReply($reference->getString("templates.detail"));
 
             return false;
-        } elseif (empty($reference->get("items.mapping.{$order}"))) {
-            $this->reply = $this->config->getString("reply.helpOrderUnknown");
+        } elseif (!$reference->has("templates.mapping.{$order}")) {
+            $this->setReply("helpUnknown");
 
             return false;
         }

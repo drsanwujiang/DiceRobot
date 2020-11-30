@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * DiceRobot API server returned HTTP status code 4xx/5xx, which means the request is not correctly processed.
  *
- * @reply apiInternalError
+ * @errorMessage apiInternalError
  *
  * @package DiceRobot\Exception\ApiException
  */

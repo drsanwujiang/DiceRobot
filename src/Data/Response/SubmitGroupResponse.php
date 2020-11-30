@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Response;
 
-use DiceRobot\Data\Response;
+use DiceRobot\Data\DiceRobotResponse;
 
 /**
  * Class SubmitGroupResponse
@@ -13,5 +13,6 @@ use DiceRobot\Data\Response;
  *
  * @package DiceRobot\Data\Response
  */
-final class SubmitGroupResponse extends Response
-{}
+final class SubmitGroupResponse extends DiceRobotResponse
+{
+}

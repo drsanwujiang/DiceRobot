@@ -7,8 +7,6 @@ namespace DiceRobot\Action\Event;
 use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\BotJoinGroupEvent;
-use DiceRobot\Exception\MiraiApiException;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Exception\FileException\LostException;
 use DiceRobot\Util\Convertor;
 
@@ -27,7 +25,7 @@ use DiceRobot\Util\Convertor;
 class BotJoinGroup extends EventAction
 {
     /**
-     * @var BotJoinGroupEvent $event Event
+     * @var BotJoinGroupEvent $event Event.
      *
      * @noinspection PhpDocFieldTypeMismatchInspection
      */
@@ -36,7 +34,7 @@ class BotJoinGroup extends EventAction
     /**
      * @inheritDoc
      *
-     * @throws InternalErrorException|LostException|MiraiApiException|NetworkErrorException|UnexpectedErrorException
+     * @throws LostException
      */
     public function __invoke(): void
     {
@@ -48,19 +46,18 @@ class BotJoinGroup extends EventAction
             // Group is in black list, quit
             $this->api->sendGroupMessage(
                 $this->event->group->id,
-                Convertor::toMessageChain($this->config->getString("reply.botJoinGroupRejected"))
+                Convertor::toMessageChain($this->config->getReply("botJoinGroupRejected"))
             );
             $this->api->quitGroup($this->event->group->id);
         } elseif ($this->checkSendHelloMessage()) {
             // Send hello message
-            $message =
-                Convertor::toCustomString(
-                    $this->resource->getReference("HelloTemplate")->getString("templates.detail"),
-                    [
-                        "机器人昵称" => $this->robot->getNickname(),
-                        "机器人QQ号" => $this->robot->getId(),
-                    ]
-                );
+            $message = Convertor::toCustomString(
+                $this->resource->getReference("HelloTemplate")->getString("templates.detail"),
+                [
+                    "机器人昵称" => $this->robot->getNickname(),
+                    "机器人QQ号" => $this->robot->getId(),
+                ]
+            );
 
             $this->api->sendGroupMessage(
                 $this->event->group->id,
@@ -72,45 +69,43 @@ class BotJoinGroup extends EventAction
     /**
      * @inheritDoc
      *
-     * @return bool Listened
+     * @return bool Listen strategy.
      */
     protected function checkListen(): bool
     {
-        return $this->config->getBool("strategy.listenBotJoinGroupEvent");
+        return $this->config->getStrategy("listenBotJoinGroupEvent");
     }
 
     /**
      * Check whether the robot should quit the group when it is delinquent.
      *
-     * @return bool
+     * @return bool Strategy.
      */
     protected function checkQuitWhenDelinquent(): bool
     {
-        return $this->config->getBool("strategy.quitDelinquentGroup");
+        return $this->config->getStrategy("quitDelinquentGroup");
     }
 
     /**
      * Check whether the robot should send hello message when joining a group.
      *
-     * @return bool
+     * @return bool Strategy.
      */
     protected function checkSendHelloMessage(): bool
     {
-        return $this->config->getBool("strategy.sendHelloMessage");
+        return $this->config->getStrategy("sendHelloMessage");
     }
 
     /**
      * Query if this group is delinquent.
      *
-     * @return bool Delinquent
-     *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @return bool Delinquent.
      */
     protected function queryGroup(): bool
     {
         return $this->api->queryGroup(
             $this->event->group->id,
-            $this->api->auth($this->robot->getId())->token
+            $this->api->authorize($this->robot->getId())->token
         )->state;
     }
 }

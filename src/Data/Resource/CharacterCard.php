@@ -16,7 +16,8 @@ use DiceRobot\Exception\CharacterCardException\ItemNotExistException;
  */
 class CharacterCard extends Resource
 {
-    protected const ATTRIBUTE_ENG_NAMES = [
+    /** @var string[] Mapping between attribute name and the corresponding Chinese name. */
+    protected const ATTRIBUTE_CN_NAMES = [
         "STR" => "力量", "CON" => "体质", "SIZ" => "体型",
         "DEX" => "敏捷",  "APP" => "外貌", "INT" => "智力",
         "IDEA" => "灵感", "POW" => "意志", "EDU" => "教育",
@@ -26,7 +27,7 @@ class CharacterCard extends Resource
     /**
      * @inheritDoc
      *
-     * @param array $data Character card data
+     * @param array $data Character card data.
      */
     public function __construct(array $data = [])
     {
@@ -42,16 +43,16 @@ class CharacterCard extends Resource
     /**
      * Get attribute value.
      *
-     * @param string $name Attribute name
+     * @param string $name Attribute name.
      *
-     * @return int Attribute value
+     * @return int Attribute value.
      *
-     * @throws ItemNotExistException
+     * @throws ItemNotExistException Attribute does not exist.
      */
     public function getAttribute(string $name): int
     {
         $name = strtoupper($name);
-        $name = self::ATTRIBUTE_ENG_NAMES[$name] ?? $name;
+        $name = self::ATTRIBUTE_CN_NAMES[$name] ?? $name;
 
         if (!$this->has("attributes.{$name}")) {
             throw new ItemNotExistException();
@@ -63,13 +64,13 @@ class CharacterCard extends Resource
     /**
      * Get skill value.
      *
-     * @param string $name Skill name
+     * @param string $name Skill name.
      *
-     * @return int Skill value or null
+     * @return int Skill value.
      *
-     * @throws ItemNotExistException
+     * @throws ItemNotExistException Skill does not exist.
      */
-    public function getSkill(string $name): ?int
+    public function getSkill(string $name): int
     {
         $name = strtolower($name);
 
@@ -83,20 +84,20 @@ class CharacterCard extends Resource
     /**
      * Set attribute value.
      *
-     * @param string $name Attribute name
-     * @param int $value Attribute value
+     * @param string $name Attribute name.
+     * @param int $value Attribute value.
      */
     public function setAttribute(string $name, int $value): void
     {
         $name = strtoupper($name);
-        $this->data["attributes"][self::ATTRIBUTE_ENG_NAMES[$name] ?? $name] = $value;
+        $this->data["attributes"][self::ATTRIBUTE_CN_NAMES[$name] ?? $name] = $value;
     }
 
     /**
      * Set skill value.
      *
-     * @param string $name Skill name
-     * @param int $value Skill value
+     * @param string $name Skill name.
+     * @param int $value Skill value.
      */
     public function setSkill(string $name, int $value): void
     {

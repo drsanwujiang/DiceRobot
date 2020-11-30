@@ -21,7 +21,7 @@ final class Xml implements Fragment
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {

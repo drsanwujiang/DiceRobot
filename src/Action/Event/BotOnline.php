@@ -24,7 +24,7 @@ use DiceRobot\Exception\MiraiApiException;
 class BotOnline extends EventAction
 {
     /**
-     * @var BotOnlineEvent $event Event
+     * @var BotOnlineEvent $event Event.
      *
      * @noinspection PhpDocFieldTypeMismatchInspection
      */
@@ -39,17 +39,27 @@ class BotOnline extends EventAction
     {
         $this->logger->notice("Robot is online (login).");
 
+        $this->init();
+    }
+
+    /**
+     * Initialize session and update robot service.
+     *
+     * @throws MiraiApiException
+     */
+    protected function init(): void
+    {
         // Try to initialize session, then update robot service
         if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
             if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()))
                 $this->app->setStatus(AppStatusEnum::RUNNING());
+        } else {
+            // Failed
+            if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
+                $this->app->setStatus(AppStatusEnum::HOLDING());
+            }
 
-            return;
-        }
-
-        // Failed
-        if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
-            $this->app->setStatus(AppStatusEnum::HOLDING());
+            $this->logger->critical("Failed to initialize session.");
         }
     }
 }

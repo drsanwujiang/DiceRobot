@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Subexpression is invalid.
  *
- * @reply diceExpressionInvalid
+ * @errorMessage diceExpressionInvalid
  *
  * @package DiceRobot\Exception\DiceException
  */

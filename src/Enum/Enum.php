@@ -16,9 +16,9 @@ abstract class Enum extends \MyCLabs\Enum\Enum
     /**
      * Compare this enum and the variable. Note: this function will not check types, only compare values.
      *
-     * @param Enum $variable Enum
+     * @param Enum $variable Enum.
      *
-     * @return bool Is less than $variable
+     * @return bool Is less than $variable.
      */
     public function lessThan(Enum $variable): bool
     {
@@ -28,9 +28,9 @@ abstract class Enum extends \MyCLabs\Enum\Enum
     /**
      * Compare this enum and the variable. Note: this function will not check types, only compare values.
      *
-     * @param Enum $variable Enum
+     * @param Enum $variable Enum.
      *
-     * @return bool Is greater than $variable
+     * @return bool Is greater than $variable.
      */
     public function greaterThan(Enum $variable): bool
     {

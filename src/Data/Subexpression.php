@@ -17,28 +17,28 @@ use DiceRobot\Util\Random;
  */
 class Subexpression
 {
-    /** @var int Max dice number */
+    /** @var int Max dice number. */
     protected static int $maxDiceNumber;
 
-    /** @var int Max dice surface number */
+    /** @var int Max dice surface number. */
     protected static int $maxSurfaceNumber;
 
-    /** @var string Subexpression */
+    /** @var string Subexpression. */
     public string $expression;
 
-    /** @var int Dice number */
+    /** @var int Dice number. */
     public int $diceNumber;
 
-    /** @var int Dice surface number */
+    /** @var int Dice surface number. */
     public int $surfaceNumber;
 
-    /** @var int|null K number */
+    /** @var int|null K number. */
     public ?int $kNumber = null;
 
-    /** @var int[] Dicing results */
+    /** @var int[] Dicing results. */
     public array $results;
 
-    /** @var int Dicing result */
+    /** @var int Dicing result. */
     public int $result;
 
     /**
@@ -46,7 +46,7 @@ class Subexpression
      *
      * @GlobalInitialize
      *
-     * @param Config $config
+     * @param Config $config DiceRobot config.
      */
     public static function globalInitialize(Config $config): void
     {
@@ -57,9 +57,11 @@ class Subexpression
     /**
      * The constructor.
      *
-     * @param string $expression Dicing subexpression
+     * @param string $expression Dicing subexpression.
      *
-     * @throws DiceNumberOverstepException|ExpressionInvalidException|SurfaceNumberOverstepException
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionInvalidException
+     * @throws SurfaceNumberOverstepException
      */
     public function __construct(string $expression)
     {
@@ -84,7 +86,7 @@ class Subexpression
      * The subexpression must be a full subexpression (xDy or xDyKz) or fulfilled before. Anything like D, xD, Dy, DK,
      * xDK, DyK, DKz, xDyK, xDKz or DyKz is invalid.
      *
-     * @throws ExpressionInvalidException
+     * @throws ExpressionInvalidException Expression is not a normative full subexpression.
      */
     protected function parseExpression(): void
     {
@@ -103,7 +105,9 @@ class Subexpression
     /**
      * Check the range of dice number and dice surface number.
      *
-     * @throws DiceNumberOverstepException|ExpressionInvalidException|SurfaceNumberOverstepException
+     * @throws DiceNumberOverstepException Dice number exceeds max limit.
+     * @throws ExpressionInvalidException K number is greater than dice number.
+     * @throws SurfaceNumberOverstepException Dice surface number exceeds max limit.
      */
     protected function checkRange(): void
     {
@@ -140,9 +144,9 @@ class Subexpression
     /**
      * Generate result string.
      *
-     * @param string $glue Bound symbol
+     * @param string $glue Bound symbol.
      *
-     * @return string Result string
+     * @return string Result string.
      */
     public function getResultString(string $glue = "+"): string
     {

@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Dice surface number oversteps the limit.
  *
- * @reply diceSurfaceNumberOverstep
+ * @errorMessage diceSurfaceNumberOverstep
  *
  * @package DiceRobot\Exception\DiceException
  */

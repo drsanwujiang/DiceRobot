@@ -18,14 +18,15 @@ final class AtAll implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @param string $code Mirai code
+     * @param string $code Mirai code.
      *
-     * @return bool Success
+     * @return bool Success.
      */
     public function fromMiraiCode(string $code): bool
     {
-        if (!preg_match("/^\[mirai:atall]$/i", $code))
+        if (!preg_match("/^\[mirai:atall]$/i", $code)) {
             return false;
+        }
 
         return true;
     }
@@ -33,7 +34,7 @@ final class AtAll implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {
@@ -45,7 +46,7 @@ final class AtAll implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function toMiraiCode(): string
     {
@@ -55,7 +56,7 @@ final class AtAll implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function __toString(): string
     {

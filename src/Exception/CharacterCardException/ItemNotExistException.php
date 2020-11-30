@@ -11,7 +11,7 @@ use DiceRobot\Exception\DiceRobotException;
  *
  * Item does not exist in the character card.
  *
- * @reply characterCardItemNotExist
+ * @errorMessage characterCardItemNotExist
  *
  * @package DiceRobot\Exception\CharacterCardException
  */

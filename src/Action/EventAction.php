@@ -17,43 +17,41 @@ use Psr\Log\LoggerInterface;
  *
  * Action that responds to event report.
  *
- * @event
- *
  * @package DiceRobot\Action
  */
 abstract class EventAction implements Action
 {
-    /** @var Config Config */
+    /** @var Config DiceRobot config. */
     protected Config $config;
 
-    /** @var App Application */
+    /** @var App Application. */
     protected App $app;
 
-    /** @var ApiService API service */
+    /** @var ApiService API service. */
     protected ApiService $api;
 
-    /** @var ResourceService Resource service */
+    /** @var ResourceService Resource service. */
     protected ResourceService $resource;
 
-    /** @var RobotService Robot service */
+    /** @var RobotService Robot service. */
     protected RobotService $robot;
 
-    /** @var LoggerInterface Logger */
+    /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
-    /** @var Event Event */
+    /** @var Event Event. */
     public Event $event;
 
     /**
      * The constructor.
      *
-     * @param COnfig $config
-     * @param App $app
-     * @param ApiService $api
-     * @param ResourceService $resource
-     * @param RobotService $robot
-     * @param LoggerFactory $loggerFactory
-     * @param Event $event
+     * @param COnfig $config DiceRobot config.
+     * @param App $app Application.
+     * @param ApiService $api API service.
+     * @param ResourceService $resource Resource service.
+     * @param RobotService $robot Robot service.
+     * @param LoggerFactory $loggerFactory Logger factory.
+     * @param Event $event Event.
      */
     public function __construct(
         Config $config,
@@ -76,7 +74,7 @@ abstract class EventAction implements Action
     /**
      * Check whether this event should be listened.
      *
-     * @return bool Listened
+     * @return bool Listen strategy.
      */
     protected function checkListen(): bool
     {

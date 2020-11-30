@@ -1,0 +1,12 @@
+{
+    "active": true,
+    "characterCards": {
+        "10000": 1
+    },
+    "cocCheckRule": 1,
+    "defaultSurfaceNumber": 50,
+    "nicknames": {
+        "10000": "What a lovely name"
+    },
+    "robotNickname": null
+}

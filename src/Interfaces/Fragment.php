@@ -16,7 +16,7 @@ interface Fragment
     /**
      * Convert fragment to single message of Mirai message chain.
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array;
 }

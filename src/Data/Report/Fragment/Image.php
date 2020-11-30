@@ -11,33 +11,37 @@ use DiceRobot\Interfaces\Fragment\ParsableFragment;
  *
  * DTO. Image message fragment.
  *
+ * Specially, we extend Mirai code of image, for it can be parsed from path.
+ *
  * @package DiceRobot\Data\Report\Fragment
  */
 final class Image implements ParsableFragment
 {
-    /** @var string Image ID */
-    public string $imageId;
+    /** @var string|null Image ID. */
+    public ?string $imageId = null;
 
-    /** @var string Image URL */
-    public string $url;
+    /** @var string|null Image URL. */
+    public ?string $url = null;
 
-    /** @var string|null Image local path */
+    /** @var string|null Image local path. */
     public ?string $path = null;
 
     /**
      * @inheritDoc
      *
-     * @param string $code Mirai code
+     * @param string $code Mirai code (extended).
      *
-     * @return bool Success
+     * @return bool Success.
      */
     public function fromMiraiCode(string $code): bool
     {
-        if (!preg_match("/^\[mirai:image:(.*?)]$/i", $code, $matches))
+        if (!preg_match("/^\[mirai:image:(.+?)]$/i", $code, $matches)) {
             return false;
-
-        $this->imageId = $matches[1];
-        $this->url = "";
+        } elseif (preg_match("/^file=(.+)$/i", $content = (string) $matches[1], $matches)) {
+            $this->path = (string) $matches[1];
+        } else {
+            $this->imageId = $content;
+        }
 
         return true;
     }
@@ -45,7 +49,7 @@ final class Image implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return array Message
+     * @return array Message.
      */
     public function toMessage(): array
     {
@@ -60,7 +64,7 @@ final class Image implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function toMiraiCode(): string
     {
@@ -70,7 +74,7 @@ final class Image implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code
+     * @return string Mirai code.
      */
     public function __toString(): string
     {

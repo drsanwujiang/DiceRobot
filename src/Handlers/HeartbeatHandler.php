@@ -15,48 +15,58 @@ use Psr\Log\LoggerInterface;
 /**
  * Class HeartbeatHandler
  *
- * The heartbeat handler.
+ * Heartbeat handler.
  *
  * @package DiceRobot\Handlers
  */
 class HeartbeatHandler
 {
-    /** @var App Application */
+    /** @var App Application. */
     protected App $app;
 
-    /** @var ApiService API service */
+    /** @var ApiService API service. */
     protected ApiService $api;
 
-    /** @var ResourceService Data service */
+    /** @var ResourceService Resource service. */
     protected ResourceService $resource;
 
-    /** @var RobotService Robot service */
+    /** @var RobotService Robot service. */
     protected RobotService $robot;
 
-    /** @var LoggerInterface Logger */
+    /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
     /**
      * The constructor.
      *
-     * @param App $app
-     * @param ApiService $api
-     * @param ResourceService $resource
-     * @param RobotService $robot
-     * @param LoggerFactory $loggerFactory
+     * @param ApiService $api API service.
+     * @param ResourceService $resource Resource service.
+     * @param RobotService $robot Robot service.
+     * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
-        App $app,
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,
         LoggerFactory $loggerFactory
     ) {
-        $this->app = $app;
         $this->api = $api;
         $this->resource = $resource;
         $this->robot = $robot;
+
         $this->logger = $loggerFactory->create("Handler");
+    }
+
+    /**
+     * Initialize heartbeat handler.
+     *
+     * @param App $app Application.
+     */
+    public function initialize(App $app): void
+    {
+        $this->app = $app;
+
+        $this->logger->info("Heartbeat handler initialized.");
     }
 
     /**
@@ -74,7 +84,7 @@ class HeartbeatHandler
         }
 
         // Heartbeat
-        if ($this->resource->saveAll() && $this->checkSession() && $this->robot->update()) {
+        if ($this->resource->saveAll() && $this->prolongSession() && $this->robot->update()) {
             $this->logger->info("Heartbeat finished.");
         } else {
             if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
@@ -86,30 +96,30 @@ class HeartbeatHandler
     }
 
     /**
-     * Check Mirai session status and extend its effective time.
+     * Prolong Mirai session.
      *
-     * @return bool
+     * @return bool Success.
      */
-    public function checkSession(): bool
+    public function prolongSession(): bool
     {
         try {
-            if (0 == $code = $this->api->verifySession($this->robot->getId())->getInt("code", -1)) {
-                $this->logger->info("Session verified.");
+            if (0 == $code = $this->api->fetchMessage(10)->getInt("code", -1)) {
+                $this->logger->info("Session prolonged.");
 
                 return true;
             }
 
+            $this->logger->error("Failed to prolong session, code {$code}.");
+
             System::sleep(1);
 
-            $this->logger->error("Session unauthorized, code {$code}. Try to initialize.");
+            $this->logger->notice("Try to initialize session.");
 
             // Try to initialize session
             if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId())) {
-                $this->logger->info("Session verified.");
-
                 return true;
             } else {
-                $this->logger->critical("Check session failed.");
+                $this->logger->critical("Failed to initialize session.");
             }
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Check session failed, unable to call Mirai API.");

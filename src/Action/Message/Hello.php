@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
-use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Exception\FileException\LostException;
+use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\Convertor;
 
 /**
@@ -31,22 +31,21 @@ class Hello extends MessageAction
     {
         $this->parseOrder();
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->resource->getReference("HelloTemplate")->getString("templates.detail"),
-                [
-                    "机器人昵称" => $this->robot->getNickname(),
-                    "机器人QQ号" => $this->robot->getId(),
-                ]
-            );
+        $this->setRawReply(Convertor::toCustomString(
+            $this->resource->getReference("HelloTemplate")->getString("templates.detail"),
+            [
+                "机器人昵称" => $this->robot->getNickname(),
+                "机器人QQ号" => $this->robot->getId(),
+            ]
+        ));
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return array Parsed elements.
      *
-     * @throws OrderErrorException
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {

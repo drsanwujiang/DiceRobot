@@ -1,6 +1,40 @@
 # Changelog
 
 
+## 2.1.0 - 2020-11-30
+
+### Added
+- Order `maxReplyCharacter` (#33)
+- Draw cards (.draw) (#31)
+- Deck (.deck) (#32)
+- Default chat settings
+- Image fragment can be created from Mirai code with path
+- Multiple replies
+- Reply APIs
+- Reply length control (#29)
+- Support more Mirai APIs
+- API handlers
+- Custom service name
+- Function switches
+
+### Fixed
+- Fragments regular expressions
+
+### Changed
+- Robot order will be redirected to about by default (#33)
+- Order `maxRepeatTimes` is now 20 by default
+- Session strategy
+
+### Refactored
+- Starting and initialization logic
+- Error log
+- `App` and `Server` logic
+- Order group
+
+### Removed
+- Selective/array-reader, for `ArrayReaderTrait`
+
+
 ## 2.0.3 - 2020-11-14
 
 ### Fixed

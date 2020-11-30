@@ -19,9 +19,18 @@ namespace DiceRobot\Enum;
  */
 final class AppStatusEnum extends Enum
 {
+    /** @var int Application stopped. */
     private const STOPPED = -2;
+
+    /** @var int Application paused. */
     private const PAUSED = -1;
+
+    /** @var int Application running. */
     private const RUNNING = 0;
-    private const HOLDING = 1;  // Holding for session initialization
-    private const WAITING = 2;  // Waiting to be initialized
+
+    /** @var int Application holding, for session initialization.  */
+    private const HOLDING = 1;
+
+    /** @var int Application waiting, for self initialization. */
+    private const WAITING = 2;
 }

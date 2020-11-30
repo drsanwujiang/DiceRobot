@@ -7,7 +7,7 @@ namespace DiceRobot\Traits;
 /**
  * Trait ArrayReaderTrait
  *
- * The array reader trait.
+ * Array reader trait.
  *
  * This trait is a simple version of ArrayReader in selective/array-reader.
  *
@@ -19,13 +19,13 @@ namespace DiceRobot\Traits;
  */
 trait ArrayReaderTrait
 {
-    /** @var array The data */
+    /** @var array The data. */
     protected array $data;
 
     /**
      * The constructor.
      *
-     * @param array $data Data
+     * @param array $data The data.
      */
     protected function __constructArrayReader(array $data)
     {
@@ -35,7 +35,7 @@ trait ArrayReaderTrait
     /**
      * Return all data as array.
      *
-     * @return array The data
+     * @return array The data.
      */
     public function all(): array
     {
@@ -45,9 +45,9 @@ trait ArrayReaderTrait
     /**
      * Test whether or not a given path exists in $data.
      *
-     * @param string $path The path to check for
+     * @param string $path The path to check for.
      *
-     * @return bool The existence of path
+     * @return bool The existence of path.
      */
     public function has(string $path): bool
     {
@@ -68,9 +68,9 @@ trait ArrayReaderTrait
     /**
      * Get value.
      *
-     * @param string $path The path
+     * @param string $path The path.
      *
-     * @return mixed|null The value
+     * @return mixed|null The value.
      */
     public function get(string $path)
     {
@@ -91,10 +91,10 @@ trait ArrayReaderTrait
     /**
      * Get value as integer.
      *
-     * @param string $key The key
-     * @param int $default The default value
+     * @param string $key The key.
+     * @param int $default The default value.
      *
-     * @return int The value
+     * @return int The value.
      */
     public function getInt(string $key, int $default = -1): int
     {
@@ -104,10 +104,10 @@ trait ArrayReaderTrait
     /**
      * Get value as string.
      *
-     * @param string $key The key
-     * @param string $default The default value
+     * @param string $key The key.
+     * @param string $default The default value.
      *
-     * @return string The value
+     * @return string The value.
      */
     public function getString(string $key, string $default = ""): string
     {
@@ -117,10 +117,10 @@ trait ArrayReaderTrait
     /**
      * Get value as array.
      *
-     * @param string $key The key
-     * @param array $default The default value
+     * @param string $key The key.
+     * @param array $default The default value.
      *
-     * @return array The value
+     * @return array The value.
      */
     public function getArray(string $key, array $default = []): array
     {
@@ -130,10 +130,10 @@ trait ArrayReaderTrait
     /**
      * Get value as float.
      *
-     * @param string $key The key
-     * @param float|null $default The default value
+     * @param string $key The key.
+     * @param float|null $default The default value.
      *
-     * @return float The value
+     * @return float The value.
      */
     public function getFloat(string $key, float $default = -1.0): float
     {
@@ -143,10 +143,10 @@ trait ArrayReaderTrait
     /**
      * Get value as boolean.
      *
-     * @param string $key The key
-     * @param bool $default The default value
+     * @param string $key The key.
+     * @param bool $default The default value.
      *
-     * @return bool The value
+     * @return bool The value.
      */
     public function getBool(string $key, bool $default = false): bool
     {

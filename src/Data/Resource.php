@@ -20,7 +20,7 @@ abstract class Resource
     /**
      * The constructor.
      *
-     * @param array $data Resource data
+     * @param array $data Resource data.
      */
     public function __construct(array $data = [])
     {
@@ -30,7 +30,7 @@ abstract class Resource
     /**
      * Return JSON serialized data.
      *
-     * @return string JSON serialized data
+     * @return string JSON serialized data.
      */
     public function __toString(): string
     {

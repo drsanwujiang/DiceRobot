@@ -6,8 +6,6 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Exception\OrderErrorException;
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Jrrp
@@ -25,28 +23,44 @@ class Jrrp extends MessageAction
     /**
      * @inheritDoc
      *
-     * @throws InternalErrorException|NetworkErrorException|OrderErrorException|UnexpectedErrorException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
+        if (!$this->checkEnabled()) {
+            return;
+        }
+
         $this->parseOrder();
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->config->getString("reply.jrrpReply"),
-                [
-                    "昵称" => $this->getNickname(),
-                    "人品" => $this->api->jrrp($this->message->sender->id)->jrrp
-                ]
-            );
+        $this->setReply("jrrpResult", [
+            "昵称" => $this->getNickname(),
+            "人品" => $this->api->jrrp($this->message->sender->id)->jrrp
+        ]);
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return bool Enabled.
+     */
+    protected function checkEnabled(): bool
+    {
+        if (!$this->config->getStrategy("enableJrrp")) {
+            $this->setReply("jrrpDisabled");
+
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * @inheritDoc
      *
-     * @throws OrderErrorException
+     * @return array Parsed elements.
+     *
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {

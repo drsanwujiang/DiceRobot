@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
-use DiceRobot\Exception\{MiraiApiException, OrderErrorException};
-use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
+use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\Convertor;
 
 /**
@@ -22,46 +21,58 @@ use DiceRobot\Util\Convertor;
  */
 class Kowtow extends MessageAction
 {
-    /** @var int[] Kowtow levels */
+    /** @var int[] Kowtow levels. */
     protected const KOWTOW_LEVEL = [10, 30, 60, 80, 95, 100];
 
     /**
      * @inheritDoc
      *
-     * @throws InternalErrorException|MiraiApiException|NetworkErrorException|OrderErrorException
-     * @throws UnexpectedErrorException
+     * @throws OrderErrorException
      */
     public function __invoke(): void
     {
+        if (!$this->checkEnabled()) {
+            return;
+        }
+
         $this->parseOrder();
 
         $piety = $this->api->kowtow($this->message->sender->id)->piety;
         $level = $this->getKowtowLevel($piety);
 
-        $this->reply =
-            Convertor::toCustomString(
-                $this->config->getString("reply.kowtowHeading"),
-                [
-                    "发送者QQ" => $this->message->sender->id,
-                    "机器人昵称" => $this->getRobotNickname(),
-                    "虔诚值" => $piety
-                ]
-            ) .
-            "\n" .
-            Convertor::toCustomString(
-                $this->config->getString("reply.kowtowLevel{$level}"),
-                [
-                    "机器人昵称" => $this->getRobotNickname()
-                ]
-            );
+        $this->setReply("kowtowResult", [
+            "发送者QQ" => $this->message->sender->id,
+            "机器人昵称" => $this->getRobotNickname(),
+            "虔诚值" => $piety,
+            "虔诚等级" => Convertor::toCustomString($this->config->getReply("kowtowLevel{$level}"), [
+                "机器人昵称" => $this->getRobotNickname()
+            ])
+        ]);
+
     }
 
     /**
      * @inheritDoc
      *
-     * @return array Parsed elements
+     * @return bool Enabled.
+     */
+    protected function checkEnabled(): bool
+    {
+        if (!$this->config->getStrategy("enableKowtow")) {
+            $this->setReply("kowtowDisabled");
+
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * @inheritDoc
      *
-     * @throws OrderErrorException
+     * @return array Parsed elements.
+     *
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {
@@ -75,9 +86,9 @@ class Kowtow extends MessageAction
     /**
      * Get kowtow level.
      *
-     * @param int $piety Piety
+     * @param int $piety Piety.
      *
-     * @return int|null Level
+     * @return int|null Level.
      */
     protected function getKowtowLevel(int $piety): ?int
     {
