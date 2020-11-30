@@ -46,8 +46,8 @@ class Jrrp extends MessageAction
      */
     protected function checkEnabled(): bool
     {
-        if (!$this->config->getStrategy("enableDraw")) {
-            $this->setReply("drawDisabled");
+        if (!$this->config->getStrategy("enableJrrp")) {
+            $this->setReply("jrrpDisabled");
 
             return false;
         } else {

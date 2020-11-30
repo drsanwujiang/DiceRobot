@@ -84,7 +84,7 @@ class Help extends MessageAction
 
             return false;
         } elseif (!$reference->has("templates.mapping.{$order}")) {
-            $this->setReply("helpOrderUnknown");
+            $this->setReply("helpUnknown");
 
             return false;
         }

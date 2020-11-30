@@ -155,7 +155,7 @@ namespace DiceRobot {
             "drawDisabled" => "Master 已经禁用了 .draw (;´Д`)",
 
             /* Help */
-            "helpOrderUnknown" => "咦？找不到这条指令诶……",
+            "helpUnknown" => "咦？找不到这条指令诶……",
 
             /* Jrrp */
             "jrrpResult" => "{&昵称}今天的人品是……{&人品}！",

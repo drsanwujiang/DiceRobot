@@ -80,8 +80,8 @@ class Draw extends MessageAction
      */
     protected function checkEnabled(): bool
     {
-        if (!$this->config->getStrategy("enableJrrp")) {
-            $this->setReply("jrrpDisabled");
+        if (!$this->config->getStrategy("enableDraw")) {
+            $this->setReply("drawDisabled");
 
             return false;
         } else {
