@@ -37,9 +37,15 @@ class Help extends MessageAction
             return;
         }
 
-        $actualOrder = $reference->getString("items.mapping.{$order}");
+        $items = $reference->get("templates.mapping.{$order}");
 
-        $this->setRawReply($reference->getString("items.order.{$actualOrder}"));
+        if (is_string($items)) {
+            $this->setRawReply($reference->getString("items.{$items}"));
+        } elseif (is_array($items)) {
+            foreach ($items as $item) {
+                $this->setRawReply($reference->getString("items.{$item}"));
+            }
+        }
     }
 
     /**
@@ -77,7 +83,7 @@ class Help extends MessageAction
             $this->setRawReply($reference->getString("templates.detail"));
 
             return false;
-        } elseif (empty($reference->get("items.mapping.{$order}"))) {
+        } elseif (!$reference->has("templates.mapping.{$order}")) {
             $this->setReply("helpOrderUnknown");
 
             return false;
