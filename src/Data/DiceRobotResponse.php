@@ -51,10 +51,14 @@ abstract class DiceRobotResponse
     /**
      * Validate return code.
      */
-    protected function validate(): void {}
+    protected function validate(): void
+    {
+    }
 
     /**
      * Parse data to properties.
      */
-    protected function parse(): void {}
+    protected function parse(): void
+    {
+    }
 }

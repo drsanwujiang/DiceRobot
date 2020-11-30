@@ -15,8 +15,6 @@ use Exception;
  * report handler will catch this exception and send the corresponding message. If exception contains extra message,
  * the message will be logged.
  *
- * @errorMessage
- *
  * @package DiceRobot\Exception
  */
 abstract class DiceRobotException extends Exception

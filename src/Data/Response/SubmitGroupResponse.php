@@ -14,4 +14,5 @@ use DiceRobot\Data\DiceRobotResponse;
  * @package DiceRobot\Data\Response
  */
 final class SubmitGroupResponse extends DiceRobotResponse
-{}
+{
+}

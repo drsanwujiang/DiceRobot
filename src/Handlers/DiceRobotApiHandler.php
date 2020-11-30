@@ -119,7 +119,9 @@ class DiceRobotApiHandler
      *
      * @return UpdateRobotResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function updateRobot(int $robotId): UpdateRobotResponse
     {
@@ -155,7 +157,9 @@ class DiceRobotApiHandler
      *
      * @return AuthorizeResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function authorize(int $robotId, int $userId = null): AuthorizeResponse
     {
@@ -178,7 +182,9 @@ class DiceRobotApiHandler
      *
      * @return GetNicknameResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function getNickname(int $robotId): GetNicknameResponse
     {
@@ -198,7 +204,9 @@ class DiceRobotApiHandler
      *
      * @return QueryGroupResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function queryGroup(int $groupId, string $token): QueryGroupResponse
     {
@@ -222,7 +230,9 @@ class DiceRobotApiHandler
      *
      * @return SubmitGroupResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function submitGroup(int $groupId, string $token): SubmitGroupResponse
     {
@@ -245,7 +255,9 @@ class DiceRobotApiHandler
      *
      * @return GetCardResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function getCard(int $cardId, string $token): GetCardResponse
     {
@@ -270,7 +282,9 @@ class DiceRobotApiHandler
      *
      * @return UpdateCardResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function updateCard(int $cardId, string $attribute, int $change, string $token): UpdateCardResponse
     {
@@ -299,7 +313,9 @@ class DiceRobotApiHandler
      *
      * @return SanityCheckResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function sanityCheck(int $cardId, int $checkResult, array $decreases, string $token): SanityCheckResponse
     {
@@ -325,7 +341,9 @@ class DiceRobotApiHandler
      *
      * @return JrrpResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function jrrp(int $userId): JrrpResponse
     {
@@ -344,7 +362,9 @@ class DiceRobotApiHandler
      *
      * @return KowtowResponse Response.
      *
-     * @throws InternalErrorException|NetworkErrorException|UnexpectedErrorException
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
      */
     final public function kowtow(int $userId): KowtowResponse
     {

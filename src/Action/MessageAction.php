@@ -19,8 +19,6 @@ use DiceRobot\Util\Convertor;
  *
  * Action that responds to message report.
  *
- * @order
- *
  * @package DiceRobot\Action
  */
 abstract class MessageAction implements Action

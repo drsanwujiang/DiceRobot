@@ -20,4 +20,5 @@ use DiceRobot\Action\Message\Robot\Goodbye;
  * @package DiceRobot\Action\Message
  */
 class Dismiss extends Goodbye
-{}
+{
+}

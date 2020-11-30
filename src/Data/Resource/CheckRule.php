@@ -40,7 +40,9 @@ class CheckRule extends Resource
      *
      * @return string Check level.
      *
-     * @throws DangerousException|InvalidException|MatchFailedException
+     * @throws DangerousException Check rule has dangerous item.
+     * @throws InvalidException Check rule has invalid item.
+     * @throws MatchFailedException Check rule is imperfect.
      */
     public function getCheckLevel(int $result, int $value): string
     {
@@ -48,7 +50,7 @@ class CheckRule extends Resource
         {
             $condition = str_replace(["{&result}", "{&value}", " "], [$result, $value, ""], $condition);
 
-            if (preg_match("/.*[a-z]+.*/i", $condition)) {
+            if (preg_match("/[a-zA-Z]/", $condition)) {
                 throw new DangerousException();
             }
 

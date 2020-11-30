@@ -17,8 +17,6 @@ use Psr\Log\LoggerInterface;
  *
  * Action that responds to event report.
  *
- * @event
- *
  * @package DiceRobot\Action
  */
 abstract class EventAction implements Action

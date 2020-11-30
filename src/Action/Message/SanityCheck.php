@@ -81,7 +81,7 @@ class SanityCheck extends MessageAction
      *
      * @return array Parsed elements.
      *
-     * @throws OrderErrorException
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {
@@ -171,9 +171,7 @@ class SanityCheck extends MessageAction
      *
      * @return array Check details.
      *
-     * @throws ItemNotExistException
-     * @throws LostException
-     * @throws NotBoundException
+     * @throws ItemNotExistException|LostException|NotBoundException
      */
     protected function check(?int $sanity, int $successDecrease, int $failureDecrease, int $checkResult): array
     {

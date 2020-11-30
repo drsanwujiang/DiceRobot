@@ -33,13 +33,8 @@ class ChangeAttribute extends MessageAction
     /**
      * @inheritDoc
      *
-     * @throws DiceNumberOverstepException
-     * @throws ExpressionErrorException
-     * @throws ExpressionInvalidException
-     * @throws LostException
-     * @throws NotBoundException
-     * @throws OrderErrorException
-     * @throws SurfaceNumberOverstepException
+     * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException|LostException
+     * @throws NotBoundException|OrderErrorException|SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {
@@ -75,7 +70,7 @@ class ChangeAttribute extends MessageAction
      *
      * @return array Parsed elements.
      *
-     * @throws OrderErrorException
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {

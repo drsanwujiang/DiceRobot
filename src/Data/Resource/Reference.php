@@ -14,4 +14,5 @@ use DiceRobot\Data\Resource;
  * @package DiceRobot\Data\Resource
  */
 class Reference extends Resource
-{}
+{
+}

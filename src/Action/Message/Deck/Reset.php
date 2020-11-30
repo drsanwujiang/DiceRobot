@@ -46,7 +46,7 @@ class Reset extends DeckAction
      *
      * @return array Parsed elements.
      *
-     * @throws OrderErrorException
+     * @throws OrderErrorException Order is invalid.
      */
     protected function parseOrder(): array
     {
