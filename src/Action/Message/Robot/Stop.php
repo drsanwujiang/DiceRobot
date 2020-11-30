@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Action\Message\RobotOrder;
+namespace DiceRobot\Action\Message\Robot;
 
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\OrderErrorException;
@@ -37,7 +37,7 @@ class Stop extends Start
 
         $this->chatSettings->set("active", false);
 
-        $this->setReply("robotOrderStop", [
+        $this->setReply("robotStop", [
             "机器人昵称" => $this->getRobotNickname()
         ]);
     }
@@ -45,13 +45,13 @@ class Stop extends Start
     /**
      * @inheritDoc
      *
-     * @return bool Validity.
+     * @return bool Permitted.
      */
     protected function checkPermission(): bool
     {
         // Must be the owner or the administrator in the group
         if ($this->message instanceof GroupMessage && $this->message->sender->permission == "MEMBER") {
-            $this->setReply("robotOrderStopDenied");
+            $this->setReply("robotStopDenied");
 
             return false;
         }

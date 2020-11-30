@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Action\Message\RobotOrder;
+namespace DiceRobot\Action\Message\Robot;
 
-use DiceRobot\Action\MessageAction;
+use DiceRobot\Action\Message\RobotAction;
 use DiceRobot\Exception\FileException\LostException;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\Convertor;
@@ -20,13 +20,12 @@ use DiceRobot\Util\Convertor;
  *
  * @package DiceRobot\Action\Message\RobotOrder
  */
-class About extends MessageAction
+class About extends RobotAction
 {
     /**
      * @inheritDoc
      *
-     * @throws LostException
-     * @throws OrderErrorException
+     * @throws LostException|OrderErrorException
      */
     public function __invoke(): void
     {

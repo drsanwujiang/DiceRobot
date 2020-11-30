@@ -2,18 +2,19 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Action;
+namespace DiceRobot\Action\Message;
 
+use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Report\Message\GroupMessage;
 
 /**
- * Class RobotOrderAction
+ * Class RobotAction
  *
- * Action of robot order.
+ * Action of robot control.
  *
  * @package DiceRobot\Action
  */
-abstract class RobotOrderAction extends MessageAction
+abstract class RobotAction extends MessageAction
 {
     /**
      * @inheritDoc
@@ -39,16 +40,19 @@ abstract class RobotOrderAction extends MessageAction
         $robotId = (string) $this->robot->getId();
 
         if ($this->message instanceof GroupMessage) {
-            // Must at robot if no robot ID
-            if (is_null($targetId))
+            if (is_null($targetId)) {
+                // Must at robot if no robot ID
                 return $this->at;
-            // Must be the full QQ ID or the last 4 digital number
-            else
+            } else {
+                // Must be the full QQ ID or the last 4 digital number
                 return $targetId == $robotId || $targetId == substr($robotId, -4);
+            }
         } else {
-            if (is_null($targetId) || $targetId == $robotId || $targetId == substr($robotId, -4))
+            if (is_null($targetId) || $targetId == $robotId || $targetId == substr($robotId, -4)) {
                 return true;
+            }
 
+            // Will not go on in private chat
             return false;
         }
     }

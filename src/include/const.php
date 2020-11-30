@@ -113,11 +113,15 @@ namespace DiceRobot {
             "cocGenerateResult" => "{&@发送者}以下是你生成的 COC {&COC版本}版 调查员人物卡：\n{&调查员属性}{&调查员详细信息}",
             "cocGenerateCountOverstep" => "COC 人物卡生成次数只能介于1~{&最大生成次数}！",
 
+            /* DeckRouter */
+            "deckRouterUnknown" => "你要对牌堆做些什么呢？",
+
             /* Deck */
             "deckSet" => "默认牌堆已修改为：{&牌堆名称}",
             "deckReset" => "【嘭！】牌堆又变回了原来的样子( ﾟ▽ﾟ)/",
-            "deckShowRest" => "当前牌堆还剩下这些卡牌：\n{&卡牌列表}",
+            "deckShow" => "当前牌堆还剩下这些卡牌：\n{&卡牌列表}",
             "deckUnset" => "牌堆不见惹~",
+            "deckDenied" => "只有群主/管理员才可以管理默认牌堆哦~",
             "deckNotSet" => "还没有设置默认牌堆，不能这样做哦~",
 
             /* DicePool */
@@ -181,19 +185,19 @@ namespace DiceRobot {
             "setCocRuleSet" => "检定规则已修改为：{&规则名称}\n规则描述：{&规则描述}\n规则介绍：\n{&规则介绍}",
             "setCocRuleIdError" => "检定规则序号只能是数字哦~",
 
-            /* RobotOrderRouter */
-            "robotOrderUnknown" => "咦？这是什么奇怪的指令？",
+            /* RobotRouter */
+            "robotRouterUnknown" => "咦？这是什么奇怪的指令？",
 
-            /* RobotOrder */
-            "robotOrderStart" => "呐呐~{&机器人昵称}为你服务~☆♪",
-            "robotOrderStartDenied" => "只有群主/管理员才可以叫醒人家哦~",
-            "robotOrderStop" => "休息，休息一会儿~",
-            "robotOrderStopDenied" => "但是群主/管理员还没有让人家休息呀……",
-            "robotOrderNicknameSet" => "从现在起请称呼我为「{&机器人新昵称}」~",
-            "robotOrderNicknameUnset" => "真·名·解·放~",
-            "robotOrderGoodbye" => "期待与君の再次相遇~",
-            "robotOrderGoodbyePrivate" => "请手动删除我吧！期待与君の再次相遇~",
-            "robotOrderGoodbyeDenied" => "只有群主/管理员才可以让人家离开哦~",
+            /* Robot */
+            "robotStart" => "呐呐~{&机器人昵称}为你服务~☆♪",
+            "robotStartDenied" => "只有群主/管理员才可以叫醒人家哦~",
+            "robotStop" => "休息，休息一会儿~",
+            "robotStopDenied" => "但是群主/管理员还没有让人家休息呀……",
+            "robotNicknameSet" => "从现在起请称呼我为「{&机器人新昵称}」~",
+            "robotNicknameUnset" => "真·名·解·放~",
+            "robotGoodbye" => "期待与君の再次相遇~",
+            "robotGoodbyePrivate" => "请手动删除我吧！期待与君の再次相遇~",
+            "robotGoodbyeDenied" => "只有群主/管理员才可以让人家离开哦~",
 
             /** Event */
 
@@ -273,7 +277,7 @@ namespace DiceRobot {
         "message" => [
             10 => [
                 "setcoc" => \DiceRobot\Action\Message\SetCoc::class,
-                "robot" => \DiceRobot\Action\Message\RobotOrderRouter::class,
+                "robot" => \DiceRobot\Action\Message\RobotRouter::class,
                 "dismiss" => \DiceRobot\Action\Message\Dismiss::class,  // Alias of .robot goodbye
             ],
             20 => [
@@ -294,12 +298,12 @@ namespace DiceRobot {
                 "set" => \DiceRobot\Action\Message\Set::class,
 
                 "draw" => \DiceRobot\Action\Message\Draw::class,
-                "deck" => \DiceRobot\Action\Message\Deck::class,
+                "deck" => \DiceRobot\Action\Message\DeckRouter::class,
 
                 "jrrp" => \DiceRobot\Action\Message\Jrrp::class,
                 "orz" => \DiceRobot\Action\Message\Kowtow::class,
 
-                "bot" =>\DiceRobot\Action\Message\RobotOrderRouter::class,  // Alias of .robot
+                "bot" =>\DiceRobot\Action\Message\RobotRouter::class,  // Alias of .robot
 
                 "help" => \DiceRobot\Action\Message\Help::class,
                 "hello" => \DiceRobot\Action\Message\Hello::class

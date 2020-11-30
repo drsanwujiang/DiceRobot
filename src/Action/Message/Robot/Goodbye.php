@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Action\Message\RobotOrder;
+namespace DiceRobot\Action\Message\Robot;
 
-use DiceRobot\Action\RobotOrderAction;
+use DiceRobot\Action\Message\RobotAction;
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\OrderErrorException;
 
@@ -21,7 +21,7 @@ use DiceRobot\Exception\OrderErrorException;
  *
  * @package DiceRobot\Action\Message\RobotOrder
  */
-class Goodbye extends RobotOrderAction
+class Goodbye extends RobotAction
 {
     /**
      * @inheritDoc
@@ -37,7 +37,7 @@ class Goodbye extends RobotOrderAction
         }
 
         // Send goodbye message
-        $this->sendMessage($this->config->getReply("robotOrderGoodbye"));
+        $this->sendMessage($this->config->getReply("robotGoodbye"));
 
         // Quit the group
         $this->api->quitGroup($this->message->sender->group->id);
@@ -76,17 +76,19 @@ class Goodbye extends RobotOrderAction
         $robotId = (string) $this->robot->getId();
 
         if ($this->message instanceof GroupMessage) {
-            // Must at robot if no robot ID
-            if (is_null($targetId))
+            if (is_null($targetId)) {
+                // Must at robot if no robot ID
                 return $this->at;
-            // Must be the full QQ ID or the last 4 digital number
-            else
+            } else {
+                // Must be the full QQ ID or the last 4 digital number
                 return $targetId == $robotId || $targetId == substr($robotId, -4);
+            }
         } else {
-            // Will not go on in private chat
-            if (is_null($targetId) || $targetId == $robotId || $targetId == substr($robotId, -4))
-                $this->setReply("robotOrderGoodbyePrivate'");
+            if (is_null($targetId) || $targetId == $robotId || $targetId == substr($robotId, -4)) {
+                $this->setReply("robotGoodbyePrivate'");
+            }
 
+            // Will not go on in private chat
             return false;
         }
     }
@@ -94,13 +96,13 @@ class Goodbye extends RobotOrderAction
     /**
      * Check the permission of message sender.
      *
-     * @return bool Validity.
+     * @return bool Permitted.
      */
     protected function checkPermission(): bool
     {
         // Must be the owner or the administrator in the group
         if ($this->message->sender->permission == "MEMBER") {
-            $this->setReply("robotOrderGoodbyeDenied");
+            $this->setReply("robotGoodbyeDenied");
 
             return false;
         }

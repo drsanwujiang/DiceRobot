@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Action\Message\RobotOrder;
+namespace DiceRobot\Action\Message\Robot;
 
-use DiceRobot\Action\RobotOrderAction;
+use DiceRobot\Action\Message\RobotAction;
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\OrderErrorException;
 
@@ -21,7 +21,7 @@ use DiceRobot\Exception\OrderErrorException;
  *
  * @package DiceRobot\Action\Message\RobotOrder
  */
-class Start extends RobotOrderAction
+class Start extends RobotAction
 {
     /**
      * @inheritDoc
@@ -38,7 +38,7 @@ class Start extends RobotOrderAction
 
         $this->chatSettings->set("active", true);
 
-        $this->setReply("robotOrderStart", [
+        $this->setReply("robotStart", [
             "机器人昵称" => $this->getRobotNickname()
         ]);
     }
@@ -67,13 +67,13 @@ class Start extends RobotOrderAction
     /**
      * Check the permission of message sender.
      *
-     * @return bool Validity.
+     * @return bool Permitted.
      */
     protected function checkPermission(): bool
     {
         // Must be the owner or the administrator in the group
         if ($this->message instanceof GroupMessage && $this->message->sender->permission == "MEMBER") {
-            $this->setReply("robotOrderStartDenied");
+            $this->setReply("robotStartDenied");
 
             return false;
         }

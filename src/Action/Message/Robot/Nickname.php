@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace DiceRobot\Action\Message\RobotOrder;
+namespace DiceRobot\Action\Message\Robot;
 
-use DiceRobot\Action\RobotOrderAction;
+use DiceRobot\Action\Message\RobotAction;
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
  * Class Nickname
  *
- * Set robot nickname.
+ * Set robot's nickname.
  *
  * @order robot nn
  *
@@ -24,7 +24,7 @@ use DiceRobot\Exception\OrderErrorException;
  *
  * @package DiceRobot\Action\Message\RobotOrder
  */
-class Nickname extends RobotOrderAction
+class Nickname extends RobotAction
 {
     /**
      * @inheritDoc
@@ -48,18 +48,18 @@ class Nickname extends RobotOrderAction
             );
         }
 
-        // Set nickname
         if (!empty($nickname)) {
+            // Set nickname
             $this->chatSettings->set("robotNickname", $nickname);
 
-            $this->setReply("robotOrderNicknameSet", [
+            $this->setReply("robotNicknameSet", [
                 "机器人新昵称" => $nickname
             ]);
         } else {
             // Unset nickname
             $this->chatSettings->set("robotNickname", null);
 
-            $this->setReply("robotOrderNicknameUnset");
+            $this->setReply("robotNicknameUnset");
         }
     }
 
