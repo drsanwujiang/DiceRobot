@@ -94,5 +94,12 @@ abstract class OrderRouterAction extends MessageAction
      *
      * @return bool Validity.
      */
-    abstract protected function checkOrder(string $match): bool;
+    protected function checkOrder(string $match): bool
+    {
+        if (!array_key_exists($match, static::$orders)) {
+            return false;
+        }
+
+        return true;
+    }
 }

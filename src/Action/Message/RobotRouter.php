@@ -37,7 +37,7 @@ use DiceRobot\Exception\OrderErrorException;
 class RobotRouter extends OrderRouterAction
 {
     /** @var string[] Mapping between robot order and the full name of the corresponding class. */
-    protected const ORDERS = [
+    protected static array $orders = [
         "about" => About::class,
         "start" => Start::class,
         "stop" => Stop::class,
@@ -96,7 +96,7 @@ class RobotRouter extends OrderRouterAction
      */
     protected function checkOrder(string $match): bool
     {
-        if (!array_key_exists($match, self::ORDERS)) {
+        if (!array_key_exists($match, static::$orders)) {
             $this->setReply("robotRouterUnknown");
 
             return false;

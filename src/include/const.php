@@ -84,7 +84,7 @@ namespace DiceRobot {
             "maxSurfaceNumber" => 1000,
             "maxDrawCount" => 20,
             "maxGenerateCount" => 20,
-            "maxRepeatTimes" => 20,
+            "maxRepetition" => 20,
             "maxReplyCharacter" => 1000
         ],
 
@@ -120,7 +120,7 @@ namespace DiceRobot {
             "deckSet" => "默认牌堆已修改为：{&牌堆名称}",
             "deckReset" => "【嘭！】牌堆又变回了原来的样子( ﾟ▽ﾟ)/",
             "deckShow" => "当前牌堆还剩下这些卡牌：\n{&卡牌列表}",
-            "deckUnset" => "牌堆不见惹~",
+            "deckClear" => "牌堆不见惹~",
             "deckDenied" => "只有群主/管理员才可以管理默认牌堆哦~",
             "deckNotSet" => "还没有设置默认牌堆，不能这样做哦~",
 
@@ -211,7 +211,7 @@ namespace DiceRobot {
         "errMsg" => [
             /* General */
             "_generalOrderError" => "指令错误，无法识别！",
-            "_generalRepeatTimeOverstep" => "不能重复这么多次啦~",
+            "_generalRepetitionOverstep" => "不能重复这么多次啦~",
 
             /* ApiService */
             "apiInternalError" => "与致远星的联络出现问题QAQ！请稍后再试……",

@@ -7,7 +7,7 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Report\Message\GroupMessage;
-use DiceRobot\Exception\{OrderErrorException, RepeatTimeOverstepException};
+use DiceRobot\Exception\{OrderErrorException, RepetitionOverstepException};
 use DiceRobot\Exception\CharacterCardException\{ItemNotExistException, LostException as CharacterCardLostException,
     NotBoundException};
 use DiceRobot\Exception\CheckRuleException\{DangerousException, InvalidException,
@@ -41,7 +41,7 @@ class Check extends MessageAction
      *
      * @throws CharacterCardLostException|CheckRuleLostException|DangerousException|DiceNumberOverstepException
      * @throws ExpressionErrorException|ExpressionInvalidException|InvalidException|ItemNotExistException
-     * @throws MatchFailedException|NotBoundException|OrderErrorException|RepeatTimeOverstepException
+     * @throws MatchFailedException|NotBoundException|OrderErrorException|RepetitionOverstepException
      * @throws SurfaceNumberOverstepException|
      */
     public function __invoke(): void
@@ -176,7 +176,7 @@ class Check extends MessageAction
      *
      * @return bool Validity.
      *
-     * @throws RepeatTimeOverstepException
+     * @throws RepetitionOverstepException Count of repetition oversteps the limit.
      */
     protected function checkRange(int $value, int $repetition): bool
     {
@@ -184,8 +184,8 @@ class Check extends MessageAction
             $this->setReply("checkValueInvalid");
 
             return false;
-        } elseif ($repetition < 1 || $repetition > $this->config->getOrder("maxRepeatTimes")) {
-            throw new RepeatTimeOverstepException();
+        } elseif ($repetition < 1 || $repetition > $this->config->getOrder("maxRepetition")) {
+            throw new RepetitionOverstepException();
         }
 
         return true;

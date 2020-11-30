@@ -22,15 +22,16 @@
 ### Changed
 - Robot order will be redirected to about by default (#33)
 - Order `maxRepeatTimes` is now 20 by default
-- Change session strategy
+- Session strategy
 
 ### Refactored
 - Starting and initialization logic
 - Error log
 - `App` and `Server` logic
+- Order group
 
 ### Removed
-- Remove selective/array-reader for `ArrayReaderTrait`
+- Selective/array-reader, for `ArrayReaderTrait`
 
 
 ## 2.0.3 - 2020-11-14

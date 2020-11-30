@@ -25,7 +25,7 @@ use DiceRobot\Exception\OrderErrorException;
 class DeckRouter extends OrderRouterAction
 {
     /** @var string[] Mapping between order and the full name of the corresponding class. */
-    protected const ORDERS = [
+    protected static array $orders = [
         "set" => Set::class,
         "reset" => Reset::class,
         "show" => Show::class,
@@ -64,7 +64,7 @@ class DeckRouter extends OrderRouterAction
      */
     protected function checkOrder(string $match): bool
     {
-        if (!array_key_exists($match, self::ORDERS)) {
+        if (!array_key_exists($match, static::$orders)) {
             $this->setReply("deckRouterUnknown");
 
             return false;

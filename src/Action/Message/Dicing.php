@@ -9,7 +9,7 @@ use DiceRobot\Data\Dice;
 use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
-use DiceRobot\Exception\RepeatTimeOverstepException;
+use DiceRobot\Exception\RepetitionOverstepException;
 use DiceRobot\Util\Convertor;
 
 /**
@@ -42,7 +42,7 @@ class Dicing extends MessageAction
      * @inheritDoc
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
-     * @throws RepeatTimeOverstepException|SurfaceNumberOverstepException
+     * @throws RepetitionOverstepException|SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {
@@ -108,12 +108,12 @@ class Dicing extends MessageAction
      *
      * @param int $repetition Count of repetition.
      *
-     * @throws RepeatTimeOverstepException
+     * @throws RepetitionOverstepException Count of repetition oversteps the limit.
      */
     protected function checkRange(int $repetition): void
     {
-        if ($repetition < 1 || $repetition > $this->config->getOrder("maxRepeatTimes")) {
-            throw new RepeatTimeOverstepException();
+        if ($repetition < 1 || $repetition > $this->config->getOrder("maxRepetition")) {
+            throw new RepetitionOverstepException();
         }
     }
 
