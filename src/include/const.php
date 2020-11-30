@@ -126,7 +126,7 @@ namespace DiceRobot {
             "deckReset" => "【嘭！】牌堆又变回了原来的样子( ﾟ▽ﾟ)/",
             "deckShow" => "当前牌堆还剩下这些卡牌：\n{&卡牌列表}",
             "deckClear" => "牌堆不见惹~",
-            "deckDisabled" => "Master 已经禁用了 jrrp (;´Д`)",
+            "deckDisabled" => "Master 已经禁用了 .deck (;´Д`)",
             "deckDenied" => "只有群主/管理员才可以管理默认牌堆哦~",
             "deckNotSet" => "还没有设置默认牌堆，不能这样做哦~",
 
@@ -152,14 +152,14 @@ namespace DiceRobot {
             "drawCountOverstep" => "一次最多只能从牌堆中抽{&最大抽牌次数}张牌哦~",
             "drawDeckEmpty" => "这副牌堆已经一张都没有了(=ﾟωﾟ)=",
             "drawDeckNotSet" => "需要先设置默认牌堆，才能愉悦地抽牌哟~",
-            "drawDisabled" => "Master 已经禁用了 jrrp (;´Д`)",
+            "drawDisabled" => "Master 已经禁用了 .draw (;´Д`)",
 
             /* Help */
             "helpOrderUnknown" => "咦？找不到这条指令诶……",
 
             /* Jrrp */
             "jrrpResult" => "{&昵称}今天的人品是……{&人品}！",
-            "jrrpDisabled" => "Master 已经禁用了 jrrp (;´Д`)",
+            "jrrpDisabled" => "Master 已经禁用了 .jrrp (;´Д`)",
 
             /* Kowtow */
             "kowtowResult" => "[mirai:at:{&发送者QQ}] 唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！\n{&虔诚等级}",
@@ -169,7 +169,7 @@ namespace DiceRobot {
             "kowtowLevel3" => "看在你还算虔诚的份上，祝你下次出现成功的几率高一点吧ヾ(✿ﾟ▽ﾟ)ノ",
             "kowtowLevel4" => "你的虔诚感动人家了呢٩(๑>◡<๑)۶祝你接下来好♡运♡连♡连哦~ヾ(✿ﾟ▽ﾟ)ノ",
             "kowtowLevel5" => "呐~ヾ(๑╹◡╹)ﾉ「{&机器人昵称}」会一直陪伴在君の身边的哟~☆♪",
-            "kowtowDisabled" => "Master 已经禁用了 jrrp (;´Д`)",
+            "kowtowDisabled" => "Master 已经禁用了 .orz (;´Д`)",
 
             /* Name */
             "nameGenerateResult" => "[mirai:at:{&发送者QQ}] 为你寻找到了这些名称：{&名称}",
