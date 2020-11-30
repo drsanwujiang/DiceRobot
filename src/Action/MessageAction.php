@@ -117,8 +117,17 @@ abstract class MessageAction implements Action
      */
     public function checkActive(): bool
     {
-        // True by default
-        return $this->chatSettings->getBool("active") ?? true;
+        return $this->chatSettings->getBool("active");
+    }
+
+    /**
+     * Check whether the function is enabled.
+     *
+     * @return bool Enabled.
+     */
+    protected function checkEnabled(): bool
+    {
+        return true;
     }
 
     /**

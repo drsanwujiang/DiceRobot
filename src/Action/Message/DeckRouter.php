@@ -36,6 +36,34 @@ class DeckRouter extends OrderRouterAction
 
     /**
      * @inheritDoc
+     */
+    public function __invoke(): void
+    {
+        if (!$this->checkEnabled()) {
+            return;
+        }
+
+        parent::__invoke();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return bool Enabled.
+     */
+    protected function checkEnabled(): bool
+    {
+        if (!$this->config->getStrategy("enableDeck")) {
+            $this->setReply("deckDisabled");
+
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * @inheritDoc
      *
      * @return array Parsed elements.
      *

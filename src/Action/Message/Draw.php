@@ -32,6 +32,10 @@ class Draw extends MessageAction
      */
     public function __invoke(): void
     {
+        if (!$this->checkEnabled()) {
+            return;
+        }
+
         list($deckName, $count) = $this->parseOrder();
 
         if (!$this->checkRange($count)) {
@@ -66,6 +70,22 @@ class Draw extends MessageAction
         // If the deck is run out of, send message
         if ($empty) {
             $this->setReply("drawDeckEmpty");
+        }
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return bool Enabled.
+     */
+    protected function checkEnabled(): bool
+    {
+        if (!$this->config->getStrategy("enableJrrp")) {
+            $this->setReply("jrrpDisabled");
+
+            return false;
+        } else {
+            return true;
         }
     }
 

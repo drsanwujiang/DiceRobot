@@ -31,6 +31,10 @@ class Kowtow extends MessageAction
      */
     public function __invoke(): void
     {
+        if (!$this->checkEnabled()) {
+            return;
+        }
+
         $this->parseOrder();
 
         $piety = $this->api->kowtow($this->message->sender->id)->piety;
@@ -45,6 +49,22 @@ class Kowtow extends MessageAction
             ])
         ]);
 
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return bool Enabled.
+     */
+    protected function checkEnabled(): bool
+    {
+        if (!$this->config->getStrategy("enableKowtow")) {
+            $this->setReply("kowtowDisabled");
+
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**

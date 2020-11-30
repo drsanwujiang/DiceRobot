@@ -27,12 +27,32 @@ class Jrrp extends MessageAction
      */
     public function __invoke(): void
     {
+        if (!$this->checkEnabled()) {
+            return;
+        }
+
         $this->parseOrder();
 
         $this->setReply("jrrpResult", [
             "昵称" => $this->getNickname(),
             "人品" => $this->api->jrrp($this->message->sender->id)->jrrp
         ]);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @return bool Enabled.
+     */
+    protected function checkEnabled(): bool
+    {
+        if (!$this->config->getStrategy("enableDraw")) {
+            $this->setReply("drawDisabled");
+
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**

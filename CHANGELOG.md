@@ -15,6 +15,7 @@
 - Support more Mirai APIs
 - API handlers
 - Custom service name
+- Function switches
 
 ### Fixed
 - Fragments regular expressions
