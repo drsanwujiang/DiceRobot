@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 2.1.0 - 2020-12-01
+## 2.1.0 - 2020-11-30
 
 ### Added
 - Order `maxReplyCharacter` (#33)
