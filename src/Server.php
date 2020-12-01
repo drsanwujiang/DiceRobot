@@ -66,8 +66,8 @@ class Server
 
         $this->logger->debug("Server created.");
 
-        // Application just created or successfully initialized
-        if ($this->app->getStatus()->greaterThan(AppStatusEnum::RUNNING()) && $this->setServer()) {
+        // Application successfully initialized
+        if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()) && $this->setServer()) {
             $this->setSignals();
             $this->setRoutes();
 
@@ -142,7 +142,7 @@ class Server
      */
     public function start(): void
     {
-        if (isset($this->server) && $this->app->getStatus()->greaterThan(AppStatusEnum::HOLDING())) {
+        if (isset($this->server) && $this->app->getStatus()->equals(AppStatusEnum::HOLDING())) {
             $this->logger->notice("Server started.");
 
             try {

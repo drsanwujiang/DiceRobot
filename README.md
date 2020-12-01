@@ -16,7 +16,7 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 * ~~使用 CoolQ 并加载了 [CQHTTP](https://github.com/richardchien/coolq-http-api) 插件的机器人~~（1.0.0 ~ 1.3.2）
 * ~~使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [CQHTTP Mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai) 插件的机器人~~（1.4.0）
-* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http) 插件的机器人（2.0.0 ~ 2.1.0）
+* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http) 插件的机器人（2.0.0）
 
 ### 部署
 
