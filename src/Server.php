@@ -142,7 +142,8 @@ class Server
      */
     public function start(): void
     {
-        if (isset($this->server) && $this->app->getStatus()->greaterThan(AppStatusEnum::RUNNING())) {
+        // Server must be set, and application must be successfully initialized
+        if (isset($this->server) && $this->app->getStatus()->equals(AppStatusEnum::HOLDING())) {
             $this->logger->notice("Server started.");
 
             try {
