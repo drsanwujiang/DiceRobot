@@ -114,7 +114,18 @@ class ApiService
     ) {
         $this->miraiHandler = $miraiHandler;
         $this->diceRobotHandler = $diceRobotHandler;
+
         $this->logger = $loggerFactory->create("Api");
+
+        $this->logger->debug("API service created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("API service destructed.");
     }
 
     /**

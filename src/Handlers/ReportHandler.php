@@ -74,6 +74,16 @@ class ReportHandler
         $this->statistics = $statistics;
 
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("Report handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Report handler destructed.");
     }
 
     /**

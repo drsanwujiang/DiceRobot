@@ -87,13 +87,14 @@ class App
         $this->statistics = $statistics;
         $this->heartbeatHandler = $heartbeatHandler;
         $this->reportHandler = $reportHandler;
+
         $this->logger = $loggerFactory->create("Application");
 
         $this->logger->notice("Application started.");
     }
 
     /**
-     * Destruct application.
+     * The destructor.
      */
     public function __destruct()
     {

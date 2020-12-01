@@ -67,8 +67,20 @@ abstract class EventAction implements Action
         $this->api = $api;
         $this->resource = $resource;
         $this->robot = $robot;
+
         $this->logger = $loggerFactory->create("Event");
+
         $this->event = $event;
+
+        $this->logger->debug("Event action " . static::class . " created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Event action " . static::class . " destructed.");
     }
 
     /**

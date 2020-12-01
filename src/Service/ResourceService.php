@@ -61,6 +61,16 @@ class ResourceService
     public function __construct(LoggerFactory $loggerFactory)
     {
         $this->logger = $loggerFactory->create("Resource");
+
+        $this->logger->debug("Resource service created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Resource service destructed.");
     }
 
     /**

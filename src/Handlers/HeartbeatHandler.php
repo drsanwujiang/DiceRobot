@@ -55,6 +55,16 @@ class HeartbeatHandler
         $this->robot = $robot;
 
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("Heartbeat handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Heartbeat handler destructed.");
     }
 
     /**

@@ -7,6 +7,7 @@ namespace DiceRobot\Action;
 use DiceRobot\Action\Message\RobotAction;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Message;
+use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
 use Psr\Container\ContainerInterface;
 
@@ -33,6 +34,7 @@ abstract class OrderRouterAction extends MessageAction
      * @param ApiService $api API service.
      * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
+     * @param LoggerFactory $loggerFactory Logger factory.
      * @param Message $message Message.
      * @param string $match Order match.
      * @param string $order Order.
@@ -44,12 +46,23 @@ abstract class OrderRouterAction extends MessageAction
         ApiService $apiService,
         ResourceService $dataService,
         RobotService $robotService,
+        LoggerFactory $loggerFactory,
         Message $message,
         string $match,
         string $order,
         bool $at
     ) {
-        parent::__construct($config, $apiService, $dataService, $robotService, $message, $match, $order, $at);
+        parent::__construct(
+            $config,
+            $apiService,
+            $dataService,
+            $robotService,
+            $loggerFactory,
+            $message,
+            $match,
+            $order,
+            $at
+        );
 
         $this->container = $container;
     }

@@ -10,7 +10,6 @@ use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, GetNicknameResp
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
-use Swlib\Http\ContentType;
 use Swlib\Http\Exception\{ClientException, ServerException, TransferException};
 use Swlib\Saber;
 
@@ -37,6 +36,16 @@ class DiceRobotApiHandler
     public function __construct(LoggerFactory $loggerFactory)
     {
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("DiceRobot API handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("DiceRobot API handler destructed.");
     }
 
     /**
@@ -91,10 +100,12 @@ class DiceRobotApiHandler
     public function initialize(Config $config): void
     {
         $this->pool = Saber::create([
-            "base_uri" => $config->getString("dicerobot.api.prefix"),
+            "base_uri" => $config->getString("dicerobot.api.uri"),
             "use_pool" => true,
             "headers" => [
-                "Content-Type" => ContentType::JSON,
+                "Accept" => "application/json",
+                "Accept-Encoding" => "identity",
+                "Content-Type" => "application/json; charset=utf-8",
                 "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
             ],
             "before" => function (Saber\Request $request) {

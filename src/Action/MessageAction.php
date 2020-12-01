@@ -10,9 +10,11 @@ use DiceRobot\Data\Report\Contact\Friend;
 use DiceRobot\Data\Report\Message;
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
 use DiceRobot\Data\Resource\ChatSettings;
+use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Interfaces\Action;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
 use DiceRobot\Util\Convertor;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class MessageAction
@@ -37,13 +39,16 @@ abstract class MessageAction implements Action
     /** @var RobotService Robot service. */
     protected RobotService $robot;
 
-    /** @var ChatSettings Chat settings. */
-    protected ChatSettings $chatSettings;
+    /** @var LoggerInterface Logger. */
+    protected LoggerInterface $logger;
+
+    /** Order information */
 
     /** @var Message Message. */
     public Message $message;
 
-    /** Order information */
+    /** @var ChatSettings Chat settings. */
+    protected ChatSettings $chatSettings;
 
     /** @var string Order match. */
     protected string $match;
@@ -64,6 +69,7 @@ abstract class MessageAction implements Action
      * @param ApiService $api API service.
      * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
+     * @param LoggerFactory $loggerFactory Logger factory.
      * @param Message $message Message.
      * @param string $match Order match.
      * @param string $order Order.
@@ -74,6 +80,7 @@ abstract class MessageAction implements Action
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,
+        LoggerFactory $loggerFactory,
         Message $message,
         string $match,
         string $order,
@@ -83,12 +90,25 @@ abstract class MessageAction implements Action
         $this->api = $api;
         $this->resource = $resource;
         $this->robot = $robot;
+
+        $this->logger = $loggerFactory->create("Message");
+
         $this->message = $message;
         $this->match = $match;
         $this->order = $order;
         $this->at = $at;
 
+        $this->logger->debug("Message action " . static::class . " created.");
+
         $this->loadChatSetting();
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Message action " . static::class . " destructed.");
     }
 
     /**
@@ -108,6 +128,8 @@ abstract class MessageAction implements Action
         }
 
         $this->chatSettings = $this->resource->getChatSettings($chatType, $chatId);
+
+        $this->logger->info("Chat settings loaded.");
     }
 
     /**
@@ -158,6 +180,8 @@ abstract class MessageAction implements Action
             // Sleep 0.5s
             System::sleep(0.5);
         }
+
+        $this->logger->info("Replies sent.");
     }
 
     /******************************************************************************
@@ -248,6 +272,8 @@ abstract class MessageAction implements Action
                 Convertor::toMessageChain($message)
             );
         }
+
+        $this->logger->info("Message sent.");
     }
 
     /**
@@ -274,6 +300,8 @@ abstract class MessageAction implements Action
                 Convertor::toMessageChain($message)
             );
         }
+
+        $this->logger->info("Message sent asynchronously.");
     }
 
     /**
@@ -293,6 +321,8 @@ abstract class MessageAction implements Action
         } else {
             $this->api->sendTempMessage($userId, $groupId, Convertor::toMessageChain($message));
         }
+
+        $this->logger->info("Private message sent.");
     }
 
     /**
@@ -312,5 +342,7 @@ abstract class MessageAction implements Action
         } else {
             $this->api->sendTempMessageAsync($userId, $groupId, Convertor::toMessageChain($message));
         }
+
+        $this->logger->info("Private message sent asynchronously.");
     }
 }

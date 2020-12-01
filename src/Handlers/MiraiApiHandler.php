@@ -38,6 +38,16 @@ class MiraiApiHandler
     public function __construct(LoggerFactory $loggerFactory)
     {
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("Mirai API handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Mirai API handler destructed.");
     }
 
     /**

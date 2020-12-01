@@ -28,7 +28,7 @@ namespace DiceRobot {
     const DEFAULT_CONFIG = [
         "dicerobot" => [
             "api" => [
-                "prefix" => "https://api.drsanwujiang.com"
+                "uri" => "https://api.drsanwujiang.com"
             ],
             "server" => [
                 "host" => "0.0.0.0",
@@ -36,6 +36,9 @@ namespace DiceRobot {
             ],
             "service" => [
                 "name" => "dicerobot"
+            ],
+            "skeleton" => [
+                "update" => "https://dl.drsanwujiang.com/dicerobot/skeleton/2.1.0"
             ],
             "version" => DICEROBOT_VERSION
         ],

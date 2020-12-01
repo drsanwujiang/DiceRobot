@@ -8,6 +8,8 @@ use Cake\Chronos\Chronos;
 use DiceRobot\Data\Report\Contact\{GroupMember, Sender};
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage};
 use DiceRobot\Data\Resource\Statistics;
+use DiceRobot\Factory\LoggerFactory;
+use Psr\Log\LoggerInterface;
 use Swoole\Timer;
 
 /**
@@ -24,6 +26,9 @@ class StatisticsService
 
     /** @var RobotService Robot service. */
     protected RobotService $robot;
+
+    /** @var LoggerInterface Logger. */
+    protected LoggerInterface $logger;
 
     /** @var Statistics Statistics. */
     protected Statistics $statistics;
@@ -42,11 +47,24 @@ class StatisticsService
      *
      * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
+     * @param LoggerFactory $loggerFactory Logger factory.
      */
-    public function __construct(ResourceService $resource, RobotService $robot)
+    public function __construct(ResourceService $resource, RobotService $robot, LoggerFactory $loggerFactory)
     {
         $this->resource = $resource;
         $this->robot = $robot;
+
+        $this->logger = $loggerFactory->create("Statistics");
+
+        $this->logger->debug("Statistics service created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Statistics service destructed.");
     }
 
     /**
@@ -104,6 +122,8 @@ class StatisticsService
         } elseif ($messageType == GroupMessage::class && $sender instanceof GroupMember) {
             $this->statistics->addGroupCount($sender->group->id);
         }
+
+        $this->logger->info("Order using recorded.");
     }
 
     /**
