@@ -69,19 +69,13 @@ class ApiService
     /** @var string[] Mirai APIs. */
     private const MIRAI_APIS = [
         "about",
-
         "authSession", "verifySession", "releaseSession",
-
         "sendFriendMessage", "sendFriendMessageAsync", "sendTempMessage", "sendTempMessageAsync", "sendGroupMessage",
         "sendGroupMessageAsync", "recallMessage",
-
         "fetchMessage", "fetchLatestMessage", "peekMessage", "peekLatestMessage", "countMessage",
-
         "getFriendList", "getGroupList", "getGroupMemberList",
-
         "muteGroupMember", "unmuteGroupMember", "kickGroupMember", "quitGroup", "muteAllGroupMembers",
         "unmuteAllGroupMembers", "getGroupConfig", "setGroupConfig", "getGroupMemberInfo", "setGroupMemberInfo",
-
         "respondToNewFriendRequestEvent", "respondToMemberJoinRequestEvent", "respondToBotInvitedJoinGroupRequestEvent"
     ];
 

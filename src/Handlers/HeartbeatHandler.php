@@ -94,7 +94,7 @@ class HeartbeatHandler
         }
 
         // Heartbeat
-        if ($this->resource->saveAll() && $this->prolongSession() && $this->robot->update()) {
+        if ($this->resource->save() && $this->prolongSession() && $this->robot->update()) {
             $this->logger->info("Heartbeat finished.");
         } else {
             if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {

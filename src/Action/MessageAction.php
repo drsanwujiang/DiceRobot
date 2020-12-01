@@ -45,7 +45,7 @@ abstract class MessageAction implements Action
     /** Order information */
 
     /** @var Message Message. */
-    public Message $message;
+    protected Message $message;
 
     /** @var ChatSettings Chat settings. */
     protected ChatSettings $chatSettings;
@@ -60,7 +60,7 @@ abstract class MessageAction implements Action
     protected bool $at;
 
     /** @var string[] Replies. */
-    public array $replies = [];
+    protected array $replies = [];
 
     /**
      * The constructor.
@@ -133,6 +133,16 @@ abstract class MessageAction implements Action
     }
 
     /**
+     * Get message of the action.
+     *
+     * @return Message Message.
+     */
+    public function getMessage(): Message
+    {
+        return $this->message;
+    }
+
+    /**
      * Check if the function is active.
      *
      * @return bool Active flag.
@@ -162,7 +172,7 @@ abstract class MessageAction implements Action
     /**
      * Send replies.
      */
-    public function sendReplies(): void
+    final public function sendReplies(): void
     {
         $maxReplyCharacter = $this->config->getOrder("maxReplyCharacter");
 

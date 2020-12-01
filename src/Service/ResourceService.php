@@ -89,7 +89,7 @@ class ResourceService
             $this->directories["chat.group"] = ($this->directories["chat"] ?? "") . "/group";
         }
 
-        if ($this->checkDirectories() && $this->loadAll()) {
+        if ($this->checkDirectories() && $this->load()) {
             $this->logger->notice("Resource service initialized.");
         } else {
             $this->logger->alert("Initialize resource service failed.");
@@ -128,13 +128,13 @@ class ResourceService
     /**
      * Load all the resources.
      *
+     * This method should be called when initialization only.
+     *
      * @return bool Success.
      */
-    public function loadAll(): bool
+    public function load(): bool
     {
-        if ($this->isLoaded && !$this->saveAll()) {
-            $this->logger->critical("Reload resources failed.");
-
+        if ($this->isLoaded) {
             return false;
         }
 
@@ -146,8 +146,6 @@ class ResourceService
             $this->loadCheckRules();
             $this->loadReferences();
             $this->loadCardDecks();
-
-            $this->isLoaded = true;
         } catch (RuntimeException $e) {
             $this->logger->error($e);
             $this->logger->critical("Load resources failed.");
@@ -155,17 +153,19 @@ class ResourceService
             return false;
         }
 
+        $this->isLoaded = true;
+
         $this->logger->info("Resources loaded.");
 
         return true;
     }
 
     /**
-     * Save all loaded resources.
+     * Save all the loaded resources.
      *
      * @return bool Success.
      */
-    public function saveAll(): bool
+    public function save(): bool
     {
         try {
             $this->saveConfig();
@@ -182,6 +182,28 @@ class ResourceService
         $this->logger->info("Resources saved.");
 
         return true;
+    }
+
+    /**
+     * Save and reload all the resources.
+     *
+     * @return bool Success.
+     */
+    public function reload(): bool
+    {
+        if (!$this->isLoaded) {
+            return false;
+        }
+
+        if (!$this->save()) {
+            $this->logger->critical("Reload resources failed.");
+
+            return false;
+        }
+
+        $this->isLoaded = false;
+
+        return $this->load();
     }
 
     /**

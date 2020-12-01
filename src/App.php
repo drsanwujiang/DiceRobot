@@ -263,7 +263,7 @@ class App
     {
         $this->status = AppStatusEnum::PAUSED();
 
-        if (!$this->resource->loadAll()) {
+        if (!$this->resource->reload()) {
             $this->logger->critical("Reload application failed.");
 
             return -1;
@@ -291,7 +291,7 @@ class App
         Timer::clearAll();
         saber_pool_release();
 
-        if ($this->resource->saveAll()) {
+        if ($this->resource->save()) {
             return 0;
         } else {
             $this->logger->alert("Application cannot normally exit. Resources and data may not be saved.");
