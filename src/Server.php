@@ -64,6 +64,8 @@ class Server
 
         $this->logger = $loggerFactory->create("Server");
 
+        $this->logger->debug("Server created.");
+
         // Application successfully initialized
         if ($this->app->getStatus()->equals(AppStatusEnum::HOLDING()) && $this->setServer()) {
             $this->setSignals();
@@ -74,7 +76,7 @@ class Server
     }
 
     /**
-     * Destruct server.
+     * The destructor.
      */
     public function __destruct()
     {
@@ -259,6 +261,8 @@ class Server
                         return;
                     } elseif ($uri == "/update") {
                         $this->panelHandler->update($response);
+                    } elseif ($uri == "/skeleton/update") {
+                        $this->panelHandler->updateSkeleton($response);
                     } elseif ($uri == "/mirai/status") {
                         $this->panelHandler->getMiraiStatus($response);
                     } elseif ($uri == "/mirai/start") {

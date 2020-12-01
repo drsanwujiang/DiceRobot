@@ -10,7 +10,6 @@ use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, GetNicknameResp
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
-use Swlib\Http\ContentType;
 use Swlib\Http\Exception\{ClientException, ServerException, TransferException};
 use Swlib\Saber;
 
@@ -37,6 +36,43 @@ class DiceRobotApiHandler
     public function __construct(LoggerFactory $loggerFactory)
     {
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("DiceRobot API handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("DiceRobot API handler destructed.");
+    }
+
+    /**
+     * Initialize DiceRobot API handler.
+     *
+     * @param Config $config DiceRobot config.
+     */
+    public function initialize(Config $config): void
+    {
+        $this->pool = Saber::create([
+            "base_uri" => $config->getString("dicerobot.api.uri"),
+            "use_pool" => true,
+            "headers" => [
+                "Accept" => "application/json",
+                "Accept-Encoding" => "identity",
+                "Content-Type" => "application/json; charset=utf-8",
+                "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
+            ],
+            "before" => function (Saber\Request $request) {
+                $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
+            },
+            "after" => function (Saber\Response $response) {
+                $this->logger->debug("Receive from {$response->getUri()}, content: {$response->getBody()}");
+            }
+        ]);
+
+        $this->logger->info("DiceRobot API handler initialized.");
     }
 
     /**
@@ -83,31 +119,6 @@ class DiceRobotApiHandler
         return $data;
     }
 
-    /**
-     * Initialize DiceRobot API handler.
-     *
-     * @param Config $config DiceRobot config.
-     */
-    public function initialize(Config $config): void
-    {
-        $this->pool = Saber::create([
-            "base_uri" => $config->getString("dicerobot.api.prefix"),
-            "use_pool" => true,
-            "headers" => [
-                "Content-Type" => ContentType::JSON,
-                "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
-            ],
-            "before" => function (Saber\Request $request) {
-                $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
-            },
-            "after" => function (Saber\Response $response) {
-                $this->logger->debug("Receive from {$response->getUri()}, content: {$response->getBody()}");
-            }
-        ]);
-
-        $this->logger->info("DiceRobot API handler initialized.");
-    }
-
     /******************************************************************************
      *                               DiceRobot APIs                               *
      ******************************************************************************/
@@ -126,7 +137,7 @@ class DiceRobotApiHandler
     final public function updateRobot(int $robotId): UpdateRobotResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/robot/{$robotId}",
+            "uri" => "robot/{$robotId}",
             "method" => "PATCH"
         ];
 
@@ -164,9 +175,9 @@ class DiceRobotApiHandler
     final public function authorize(int $robotId, int $userId = null): AuthorizeResponse
     {
         if ($userId) {
-            $url = "/dicerobot/v2/robot/{$robotId}/auth/{$userId}";
+            $url = "robot/{$robotId}/auth/{$userId}";
         } else {
-            $url = "/dicerobot/v2/robot/{$robotId}/auth";
+            $url = "robot/{$robotId}/auth";
         }
 
         $options = [
@@ -189,7 +200,7 @@ class DiceRobotApiHandler
     final public function getNickname(int $robotId): GetNicknameResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/robot/{$robotId}/nickname",
+            "uri" => "robot/{$robotId}/nickname",
             "method" => "GET"
         ];
 
@@ -211,7 +222,7 @@ class DiceRobotApiHandler
     final public function queryGroup(int $groupId, string $token): QueryGroupResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/group/{$groupId}",
+            "uri" => "group/{$groupId}",
             "method" => "GET",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
@@ -237,7 +248,7 @@ class DiceRobotApiHandler
     final public function submitGroup(int $groupId, string $token): SubmitGroupResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/group/{$groupId}",
+            "uri" => "group/{$groupId}",
             "method" => "PUT",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
@@ -262,7 +273,7 @@ class DiceRobotApiHandler
     final public function getCard(int $cardId, string $token): GetCardResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/card/{$cardId}",
+            "uri" => "card/{$cardId}",
             "method" => "GET",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
@@ -289,7 +300,7 @@ class DiceRobotApiHandler
     final public function updateCard(int $cardId, string $attribute, int $change, string $token): UpdateCardResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/card/{$cardId}",
+            "uri" => "card/{$cardId}",
             "method" => "PATCH",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
@@ -320,7 +331,7 @@ class DiceRobotApiHandler
     final public function sanityCheck(int $cardId, int $checkResult, array $decreases, string $token): SanityCheckResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/card/{$cardId}/sc",
+            "uri" => "card/{$cardId}/sc",
             "method" => "PATCH",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
@@ -348,7 +359,7 @@ class DiceRobotApiHandler
     final public function jrrp(int $userId): JrrpResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/user/{$userId}/jrrp",
+            "uri" => "user/{$userId}/jrrp",
             "method" => "GET"
         ];
 
@@ -369,7 +380,7 @@ class DiceRobotApiHandler
     final public function kowtow(int $userId): KowtowResponse
     {
         $options = [
-            "uri" => "/dicerobot/v2/user/{$userId}/kowtow",
+            "uri" => "user/{$userId}/kowtow",
             "method" => "GET"
         ];
 

@@ -38,6 +38,42 @@ class MiraiApiHandler
     public function __construct(LoggerFactory $loggerFactory)
     {
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("Mirai API handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Mirai API handler destructed.");
+    }
+
+    /**
+     * Initialize Mirai API handler.
+     *
+     * @param Config $config DiceRobot config.
+     */
+    public function initialize(Config $config): void
+    {
+        $this->pool = Saber::create([
+            "base_uri" =>
+                "http://{$config->getString("mirai.server.host")}:{$config->getString("mirai.server.port")}",
+            "use_pool" => true,
+            "headers" => [
+                "Content-Type" => ContentType::JSON,
+                "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
+            ],
+            "before" => function (Saber\Request $request) {
+                $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
+            },
+            "after" => function (Saber\Response $response) {
+                $this->logger->debug("Receive from {$response->getUri()}, content: {$response->getBody()}");
+            }
+        ]);
+
+        $this->logger->info("Mirai API handler initialized.");
     }
 
     /**
@@ -60,31 +96,6 @@ class MiraiApiHandler
         }
 
         return $response->getParsedJsonArray();
-    }
-
-    /**
-     * Initialize Mirai API handler.
-     *
-     * @param Config $config DiceRobot config.
-     */
-    public function initialize(Config $config): void
-    {
-        $this->pool = Saber::create([
-            "base_uri" => "http://{$config->getString("mirai.server.host")}:{$config->getString("mirai.server.port")}",
-            "use_pool" => true,
-            "headers" => [
-                "Content-Type" => ContentType::JSON,
-                "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
-            ],
-            "before" => function (Saber\Request $request) {
-                $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
-            },
-            "after" => function (Saber\Response $response) {
-                $this->logger->debug("Receive from {$response->getUri()}, content: {$response->getBody()}");
-            }
-        ]);
-
-        $this->logger->info("Mirai API handler initialized.");
     }
 
     /**

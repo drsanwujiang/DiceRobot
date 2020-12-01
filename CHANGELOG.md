@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 2.1.0 - 2020-11-30
+## 2.1.0 - 2020-12-01
 
 ### Added
 - Order `maxReplyCharacter` (#33)
@@ -16,6 +16,7 @@
 - API handlers
 - Custom service name
 - Function switches
+- Skeleton updater
 
 ### Fixed
 - Fragments regular expressions

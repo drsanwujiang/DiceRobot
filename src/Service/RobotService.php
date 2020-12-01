@@ -44,14 +44,24 @@ class RobotService
     /**
      * The constructor.
      *
-     * @param LoggerFactory $loggerFactory Logger factory.
      * @param ApiService $api API service.
+     * @param LoggerFactory $loggerFactory Logger factory.
      */
-    public function __construct(LoggerFactory $loggerFactory, ApiService $api)
+    public function __construct(ApiService $api, LoggerFactory $loggerFactory)
     {
         $this->api = $api;
 
         $this->logger = $loggerFactory->create("Robot");
+
+        $this->logger->debug("Robot service created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Robot service destructed.");
     }
 
     /**

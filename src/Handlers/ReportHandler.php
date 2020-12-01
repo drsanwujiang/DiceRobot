@@ -74,6 +74,16 @@ class ReportHandler
         $this->statistics = $statistics;
 
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("Report handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Report handler destructed.");
     }
 
     /**
@@ -227,7 +237,7 @@ class ReportHandler
             // TODO: $e::class, $action->message::class, $action::class in PHP 8
             $this->logger->info(
                 "Report finished, " . get_class($e) . " occurred when handling " .
-                get_class($action->message) . " and executing " . get_class($action) . "."
+                get_class($action->getMessage()) . " and executing " . get_class($action) . "."
             );
 
             if (!empty($e->extraMessage)) {

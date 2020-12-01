@@ -38,6 +38,8 @@ class ResponseFactory
         -1052 => "Update DiceRobot failed",
         -1060 => "Config invalid",
         -1061 => "Config prohibited",
+        -1070 => "Update skeleton failed",
+        -1071 => "Skeleton cannot be updated",
 
         -2000 => "Mirai not setup as service",
         -2001 => "Start Mirai failed",

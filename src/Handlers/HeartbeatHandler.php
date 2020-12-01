@@ -55,6 +55,16 @@ class HeartbeatHandler
         $this->robot = $robot;
 
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("Heartbeat handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Heartbeat handler destructed.");
     }
 
     /**
@@ -84,7 +94,7 @@ class HeartbeatHandler
         }
 
         // Heartbeat
-        if ($this->resource->saveAll() && $this->prolongSession() && $this->robot->update()) {
+        if ($this->resource->save() && $this->prolongSession() && $this->robot->update()) {
             $this->logger->info("Heartbeat finished.");
         } else {
             if ($this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
