@@ -261,6 +261,8 @@ class Server
                         return;
                     } elseif ($uri == "/update") {
                         $this->panelHandler->update($response);
+                    } elseif ($uri == "/skeleton/update") {
+                        $this->panelHandler->updateSkeleton($response);
                     } elseif ($uri == "/mirai/status") {
                         $this->panelHandler->getMiraiStatus($response);
                     } elseif ($uri == "/mirai/start") {

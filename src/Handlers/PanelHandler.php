@@ -9,6 +9,8 @@ use DiceRobot\Data\Config;
 use DiceRobot\Factory\{LoggerFactory, ResponseFactory};
 use DiceRobot\Server;
 use DiceRobot\Service\{RobotService, StatisticsService};
+use DiceRobot\Util\Updater;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Swoole\Coroutine\System;
 use Swoole\Http\Response;
@@ -22,6 +24,9 @@ use Swoole\Http\Response;
  */
 class PanelHandler
 {
+    /** @var ContainerInterface Container. */
+    protected ContainerInterface $container;
+
     /** @var Config DiceRobot config. */
     protected Config $config;
 
@@ -46,6 +51,7 @@ class PanelHandler
     /**
      * The constructor.
      *
+     * @param ContainerInterface $container Container.
      * @param Config $config DiceRobot config.
      * @param App $app Application.
      * @param RobotService $robot Robot service.
@@ -54,6 +60,7 @@ class PanelHandler
      * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
+        ContainerInterface $container,
         Config $config,
         App $app,
         RobotService $robot,
@@ -61,6 +68,7 @@ class PanelHandler
         ResponseFactory $responseFactory,
         LoggerFactory $loggerFactory
     ) {
+        $this->container = $container;
         $this->config = $config;
         $this->app = $app;
         $this->robot = $robot;
@@ -68,6 +76,16 @@ class PanelHandler
         $this->responseFactory = $responseFactory;
 
         $this->logger = $loggerFactory->create("Handler");
+
+        $this->logger->debug("Panel handler created.");
+    }
+
+    /**
+     * The destructor.
+     */
+    public function __destruct()
+    {
+        $this->logger->debug("Panel handler destructed.");
     }
 
     /**
@@ -386,6 +404,31 @@ class PanelHandler
                 );
             }
         }
+    }
+
+    /**
+     * Update DiceRobot skeleton.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    public function updateSkeleton(Response $response): Response
+    {
+        $this->logger->notice("HTTP request received, update skeleton.");
+
+        /** @var Updater $updater */
+        $updater = $this->container->make(Updater::class);
+
+        $code = $updater->update();
+
+        if ($code == -1) {
+            $code = -1070;
+        } elseif ($code == -2) {
+            $code = -1071;
+        }
+
+        return $this->responseFactory->create($code, null, $response);
     }
 
     /**
