@@ -40,7 +40,7 @@ class Set extends MessageAction
             ]);
         } else {
             // Reset the default dice surface number of this chat to the default value of the robot
-            $this->chatSettings->set("defaultSurfaceNumber", null);
+            $this->chatSettings->set("defaultSurfaceNumber", 100);
 
             $this->setReply("setSurfaceNumberReset");
         }

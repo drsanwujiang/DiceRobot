@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace DiceRobot\Service;
 
 use DiceRobot\Data\{Config, MiraiResponse};
-use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, GetNicknameResponse, JrrpResponse, KowtowResponse,
-    QueryGroupResponse, SanityCheckResponse, SubmitGroupResponse, UpdateCardResponse, UpdateRobotResponse};
+use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetTokenResponse, GetCardResponse,
+    GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
+    ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
 use DiceRobot\Exception\{MiraiApiException, RuntimeException};
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Handlers\{DiceRobotApiHandler, MiraiApiHandler};
@@ -54,15 +55,19 @@ use Psr\Log\LoggerInterface;
  *
  * @method UpdateRobotResponse updateRobot(int $robotId)
  * @method void updateRobotAsync(int $robotId)
- * @method AuthorizeResponse authorize(int $robotId, int $userId = null)
  * @method GetNicknameResponse getNickname(int $robotId)
+ * @method GetTokenResponse getToken(int $robotId)
+ * @method GetLuckResponse getLuck(int $userId, string $token)
+ * @method GetPietyResponse getPiety(int $userId, string $token)
+ * @method GetCardResponse getCard(int $userId, int $cardId, string $token)
+ * @method UpdateCardResponse updateCard(int $userId, int $cardId, string $item, int $change, string $token)
+ * @method SanityCheckResponse sanityCheck(int $userId, int $cardId, int $checkResult, array $decreases, string $token)
  * @method QueryGroupResponse queryGroup(int $groupId, string $token)
- * @method SubmitGroupResponse submitGroup(int $groupId, string $token)
- * @method GetCardResponse getCard(int $cardId, string $token)
- * @method UpdateCardResponse updateCard(int $cardId, string $attribute, int $change, string $token)
- * @method SanityCheckResponse sanityCheck(int $cardId, int $checkResult, array $decreases, string $token)
- * @method JrrpResponse jrrp(int $userId)
- * @method KowtowResponse kowtow(int $userId)
+ * @method ReportGroupResponse reportGroup(int $groupId, string $token)
+ * @method CreateLogResponse createLog(int $chatId, string $chatType, string $token)
+ * @method UpdateLogResponse updateLog(string $uuid, array $message)
+ * @method void updateLogAsync(string $uuid, array $message)
+ * @method FinishLogResponse finishLog(int $chatId, string $chatType, string $uuid, string $token)
  */
 class ApiService
 {
@@ -70,19 +75,20 @@ class ApiService
     private const MIRAI_APIS = [
         "about",
         "authSession", "verifySession", "releaseSession",
-        "sendFriendMessage", "sendFriendMessageAsync", "sendTempMessage", "sendTempMessageAsync", "sendGroupMessage",
-        "sendGroupMessageAsync", "recallMessage",
+        "sendFriendMessage", "sendFriendMessageAsync", "sendTempMessage", "sendTempMessageAsync", "sendGroupMessage", "sendGroupMessageAsync", "recallMessage",
         "fetchMessage", "fetchLatestMessage", "peekMessage", "peekLatestMessage", "countMessage",
         "getFriendList", "getGroupList", "getGroupMemberList",
-        "muteGroupMember", "unmuteGroupMember", "kickGroupMember", "quitGroup", "muteAllGroupMembers",
-        "unmuteAllGroupMembers", "getGroupConfig", "setGroupConfig", "getGroupMemberInfo", "setGroupMemberInfo",
+        "muteGroupMember", "unmuteGroupMember", "kickGroupMember", "quitGroup", "muteAllGroupMembers", "unmuteAllGroupMembers", "getGroupConfig", "setGroupConfig", "getGroupMemberInfo", "setGroupMemberInfo",
         "respondToNewFriendRequestEvent", "respondToMemberJoinRequestEvent", "respondToBotInvitedJoinGroupRequestEvent"
     ];
 
     /** @var string[] DiceRobot APIs. */
     private const DICEROBOT_APIS = [
-        "updateRobot", "updateRobotAsync", "authorize", "getNickname", "queryGroup", "submitGroup", "getCard",
-        "updateCard", "sanityCheck", "jrrp", "kowtow"
+        "updateRobot", "updateRobotAsync", "getNickname", "getToken",
+        "getLuck", "getPiety",
+        "getCard", "updateCard", "sanityCheck",
+        "queryGroup", "reportGroup",
+        "createLog", "updateLog", "updateLogAsync", "finishLog"
     ];
 
     /** @var MiraiApiHandler Mirai API handler. */

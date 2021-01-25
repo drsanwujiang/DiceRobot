@@ -97,7 +97,7 @@ class BotJoinGroup extends EventAction
     }
 
     /**
-     * Query if this group is delinquent.
+     * Request to query if this group is delinquent.
      *
      * @return bool Delinquent.
      */
@@ -105,7 +105,7 @@ class BotJoinGroup extends EventAction
     {
         return $this->api->queryGroup(
             $this->event->group->id,
-            $this->api->authorize($this->robot->getId())->token
+            $this->api->getToken($this->robot->getId())->token
         )->state;
     }
 }

@@ -18,7 +18,7 @@ use Throwable;
  */
 class Dice
 {
-    /** @var int Max dice number. */
+    /** @var int Maximum dice number. */
     protected static int $maxDiceNumber;
 
     /** @var string[] B/P dice type wording. */
@@ -222,7 +222,7 @@ class Dice
     /**
      * Roll bonus/punishment dices and get result.
      *
-     * @throws DiceNumberOverstepException Dice number exceeds max limit.
+     * @throws DiceNumberOverstepException Dice number exceeds the maximum.
      */
     protected function bp(): void
     {

@@ -7,7 +7,7 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Response\SanityCheckResponse;
-use DiceRobot\Exception\CharacterCardException\{ItemNotExistException, LostException, NotBoundException};
+use DiceRobot\Exception\CharacterCardException\{LostException, NotBoundException};
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
 use DiceRobot\Exception\OrderErrorException;
@@ -34,8 +34,7 @@ class SanityCheck extends MessageAction
      * @inheritDoc
      *
      * @throws DiceNumberOverstepException|ExpressionErrorException|ExpressionInvalidException
-     * @throws ItemNotExistException|LostException|NotBoundException|OrderErrorException
-     * @throws SurfaceNumberOverstepException
+     * @throws LostException|NotBoundException|OrderErrorException|SurfaceNumberOverstepException
      */
     public function __invoke(): void
     {
@@ -171,7 +170,7 @@ class SanityCheck extends MessageAction
      *
      * @return array Check details.
      *
-     * @throws ItemNotExistException|LostException|NotBoundException
+     * @throws LostException|NotBoundException
      */
     protected function check(?int $sanity, int $successDecrease, int $failureDecrease, int $checkResult): array
     {
@@ -182,12 +181,12 @@ class SanityCheck extends MessageAction
 
             $response = $this->updateCard($cardId, $checkResult, [$successDecrease, $failureDecrease]);
 
-            $card->setAttribute("SAN", $response->afterSanity);
+            $card->setItem("SAN", $response->currentSanity);
 
             $checkLevel = $response->checkSuccess ? "success" : "failure";
             $decrease = $response->checkSuccess ? $successDecrease : $failureDecrease;
-            $previousSanity = $response->beforeSanity;
-            $currentSanity = $response->afterSanity;
+            $previousSanity = $response->previousSanity;
+            $currentSanity = $response->currentSanity;
             $maxSanity = 99 - ($card->getSkill("克苏鲁神话") ?? 0);
 
             return [$checkLevel, $decrease, $previousSanity, $currentSanity, $maxSanity];
@@ -203,7 +202,7 @@ class SanityCheck extends MessageAction
     }
 
     /**
-     * Update the character card.
+     * Request to perform a sanity check.
      *
      * @param int $cardId Character card ID.
      * @param int $checkResult The check result.
@@ -214,10 +213,11 @@ class SanityCheck extends MessageAction
     protected function updateCard(int $cardId, int $checkResult, array $decreases): SanityCheckResponse
     {
         return $this->api->sanityCheck(
+            $this->message->sender->id,
             $cardId,
             $checkResult,
             $decreases,
-            $this->api->authorize($this->robot->getId(), $this->message->sender->id)->token
+            $this->api->getToken($this->robot->getId())->token
         );
     }
 }

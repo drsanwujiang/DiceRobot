@@ -33,7 +33,7 @@ class Clear extends DeckAction
             return;
         }
 
-        $this->chatSettings->set("defaultCardDeck", null);
+        $this->chatSettings->set("defaultCardDeck", "");
         $this->chatSettings->set("cardDeck", null);
 
         $this->setReply("deckClear");

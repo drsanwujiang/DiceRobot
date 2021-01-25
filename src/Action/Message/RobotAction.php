@@ -17,18 +17,6 @@ use DiceRobot\Data\Report\Message\GroupMessage;
 abstract class RobotAction extends MessageAction
 {
     /**
-     * @inheritDoc
-     */
-    abstract public function __invoke(): void;
-
-    /**
-     * @inheritDoc
-     *
-     * @return array Parsed elements.
-     */
-    abstract protected function parseOrder(): array;
-
-    /**
      * Check the targeted robot ID.
      *
      * @param string|null $targetId Targeted robot ID.

@@ -7,12 +7,12 @@ namespace DiceRobot\Data\Response;
 use DiceRobot\Data\DiceRobotResponse;
 
 /**
- * Class SubmitGroupResponse
+ * Class ReportGroupResponse
  *
- * DTO. Response of submitting group.
+ * DTO. Response of reporting group.
  *
  * @package DiceRobot\Data\Response
  */
-final class SubmitGroupResponse extends DiceRobotResponse
+final class ReportGroupResponse extends DiceRobotResponse
 {
 }

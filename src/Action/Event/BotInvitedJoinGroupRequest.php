@@ -86,7 +86,7 @@ class BotInvitedJoinGroupRequest extends EventAction
     }
 
     /**
-     * Query whether this group is delinquent.
+     * Request to query whether this group is delinquent.
      *
      * @return bool Delinquent.
      */
@@ -94,7 +94,7 @@ class BotInvitedJoinGroupRequest extends EventAction
     {
         return $this->api->queryGroup(
             $this->event->groupId,
-            $this->api->authorize($this->robot->getId())->token
+            $this->api->getToken($this->robot->getId())->token
         )->state;
     }
 }

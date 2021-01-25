@@ -7,22 +7,22 @@ namespace DiceRobot\Data\Response;
 use DiceRobot\Data\DiceRobotResponse;
 
 /**
- * Class AuthorizeResponse
+ * Class CreateLogResponse
  *
- * DTO. Response of authorization.
+ * DTO. Response of creating log.
  *
  * @package DiceRobot\Data\Response
  */
-final class AuthorizeResponse extends DiceRobotResponse
+final class CreateLogResponse extends DiceRobotResponse
 {
-    /** @var string JWT token. */
-    public string $token;
+    /** @var string Log UUID. */
+    public string $uuid;
 
     /**
      * @inheritDoc
      */
     protected function parse(): void
     {
-        $this->token = (string) $this->data["access_token"];
+        $this->uuid = (string) $this->data["uuid"];
     }
 }

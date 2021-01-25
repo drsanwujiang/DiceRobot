@@ -2,7 +2,7 @@
   "name": "drsanwujiang/dicerobot",
   "type": "library",
   "description": "A TRPG dice robot based on Swoole.",
-  "homepage": "https://tool.drsanwujiang.com/dicerobot/",
+  "homepage": "https://dicerobot.tech/",
   "license": "MIT",
   "authors": [
     {
@@ -12,7 +12,7 @@
     }
   ],
   "support": {
-    "docs": "https://docs.drsanwujiang.com/dicerobot/",
+    "docs": "https://docs.dicerobot.tech/",
     "issues": "https://github.com/drsanwujiang/DiceRobot/issues",
     "source": "https://github.com/drsanwujiang/DiceRobot"
   },

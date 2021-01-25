@@ -13,7 +13,7 @@ use DiceRobot\Data\DiceRobotResponse;
  *
  * @package DiceRobot\Data\Response
  */
-class GetNicknameResponse extends DiceRobotResponse
+final class GetNicknameResponse extends DiceRobotResponse
 {
     /** @var string Robot's nickname. */
     public string $nickname;

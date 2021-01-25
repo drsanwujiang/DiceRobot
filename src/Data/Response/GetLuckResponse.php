@@ -7,22 +7,22 @@ namespace DiceRobot\Data\Response;
 use DiceRobot\Data\DiceRobotResponse;
 
 /**
- * Class KowtowResponse
+ * Class GetLuckResponse
  *
- * DTO. Response of kowtow.
+ * DTO. Response of getting luck.
  *
  * @package DiceRobot\Data\Api\Response
  */
-final class KowtowResponse extends DiceRobotResponse
+final class GetLuckResponse extends DiceRobotResponse
 {
-    /** @var int Piety. */
-    public int $piety;
+    /** @var int Today's luck. */
+    public int $luck;
 
     /**
      * @inheritDoc
      */
     protected function parse(): void
     {
-        $this->piety = (int) $this->data["piety"];
+        $this->luck = (int) $this->data["luck"];
     }
 }

@@ -9,6 +9,7 @@ use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Message;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
+use DiceRobot\Util\MessageSplitter;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -24,25 +25,17 @@ abstract class OrderRouterAction extends MessageAction
     protected static array $orders = [];
 
     /** @var ContainerInterface Container. */
-    protected ContainerInterface $container;
+    private ContainerInterface $container;
 
     /**
      * @inheritDoc
      *
      * @param ContainerInterface $container Container.
-     * @param Config $config DiceRobot config.
-     * @param ApiService $api API service.
-     * @param ResourceService $resource Resource service.
-     * @param RobotService $robot Robot service.
-     * @param LoggerFactory $loggerFactory Logger factory.
-     * @param Message $message Message.
-     * @param string $match Order match.
-     * @param string $order Order.
-     * @param bool $at If message sender at robot.
      */
     public function __construct(
         ContainerInterface $container,
         Config $config,
+        MessageSplitter $splitter,
         ApiService $apiService,
         ResourceService $dataService,
         RobotService $robotService,
@@ -54,6 +47,7 @@ abstract class OrderRouterAction extends MessageAction
     ) {
         parent::__construct(
             $config,
+            $splitter,
             $apiService,
             $dataService,
             $robotService,
@@ -69,6 +63,8 @@ abstract class OrderRouterAction extends MessageAction
 
     /**
      * @inheritDoc
+     *
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function __invoke(): void
     {
@@ -92,13 +88,6 @@ abstract class OrderRouterAction extends MessageAction
 
         $this->replies = $orderAction->replies;
     }
-
-    /**
-     * @inheritDoc
-     *
-     * @return array Parsed elements.
-     */
-    abstract protected function parseOrder(): array;
 
     /**
      * Check the order.

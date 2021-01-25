@@ -147,8 +147,6 @@ class App
 
     /**
      * Load config.
-     *
-     * @noinspection PhpUnhandledExceptionInspection
      */
     protected function loadConfig(): void
     {

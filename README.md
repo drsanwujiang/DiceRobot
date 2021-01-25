@@ -16,11 +16,11 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 * ~~使用 CoolQ 并加载了 [CQHTTP](https://github.com/richardchien/coolq-http-api) 插件的机器人~~（1.0.0 ~ 1.3.2）
 * ~~使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [CQHTTP Mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai) 插件的机器人~~（1.4.0）
-* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http) 插件的机器人（2.0.0）
+* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http) 插件的机器人（2.0.0 ~ 3.0.0）
 
 ### 部署
 
-无需 Docker、Apache 等环境，没有复杂的设置，部署 DiceRobot 十分简单！
+部署 DiceRobot 十分简单！
 
 如果你追求极致简洁的 [一键部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#onekey) ，那么只需几分钟，就可以直接使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以基于我们推荐的流程进行 [手动部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#manual) 。
 
@@ -70,7 +70,7 @@ DiceRobot 的开发初衷是解决 [Dice!](https://github.com/w4123/Dice) 插件
 ```
 MIT License
 
-Copyright (c) 2019-2020 Drsanwujiang
+Copyright (c) 2019-2021 Drsanwujiang
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

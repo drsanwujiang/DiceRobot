@@ -21,6 +21,9 @@ abstract class Message implements Report
     /** @var object[] Mirai message chain. */
     public array $messageChain;
 
+    /** @var ParsableFragment[] Parsable fragments. */
+    public array $fragments = [];
+
     /** @var string Serialized fragments. */
     public string $message = "";
 
@@ -55,7 +58,8 @@ abstract class Message implements Report
                 return false;
             }
 
-            $this->message .= $fragment;
+            $this->fragments[] = $fragment;
+            $this->message .= (string) $fragment;
         }
 
         $this->message = trim($this->message);

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace DiceRobot\Handlers;
 
 use DiceRobot\Data\Config;
-use DiceRobot\Data\Response\{AuthorizeResponse, GetCardResponse, GetNicknameResponse, JrrpResponse, KowtowResponse,
-    QueryGroupResponse, SanityCheckResponse, SubmitGroupResponse, UpdateCardResponse, UpdateRobotResponse};
+use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetTokenResponse, GetCardResponse,
+    GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
+    ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
+use Swlib\Http\ContentType;
 use Swlib\Http\Exception\{ClientException, ServerException, TransferException};
 use Swlib\Saber;
 
@@ -61,7 +63,7 @@ class DiceRobotApiHandler
             "headers" => [
                 "Accept" => "application/json",
                 "Accept-Encoding" => "identity",
-                "Content-Type" => "application/json; charset=utf-8",
+                "Content-Type" => ContentType::JSON,
                 "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
             ],
             "before" => function (Saber\Request $request) {
@@ -123,6 +125,8 @@ class DiceRobotApiHandler
      *                               DiceRobot APIs                               *
      ******************************************************************************/
 
+    /** Robot */
+
     /**
      * Update robot online info.
      *
@@ -161,34 +165,6 @@ class DiceRobotApiHandler
     }
 
     /**
-     * Get access token.
-     *
-     * @param int $robotId Robot's ID.
-     * @param int|null $userId User's ID if operation is about user.
-     *
-     * @return AuthorizeResponse Response.
-     *
-     * @throws InternalErrorException
-     * @throws NetworkErrorException
-     * @throws UnexpectedErrorException
-     */
-    final public function authorize(int $robotId, int $userId = null): AuthorizeResponse
-    {
-        if ($userId) {
-            $url = "robot/{$robotId}/auth/{$userId}";
-        } else {
-            $url = "robot/{$robotId}/auth";
-        }
-
-        $options = [
-            "uri" => $url,
-            "method" => "GET"
-        ];
-
-        return new AuthorizeResponse($this->request($options));
-    }
-
-    /**
      * @param int $robotId Robot's ID.
      *
      * @return GetNicknameResponse Response.
@@ -206,6 +182,184 @@ class DiceRobotApiHandler
 
         return new GetNicknameResponse($this->request($options));
     }
+
+    /**
+     * Get access token.
+     *
+     * @param int $robotId Robot's ID.
+     *
+     * @return GetTokenResponse Response.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function getToken(int $robotId): GetTokenResponse
+    {
+        $options = [
+            "uri" => "robot/{$robotId}/token",
+            "method" => "GET"
+        ];
+
+        return new GetTokenResponse($this->request($options));
+    }
+
+    /** User */
+
+    /**
+     * Get today's luck.
+     *
+     * @param int $userId User's ID.
+     * @param string $token Access token.
+     *
+     * @return GetLuckResponse Response.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function getLuck(int $userId, string $token): GetLuckResponse
+    {
+        $options = [
+            "uri" => "user/{$userId}/luck",
+            "method" => "GET",
+            "headers" => [
+                "Authorization" => "Bearer {$token}"
+            ]
+        ];
+
+        return new GetLuckResponse($this->request($options));
+    }
+
+    /**
+     * Get piety.
+     *
+     * @param int $userId User's ID.
+     * @param string $token Access token.
+     *
+     * @return GetPietyResponse Response.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function getPiety(int $userId, string $token): GetPietyResponse
+    {
+        $options = [
+            "uri" => "user/{$userId}/kowtow",
+            "method" => "GET",
+            "headers" => [
+                "Authorization" => "Bearer {$token}"
+            ]
+        ];
+
+        return new GetPietyResponse($this->request($options));
+    }
+
+    /** Card */
+
+    /**
+     * Get character card data.
+     *
+     * @param int $userId User's ID.
+     * @param int $cardId Character card ID.
+     * @param string $token Access token.
+     *
+     * @return GetCardResponse Response.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function getCard(int $userId, int $cardId, string $token): GetCardResponse
+    {
+        $options = [
+            "uri" => "user/{$userId}/card/{$cardId}",
+            "method" => "GET",
+            "headers" => [
+                "Authorization" => "Bearer {$token}"
+            ]
+        ];
+
+        return new GetCardResponse($this->request($options));
+    }
+
+    /**
+     * Update character card data.
+     *
+     * @param int $userId User's ID.
+     * @param int $cardId Character card ID.
+     * @param string $item Item name.
+     * @param int $change Change to the item.
+     * @param string $token Access token.
+     *
+     * @return UpdateCardResponse Response.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function updateCard(
+        int $userId,
+        int $cardId,
+        string $item,
+        int $change,
+        string $token
+    ): UpdateCardResponse {
+        $options = [
+            "uri" => "user/{$userId}/card/{$cardId}",
+            "method" => "PATCH",
+            "headers" => [
+                "Authorization" => "Bearer {$token}"
+            ],
+            "data" => [
+                "user_id" => $userId,
+                "item" => $item,
+                "change" => $change
+            ]
+        ];
+
+        return new UpdateCardResponse($this->request($options));
+    }
+
+    /**
+     * Request a sanity check to the character card.
+     *
+     * @param int $userId User's ID.
+     * @param int $cardId Character card ID.
+     * @param int $checkResult Sanity check result.
+     * @param array $decreases Sanity decreases.
+     * @param string $token Access token.
+     *
+     * @return SanityCheckResponse Response.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function sanityCheck(
+        int $userId,
+        int $cardId,
+        int $checkResult,
+        array $decreases,
+        string $token
+    ): SanityCheckResponse {
+        $options = [
+            "uri" => "user/{$userId}/card/{$cardId}/sc",
+            "method" => "POST",
+            "headers" => [
+                "Authorization" => "Bearer {$token}"
+            ],
+            "data" => [
+                "check_result" => $checkResult,
+                "decreases" => $decreases
+            ]
+        ];
+
+        return new SanityCheckResponse($this->request($options));
+    }
+
+    /** Group */
 
     /**
      * Query if the group is delinquent.
@@ -233,19 +387,18 @@ class DiceRobotApiHandler
     }
 
     /**
-     * Submit ID of the delinquent group to public database. These group IDs will be queried when DiceRobot is added
-     * to a group.
+     * Report the delinquent group's ID. These group IDs will be queried when robot is added to a group.
      *
      * @param int $groupId Delinquent group's ID.
      * @param string $token Access token.
      *
-     * @return SubmitGroupResponse Response.
+     * @return ReportGroupResponse Response.
      *
      * @throws InternalErrorException
      * @throws NetworkErrorException
      * @throws UnexpectedErrorException
      */
-    final public function submitGroup(int $groupId, string $token): SubmitGroupResponse
+    final public function reportGroup(int $groupId, string $token): ReportGroupResponse
     {
         $options = [
             "uri" => "group/{$groupId}",
@@ -255,135 +408,111 @@ class DiceRobotApiHandler
             ]
         ];
 
-        return new SubmitGroupResponse($this->request($options));
+        return new ReportGroupResponse($this->request($options));
     }
 
+    /** Log */
+
     /**
-     * Get character card data.
+     * Create a new TRPG log.
      *
-     * @param int $cardId ID of the character card.
+     * @param int $chatId Chat ID.
+     * @param string $chatType Chat type.
      * @param string $token Access token.
      *
-     * @return GetCardResponse Response.
+     * @return CreateLogResponse Response.
      *
      * @throws InternalErrorException
      * @throws NetworkErrorException
      * @throws UnexpectedErrorException
      */
-    final public function getCard(int $cardId, string $token): GetCardResponse
+    final public function createLog(int $chatId, string $chatType, string $token): CreateLogResponse
     {
         $options = [
-            "uri" => "card/{$cardId}",
-            "method" => "GET",
-            "headers" => [
-                "Authorization" => "Bearer {$token}"
-            ]
-        ];
-
-        return new GetCardResponse($this->request($options));
-    }
-
-    /**
-     * Update character card data.
-     *
-     * @param int $cardId ID of the character card.
-     * @param string $attribute Attribute name.
-     * @param int $change Change in the attribute.
-     * @param string $token Access token.
-     *
-     * @return UpdateCardResponse Response.
-     *
-     * @throws InternalErrorException
-     * @throws NetworkErrorException
-     * @throws UnexpectedErrorException
-     */
-    final public function updateCard(int $cardId, string $attribute, int $change, string $token): UpdateCardResponse
-    {
-        $options = [
-            "uri" => "card/{$cardId}",
-            "method" => "PATCH",
+            "uri" => "log",
+            "method" => "PUT",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
             ],
             "data" => [
-                "attribute" => $attribute,
-                "change" => $change
+                "chat_id" => $chatId,
+                "chat_type" => $chatType
             ]
         ];
 
-        return new UpdateCardResponse($this->request($options));
+        return new CreateLogResponse($this->request($options));
     }
 
     /**
-     * Sanity check.
+     * Update the TRPG log.
      *
-     * @param int $cardId ID of the character card.
-     * @param int $checkResult Sanity check result.
-     * @param array $decreases Sanity decreases.
-     * @param string $token Access token.
+     * @param string $uuid Log UUID.
+     * @param array $message Message chain.
      *
-     * @return SanityCheckResponse Response.
+     * @return UpdateLogResponse Response.
      *
      * @throws InternalErrorException
      * @throws NetworkErrorException
      * @throws UnexpectedErrorException
      */
-    final public function sanityCheck(int $cardId, int $checkResult, array $decreases, string $token): SanityCheckResponse
+    final public function updateLog(string $uuid, array $message): UpdateLogResponse
     {
         $options = [
-            "uri" => "card/{$cardId}/sc",
+            "uri" => "log/{$uuid}",
             "method" => "PATCH",
+            "data" => [
+                "message" => $message,
+            ]
+        ];
+
+        return new UpdateLogResponse($this->request($options));
+    }
+
+    /**
+     * Update the TRPG log asynchronously.
+     *
+     * @param string $uuid Log UUID.
+     * @param array $message Message chain.
+     */
+    final public function updateLogAsync(string $uuid, array $message): void
+    {
+        go(function () use ($uuid, $message) {
+            try {
+                $this->updateLog($uuid, $message);
+            } catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
+                // Do nothing
+            }
+        });
+    }
+
+    /**
+     * Finish the TRPG log.
+     *
+     * @param int $chatId Chat ID.
+     * @param string $chatType Chat type.
+     * @param string $uuid Log UUID.
+     * @param string $token Access token.
+     *
+     * @return FinishLogResponse Response.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function finishLog(int $chatId, string $chatType, string $uuid, string $token): FinishLogResponse
+    {
+        $options = [
+            "uri" => "log/{$uuid}/finish",
+            "method" => "POST",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
             ],
             "data" => [
-                "check_result" => $checkResult,
-                "decreases" => $decreases
+                "chat_id" => $chatId,
+                "chat_type" => $chatType
             ]
         ];
 
-        return new SanityCheckResponse($this->request($options));
-    }
-
-    /**
-     * Get jrrp, aka today's luck.
-     *
-     * @param int $userId User's ID.
-     *
-     * @return JrrpResponse Response.
-     *
-     * @throws InternalErrorException
-     * @throws NetworkErrorException
-     * @throws UnexpectedErrorException
-     */
-    final public function jrrp(int $userId): JrrpResponse
-    {
-        $options = [
-            "uri" => "user/{$userId}/jrrp",
-            "method" => "GET"
-        ];
-
-        return new JrrpResponse($this->request($options));
-    }
-
-    /**
-     * Kowtow, get piety.
-     *
-     * @param int $userId User's ID.
-     *
-     * @return KowtowResponse Response.
-     *
-     * @throws InternalErrorException
-     * @throws NetworkErrorException
-     * @throws UnexpectedErrorException
-     */
-    final public function kowtow(int $userId): KowtowResponse
-    {
-        $options = [
-            "uri" => "user/{$userId}/kowtow",
-            "method" => "GET"
-        ];
-
-        return new KowtowResponse($this->request($options));
+        return new FinishLogResponse($this->request($options));
     }
 }

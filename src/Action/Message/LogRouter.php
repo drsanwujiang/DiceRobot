@@ -4,34 +4,35 @@ declare(strict_types=1);
 
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Message\Deck\{Clear, Reset, Set, Show};
+use DiceRobot\Action\Message\Log\{Create, Finish, Start, Stop};
 use DiceRobot\Action\OrderRouterAction;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class DeckRouter
+ * Class LogRouter
  *
- * Parse deck order and route it to specific action.
+ * Parse TRPG log order and route it to specific action.
  *
  * @order deck
  *
- *      Sample: .deck set FGO
- *              .deck reset
- *              .deck show
- *              .deck clear
+ *      Sample: .log new
+ *              .log start
+ *              .log stop
+ *              .log end
  *
  * @package DiceRobot\Action\Message
  */
-class DeckRouter extends OrderRouterAction
+class LogRouter extends OrderRouterAction
 {
-    /** @var string[] Mapping between deck order and the full name of the corresponding class. */
+    /** @var string[] Mapping between TRPG log order and the full name of the corresponding class. */
     protected static array $orders = [
-        "set" => Set::class,
-        "reset" => Reset::class,
-        "show" => Show::class,
-        "clear" => Clear::class,
+        "new" => Create::class,
+        "start" => Start::class,
+        "stop" => Stop::class,
+        "end" => Finish::class,
 
-        "unset" => Clear::class,  // Alias of clear
+        "on" => Start::class,  // Alias of start
+        "off" => Stop::class,  // Alias of stop
     ];
 
     /**
@@ -53,8 +54,8 @@ class DeckRouter extends OrderRouterAction
      */
     protected function checkEnabled(): bool
     {
-        if (!$this->config->getStrategy("enableDeck")) {
-            $this->setReply("deckDisabled");
+        if (!$this->config->getStrategy("enableLog")) {
+            $this->setReply("logDisabled");
 
             return false;
         } else {
@@ -71,12 +72,12 @@ class DeckRouter extends OrderRouterAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([a-z]+)(?:[\s]+(.+))?$/", $this->order, $matches)) {
+        if (!preg_match("/^([a-z]+)$/", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 
         $match = strtolower($matches[1]);
-        $subOrder = $matches[2] ?? "";
+        $subOrder = "";
 
         /**
          * @var string $match Deck order match.
@@ -93,7 +94,7 @@ class DeckRouter extends OrderRouterAction
     protected function checkOrder(string $match): bool
     {
         if (!array_key_exists($match, static::$orders)) {
-            $this->setReply("deckRouterUnknown");
+            $this->setReply("logRouterUnknown");
 
             return false;
         }

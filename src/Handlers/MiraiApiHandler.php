@@ -268,7 +268,7 @@ class MiraiApiHandler
     /**
      * Send message to the specified temporary chat object.
      *
-     * @param int $targetId ID of the target temporary chat.
+     * @param int $targetId Target temporary chat ID.
      * @param int $groupId Group's ID.
      * @param array $messageChain Message chain.
      *
@@ -297,7 +297,7 @@ class MiraiApiHandler
     /**
      * Send message to the specified temporary chat object asynchronously.
      *
-     * @param int $targetId ID of the target temporary chat.
+     * @param int $targetId Target temporary chat ID.
      * @param int $groupId Group's ID.
      * @param array $messageChain Message chain.
      *
@@ -363,7 +363,7 @@ class MiraiApiHandler
     /**
      * Recall the specific message.
      *
-     * @param int $messageId ID of the target message.
+     * @param int $messageId Target message ID.
      *
      * @return MiraiResponse Response.
      *
@@ -846,8 +846,8 @@ class MiraiApiHandler
     /**
      * Respond to NewFriendRequestEvent.
      *
-     * @param int $eventId ID of the event.
-     * @param int $fromId ID of the requester.
+     * @param int $eventId Event ID.
+     * @param int $fromId Requester ID.
      * @param int $groupId Group's ID if request via a group.
      * @param int $operate Response operation type.
      * @param string $message Reply.
@@ -884,8 +884,8 @@ class MiraiApiHandler
     /**
      * Respond to MemberJoinRequestEvent.
      *
-     * @param int $eventId ID of the event.
-     * @param int $fromId ID of the requester.
+     * @param int $eventId Event ID.
+     * @param int $fromId Requester ID.
      * @param int $groupId Requested group's ID.
      * @param int $operate Response operation type.
      * @param string $message Reply.
@@ -922,8 +922,8 @@ class MiraiApiHandler
     /**
      * Respond to BotInvitedJoinGroupRequestEvent.
      *
-     * @param int $eventId ID of the event.
-     * @param int $fromId ID of the requester.
+     * @param int $eventId Event ID.
+     * @param int $fromId Requester ID.
      * @param int $groupId Requested group's ID.
      * @param int $operate Response operation type.
      * @param string $message Reply.

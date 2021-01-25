@@ -412,6 +412,8 @@ class PanelHandler
      * @param Response $response HTTP response.
      *
      * @return Response HTTP response.
+     *
+     * @noinspection PhpDocMissingThrowsInspection
      */
     public function updateSkeleton(Response $response): Response
     {

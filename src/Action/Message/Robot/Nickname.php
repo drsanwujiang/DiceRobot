@@ -57,7 +57,7 @@ class Nickname extends RobotAction
             ]);
         } else {
             // Unset nickname
-            $this->chatSettings->set("robotNickname", null);
+            $this->chatSettings->set("robotNickname", "");
 
             $this->setReply("robotNicknameUnset");
         }

@@ -13,9 +13,9 @@ use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionEr
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class ChangeAttribute
+ * Class ChangeItem
  *
- * Change investigator's attributes (HP, MP or SAN).
+ * Change character card's item (HP, MP or SAN).
  *
  * @order hp/mp/san
  *
@@ -28,7 +28,7 @@ use DiceRobot\Exception\OrderErrorException;
  *
  * @package DiceRobot\Action\Message
  */
-class ChangeAttribute extends MessageAction
+class ChangeItem extends MessageAction
 {
     /**
      * @inheritDoc
@@ -38,7 +38,7 @@ class ChangeAttribute extends MessageAction
      */
     public function __invoke(): void
     {
-        list($attribute, $symbol, $expression) = $this->parseOrder();
+        list($item, $symbol, $expression) = $this->parseOrder();
 
         list($success, $result, $fullResult) = $this->getResult($expression);
 
@@ -50,18 +50,18 @@ class ChangeAttribute extends MessageAction
         $cardId = $this->chatSettings->getCharacterCardId($this->message->sender->id);
         $card = $this->resource->getCharacterCard($cardId);
 
-        // Request server to change attribute
-        $response = $this->updateCard($cardId, $attribute, (int) ($symbol . $result));
+        // Request to change item
+        $response = $this->updateCard($cardId, $item, (int) ($symbol . $result));
 
         // Apply change to the character card
-        $card->setAttribute($attribute, $response->afterValue);
+        $card->setItem($item, $response->currentValue);
 
-        $this->setReply("changeAttributeResult", [
+        $this->setReply("changeItemResult", [
             "昵称" => $this->getNickname(),
-            "属性" => $attribute,
-            "增减" => $this->config->getString("wording.attributeChange.{$symbol}", ),
+            "项目" => $item,
+            "增减" => $this->config->getString("wording.itemChange.{$symbol}", ),
             "变动值" => $fullResult,
-            "当前值" => $response->afterValue
+            "当前值" => $response->currentValue
         ]);
     }
 
@@ -78,7 +78,7 @@ class ChangeAttribute extends MessageAction
             throw new OrderErrorException;
         }
 
-        $attribute = strtoupper($matches[1]);
+        $item = strtoupper($matches[1]);
 
         if (!preg_match("/^([+-])\s*(\S+)$/i", $this->order, $matches)) {
             throw new OrderErrorException;
@@ -88,11 +88,11 @@ class ChangeAttribute extends MessageAction
         $expression = $matches[2];
 
         /**
-         * @var string $attribute Attribute name.
+         * @var string $item Item name.
          * @var string $symbol Addition/Subtraction symbol.
          * @var string $expression Dicing expression.
          */
-        return [$attribute, $symbol, $expression];
+        return [$item, $symbol, $expression];
     }
 
     /**
@@ -114,28 +114,29 @@ class ChangeAttribute extends MessageAction
         $fullResult = $dice->getCompleteExpression();
 
         if (!$success) {
-            $this->setReply("changeAttributeWrongExpression");
+            $this->setReply("changeItemWrongExpression");
         }
 
         return [$success, $result, $fullResult];
     }
 
     /**
-     * Update character card.
+     * Request to update character card.
      *
      * @param int $cardId Character card ID.
-     * @param string $attribute Attribute name.
+     * @param string $item Item name.
      * @param int $change Change value.
      *
      * @return UpdateCardResponse The response.
      */
-    protected function updateCard(int $cardId, string $attribute, int $change): UpdateCardResponse
+    protected function updateCard(int $cardId, string $item, int $change): UpdateCardResponse
     {
         return $this->api->updateCard(
+            $this->message->sender->id,
             $cardId,
-            $attribute,
+            $item,
             $change,
-            $this->api->authorize($this->robot->getId(), $this->message->sender->id)->token
+            $this->api->getToken($this->robot->getId())->token
         );
     }
 }

@@ -17,14 +17,14 @@ use DiceRobot\Exception\CharacterCardException\PermissionDeniedException;
 final class UpdateCardResponse extends DiceRobotResponse
 {
     /** @var int Current value. */
-    public int $afterValue;
+    public int $currentValue;
 
     /**
      * @inheritDoc
      */
     protected function parse(): void
     {
-        $this->afterValue = (int) $this->data["after_value"];
+        $this->currentValue = (int) $this->data["current_value"];
     }
 
     /**
@@ -34,7 +34,7 @@ final class UpdateCardResponse extends DiceRobotResponse
      */
     protected function validate(): void
     {
-        if ($this->code == -1012) {
+        if ($this->code == -3) {
             throw new PermissionDeniedException();
         }
     }

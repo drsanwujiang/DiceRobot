@@ -63,7 +63,7 @@ class Name extends MessageAction
 
         /**
          * @var string $language Language.
-         * @var int $count Count of generation.
+         * @var int $count Generation count.
          */
         return [$language, $count];
     }
@@ -71,7 +71,7 @@ class Name extends MessageAction
     /**
      * Check the range.
      *
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      *
      * @return bool Validity.
      */
@@ -94,7 +94,7 @@ class Name extends MessageAction
      * Generate names.
      *
      * @param string $language Targeted language.
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      *
      * @return string Generated names.
      *

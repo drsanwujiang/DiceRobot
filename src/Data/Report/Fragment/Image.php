@@ -64,17 +64,23 @@ final class Image implements ParsableFragment
     /**
      * @inheritDoc
      *
-     * @return string Mirai code.
+     * @return string Mirai code (extended).
      */
     public function toMiraiCode(): string
     {
-        return "[mirai:image:{$this->imageId}]";
+        if ($this->imageId) {
+            return "[mirai:image:{$this->imageId}]";
+        } elseif ($this->url) {
+            return "[mirai:image:{$this->url}]";
+        } else {
+            return "[mirai:image:file={$this->path}]";
+        }
     }
 
     /**
      * @inheritDoc
      *
-     * @return string Mirai code.
+     * @return string Mirai code (extended).
      */
     public function __toString(): string
     {
