@@ -191,7 +191,7 @@ class Dice
                 }
 
                 $subexpressions[$index] = new Subexpression($filledExpression);
-            } elseif (!preg_match("/^[0-9+\-*()]+$/i", $splitExpression)) {
+            } elseif (!preg_match("/^[0-9+\-*()]+$/", $splitExpression)) {
                 $this->reason = $this->order;
 
                 return;

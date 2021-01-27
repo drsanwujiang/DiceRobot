@@ -80,7 +80,7 @@ class ChangeItem extends MessageAction
 
         $item = strtoupper($matches[1]);
 
-        if (!preg_match("/^([+-])\s*(\S+)$/i", $this->order, $matches)) {
+        if (!preg_match("/^([+-])\s*(\S+)$/", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 

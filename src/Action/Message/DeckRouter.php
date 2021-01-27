@@ -76,7 +76,7 @@ class DeckRouter extends OrderRouterAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([a-z\x{4e00}-\x{9fa5}]+)(?:[\s]+(.+))?$/u", $this->order, $matches)) {
+        if (!preg_match("/^([a-z\x{4e00}-\x{9fa5}]+)(?:[\s]+(.+))?$/ui", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 

@@ -50,7 +50,7 @@ class CheckRule extends Resource
         {
             $condition = str_replace(["{&result}", "{&value}", " "], [$result, $value, ""], $condition);
 
-            if (preg_match("/[a-zA-Z]/", $condition)) {
+            if (preg_match("/[a-z]/i", $condition)) {
                 throw new DangerousException();
             }
 
