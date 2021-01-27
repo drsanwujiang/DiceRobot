@@ -27,9 +27,14 @@ class DeckRouter extends OrderRouterAction
     /** @var string[] Mapping between deck order and the full name of the corresponding class. */
     protected static array $orders = [
         "set" => Set::class,
+        "设置" => Set::class,
         "reset" => Reset::class,
+        "重置" => Reset::class,
         "show" => Show::class,
+        "展示" => Show::class,
         "clear" => Clear::class,
+        "清除" => Clear::class,
+        "清空" => Clear::class,
 
         "unset" => Clear::class,  // Alias of clear
     ];
@@ -71,7 +76,7 @@ class DeckRouter extends OrderRouterAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([a-z]+)(?:[\s]+(.+))?$/", $this->order, $matches)) {
+        if (!preg_match("/^([a-z\x{4e00}-\x{9fa5}]+)(?:[\s]+(.+))?$/u", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 

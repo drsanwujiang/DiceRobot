@@ -305,42 +305,66 @@ namespace DiceRobot {
         "message" => [
             10 => [
                 "setcoc" => \DiceRobot\Action\Message\SetCoc::class,
+                "设置检定规则" => \DiceRobot\Action\Message\SetCoc::class,
+                "检定规则" => \DiceRobot\Action\Message\SetCoc::class,
                 "robot" => \DiceRobot\Action\Message\RobotRouter::class,
+                "机器人" => \DiceRobot\Action\Message\RobotRouter::class,
                 "dismiss" => \DiceRobot\Action\Message\Dismiss::class,  // Alias of .robot goodbye
+                "退群" => \DiceRobot\Action\Message\Dismiss::class
             ],
             20 => [
                 "ra" => \DiceRobot\Action\Message\Check::class,
+                "检定" => \DiceRobot\Action\Message\Check::class,
                 "sc" => \DiceRobot\Action\Message\SanityCheck::class,
+                "SAN检定" => \DiceRobot\Action\Message\SanityCheck::class,
 
                 "coc" => \DiceRobot\Action\Message\Coc::class,
+                "COC人物卡" => \DiceRobot\Action\Message\Coc::class,
                 "dnd" => \DiceRobot\Action\Message\Dnd::class,
+                "DND人物卡" => \DiceRobot\Action\Message\Dnd::class,
 
                 "card" => \DiceRobot\Action\Message\Card::class,
+                "人物卡" => \DiceRobot\Action\Message\Card::class,
                 "hp" => \DiceRobot\Action\Message\ChangeItem::class,
+                "生命" => \DiceRobot\Action\Message\ChangeItem::class,
                 "mp" => \DiceRobot\Action\Message\ChangeItem::class,  // Alias
+                "魔法" => \DiceRobot\Action\Message\ChangeItem::class,
                 "san" => \DiceRobot\Action\Message\ChangeItem::class,  // Alias
 
                 "name" => \DiceRobot\Action\Message\Name::class,
+                "生成名称" => \DiceRobot\Action\Message\Name::class,
                 "nn" => \DiceRobot\Action\Message\Nickname::class,
+                "昵称" => \DiceRobot\Action\Message\Nickname::class,
 
                 "set" => \DiceRobot\Action\Message\Set::class,
+                "默认面数" => \DiceRobot\Action\Message\Set::class,
 
                 "log" => \DiceRobot\Action\Message\LogRouter::class,
+                "记录" => \DiceRobot\Action\Message\LogRouter::class,
 
                 "draw" => \DiceRobot\Action\Message\Draw::class,
+                "抽牌" => \DiceRobot\Action\Message\Draw::class,
+                "抽卡" => \DiceRobot\Action\Message\Draw::class,
                 "deck" => \DiceRobot\Action\Message\DeckRouter::class,
+                "牌堆" => \DiceRobot\Action\Message\DeckRouter::class,
 
                 "jrrp" => \DiceRobot\Action\Message\Jrrp::class,
+                "今日人品" => \DiceRobot\Action\Message\Jrrp::class,
                 "orz" => \DiceRobot\Action\Message\Kowtow::class,
+                "磕头" => \DiceRobot\Action\Message\Kowtow::class,
 
                 "bot" =>\DiceRobot\Action\Message\RobotRouter::class,  // Alias of .robot
 
                 "help" => \DiceRobot\Action\Message\Help::class,
-                "hello" => \DiceRobot\Action\Message\Hello::class
+                "帮助" => \DiceRobot\Action\Message\Help::class,
+                "hello" => \DiceRobot\Action\Message\Hello::class,
+                "欢迎" => \DiceRobot\Action\Message\Hello::class
             ],
             100 => [
                 "r" => \DiceRobot\Action\Message\Dicing::class,
+                "掷骰" => \DiceRobot\Action\Message\Dicing::class,
                 "w" => \DiceRobot\Action\Message\DicePool::class,
+                "骰池" => \DiceRobot\Action\Message\DicePool::class,
             ]
         ],
 

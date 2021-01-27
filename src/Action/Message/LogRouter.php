@@ -27,9 +27,16 @@ class LogRouter extends OrderRouterAction
     /** @var string[] Mapping between TRPG log order and the full name of the corresponding class. */
     protected static array $orders = [
         "new" => Create::class,
+        "创建" => Create::class,
+        "新建" => Create::class,
         "start" => Start::class,
+        "开始" => Start::class,
         "stop" => Stop::class,
+        "停止" => Stop::class,
+        "暂停" => Stop::class,
         "end" => Finish::class,
+        "完成" => Finish::class,
+        "结束" => Finish::class,
 
         "on" => Start::class,  // Alias of start
         "off" => Stop::class,  // Alias of stop
@@ -72,7 +79,7 @@ class LogRouter extends OrderRouterAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([a-z]+)$/", $this->order, $matches)) {
+        if (!preg_match("/^([a-z\x{4e00}-\x{9fa5}]+)$/u", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 
