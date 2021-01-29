@@ -150,6 +150,6 @@ class Dicing extends MessageAction
             }
         }
 
-        return [$dices[0]->vType ?? null, $dices[0]->reason ?? "", rtrim($detail)];
+        return [$dices[0]->vType, $dices[0]->reason, rtrim($detail)];
     }
 }

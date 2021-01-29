@@ -52,7 +52,7 @@ class Dice
     public array $subexpressions;
 
     /** @var string Dicing reason. */
-    public string $reason;
+    public string $reason = "";
 
     /** @var int Dicing result. */
     public int $result;
@@ -123,7 +123,7 @@ class Dice
         preg_match("/^([hs])?\s*([bp])?(.*)\s*$/i", $this->order, $matches);
         $this->vType = empty($matches[1]) ? null : strtoupper($matches[1]);
         $this->bpType = empty($matches[2]) ? null : strtoupper($matches[2]);
-        $order = (string) $matches[3];
+        $order = (string) ($matches[3] ?? "");
 
         if ($this->bpType) {
             // Bonus/Punishment dice
@@ -132,7 +132,7 @@ class Dice
             $this->reason = $matches[2];
         } else {
             // Normal dice, parse expressions. Sample: x1Dy1Kz1+x2Dy2+c reason
-            preg_match("/^([0-9DK+\-x*()（）]+)?\s*([\S\s]*)$/i", $order, $matches);
+            preg_match("/^([0-9dk+\-x*()（）]+)?\s*([\S\s]*)$/i", $order, $matches);
             // Replace Chinese brackets, d, k, x and X
             $expression = str_replace(["（", "）", "x", "X"], ["(", ")", "*", "*"], $matches[1]);
             $this->reason = $matches[2];
