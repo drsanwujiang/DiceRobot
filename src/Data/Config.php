@@ -27,6 +27,7 @@ class Config
      * @param Resource\Config|null $config Panel config.
      *
      * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function __construct(ContainerInterface $container, Resource\Config $config = null)
     {

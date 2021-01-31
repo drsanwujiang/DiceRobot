@@ -8,13 +8,12 @@ use Co\System;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Contact\Friend;
 use DiceRobot\Data\Report\Message;
-use DiceRobot\Util\MessageSplitter;
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage};
 use DiceRobot\Data\Resource\ChatSettings;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Interfaces\Action;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
-use DiceRobot\Util\Convertor;
+use DiceRobot\Util\{Convertor, MessageSplitter};
 use Psr\Log\LoggerInterface;
 
 /**
@@ -30,9 +29,6 @@ abstract class MessageAction implements Action
 
     /** @var Config DiceRobot config. */
     protected Config $config;
-
-    /** @var MessageSplitter Message splitter. */
-    private MessageSplitter $splitter;
 
     /** @var ApiService API service. */
     protected ApiService $api;
@@ -70,7 +66,6 @@ abstract class MessageAction implements Action
      * The constructor.
      *
      * @param Config $config DiceRobot config.
-     * @param MessageSplitter $splitter Message splitter.
      * @param ApiService $api API service.
      * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
@@ -82,7 +77,6 @@ abstract class MessageAction implements Action
      */
     public function __construct(
         Config $config,
-        MessageSplitter $splitter,
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,
@@ -93,7 +87,6 @@ abstract class MessageAction implements Action
         bool $at
     ) {
         $this->config = $config;
-        $this->splitter = $splitter;
         $this->api = $api;
         $this->resource = $resource;
         $this->robot = $robot;
@@ -191,10 +184,10 @@ abstract class MessageAction implements Action
      */
     final public function sendReplies(): void
     {
-        $maxCharacter = static::class == GroupMessage::class ?
-            $this->config->getOrder("maxReplyCharacter"):
-            $this->config->getOrder("maxPrivateReplyCharacter");
-        $splitReplies = $this->splitter->split($this->replies, $maxCharacter);
+        $splitReplies = MessageSplitter::split(
+            $this->replies,
+            $this->config->getOrder("maxReplyCharacter")
+        );
 
         foreach ($splitReplies as $reply) {
             $this->sendMessage($reply);

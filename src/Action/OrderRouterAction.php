@@ -9,7 +9,6 @@ use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Message;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
-use DiceRobot\Util\MessageSplitter;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -35,7 +34,6 @@ abstract class OrderRouterAction extends MessageAction
     public function __construct(
         ContainerInterface $container,
         Config $config,
-        MessageSplitter $splitter,
         ApiService $apiService,
         ResourceService $dataService,
         RobotService $robotService,
@@ -47,7 +45,6 @@ abstract class OrderRouterAction extends MessageAction
     ) {
         parent::__construct(
             $config,
-            $splitter,
             $apiService,
             $dataService,
             $robotService,

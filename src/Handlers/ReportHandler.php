@@ -145,6 +145,7 @@ class ReportHandler
      *
      * @noinspection PhpRedundantCatchClauseInspection
      * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     protected function event(Event $event): void
     {
