@@ -356,12 +356,12 @@ class PanelHandler
             "/bin/systemctl status {$this->config->getString("dicerobot.service.name")}"
         ), EXTR_OVERWRITE);
 
-        if ($code != 0) {
-            $this->responseFactory->create(1040, null, $response)->end();
-        } else {
+        if ($code == 0) {
             $this->responseFactory->create(0, null, $response)->end();
 
             System::exec("/bin/systemctl restart {$this->config->getString("dicerobot.service.name")}");
+        } else {
+            $this->responseFactory->create(1040, null, $response)->end();
         }
     }
 
@@ -567,6 +567,40 @@ class PanelHandler
             } else {
                 return $this->responseFactory->create(
                     -2021,
+                    ["code" => $code, "signal" => $signal, "output" => $output],
+                    $response
+                );
+            }
+        }
+    }
+
+    public function updateMirai(Response $response): Response
+    {
+        $this->logger->notice("HTTP request received, update Mirai.");
+
+        if (!is_dir($root = $this->config->getString("root"))) {
+            return $this->responseFactory->create(-2030, null, $response);
+        }
+
+        $code = $signal = -1;
+        $output = "";
+
+        extract(System::exec(
+            "/bin/bash {$this->config->getString("mirai.path")}/update-mirai.sh"
+        ), EXTR_OVERWRITE);
+
+        if ($code == 0) {
+            return $this->responseFactory->create($code, null, $response);
+        } else {
+            $this->logger->critical(
+                "Failed to update Mirai. Code {$code}, signal {$signal}, output message: {$output}"
+            );
+
+            if ($code == 127) {
+                return $this->responseFactory->create(-2031, null, $response);
+            } else {
+                return $this->responseFactory->create(
+                    -2032,
                     ["code" => $code, "signal" => $signal, "output" => $output],
                     $response
                 );

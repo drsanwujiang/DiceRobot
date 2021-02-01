@@ -55,7 +55,8 @@ namespace DiceRobot {
             ],
             "service" => [
                 "name" => "mirai"
-            ]
+            ],
+            "path" => "/root/mirai"
         ],
 
         "log" => [

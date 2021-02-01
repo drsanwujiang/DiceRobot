@@ -47,6 +47,9 @@ class ResponseFactory
         -2011 => "Stop Mirai failed",
         -2020 => "Mirai not setup as service",
         -2021 => "Restart Mirai failed",
+        -2030 => "Mirai root path not found",
+        -2031 => "MCL not found",
+        -2032 => "Update Mirai failed"
     ];
 
     /** @var Config DiceRobot config. */
