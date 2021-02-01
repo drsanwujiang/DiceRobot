@@ -16,6 +16,7 @@ use DiceRobot\Service\{ApiService, RobotService, StatisticsService};
 use DiceRobot\Traits\RouteCollectorTrait;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Class ReportHandler
@@ -137,6 +138,18 @@ class ReportHandler
             }
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Report failed, unable to call Mirai API.");
+        } catch (Throwable $e) {
+            $details = sprintf(
+                "Type: %s\nCode: %s\nMessage: %s\nFile: %s\nLine: %s\nTrace: %s",
+                get_class($e),
+                $e->getCode(),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(),
+                $e->getTraceAsString()
+            );
+
+            $this->logger->error("Report failed, unexpected exception occurred:\n{$details}");
         }
     }
 
@@ -185,6 +198,7 @@ class ReportHandler
      *
      * @noinspection PhpRedundantCatchClauseInspection
      * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     protected function message(Message $message): void
     {

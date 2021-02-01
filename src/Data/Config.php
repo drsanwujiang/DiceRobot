@@ -34,18 +34,11 @@ class Config
         /** @var CustomConfig $customConfig */
         $customConfig = $container->make(CustomConfig::class);
 
-        if ($config) {
-            $this->__constructArrayReader((array) array_replace_recursive(
-                DEFAULT_CONFIG,
-                $config->all(),
-                $customConfig->all()
-            ));
-        } else {
-            $this->__constructArrayReader((array) array_replace_recursive(
-                DEFAULT_CONFIG,
-                $customConfig->all()
-            ));
-        }
+        $this->__constructArrayReader((array) array_replace_recursive(
+            DEFAULT_CONFIG,
+            $config ? $config->all() : [],
+            $customConfig->all()
+        ));
     }
 
     /**

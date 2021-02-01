@@ -20,7 +20,7 @@
     "php": ">=7.4",
     "ext-json": "*",
     "ext-mbstring": "*",
-    "ext-swoole": ">=4.5.5",
+    "ext-swoole": ">=4.6.0",
     "ext-zip": "*",
     "cakephp/chronos": "^2.0",
     "imefisto/psr-swoole-native": "^0.0.2",
@@ -32,7 +32,7 @@
   },
   "require-dev": {
     "phpunit/phpunit": "^9.4",
-    "swoole/ide-helper": "^4.5"
+    "swoole/ide-helper": "^4.6"
   },
   "autoload": {
     "psr-4": {

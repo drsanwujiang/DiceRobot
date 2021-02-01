@@ -214,6 +214,7 @@ class Server
         $method = $request->server["request_method"] ?? "";
         $uri = $request->server["request_uri"] ?? "";
         $content = (string) ($request->getContent() ?? "");
+        $contentType = $request->header["content-type"] ?? "";
 
         if ($method == "POST" && $uri == "/report") {
             $this->report($content, $response);
@@ -223,15 +224,17 @@ class Server
             /** Panel APIs */
 
             // Check header
-            if (!preg_match("/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/", $request->header["x-dr-client"] ?? "")) {
+            if (!preg_match("/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/", $request->header["x-dr-panel"] ?? "")) {
                 $this->panelHandler->notFound($response);
             } else {
                 // Web APIs
                 if ($method == "OPTIONS") {
                     $this->panelHandler->preflight($response);
-                } elseif ($method == "POST") {
+                } elseif ($method == "POST" && $contentType == "application/json") {
                     if ($uri == "/config") {
                         $this->panelHandler->setConfig($content, $response);
+                    } elseif ($uri == "/mirai/update") {
+                        $this->panelHandler->updateMirai($content, $response);
                     } else {
                         $this->panelHandler->notFound($response);
                     }
@@ -254,12 +257,8 @@ class Server
                         $this->panelHandler->reload($response);
                     } elseif ($uri == "/stop") {
                         $this->panelHandler->stop($response);
-
-                        return;
                     } elseif ($uri == "/restart") {
                         $this->panelHandler->restart($response);
-
-                        return;
                     } elseif ($uri == "/update") {
                         $this->panelHandler->update($response);
                     } elseif ($uri == "/skeleton/update") {
@@ -281,7 +280,9 @@ class Server
             }
         }
 
-        $response->end();
+        if ($response->isWritable()) {
+            $response->end();
+        }
     }
 
     /**
