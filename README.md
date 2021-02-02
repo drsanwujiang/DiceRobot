@@ -22,15 +22,15 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 部署 DiceRobot 十分简单！
 
-如果你追求极致简洁的 [一键部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#onekey) ，那么只需几分钟，就可以直接使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以基于我们推荐的流程进行 [手动部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#manual) 。
+如果你追求极致简洁的 [一键部署](https://docs.dicerobot.tech/deploy/how-to-deploy#onekey) ，那么只需几分钟，就可以直接使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以基于我们推荐的流程进行 [手动部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#manual) 。
 
 ### 自定义
 
-如果现有的功能无法满足你的需要，那么你可以 [自定义](https://docs.drsanwujiang.com/dicerobot/deploy/customization) DiceRobot。
+如果现有的功能无法满足你的需要，那么你可以 [自定义](https://docs.dicerobot.tech/deploy/customization) DiceRobot。
 
 ### 控制面板
 
-我们为 DiceRobot 设计了一个功能丰富的 [控制面板](https://docs.drsanwujiang.com/dicerobot/use/panel) ，涵盖了除启动之外的几乎所有常用操作。只需要动动手指，就可以轻松管理和设置 DiceRobot。
+我们为 DiceRobot 设计了一个功能丰富的 [控制面板](https://docs.dicerobot.tech/use/panel) ，涵盖了除启动之外的几乎所有常用操作。只需要动动手指，就可以轻松管理和设置 DiceRobot。
 
 
 ## 如果你是使用者
@@ -42,11 +42,19 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 * Sanwu Jr.（2656398864）- 稳定版机器人，7 × 24h 在线
 * Sakura Tsang（3330148645）- 开发版机器人，在调试 BUG 时可能会暂时不可用
 
-可以在 [在线机器人列表](https://tool.drsanwujiang.com/dicerobot/online) 页面查看机器人的在线状态。
+可以在 [在线机器人列表](https://dicerobot.tech/online) 页面查看机器人的在线状态。
 
 ### 指令
 
-在 [指令](https://docs.drsanwujiang.com/dicerobot/use/order) 页面可以查阅所有指令的详细说明，使用 [.help](https://docs.drsanwujiang.com/dicerobot/use/order#help) 指令同样可以。
+在 [指令](https://docs.dicerobot.tech/use/order) 页面可以查阅所有指令的详细说明，使用 [.help](https://docs.dicerobot.tech/use/order#help) 指令同样可以。
+
+### 人物卡编辑器
+
+游玩 TRPG 的基础当然是要有一张自己的人物卡。使用 [人物卡编辑器](https://docs.dicerobot.tech/use/card-editor) ，随时随地在线查看、编辑你的人物卡。
+
+###Log 阅览器
+
+每一次战斗、每一段旅程都是值得珍惜的美好记忆。使用 [Log 阅览器](https://docs.dicerobot.tech/use/log-viewer) ，回忆你与同伴们独一无二的精彩瞬间。
 
 
 ## 就这些了
