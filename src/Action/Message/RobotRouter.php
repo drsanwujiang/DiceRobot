@@ -40,23 +40,25 @@ class RobotRouter extends OrderRouterAction
     protected static array $orders = [
         "about" => About::class,
         "关于" => About::class,
+
         "start" => Start::class,
+        "on" => Start::class,
         "启动" => Start::class,
         "启用" => Start::class,
         "开始" => Start::class,
+
         "stop" => Stop::class,
+        "off" => Stop::class,
         "停用" => Stop::class,
         "停止" => Stop::class,
         "暂停" => Stop::class,
+
         "nn" => Nickname::class,
         "昵称" => Nickname::class,
+
         "goodbye" => Goodbye::class,
         "再见" => Goodbye::class,
         "退群" => Goodbye::class,
-
-        "on" => Start::class,  // Alias of start
-        "off" => Stop::class,  // Alias of stop
-        "dismiss" => Goodbye::class,  // Alias of goodbye
 
         "" => About::class,  // Redirect to about by default
     ];

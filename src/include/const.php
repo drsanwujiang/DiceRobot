@@ -305,7 +305,6 @@ namespace DiceRobot {
         "message" => [
             10 => [
                 "setcoc" => \DiceRobot\Action\Message\SetCoc::class,
-                "设置检定规则" => \DiceRobot\Action\Message\SetCoc::class,
                 "检定规则" => \DiceRobot\Action\Message\SetCoc::class,
                 "robot" => \DiceRobot\Action\Message\RobotRouter::class,
                 "机器人" => \DiceRobot\Action\Message\RobotRouter::class,
@@ -317,6 +316,7 @@ namespace DiceRobot {
                 "检定" => \DiceRobot\Action\Message\Check::class,
                 "sc" => \DiceRobot\Action\Message\SanityCheck::class,
                 "SAN检定" => \DiceRobot\Action\Message\SanityCheck::class,
+                "理智检定" => \DiceRobot\Action\Message\SanityCheck::class,
 
                 "coc" => \DiceRobot\Action\Message\Coc::class,
                 "COC人物卡" => \DiceRobot\Action\Message\Coc::class,

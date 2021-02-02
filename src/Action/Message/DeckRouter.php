@@ -28,15 +28,17 @@ class DeckRouter extends OrderRouterAction
     protected static array $orders = [
         "set" => Set::class,
         "设置" => Set::class,
+
         "reset" => Reset::class,
         "重置" => Reset::class,
+
         "show" => Show::class,
         "展示" => Show::class,
-        "clear" => Clear::class,
-        "清除" => Clear::class,
-        "清空" => Clear::class,
 
-        "unset" => Clear::class,  // Alias of clear
+        "clear" => Clear::class,
+        "unset" => Clear::class,
+        "清除" => Clear::class,
+        "清空" => Clear::class
     ];
 
     /**

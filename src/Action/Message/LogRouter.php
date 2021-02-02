@@ -29,17 +29,19 @@ class LogRouter extends OrderRouterAction
         "new" => Create::class,
         "创建" => Create::class,
         "新建" => Create::class,
+
         "start" => Start::class,
+        "on" => Start::class,
         "开始" => Start::class,
+
         "stop" => Stop::class,
+        "off" => Stop::class,
         "停止" => Stop::class,
         "暂停" => Stop::class,
+
         "end" => Finish::class,
         "完成" => Finish::class,
-        "结束" => Finish::class,
-
-        "on" => Start::class,  // Alias of start
-        "off" => Stop::class,  // Alias of stop
+        "结束" => Finish::class
     ];
 
     /**
