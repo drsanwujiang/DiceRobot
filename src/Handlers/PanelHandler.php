@@ -384,7 +384,7 @@ class PanelHandler
         $output = "";
 
         extract(System::exec(
-            "/usr/local/bin/composer update --working-dir {$root} --no-ansi --no-interaction --quiet 2>&1"
+            "/usr/local/bin/composer --no-interaction --no-ansi --quiet update --working-dir {$root} --no-dev 2>&1"
         ), EXTR_OVERWRITE);
 
         if ($code == 0) {
