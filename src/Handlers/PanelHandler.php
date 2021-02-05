@@ -230,15 +230,15 @@ class PanelHandler
     {
         $this->logger->info("HTTP request received, set config.");
 
-        $code = $this->app->setConfig($content);
-
-        if ($code == -1) {
-            $code = -1060;
-        } elseif ($code == -2) {
-            $code = -1061;
+        if (!is_array($data = json_decode($content, true))) {
+            return $this->responseFactory->create(-1060, null, $response);
         }
 
-        return $this->responseFactory->create($code, null, $response);
+        if (!$this->app->setConfig($data)) {
+            return $this->responseFactory->create(-1061, null, $response);
+        }
+
+        return $this->responseFactory->create(0, null, $response);
     }
 
     /**
@@ -356,12 +356,12 @@ class PanelHandler
             "/bin/systemctl status {$this->config->getString("dicerobot.service.name")}"
         ), EXTR_OVERWRITE);
 
-        if ($code != 0) {
-            $this->responseFactory->create(1040, null, $response)->end();
-        } else {
+        if ($code == 0) {
             $this->responseFactory->create(0, null, $response)->end();
 
             System::exec("/bin/systemctl restart {$this->config->getString("dicerobot.service.name")}");
+        } else {
+            $this->responseFactory->create(1040, null, $response)->end();
         }
     }
 
@@ -412,6 +412,9 @@ class PanelHandler
      * @param Response $response HTTP response.
      *
      * @return Response HTTP response.
+     *
+     * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function updateSkeleton(Response $response): Response
     {
@@ -565,6 +568,54 @@ class PanelHandler
             } else {
                 return $this->responseFactory->create(
                     -2021,
+                    ["code" => $code, "signal" => $signal, "output" => $output],
+                    $response
+                );
+            }
+        }
+    }
+
+    public function updateMirai(string $content, Response $response): Response
+    {
+        $this->logger->notice("HTTP request received, update Mirai.");
+
+        if (!is_array($params = json_decode($content, true))) {
+            return $this->responseFactory->create(-2030, null, $response);
+        }
+
+        foreach ($params as $param) {
+            if (!preg_match("/^[1-9]\.[0-9]\.[0-9]$/", $param)) {
+                return $this->responseFactory->create(-2031, null, $response);
+            }
+        }
+
+        if (!is_dir($root = $this->config->getString("mirai.path"))) {
+            return $this->responseFactory->create(-2032, null, $response);
+        }
+
+        $code = $signal = -1;
+        $output = "";
+
+        $params = join(" ", $params);
+
+        extract(System::exec(
+            "/bin/bash {$root}/update-mirai.sh {$params}"
+        ), EXTR_OVERWRITE);
+
+        if ($code == 0) {
+            return $this->responseFactory->create($code, null, $response);
+        } else {
+            $this->logger->critical(
+                "Failed to update Mirai. Code {$code}, signal {$signal}, output message: {$output}"
+            );
+
+            if ($code == 127) {
+                return $this->responseFactory->create(-2033, null, $response);
+            } elseif ($code == 126) {
+                return $this->responseFactory->create(-2034, null, $response);
+            } else {
+                return $this->responseFactory->create(
+                    -2035,
                     ["code" => $code, "signal" => $signal, "output" => $output],
                     $response
                 );

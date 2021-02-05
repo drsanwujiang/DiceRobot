@@ -15,20 +15,21 @@ declare(strict_types=1);
 
 namespace {
     /** @var string Current version. */
-    const DICEROBOT_VERSION = "2.1.0";
+    const DICEROBOT_VERSION = "3.0.0-alpha";
 
     /** @var string Root directory. */
     define("DICEROBOT_STARTUP", time());
 }
 
 namespace DiceRobot {
+
     use Monolog\Logger;
 
     /** @var array Default config. */
     const DEFAULT_CONFIG = [
         "dicerobot" => [
             "api" => [
-                "uri" => "https://api.drsanwujiang.com/dicerobot/v2/"
+                "uri" => "https://api.dicerobot.tech/v3/"
             ],
             "server" => [
                 "host" => "0.0.0.0",
@@ -38,7 +39,7 @@ namespace DiceRobot {
                 "name" => "dicerobot"
             ],
             "skeleton" => [
-                "uri" => "https://dl.drsanwujiang.com/dicerobot/skeleton/2.1.0/"
+                "uri" => "https://dl.drsanwujiang.com/dicerobot/skeleton/3.0.0/"
             ],
             "version" => DICEROBOT_VERSION
         ],
@@ -54,7 +55,8 @@ namespace DiceRobot {
             ],
             "service" => [
                 "name" => "mirai"
-            ]
+            ],
+            "path" => "/root/mirai"
         ],
 
         "log" => [
@@ -67,6 +69,7 @@ namespace DiceRobot {
         ],
 
         "strategy" => [
+            "enableLog" => true,
             "enableDraw" => true,
             "enableDeck" => true,
             "enableJrrp" => true,
@@ -92,7 +95,7 @@ namespace DiceRobot {
             "maxSurfaceNumber" => 1000,
             "maxDrawCount" => 20,
             "maxGenerateCount" => 20,
-            "maxRepetition" => 20,
+            "maxRepeat" => 20,
             "maxReplyCharacter" => 1000
         ],
 
@@ -104,15 +107,15 @@ namespace DiceRobot {
             "cardBind" => "人物卡绑定完成啦~",
             "cardUnbind" => "人物卡解绑成功",
 
-            /* ChangeAttribute */
-            "changeAttributeResult" => "{&昵称}的 {&属性} {&增减}了{&变动值}点，当前 {&属性}：{&当前值}点",
-            "changeAttributeWrongExpression" => "指令错误！属性值的变动只能是非负整数或掷骰表达式",
+            /* ChangeItem */
+            "changeItemResult" => "{&昵称}的 {&属性} {&增减}了{&变动值}点，当前 {&属性}：{&当前值}点",
+            "changeItemWrongExpression" => "指令错误！人物卡的变动只能是非负整数或掷骰表达式",
 
             /* Check */
             "checkPrivate" => "{&昵称}悄悄地进行了{&检定次数}次检定……",
             "checkPrivateResult" => "在{&群名}({&群号})中，{&检定详情}",
             "checkResult" => "{&昵称}进行了{&检定次数}次{&检定项目}检定：{&检定详情}",
-            "checkResultWithAttributes" => "{&昵称}(HP:{&当前HP}/{&最大HP} MP:{&当前MP}/{&最大MP} SAN:{&当前SAN}/{&最大SAN})进行了{&检定次数}次{&检定项目}检定：{&检定详情}",
+            "checkResultWithStates" => "{&昵称}(HP:{&当前HP}/{&最大HP} MP:{&当前MP}/{&最大MP} SAN:{&当前SAN}/{&最大SAN})进行了{&检定次数}次{&检定项目}检定：{&检定详情}",
             "checkDetail" => "{&掷骰结果}/{&检定值}，{&检定结果}",
             "checkPrivateNotInGroup" => "咦？为什么要在私聊的时候暗检定",
             "checkValueInvalid" => "属性/技能值非法，不能进行检定！",
@@ -122,7 +125,7 @@ namespace DiceRobot {
             "cocGenerateCountOverstep" => "COC 人物卡生成次数只能介于1~{&最大生成次数}！",
 
             /* DeckRouter */
-            "deckRouterUnknown" => "你要对牌堆做些什么呢？",
+            "deckRouterUnknown" => "你要对牌堆做些什么呢？可以使用 .help deck 指令查询帮助信息哦~",
 
             /* Deck */
             "deckSet" => "默认牌堆已修改为：{&牌堆名称}",
@@ -174,6 +177,19 @@ namespace DiceRobot {
             "kowtowLevel5" => "呐~ヾ(๑╹◡╹)ﾉ「{&机器人昵称}」会一直陪伴在君の身边的哟~☆♪",
             "kowtowDisabled" => "Master 已经禁用了 .orz (;´Д`)",
 
+            /* LogRouter */
+            "logRouterUnknown" => "唔……这是什么指令呢？如果需要使用 Log 功能请使用 .help log 指令查询帮助信息~",
+
+            /* Log */
+            "logCreate" => "{&机器人昵称}正在忠实地记录这里所发生的一切……",
+            "logStart" => "已经准备好记录了~٩(๑❛︶❛๑)۶",
+            "logStop" => "收到！已经暂停记录了~(*/ω＼*)",
+            "logFinish" => "【合书】终于完成啦ヾ(◍°∇°◍)ﾉﾞ\n请访问 {&Log地址} 欣赏这段独一无二的旅程吧~",
+            "logExist" => "有一个 Log 正在记录中，请先完成记录的说~",
+            "logNotExist" => "这里还没有正在记录中的 Log，先创建一个吧~",
+            "logTempChatDenied" => "不可以在临时聊天中使用 Log 功能哦~",
+            "logDisabled" => "Master 已经禁用了 .log (;´Д`)",
+
             /* Name */
             "nameGenerateResult" => "[mirai:at:{&发送者QQ}] 为你寻找到了这些名称：{&名称}",
             "nameGenerateCountOverstep" => "随机名称生成次数只能介于1~{&最大生成次数}！",
@@ -181,6 +197,20 @@ namespace DiceRobot {
             /* Nickname */
             "nicknameSet" => "{&昵称}已将自己的昵称修改为{&新昵称}",
             "nicknameUnset" => "{&昵称}解放了自己的真名",
+
+            /* RobotRouter */
+            "robotRouterUnknown" => "咦？这是什么奇怪的指令？",
+
+            /* Robot */
+            "robotStart" => "呐呐~{&机器人昵称}为你服务~☆♪",
+            "robotStartDenied" => "只有群主/管理员才可以叫醒人家哦~",
+            "robotStop" => "休息，休息一会儿~",
+            "robotStopDenied" => "但是群主/管理员还没有让人家休息呀……",
+            "robotNicknameSet" => "从现在起请称呼我为「{&机器人新昵称}」~",
+            "robotNicknameUnset" => "真·名·解·放~",
+            "robotGoodbye" => "期待与君の再次相遇~",
+            "robotGoodbyePrivate" => "请手动删除我吧！期待与君の再次相遇~",
+            "robotGoodbyeDenied" => "只有群主/管理员才可以让人家离开哦~",
 
             /* SanityCheck */
             "sanityCheckResult" => "{&昵称}进行了 SAN 值检定：{&掷骰结果}/{&原有SAN值}，{&检定结果}\nSAN 值减少{&SAN值减少}点，剩余{&当前SAN值}/{&最大SAN值}点",
@@ -197,20 +227,6 @@ namespace DiceRobot {
             "setCocRuleSet" => "检定规则已修改为：{&规则名称}\n规则描述：{&规则描述}\n规则介绍：\n{&规则介绍}",
             "setCocRuleIdError" => "检定规则序号只能是数字哦~",
 
-            /* RobotRouter */
-            "robotRouterUnknown" => "咦？这是什么奇怪的指令？",
-
-            /* Robot */
-            "robotStart" => "呐呐~{&机器人昵称}为你服务~☆♪",
-            "robotStartDenied" => "只有群主/管理员才可以叫醒人家哦~",
-            "robotStop" => "休息，休息一会儿~",
-            "robotStopDenied" => "但是群主/管理员还没有让人家休息呀……",
-            "robotNicknameSet" => "从现在起请称呼我为「{&机器人新昵称}」~",
-            "robotNicknameUnset" => "真·名·解·放~",
-            "robotGoodbye" => "期待与君の再次相遇~",
-            "robotGoodbyePrivate" => "请手动删除我吧！期待与君の再次相遇~",
-            "robotGoodbyeDenied" => "只有群主/管理员才可以让人家离开哦~",
-
             /** Event */
 
             /* BotInvitedJoinGroupRequest */
@@ -223,7 +239,7 @@ namespace DiceRobot {
         "errMsg" => [
             /* General */
             "_generalOrderError" => "指令错误，无法识别！",
-            "_generalRepetitionOverstep" => "不能重复这么多次啦~",
+            "_generalRepeatOverstep" => "不能重复这么多次啦~",
 
             /* ApiService */
             "apiInternalError" => "与致远星的联络出现问题QAQ！请稍后再试……",
@@ -259,10 +275,6 @@ namespace DiceRobot {
         ],
 
         "wording" => [
-            "attributeChange" => [
-                "+" => "增加",
-                "-" => "减少"
-            ],
             "bpDiceType" => [
                 "B" => "奖励骰",
                 "P" => "惩罚骰"
@@ -277,6 +289,10 @@ namespace DiceRobot {
                 "UltimateFailure" => "极限失败",
                 "GreatFailure" => "大失败"
             ],
+            "itemChange" => [
+                "+" => "增加",
+                "-" => "减少"
+            ],
             "sanityCheckLevel" => [
                 "success" => "成功",
                 "failure" => "失败"
@@ -289,40 +305,69 @@ namespace DiceRobot {
         "message" => [
             10 => [
                 "setcoc" => \DiceRobot\Action\Message\SetCoc::class,
+                "检定规则" => \DiceRobot\Action\Message\SetCoc::class,
                 "robot" => \DiceRobot\Action\Message\RobotRouter::class,
+                "机器人" => \DiceRobot\Action\Message\RobotRouter::class,
                 "dismiss" => \DiceRobot\Action\Message\Dismiss::class,  // Alias of .robot goodbye
+                "退群" => \DiceRobot\Action\Message\Dismiss::class
             ],
             20 => [
                 "ra" => \DiceRobot\Action\Message\Check::class,
+                "检定" => \DiceRobot\Action\Message\Check::class,
                 "sc" => \DiceRobot\Action\Message\SanityCheck::class,
+                "SAN检定" => \DiceRobot\Action\Message\SanityCheck::class,
+                "理智检定" => \DiceRobot\Action\Message\SanityCheck::class,
 
                 "coc" => \DiceRobot\Action\Message\Coc::class,
+                "COC人物卡" => \DiceRobot\Action\Message\Coc::class,
                 "dnd" => \DiceRobot\Action\Message\Dnd::class,
+                "DND人物卡" => \DiceRobot\Action\Message\Dnd::class,
 
                 "card" => \DiceRobot\Action\Message\Card::class,
-                "hp" => \DiceRobot\Action\Message\ChangeAttribute::class,
-                "mp" => \DiceRobot\Action\Message\ChangeAttribute::class,  // Alias
-                "san" => \DiceRobot\Action\Message\ChangeAttribute::class,  // Alias
+                "人物卡" => \DiceRobot\Action\Message\Card::class,
+                "hp" => \DiceRobot\Action\Message\ChangeItem::class,
+                "生命" => \DiceRobot\Action\Message\ChangeItem::class,
+                "mp" => \DiceRobot\Action\Message\ChangeItem::class,  // Alias
+                "魔法" => \DiceRobot\Action\Message\ChangeItem::class,
+                "san" => \DiceRobot\Action\Message\ChangeItem::class,  // Alias
+                "理智" => \DiceRobot\Action\Message\ChangeItem::class,
 
                 "name" => \DiceRobot\Action\Message\Name::class,
+                "生成名称" => \DiceRobot\Action\Message\Name::class,
                 "nn" => \DiceRobot\Action\Message\Nickname::class,
+                "昵称" => \DiceRobot\Action\Message\Nickname::class,
 
                 "set" => \DiceRobot\Action\Message\Set::class,
+                "面数" => \DiceRobot\Action\Message\Set::class,
+                "默认面数" => \DiceRobot\Action\Message\Set::class,
+                "骰子面数" => \DiceRobot\Action\Message\Set::class,
+
+                "log" => \DiceRobot\Action\Message\LogRouter::class,
+                "记录" => \DiceRobot\Action\Message\LogRouter::class,
 
                 "draw" => \DiceRobot\Action\Message\Draw::class,
+                "抽牌" => \DiceRobot\Action\Message\Draw::class,
+                "抽卡" => \DiceRobot\Action\Message\Draw::class,
                 "deck" => \DiceRobot\Action\Message\DeckRouter::class,
+                "牌堆" => \DiceRobot\Action\Message\DeckRouter::class,
 
                 "jrrp" => \DiceRobot\Action\Message\Jrrp::class,
+                "今日人品" => \DiceRobot\Action\Message\Jrrp::class,
                 "orz" => \DiceRobot\Action\Message\Kowtow::class,
+                "磕头" => \DiceRobot\Action\Message\Kowtow::class,
 
                 "bot" =>\DiceRobot\Action\Message\RobotRouter::class,  // Alias of .robot
 
                 "help" => \DiceRobot\Action\Message\Help::class,
-                "hello" => \DiceRobot\Action\Message\Hello::class
+                "帮助" => \DiceRobot\Action\Message\Help::class,
+                "hello" => \DiceRobot\Action\Message\Hello::class,
+                "欢迎" => \DiceRobot\Action\Message\Hello::class
             ],
             100 => [
                 "r" => \DiceRobot\Action\Message\Dicing::class,
+                "掷骰" => \DiceRobot\Action\Message\Dicing::class,
                 "w" => \DiceRobot\Action\Message\DicePool::class,
+                "骰池" => \DiceRobot\Action\Message\DicePool::class,
             ]
         ],
 
@@ -353,12 +398,15 @@ namespace DiceRobot {
     /** @var array Default chat settings. */
     const DEFAULT_CHAT_SETTINGS = [
         "active" => true,
-        "robotNickname" => null,
+        "robotNickname" => "",
 
-        "defaultSurfaceNumber" => null,
+        "defaultSurfaceNumber" => 100,
         "cocCheckRule" => 0,
-        "defaultCardDeck" => null,
+        "defaultCardDeck" => "",
         "cardDeck" => null,
+
+        "logUuid" => "",
+        "isLogging" => false,
 
         "characterCards" => [],
         "nicknames" => []

@@ -92,7 +92,7 @@ class Coc extends MessageAction
 
         /**
          * @var int $version COC version.
-         * @var int $count Count of generation.
+         * @var int $count Generation count.
          * @var bool $detailed Detailed generation flag.
          */
         return [$version, $count, $detailed];
@@ -101,7 +101,7 @@ class Coc extends MessageAction
     /**
      * Check the range.
      *
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      *
      * @return bool Validity.
      */
@@ -124,7 +124,7 @@ class Coc extends MessageAction
      * Generate attributes of character card.
      *
      * @param int $version COC version.
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      * @param Reference $reference The reference.
      *
      * @return string Attributes.

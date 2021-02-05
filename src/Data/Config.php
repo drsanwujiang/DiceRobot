@@ -25,24 +25,20 @@ class Config
      *
      * @param ContainerInterface $container Container.
      * @param Resource\Config|null $config Panel config.
+     *
+     * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function __construct(ContainerInterface $container, Resource\Config $config = null)
     {
         /** @var CustomConfig $customConfig */
         $customConfig = $container->make(CustomConfig::class);
 
-        if ($config) {
-            $this->__constructArrayReader(array_replace_recursive(
-                DEFAULT_CONFIG,
-                $config->all(),
-                $customConfig->all()
-            ));
-        } else {
-            $this->__constructArrayReader(array_replace_recursive(
-                DEFAULT_CONFIG,
-                $customConfig->all()
-            ));
-        }
+        $this->__constructArrayReader((array) array_replace_recursive(
+            DEFAULT_CONFIG,
+            $config ? $config->all() : [],
+            $customConfig->all()
+        ));
     }
 
     /**

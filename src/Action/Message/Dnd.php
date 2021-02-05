@@ -66,7 +66,7 @@ class Dnd extends MessageAction
         $count = empty($matches[1]) ? 1 : (int) $matches[1];
 
         /**
-         * @var int $count Count of generation.
+         * @var int $count Generation count.
          */
         return [$count];
     }
@@ -74,7 +74,7 @@ class Dnd extends MessageAction
     /**
      * Check the range.
      *
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      *
      * @return bool Validity.
      */
@@ -96,7 +96,7 @@ class Dnd extends MessageAction
     /**
      * Generate attributes of character card.
      *
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      *
      * @return string Attributes.
      *

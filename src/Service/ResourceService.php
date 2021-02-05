@@ -250,7 +250,7 @@ class ResourceService
                 $d = dir($this->directories["chat.{$type}"]);
 
                 while (false !== $f = $d->read()) {
-                    if (preg_match("/^([1-9][0-9]{4,9}).json$/", $f, $matches)) {
+                    if (preg_match("/^([1-9][0-9]{4,9}).json$/i", $f, $matches)) {
                         $this->chatSettings[$type][(int) $matches[1]] =
                             new ChatSettings(File::getFile("{$this->directories["chat.{$type}"]}/{$f}"));
                     }
@@ -272,7 +272,7 @@ class ResourceService
             $d = dir($this->directories["card"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([1-9][0-9]{0,5}).json$/", $f, $matches)) {
+                if (preg_match("/^([1-9][0-9]{0,5}).json$/i", $f, $matches)) {
                     $this->characterCards[(int) $matches[1]] =
                         new CharacterCard(File::getFile("{$this->directories["card"]}/{$f}"));
                 }
@@ -293,7 +293,7 @@ class ResourceService
             $d = dir($this->directories["rule"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([0-9]{1,2}).json$/", $f, $matches)) {
+                if (preg_match("/^([0-9]{1,2}).json$/i", $f, $matches)) {
                     $this->checkRules[(int) $matches[1]] =
                         new CheckRule(File::getFile("{$this->directories["rule"]}/{$f}"));
                 }
@@ -314,7 +314,7 @@ class ResourceService
             $d = dir($this->directories["reference"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([a-zA-z]+).json$/", $f, $matches)) {
+                if (preg_match("/^([a-zA-z]+).json$/i", $f, $matches)) {
                     $this->references[$matches[1]] =
                         new Reference(File::getFile("{$this->directories["reference"]}/{$f}"));
                 }
@@ -335,7 +335,7 @@ class ResourceService
             $d = dir($this->directories["deck"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^(.+?).json$/", $f, $matches)) {
+                if (preg_match("/^(.+?).json$/i", $f, $matches)) {
                     $this->cardDecks[$matches[1]] =
                         new CardDeck(File::getFile("{$this->directories["deck"]}/{$f}"));
                 }

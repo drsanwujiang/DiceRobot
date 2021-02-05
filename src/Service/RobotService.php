@@ -35,10 +35,10 @@ class RobotService
     /** @var Group[] Group list. */
     protected array $groups = [];
 
-    /** @var int Count of friends. */
+    /** @var int Friend count. */
     protected int $friendCount = 0;
 
-    /** @var int Count of groups. */
+    /** @var int Group count. */
     protected int $groupCount = 0;
 
     /**
@@ -258,9 +258,9 @@ class RobotService
     }
 
     /**
-     * Get the count of friends.
+     * Get friend count.
      *
-     * @return int Count of friends.
+     * @return int Friend count.
      */
     public function getFriendCount(): int
     {
@@ -268,9 +268,9 @@ class RobotService
     }
 
     /**
-     * Get the count of groups.
+     * Get group count.
      *
-     * @return int Count of groups.
+     * @return int Group count.
      */
     public function getGroupCount(): int
     {

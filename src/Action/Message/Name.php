@@ -54,7 +54,7 @@ class Name extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^(cn|en|jp)?\s*([1-9][0-9]*)?$/i", $this->order, $matches)) {
+        if (!preg_match("/^(cn|en|jp|中文|英文|日文|汉语|英语|日语)?\s*([1-9][0-9]*)?$/i", $this->order, $matches)) {
             throw new OrderErrorException();
         }
 
@@ -63,7 +63,7 @@ class Name extends MessageAction
 
         /**
          * @var string $language Language.
-         * @var int $count Count of generation.
+         * @var int $count Generation count.
          */
         return [$language, $count];
     }
@@ -71,7 +71,7 @@ class Name extends MessageAction
     /**
      * Check the range.
      *
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      *
      * @return bool Validity.
      */
@@ -94,7 +94,7 @@ class Name extends MessageAction
      * Generate names.
      *
      * @param string $language Targeted language.
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      *
      * @return string Generated names.
      *
@@ -103,6 +103,7 @@ class Name extends MessageAction
     protected function generateNames(string $language, int $count): string
     {
         $reference = $this->resource->getReference("NameTemplate");
+        $language = $reference->getString("templates.mapping.{$language}");
         $firstNames = $reference->getArray("items.{$language}.firstName");
         $lastNames = $language == "cn" ?
             $reference->getArray("items.{$language}.lastNameSingle") :
@@ -112,7 +113,7 @@ class Name extends MessageAction
         while ($count--) {
             $firstName = $this->draw($firstNames);
             $lastName = $language == "cn" ? $this->draw($lastNames, 2) : $this->draw($lastNames);
-            $names[] = Convertor::toCustomString($reference->getString("templates.{$language}"), [
+            $names[] = Convertor::toCustomString($reference->getString("templates.names.{$language}"), [
                 "姓" => $firstName,
                 "名" => $lastName
             ]);

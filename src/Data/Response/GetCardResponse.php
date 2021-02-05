@@ -25,6 +25,9 @@ final class GetCardResponse extends DiceRobotResponse
     /** @var array Investigator's attributes. */
     public array $attributes;
 
+    /** @var array Investigator's states. */
+    public array $states;
+
     /** @var array Investigator's attributes. */
     public array $skills;
 
@@ -36,6 +39,7 @@ final class GetCardResponse extends DiceRobotResponse
         $this->id = (int) $this->data["id"];
         $this->type = (int) $this->data["type"];
         $this->attributes = (array) $this->data["attributes"];
+        $this->states = (array) $this->data["states"];
         $this->skills = (array) $this->data["skills"];
     }
 
@@ -47,10 +51,10 @@ final class GetCardResponse extends DiceRobotResponse
      */
     protected function validate(): void
     {
-        if ($this->code == -1000) {
+        if ($this->code == -3) {
             throw new NotFoundException();
         }
-        elseif ($this->code == -1001) {
+        elseif ($this->code == -1200) {
             throw new FormatInvalidException();
         }
     }

@@ -17,10 +17,10 @@ use DiceRobot\Data\Report\Event;
  */
 final class MemberJoinRequestEvent extends Event
 {
-    /** @var int ID of the event. */
+    /** @var int Event ID. */
     public int $eventId;
 
-    /** @var int ID of the requester. */
+    /** @var int Requester ID. */
     public int $fromId;
 
     /** @var int Requested group's ID. */

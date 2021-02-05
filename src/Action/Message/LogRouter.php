@@ -4,41 +4,44 @@ declare(strict_types=1);
 
 namespace DiceRobot\Action\Message;
 
-use DiceRobot\Action\Message\Deck\{Clear, Reset, Set, Show};
+use DiceRobot\Action\Message\Log\{Create, Finish, Start, Stop};
 use DiceRobot\Action\OrderRouterAction;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
- * Class DeckRouter
+ * Class LogRouter
  *
- * Parse deck order and route it to specific action.
+ * Parse TRPG log order and route it to specific action.
  *
  * @order deck
  *
- *      Sample: .deck set FGO
- *              .deck reset
- *              .deck show
- *              .deck clear
+ *      Sample: .log new
+ *              .log start
+ *              .log stop
+ *              .log end
  *
  * @package DiceRobot\Action\Message
  */
-class DeckRouter extends OrderRouterAction
+class LogRouter extends OrderRouterAction
 {
-    /** @var string[] Mapping between deck order and the full name of the corresponding class. */
+    /** @var string[] Mapping between TRPG log order and the full name of the corresponding class. */
     protected static array $orders = [
-        "set" => Set::class,
-        "设置" => Set::class,
+        "new" => Create::class,
+        "创建" => Create::class,
+        "新建" => Create::class,
 
-        "reset" => Reset::class,
-        "重置" => Reset::class,
+        "start" => Start::class,
+        "on" => Start::class,
+        "开始" => Start::class,
 
-        "show" => Show::class,
-        "展示" => Show::class,
+        "stop" => Stop::class,
+        "off" => Stop::class,
+        "停止" => Stop::class,
+        "暂停" => Stop::class,
 
-        "clear" => Clear::class,
-        "unset" => Clear::class,
-        "清除" => Clear::class,
-        "清空" => Clear::class
+        "end" => Finish::class,
+        "完成" => Finish::class,
+        "结束" => Finish::class
     ];
 
     /**
@@ -60,8 +63,8 @@ class DeckRouter extends OrderRouterAction
      */
     protected function checkEnabled(): bool
     {
-        if (!$this->config->getStrategy("enableDeck")) {
-            $this->setReply("deckDisabled");
+        if (!$this->config->getStrategy("enableLog")) {
+            $this->setReply("logDisabled");
 
             return false;
         } else {
@@ -78,12 +81,12 @@ class DeckRouter extends OrderRouterAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([a-z\x{4e00}-\x{9fa5}]+)(?:[\s]+(.+))?$/ui", $this->order, $matches)) {
+        if (!preg_match("/^([a-z\x{4e00}-\x{9fa5}]+)$/ui", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 
         $match = strtolower($matches[1]);
-        $subOrder = $matches[2] ?? "";
+        $subOrder = "";
 
         /**
          * @var string $match Deck order match.
@@ -100,7 +103,7 @@ class DeckRouter extends OrderRouterAction
     protected function checkOrder(string $match): bool
     {
         if (!array_key_exists($match, static::$orders)) {
-            $this->setReply("deckRouterUnknown");
+            $this->setReply("logRouterUnknown");
 
             return false;
         }

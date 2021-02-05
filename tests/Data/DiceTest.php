@@ -7,7 +7,10 @@ namespace DiceRobot\Tests\Data;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Subexpression;
+use DiceRobot\Exception\DiceException\DiceNumberOverstepException;
+use DiceRobot\Exception\DiceException\ExpressionErrorException;
 use DiceRobot\Exception\DiceException\ExpressionInvalidException;
+use DiceRobot\Exception\DiceException\SurfaceNumberOverstepException;
 use DiceRobot\Tests\TestCase;
 
 class DiceTest extends TestCase
@@ -53,6 +56,14 @@ class DiceTest extends TestCase
     }
 
     /**
+     * @param string $order
+     * @param array $expected
+     *
+     * @throws ExpressionInvalidException
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws SurfaceNumberOverstepException
+     *
      * @dataProvider provideOrder
      */
     public function testOrder(string $order, array $expected): void
@@ -71,6 +82,13 @@ class DiceTest extends TestCase
     }
 
     /**
+     * @param string $order
+     *
+     * @throws DiceNumberOverstepException
+     * @throws ExpressionErrorException
+     * @throws ExpressionInvalidException
+     * @throws SurfaceNumberOverstepException
+     *
      * @dataProvider provideInvalidOrder
      */
     public function testInvalidOrder(string $order): void

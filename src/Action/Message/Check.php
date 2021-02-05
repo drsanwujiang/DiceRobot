@@ -7,7 +7,7 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
 use DiceRobot\Data\Report\Message\GroupMessage;
-use DiceRobot\Exception\{OrderErrorException, RepetitionOverstepException};
+use DiceRobot\Exception\{OrderErrorException, RepeatOverstepException};
 use DiceRobot\Exception\CharacterCardException\{ItemNotExistException, LostException as CharacterCardLostException,
     NotBoundException};
 use DiceRobot\Exception\CheckRuleException\{DangerousException, InvalidException,
@@ -41,33 +41,33 @@ class Check extends MessageAction
      *
      * @throws CharacterCardLostException|CheckRuleLostException|DangerousException|DiceNumberOverstepException
      * @throws ExpressionErrorException|ExpressionInvalidException|InvalidException|ItemNotExistException
-     * @throws MatchFailedException|NotBoundException|OrderErrorException|RepetitionOverstepException
+     * @throws MatchFailedException|NotBoundException|OrderErrorException|RepeatOverstepException
      * @throws SurfaceNumberOverstepException|
      */
     public function __invoke(): void
     {
-        list($private, $bp, $item, $adjustments, $repetition) = $this->parseOrder();
+        list($private, $bp, $item, $adjustments, $repeat) = $this->parseOrder();
 
         list($item, $value, $attributes) = $this->getCheckInfo($item);
 
-        if (!$this->checkRange($value, $repetition)) {
+        if (!$this->checkRange($value, $repeat)) {
             return;
         }
 
         $nickname = $this->getNickname();
-        $checkDetails = $this->getCheckDetails($bp, $adjustments, $value, $repetition);
+        $checkDetails = $this->getCheckDetails($bp, $adjustments, $value, $repeat);
 
         if (empty($item)) {
             $reply = Convertor::toCustomString($this->config->getReply("checkResult"), [
                 "昵称" => $nickname,
-                "检定次数" => $repetition,
+                "检定次数" => $repeat,
                 "检定项目" => "",
                 "检定详情" => $checkDetails
             ]);
         } else {
-            $reply = Convertor::toCustomString($this->config->getReply("checkResultWithAttributes"), [
+            $reply = Convertor::toCustomString($this->config->getReply("checkResultWithStates"), [
                 "昵称" => $nickname,
-                "检定次数" => $repetition,
+                "检定次数" => $repeat,
                 "检定项目" => $item,
                 "检定详情" => $checkDetails
             ] + $attributes);
@@ -86,7 +86,7 @@ class Check extends MessageAction
 
                 $this->setReply("checkPrivate", [
                     "昵称" => $nickname,
-                    "检定次数" => $repetition
+                    "检定次数" => $repeat
                 ]);
             } else {
                 $this->setReply("checkPrivateNotInGroup");
@@ -117,16 +117,16 @@ class Check extends MessageAction
         $bp = $matches[2];
         $item = $matches[3];
         $adjustments = str_replace(" ", "", $matches[4] ?? "");
-        $repetition = (int) ($matches[5] ?? 1);
+        $repeat = (int) ($matches[5] ?? 1);
 
         /**
          * @var bool $private Private check flag.
          * @var string $bp Bonus/Punishment check flag.
          * @var string $item Check item (skill/attribute name or value).
          * @var string $adjustments Adjustment operations.
-         * @var int $repetition Repetition count.
+         * @var int $repeat Repeat count.
          */
-        return [$private, $bp, $item, $adjustments, $repetition];
+        return [$private, $bp, $item, $adjustments, $repeat];
     }
 
     /**
@@ -147,11 +147,7 @@ class Check extends MessageAction
                 $this->chatSettings->getCharacterCardId($this->message->sender->id)
             );
 
-            try {
-                $value = $card->getAttribute($item);
-            } catch (ItemNotExistException $e) {
-                $value = $card->getSkill($item);
-            }
+            $value = $card->getItem($item);
 
             return [
                 $item,
@@ -172,20 +168,20 @@ class Check extends MessageAction
      * Check the range.
      *
      * @param int $value The value to be checked.
-     * @param int $repetition Repetition count.
+     * @param int $repeat Repeat count.
      *
      * @return bool Validity.
      *
-     * @throws RepetitionOverstepException Count of repetition oversteps the limit.
+     * @throws RepeatOverstepException Repeat count oversteps the limit.
      */
-    protected function checkRange(int $value, int $repetition): bool
+    protected function checkRange(int $value, int $repeat): bool
     {
         if ($value < 1) {
             $this->setReply("checkValueInvalid");
 
             return false;
-        } elseif ($repetition < 1 || $repetition > $this->config->getOrder("maxRepetition")) {
-            throw new RepetitionOverstepException();
+        } elseif ($repeat < 1 || $repeat > $this->config->getOrder("maxRepeat")) {
+            throw new RepeatOverstepException();
         }
 
         return true;
@@ -197,19 +193,19 @@ class Check extends MessageAction
      * @param string $bp B/P order.
      * @param string $adjustments Adjustment operations.
      * @param int $value The value to be checked.
-     * @param int $repetition Repetition count.
+     * @param int $repeat Repeat count.
      *
      * @return string Check details.
      *
      * @throws CheckRuleLostException|DangerousException|DiceNumberOverstepException|ExpressionErrorException
      * @throws ExpressionInvalidException|InvalidException|MatchFailedException|SurfaceNumberOverstepException
      */
-    protected function getCheckDetails(string $bp, string $adjustments, int $value, int $repetition): string
+    protected function getCheckDetails(string $bp, string $adjustments, int $value, int $repeat): string
     {
-        $details = $repetition > 1 ? "\n" : "";
+        $details = $repeat > 1 ? "\n" : "";
         $reply = $this->config->getReply("checkDetail");
 
-        while ($repetition--) {
+        while ($repeat--) {
             $dice = isset($dice) ? clone $dice : new Dice("{$bp} D{$adjustments}", 100);
 
             // Adjust result

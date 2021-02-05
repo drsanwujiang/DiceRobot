@@ -18,7 +18,7 @@ use Throwable;
  */
 class Dice
 {
-    /** @var int Max dice number. */
+    /** @var int Maximum dice number. */
     protected static int $maxDiceNumber;
 
     /** @var string[] B/P dice type wording. */
@@ -52,7 +52,7 @@ class Dice
     public array $subexpressions;
 
     /** @var string Dicing reason. */
-    public string $reason;
+    public string $reason = "";
 
     /** @var int Dicing result. */
     public int $result;
@@ -123,7 +123,7 @@ class Dice
         preg_match("/^([hs])?\s*([bp])?(.*)\s*$/i", $this->order, $matches);
         $this->vType = empty($matches[1]) ? null : strtoupper($matches[1]);
         $this->bpType = empty($matches[2]) ? null : strtoupper($matches[2]);
-        $order = (string) $matches[3];
+        $order = (string) ($matches[3] ?? "");
 
         if ($this->bpType) {
             // Bonus/Punishment dice
@@ -132,7 +132,7 @@ class Dice
             $this->reason = $matches[2];
         } else {
             // Normal dice, parse expressions. Sample: x1Dy1Kz1+x2Dy2+c reason
-            preg_match("/^([0-9DK+\-x*()（）]+)?\s*([\S\s]*)$/i", $order, $matches);
+            preg_match("/^([0-9dk+\-x*()（）]+)?\s*([\S\s]*)$/i", $order, $matches);
             // Replace Chinese brackets, d, k, x and X
             $expression = str_replace(["（", "）", "x", "X"], ["(", ")", "*", "*"], $matches[1]);
             $this->reason = $matches[2];
@@ -191,7 +191,7 @@ class Dice
                 }
 
                 $subexpressions[$index] = new Subexpression($filledExpression);
-            } elseif (!preg_match("/^[0-9+\-*()]+$/i", $splitExpression)) {
+            } elseif (!preg_match("/^[0-9+\-*()]+$/", $splitExpression)) {
                 $this->reason = $this->order;
 
                 return;
@@ -222,7 +222,7 @@ class Dice
     /**
      * Roll bonus/punishment dices and get result.
      *
-     * @throws DiceNumberOverstepException Dice number exceeds max limit.
+     * @throws DiceNumberOverstepException Dice number exceeds the maximum.
      */
     protected function bp(): void
     {

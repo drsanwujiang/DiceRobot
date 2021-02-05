@@ -12,4 +12,5 @@ namespace DiceRobot\Interfaces;
  * @package DiceRobot\Interfaces
  */
 interface Report
-{}
+{
+}

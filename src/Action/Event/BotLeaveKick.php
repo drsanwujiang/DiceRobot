@@ -13,7 +13,7 @@ use DiceRobot\Data\Report\Event\BotJoinGroupEvent;
  *
  * Action that responds to BotLeaveEventKick.
  *
- * Report the group ID.
+ * Report the group.
  *
  * @event BotLeaveEventKick
  *
@@ -33,10 +33,10 @@ class BotLeaveKick extends EventAction
      */
     public function __invoke(): void
     {
-        // Submit this group to public database
-        $this->api->submitGroup(
+        // Report the group
+        $this->api->reportGroup(
             $this->event->group->id,
-            $this->api->authorize($this->robot->getId())->token
+            $this->api->getToken($this->robot->getId())->token
         );
     }
 }

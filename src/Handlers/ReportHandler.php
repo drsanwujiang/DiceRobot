@@ -16,6 +16,7 @@ use DiceRobot\Service\{ApiService, RobotService, StatisticsService};
 use DiceRobot\Traits\RouteCollectorTrait;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Class ReportHandler
@@ -44,6 +45,9 @@ class ReportHandler
     /** @var StatisticsService Statistics service. */
     protected StatisticsService $statistics;
 
+    /** @var LogHandler TRPG log handler. */
+    protected LogHandler $log;
+
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
@@ -57,6 +61,7 @@ class ReportHandler
      * @param ApiService $api API service.
      * @param RobotService $robot Robot service.
      * @param StatisticsService $statistics Statistics service.
+     * @param LogHandler $log TRPG log handler.
      * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
@@ -65,6 +70,7 @@ class ReportHandler
         ApiService $api,
         RobotService $robot,
         StatisticsService $statistics,
+        LogHandler $log,
         LoggerFactory $loggerFactory
     ) {
         $this->container = $container;
@@ -72,6 +78,7 @@ class ReportHandler
         $this->api = $api;
         $this->robot = $robot;
         $this->statistics = $statistics;
+        $this->log = $log;
 
         $this->logger = $loggerFactory->create("Handler");
 
@@ -131,6 +138,18 @@ class ReportHandler
             }
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Report failed, unable to call Mirai API.");
+        } catch (Throwable $e) {
+            $details = sprintf(
+                "Type: %s\nCode: %s\nMessage: %s\nFile: %s\nLine: %s\nTrace: %s",
+                get_class($e),
+                $e->getCode(),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(),
+                $e->getTraceAsString()
+            );
+
+            $this->logger->error("Report failed, unexpected exception occurred:\n{$details}");
         }
     }
 
@@ -138,6 +157,8 @@ class ReportHandler
      * @param Event $event Event.
      *
      * @noinspection PhpRedundantCatchClauseInspection
+     * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     protected function event(Event $event): void
     {
@@ -176,6 +197,8 @@ class ReportHandler
      * @param Message $message Message.
      *
      * @noinspection PhpRedundantCatchClauseInspection
+     * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     protected function message(Message $message): void
     {
@@ -187,10 +210,12 @@ class ReportHandler
         }
 
         if (!$message->parseMessageChain()) {
-            $this->logger->error("Report failed, parse message error.");
+            $this->logger->info("Report skipped, message not parsable.");
 
             return;
         }
+
+        $this->log->handle($message);
 
         list($filter, $at) = $this->filter($message);
 
@@ -229,10 +254,14 @@ class ReportHandler
 
             $action->sendReplies();
 
+            $this->log->handle($message, $action);
+
             $this->logger->info("Report finished.");
         } catch (DiceRobotException $e) {
             // Action interrupted, send error message to group/user
             $action->sendMessage($this->config->getErrMsg((string) $e));
+
+            $this->log->handle($message, $action, $e);
 
             // TODO: $e::class, $action->message::class, $action::class in PHP 8
             $this->logger->info(

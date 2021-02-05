@@ -20,7 +20,7 @@ final class FriendRecallEvent extends Event
     /** @var int Message sender's ID. */
     public int $authorId;
 
-    /** @var int ID of the message. */
+    /** @var int Message ID. */
     public int $messageId;
 
     /** @var int The time when the message was sent. */

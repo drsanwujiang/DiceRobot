@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DiceRobot\Util;
 
 use DiceRobot\Factory\FragmentFactory;
+use DiceRobot\Interfaces\Fragment\ParsableFragment;
 use Exception;
 use ReflectionClass;
 
@@ -16,9 +19,9 @@ use ReflectionClass;
 class Convertor
 {
     /**
-     * Convert JSON object to the custom object.
+     * Convert object to the custom instance.
      *
-     * @param object $object Source JSON object.
+     * @param object $object Source object.
      * @param string $className Class name of the custom instance.
      * @param string $default Default class name.
      *
@@ -37,7 +40,7 @@ class Convertor
                     $type = $property->getType();
 
                     if ($type->isBuiltin()) {
-                        settype($object->$name, $type);
+                        settype($object->$name, (string) $type);
                         $instance->$name = $object->$name;
                     } else {
                         $instance->$name =
@@ -74,6 +77,30 @@ class Convertor
     }
 
     /**
+     * Convert string-typed messages (may be with Mirai code) to parsable fragments.
+     *
+     * @param string $messages String-typed messages.
+     *
+     * @return ParsableFragment[] Parsed parsable fragments.
+     */
+    public static function toFragments(string $messages): array
+    {
+        $matches = preg_split(
+            "/(\[mirai:\w+:.+?])/i",
+            $messages,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
+        );
+        $fragments = [];
+
+        foreach ($matches as $match) {
+            $fragments[] = FragmentFactory::fromMiraiCode($match);
+        }
+
+        return $fragments;
+    }
+
+    /**
      * Convert string-typed messages (may be with Mirai code) to message chain.
      *
      * @param string $messages String-typed messages.
@@ -82,16 +109,11 @@ class Convertor
      */
     public static function toMessageChain(string $messages): array
     {
-        $matches = preg_split(
-            "/(\[mirai:\w+:.+?])/i",
-            $messages,
-            -1,
-            PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
-        );
+        $fragments = self::toFragments($messages);
         $messageChain = [];
 
-        foreach ($matches as $match) {
-            $messageChain[] = FragmentFactory::fromMiraiCode($match)->toMessage();
+        foreach ($fragments as $fragment) {
+            $messageChain[] = $fragment->toMessage();
         }
 
         return $messageChain;

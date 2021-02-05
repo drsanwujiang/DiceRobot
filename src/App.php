@@ -147,8 +147,6 @@ class App
 
     /**
      * Load config.
-     *
-     * @noinspection PhpUnhandledExceptionInspection
      */
     protected function loadConfig(): void
     {
@@ -166,21 +164,19 @@ class App
     /**
      * Set panel config.
      *
-     * @param string $content Panel config content.
+     * @param array $data Panel config data.
      *
-     * @return int Result code.
+     * @return bool Success.
      */
-    public function setConfig(string $content): int
+    public function setConfig(array $data): bool
     {
-        if (!is_array($data = json_decode($content, true))) {
-            return -1;
-        } elseif (false === $this->resource->getConfig()->setConfig($data)) {
-            return -2;
+        if (!$this->resource->getConfig()->setConfig($data)) {
+            return false;
         }
 
         $this->loadConfig();
 
-        return 0;
+        return true;
     }
 
     /**

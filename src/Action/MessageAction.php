@@ -8,12 +8,12 @@ use Co\System;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Contact\Friend;
 use DiceRobot\Data\Report\Message;
-use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
+use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage};
 use DiceRobot\Data\Resource\ChatSettings;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Interfaces\Action;
 use DiceRobot\Service\{ApiService, ResourceService, RobotService};
-use DiceRobot\Util\Convertor;
+use DiceRobot\Util\{Convertor, MessageSplitter};
 use Psr\Log\LoggerInterface;
 
 /**
@@ -143,6 +143,16 @@ abstract class MessageAction implements Action
     }
 
     /**
+     * Get replies of the action.
+     *
+     * @return string[] Replies.
+     */
+    public function getReplies(): array
+    {
+        return $this->replies;
+    }
+
+    /**
      * Check if the function is active.
      *
      * @return bool Active flag.
@@ -174,17 +184,12 @@ abstract class MessageAction implements Action
      */
     final public function sendReplies(): void
     {
-        $maxReplyCharacter = $this->config->getOrder("maxReplyCharacter");
+        $splitReplies = MessageSplitter::split(
+            $this->replies,
+            $this->config->getOrder("maxReplyCharacter")
+        );
 
-        // If the reply length is greater than threshold, slice it and send fragments
-        while (is_string($reply = array_shift($this->replies))) {
-            if (mb_strlen($reply) > $maxReplyCharacter) {
-                $splitReply = mb_str_split($reply, $maxReplyCharacter);
-                $reply = array_shift($splitReply);
-
-                array_unshift($this->replies, ...$splitReply);
-            }
-
+        foreach ($splitReplies as $reply) {
             $this->sendMessage($reply);
 
             // Sleep 0.5s
@@ -224,7 +229,7 @@ abstract class MessageAction implements Action
      *
      * @return string User nickname.
      */
-    final protected function getNickname(): string
+    final public function getNickname(): string
     {
         $userId = $this->message->sender->id;
         $nickname = $this->message->sender instanceof Friend ?
@@ -234,11 +239,11 @@ abstract class MessageAction implements Action
     }
 
     /**
-     * Get robot nickname.
+     * Request to get robot nickname.
      *
      * @return string Robot nickname.
      */
-    final protected function getRobotNickname(): string
+    final public function getRobotNickname(): string
     {
         $nickname = $this->chatSettings->getString("robotNickname");
 
@@ -265,21 +270,16 @@ abstract class MessageAction implements Action
      */
     final public function sendMessage(string $message): void
     {
-        if ($this->message instanceof FriendMessage) {
-            $this->api->sendFriendMessage(
-                $this->message->sender->id,
-                Convertor::toMessageChain($message)
-            );
-        } elseif ($this->message instanceof GroupMessage) {
+        if ($this->message instanceof GroupMessage) {
             $this->api->sendGroupMessage(
                 $this->message->sender->group->id,
                 Convertor::toMessageChain($message)
             );
-        } elseif ($this->message instanceof TempMessage) {
-            $this->api->sendTempMessage(
+        } else {
+            $this->sendPrivateMessage(
+                $message,
                 $this->message->sender->id,
-                $this->message->sender->group->id,
-                Convertor::toMessageChain($message)
+                $this->message->sender->group->id ?? 0
             );
         }
 
@@ -293,21 +293,16 @@ abstract class MessageAction implements Action
      */
     final public function sendMessageAsync(string $message): void
     {
-        if ($this->message instanceof FriendMessage) {
-            $this->api->sendFriendMessageAsync(
-                $this->message->sender->id,
-                Convertor::toMessageChain($message)
-            );
-        } elseif ($this->message instanceof GroupMessage) {
+        if ($this->message instanceof GroupMessage) {
             $this->api->sendGroupMessageAsync(
                 $this->message->sender->group->id,
                 Convertor::toMessageChain($message)
             );
-        } elseif ($this->message instanceof TempMessage) {
-            $this->api->sendTempMessageAsync(
+        } else {
+            $this->sendPrivateMessageAsync(
+                $message,
                 $this->message->sender->id,
-                $this->message->sender->group->id,
-                Convertor::toMessageChain($message)
+                $this->message->sender->group->id ?? 0
             );
         }
 

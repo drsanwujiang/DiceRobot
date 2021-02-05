@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace DiceRobot\Exception;
 
 /**
- * Class RepetitionOverstepException
+ * Class RepeatOverstepException
  *
  * Count of repetition oversteps the limit.
  *
- * @errorMessage _generalRepetitionOverstep.
+ * @errorMessage _generalRepeatOverstep.
  *
  * @package DiceRobot\Exception
  */
-final class RepetitionOverstepException extends DiceRobotException
+final class RepeatOverstepException extends DiceRobotException
 {
     /**
      * @inheritDoc
      */
     public function __construct()
     {
-        parent::__construct("_generalRepetitionOverstep");
+        parent::__construct("_generalRepeatOverstep");
     }
 }

@@ -20,10 +20,10 @@ final class SanityCheckResponse extends DiceRobotResponse
     public bool $checkSuccess;
 
     /** @var int Previous sanity. */
-    public int $beforeSanity;
+    public int $previousSanity;
 
     /** @var int Current sanity. */
-    public int $afterSanity;
+    public int $currentSanity;
 
     /**
      * @inheritDoc
@@ -31,8 +31,8 @@ final class SanityCheckResponse extends DiceRobotResponse
     protected function parse(): void
     {
         $this->checkSuccess = (bool) $this->data["check_success"];
-        $this->beforeSanity = (int) $this->data["before_sanity"];
-        $this->afterSanity = (int) $this->data["after_sanity"];
+        $this->previousSanity = (int) $this->data["previous_value"];
+        $this->currentSanity = (int) $this->data["after_value"];
     }
 
     /**
@@ -42,7 +42,7 @@ final class SanityCheckResponse extends DiceRobotResponse
      */
     protected function validate(): void
     {
-        if ($this->code == -1024) {
+        if ($this->code == -3) {
             throw new PermissionDeniedException();
         }
     }

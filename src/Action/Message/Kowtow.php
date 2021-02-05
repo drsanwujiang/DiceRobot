@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
+use DiceRobot\Data\Response\GetPietyResponse;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\Convertor;
 
@@ -37,7 +38,7 @@ class Kowtow extends MessageAction
 
         $this->parseOrder();
 
-        $piety = $this->api->kowtow($this->message->sender->id)->piety;
+        $piety = $this->getPiety()->piety;
         $level = $this->getKowtowLevel($piety);
 
         $this->setReply("kowtowResult", [
@@ -81,6 +82,19 @@ class Kowtow extends MessageAction
         }
 
         return [];
+    }
+
+    /**
+     * Request to get piety.
+     *
+     * @return GetPietyResponse The response.
+     */
+    protected function getPiety(): GetPietyResponse
+    {
+        return $this->api->getPiety(
+            $this->message->sender->id,
+            $this->api->getToken($this->robot->getId())->token
+        );
     }
 
     /**

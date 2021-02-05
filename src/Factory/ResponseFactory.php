@@ -47,6 +47,12 @@ class ResponseFactory
         -2011 => "Stop Mirai failed",
         -2020 => "Mirai not setup as service",
         -2021 => "Restart Mirai failed",
+        -2030 => "Parameters invalid",
+        -2031 => "Parameters prohibited",
+        -2032 => "Mirai root path not found",
+        -2033 => "Script not found",
+        -2034 => "Script error",
+        -2035 => "Update Mirai failed"
     ];
 
     /** @var Config DiceRobot config. */

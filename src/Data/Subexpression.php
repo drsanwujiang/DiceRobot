@@ -17,10 +17,10 @@ use DiceRobot\Util\Random;
  */
 class Subexpression
 {
-    /** @var int Max dice number. */
+    /** @var int Maximum dice number. */
     protected static int $maxDiceNumber;
 
-    /** @var int Max dice surface number. */
+    /** @var int Maximum dice surface number. */
     protected static int $maxSurfaceNumber;
 
     /** @var string Subexpression. */
@@ -105,9 +105,9 @@ class Subexpression
     /**
      * Check the range of dice number and dice surface number.
      *
-     * @throws DiceNumberOverstepException Dice number exceeds max limit.
+     * @throws DiceNumberOverstepException Dice number exceeds the Maximum.
      * @throws ExpressionInvalidException K number is greater than dice number.
-     * @throws SurfaceNumberOverstepException Dice surface number exceeds max limit.
+     * @throws SurfaceNumberOverstepException Dice surface number exceeds the Maximum.
      */
     protected function checkRange(): void
     {

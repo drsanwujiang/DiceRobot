@@ -71,7 +71,7 @@ class Card extends MessageAction
     }
 
     /**
-     * Get character card content.
+     * Request to get character card content.
      *
      * @param int $cardId Character card ID.
      *
@@ -80,8 +80,9 @@ class Card extends MessageAction
     protected function getCard(int $cardId): array
     {
         return $this->api->getCard(
+            $this->message->sender->id,
             $cardId,
-            $this->api->authorize($this->robot->getId(), $this->message->sender->id)->token
+            $this->api->getToken($this->robot->getId())->token
         )->data;
     }
 }

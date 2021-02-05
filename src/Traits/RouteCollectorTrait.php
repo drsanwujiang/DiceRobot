@@ -30,8 +30,10 @@ trait RouteCollectorTrait
      */
     public function registerRoutes(array $routes = []): void
     {
-        $this->eventRoutes = array_replace_recursive(DEFAULT_ROUTES["event"], $routes["event"] ?? []);
-        $this->messageRoutes = array_replace_recursive(DEFAULT_ROUTES["message"], $routes["message"] ?? []);
+        $this->eventRoutes =
+            (array) array_replace_recursive(DEFAULT_ROUTES["event"], $routes["event"] ?? []);
+        $this->messageRoutes =
+            (array) array_replace_recursive(DEFAULT_ROUTES["message"], $routes["message"] ?? []);
     }
 
     /**

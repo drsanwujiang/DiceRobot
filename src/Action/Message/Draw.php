@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
+use DiceRobot\Data\Dice;
 use DiceRobot\Data\Resource\CardDeck;
+use DiceRobot\Exception\DiceRobotException;
 use DiceRobot\Exception\CardDeckException\{InvalidException, NotFoundException};
 use DiceRobot\Exception\OrderErrorException;
 
@@ -46,7 +48,7 @@ class Draw extends MessageAction
             $deckName = $this->chatSettings->get("defaultCardDeck");
             $deck = $this->chatSettings->get("cardDeck");
 
-            if (!is_string($deckName) || !($deck instanceof CardDeck)) {
+            if (empty($deckName) || !($deck instanceof CardDeck)) {
                 $this->setReply("drawDeckNotSet");
 
                 return;
@@ -114,7 +116,7 @@ class Draw extends MessageAction
 
         /**
          * @var null $deckName Deck name.
-         * @var int $count Count of drawing card.
+         * @var int $count Draw count.
          */
         return [$deckName, $count];
     }
@@ -122,7 +124,7 @@ class Draw extends MessageAction
     /**
      * Check the range.
      *
-     * @param int $count Count of drawing card.
+     * @param int $count Draw count.
      *
      * @return bool Validity.
      */
@@ -146,7 +148,7 @@ class Draw extends MessageAction
      *
      * @param CardDeck $deck Card deck to draw from.
      * @param string $deckName Deck name.
-     * @param int $count Count of drawing card.
+     * @param int $count Draw count.
      *
      * @return array Empty flag and draw result.
      *
@@ -168,6 +170,25 @@ class Draw extends MessageAction
             }
         }
 
-        return [$empty, rtrim($result)];
+        $expressions = preg_split(
+            "/\[([0-9dk+\-x*()（）]+)]/i",
+            rtrim($result),
+            -1,
+            PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
+        );
+
+        // Try to parse dicing expressions
+        foreach ($expressions as &$expression) {
+            if (preg_match("/^[0-9dk+\-x*()（）]+$/i", $expression)) {
+                try {
+                    $dice = new Dice($expression, 100);
+                    $expression = empty($dice->reason) ? (string) $dice->result : "[{$expression}]";
+                } catch (DiceRobotException $e) {
+                    $expression = "[{$expression}]";
+                }
+            }
+        }
+
+        return [$empty, join($expressions)];
     }
 }

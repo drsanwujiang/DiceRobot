@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
+use DiceRobot\Data\Response\GetLuckResponse;
 use DiceRobot\Exception\OrderErrorException;
 
 /**
@@ -35,7 +36,7 @@ class Jrrp extends MessageAction
 
         $this->setReply("jrrpResult", [
             "昵称" => $this->getNickname(),
-            "人品" => $this->api->jrrp($this->message->sender->id)->jrrp
+            "人品" => $this->getLuck()->luck
         ]);
     }
 
@@ -69,5 +70,18 @@ class Jrrp extends MessageAction
         }
 
         return [];
+    }
+
+    /**
+     * Request to get today's luck.
+     *
+     * @return GetLuckResponse The response.
+     */
+    protected function getLuck(): GetLuckResponse
+    {
+        return $this->api->getLuck(
+            $this->message->sender->id,
+            $this->api->getToken($this->robot->getId())->token
+        );
     }
 }

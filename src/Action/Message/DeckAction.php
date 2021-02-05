@@ -18,18 +18,6 @@ use DiceRobot\Data\Resource\CardDeck;
 abstract class DeckAction extends MessageAction
 {
     /**
-     * @inheritDoc
-     */
-    abstract public function __invoke(): void;
-
-    /**
-     * @inheritDoc
-     *
-     * @return array Parsed elements.
-     */
-    abstract protected function parseOrder(): array;
-
-    /**
      * Check the permission of message sender.
      *
      * @return bool Permitted.
@@ -53,8 +41,7 @@ abstract class DeckAction extends MessageAction
      */
     protected function checkDeck(): bool
     {
-        if (
-            !is_string($this->chatSettings->get("defaultCardDeck")) ||
+        if (empty($this->chatSettings->getString("defaultCardDeck")) ||
             !($this->chatSettings->get("cardDeck") instanceof CardDeck)
         ) {
             $this->setReply("deckNotSet");

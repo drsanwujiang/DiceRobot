@@ -16,7 +16,7 @@ class Random
     /**
      * Generate random number(s).
      *
-     * @param int $count Count of generation.
+     * @param int $count Generation count.
      * @param int $max The maximum.
      * @param int $min The minimum.
      *
