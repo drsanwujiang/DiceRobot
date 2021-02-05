@@ -15,7 +15,7 @@ declare(strict_types=1);
 
 namespace {
     /** @var string Current version. */
-    const DICEROBOT_VERSION = "3.0.0";
+    const DICEROBOT_VERSION = "3.0.0-alpha";
 
     /** @var string Root directory. */
     define("DICEROBOT_STARTUP", time());
