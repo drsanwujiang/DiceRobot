@@ -52,7 +52,7 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 游玩 TRPG 的基础当然是要有一张自己的人物卡。使用 [人物卡编辑器](https://docs.dicerobot.tech/use/card-editor) ，随时随地在线查看、编辑你的人物卡。
 
-###Log 阅览器
+### Log 阅览器
 
 每一次战斗、每一段旅程都是值得珍惜的美好记忆。使用 [Log 阅览器](https://docs.dicerobot.tech/use/log-viewer) ，回忆你与同伴们独一无二的精彩瞬间。
 
