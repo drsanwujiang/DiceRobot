@@ -337,7 +337,9 @@ namespace DiceRobot {
                 "昵称" => \DiceRobot\Action\Message\Nickname::class,
 
                 "set" => \DiceRobot\Action\Message\Set::class,
+                "面数" => \DiceRobot\Action\Message\Set::class,
                 "默认面数" => \DiceRobot\Action\Message\Set::class,
+                "骰子面数" => \DiceRobot\Action\Message\Set::class,
 
                 "log" => \DiceRobot\Action\Message\LogRouter::class,
                 "记录" => \DiceRobot\Action\Message\LogRouter::class,
