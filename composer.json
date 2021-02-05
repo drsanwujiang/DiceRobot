@@ -22,7 +22,7 @@
     "ext-mbstring": "*",
     "ext-swoole": ">=4.6.0",
     "ext-zip": "*",
-    "cakephp/chronos": "^2.0",
+    "cakephp/chronos": "^2.1",
     "imefisto/psr-swoole-native": "^0.0.2",
     "monolog/monolog": "^2.2",
     "myclabs/php-enum": "^1.7",
