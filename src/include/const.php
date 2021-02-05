@@ -330,6 +330,7 @@ namespace DiceRobot {
                 "mp" => \DiceRobot\Action\Message\ChangeItem::class,  // Alias
                 "魔法" => \DiceRobot\Action\Message\ChangeItem::class,
                 "san" => \DiceRobot\Action\Message\ChangeItem::class,  // Alias
+                "理智" => \DiceRobot\Action\Message\ChangeItem::class,
 
                 "name" => \DiceRobot\Action\Message\Name::class,
                 "生成名称" => \DiceRobot\Action\Message\Name::class,

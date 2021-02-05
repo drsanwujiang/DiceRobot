@@ -74,11 +74,11 @@ class ChangeItem extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^(hp|mp|san)$/i", $this->match, $matches)) {
+        if (!preg_match("/^(hp|生命|mp|魔法|san|理智)$/i", $this->match)) {
             throw new OrderErrorException;
         }
 
-        $item = strtoupper($matches[1]);
+        $item = strtoupper($this->match);
 
         if (!preg_match("/^([+-])\s*(\S+)$/", $this->order, $matches)) {
             throw new OrderErrorException;
