@@ -575,6 +575,14 @@ class PanelHandler
         }
     }
 
+    /**
+     * Update Mirai.
+     *
+     * @param string $content HTTP request content.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
     public function updateMirai(string $content, Response $response): Response
     {
         $this->logger->notice("HTTP request received, update Mirai.");
