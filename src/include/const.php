@@ -191,7 +191,7 @@ namespace DiceRobot {
             "logDisabled" => "Master 已经禁用了 .log (;´Д`)",
 
             /* Name */
-            "nameGenerateResult" => "[mirai:at:{&发送者QQ}] 为你寻找到了这些名称：{&名称}",
+            "nameGenerateResult" => "{&@发送者}为你寻找到了这些名称：{&名称}",
             "nameGenerateCountOverstep" => "随机名称生成次数只能介于1~{&最大生成次数}！",
 
             /* Nickname */

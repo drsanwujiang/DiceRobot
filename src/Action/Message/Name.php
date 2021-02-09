@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
+use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\FileException\LostException;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\{Convertor, Random};
@@ -40,6 +41,7 @@ class Name extends MessageAction
         }
 
         $this->setReply("nameGenerateResult", [
+            "@发送者" => ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "",
             "发送者QQ" => $this->message->sender->id,
             "名称" => $this->generateNames($language, $count)
         ]);
