@@ -1,12 +1,16 @@
 {
     "active": true,
+    "robotNickname": null,
+    "defaultSurfaceNumber": 50,
+    "cocCheckRule": 1,
+    "defaultCardDeck": "",
+    "cardDeck": null,
+    "logUuid": "",
+    "isLogging": false,
     "characterCards": {
         "10000": 1
     },
-    "cocCheckRule": 1,
-    "defaultSurfaceNumber": 50,
     "nicknames": {
         "10000": "What a lovely name"
-    },
-    "robotNickname": null
+    }
 }

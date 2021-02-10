@@ -1,8 +1,12 @@
 {
     "active": true,
-    "cocCheckRule": 0,
-    "defaultSurfaceNumber": null,
     "robotNickname": null,
+    "defaultSurfaceNumber": null,
+    "cocCheckRule": 0,
+    "defaultCardDeck": "",
+    "cardDeck": null,
+    "logUuid": "",
+    "isLogging": false,
     "characterCards": {
         "10000": 1
     },

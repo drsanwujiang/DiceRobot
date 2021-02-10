@@ -1,11 +1,24 @@
 {
   "templates": {
-    "cn": "{&姓}{&名}",
-    "en": "{&姓}·{&名}",
-    "jp": "{&姓}{&名}"
+    "mapping": {
+      "cn": "chinese",
+      "中文": "chinese",
+      "汉语": "chinese",
+      "en": "english",
+      "英文": "english",
+      "英语": "english",
+      "jp": "japanese",
+      "日文": "japanese",
+      "日语": "japanese"
+    },
+    "names": {
+      "chinese": "{&姓}{&名}",
+      "english": "{&姓}·{&名}",
+      "japanese": "{&姓}{&名}"
+    }
   },
   "items": {
-    "cn": {
+    "chinese": {
       "firstName": [
         "赵",
         "钱",
@@ -1115,7 +1128,7 @@
         "百"
       ]
     },
-    "en": {
+    "english": {
       "firstName": [
         "亚伦",
         "亚伯",
@@ -1938,7 +1951,7 @@
         "海斯"
       ]
     },
-    "jp": {
+    "japanese": {
       "firstName": [
         "鹤田",
         "香取",
