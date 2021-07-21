@@ -23,8 +23,6 @@ class BotMute extends EventAction
 {
     /**
      * @var BotMuteEvent $event Event
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
      */
     public Event $event;
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace DiceRobot\Handlers;
 
+use DiceRobot\AppStatus;
 use DiceRobot\Action\{EventAction, MessageAction};
-use DiceRobot\App;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\{Event, InvalidReport, Message};
 use DiceRobot\Enum\AppStatusEnum;
@@ -32,9 +32,6 @@ class ReportHandler
 
     /** @var Config DiceRobot config. */
     protected Config $config;
-
-    /** @var App Application. */
-    protected App $app;
 
     /** @var ApiService API service. */
     protected ApiService $api;
@@ -94,18 +91,6 @@ class ReportHandler
     }
 
     /**
-     * Initialize report handler.
-     *
-     * @param App $app Application.
-     */
-    public function initialize(App $app): void
-    {
-        $this->app = $app;
-
-        $this->logger->info("Report handler initialized.");
-    }
-
-    /**
      * Handle message and event report.
      *
      * @param string $content Report content.
@@ -114,7 +99,7 @@ class ReportHandler
      */
     public function handle(string $content): void
     {
-        $this->logger->debug("Receive report, content: {$content}");
+        $this->logger->debug("Report received, content: {$content}");
 
         $this->logger->info("Report started.");
 
@@ -140,7 +125,7 @@ class ReportHandler
             $this->logger->alert("Report failed, unable to call Mirai API.");
         } catch (Throwable $e) {
             $details = sprintf(
-                "Type: %s\nCode: %s\nMessage: %s\nFile: %s\nLine: %s\nTrace: %s",
+                "Type: %s.\nCode: %s.\nMessage: %s.\nFile: %s.\nLine: %s.\nTrace: %s",
                 get_class($e),
                 $e->getCode(),
                 $e->getMessage(),
@@ -158,13 +143,12 @@ class ReportHandler
      *
      * @noinspection PhpRedundantCatchClauseInspection
      * @noinspection PhpDocMissingThrowsInspection
-     * @noinspection PhpUnhandledExceptionInspection
      */
     protected function event(Event $event): void
     {
         // Check application status
-        if ($this->app->getStatus()->lessThan(AppStatusEnum::RUNNING())) {
-            $this->logger->info("Report skipped. Application status {$this->app->getStatus()}.");
+        if (($status = AppStatus::getStatus())->lessThan(AppStatusEnum::RUNNING())) {
+            $this->logger->info("Report skipped. Application status {$status}.");
 
             return;
         }
@@ -203,8 +187,8 @@ class ReportHandler
     protected function message(Message $message): void
     {
         // Check application status
-        if (!$this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
-            $this->logger->info("Report skipped. Application status {$this->app->getStatus()}.");
+        if (!($status = AppStatus::getStatus())->equals(AppStatusEnum::RUNNING())) {
+            $this->logger->info("Report skipped. Application status {$status}.");
 
             return;
         }

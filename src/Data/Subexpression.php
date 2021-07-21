@@ -44,11 +44,9 @@ class Subexpression
     /**
      * Set maxDiceNumber and maxSurfaceNumber.
      *
-     * @GlobalInitialize
-     *
      * @param Config $config DiceRobot config.
      */
-    public static function globalInitialize(Config $config): void
+    public static function initialize(Config $config): void
     {
         static::$maxDiceNumber = $config->getInt("order.maxDiceNumber");
         static::$maxSurfaceNumber = $config->getInt("order.maxSurfaceNumber");

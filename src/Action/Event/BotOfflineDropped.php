@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Event;
 use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\BotOfflineEventDropped;
-use DiceRobot\Enum\AppStatusEnum;
 
 /**
  * Class BotOfflineDropped
@@ -24,8 +23,6 @@ class BotOfflineDropped extends EventAction
 {
     /**
      * @var BotOfflineEventDropped $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
      */
     public Event $event;
 
@@ -34,8 +31,8 @@ class BotOfflineDropped extends EventAction
      */
     public function __invoke(): void
     {
-        $this->logger->notice("Robot is offline (dropped).");
+        $this->logger->notice("Bot is offline (dropped).");
 
-        $this->app->setStatus(AppStatusEnum::HOLDING());
+        $this->heartbeat->disable();
     }
 }

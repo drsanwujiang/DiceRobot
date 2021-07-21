@@ -81,6 +81,8 @@ class LogHandler
      * @param Message $message Message.
      * @param MessageAction|null $action Message action.
      * @param DiceRobotException|null $exception Exception.
+     *
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function handle(
         Message $message,

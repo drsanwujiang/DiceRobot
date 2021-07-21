@@ -181,6 +181,8 @@ abstract class MessageAction implements Action
 
     /**
      * Send replies.
+     *
+     * @noinspection PhpUndefinedMethodInspection
      */
     final public function sendReplies(): void
     {
@@ -253,7 +255,7 @@ abstract class MessageAction implements Action
 
         if ($this->message instanceof GroupMessage) {
             return empty(
-            $nickname = $this->api->getGroupMemberInfo(
+            $nickname = $this->api->getMemberInfo(
                 $this->message->sender->group->id,
                 $this->robot->getId()
             )->getString("name", "")
@@ -321,7 +323,7 @@ abstract class MessageAction implements Action
         $userId ??= $this->message->sender->id;
         $groupId ??= $this->message->sender->group->id ?? 0;
 
-        if ($this->robot->hasFriend($userId)) {
+        if ($this->message instanceof FriendMessage) {
             $this->api->sendFriendMessage($userId, Convertor::toMessageChain($message));
         } else {
             $this->api->sendTempMessage($userId, $groupId, Convertor::toMessageChain($message));
@@ -342,7 +344,7 @@ abstract class MessageAction implements Action
         $userId ??= $this->message->sender->id;
         $groupId ??= $this->message->sender->group->id ?? 0;
 
-        if ($this->robot->hasFriend($userId)) {
+        if ($this->message instanceof FriendMessage) {
             $this->api->sendFriendMessageAsync($userId, Convertor::toMessageChain($message));
         } else {
             $this->api->sendTempMessageAsync($userId, $groupId, Convertor::toMessageChain($message));

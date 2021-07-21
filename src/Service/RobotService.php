@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Data\Config;
-use DiceRobot\Data\Contact\{Friend, Group, Robot};
+use DiceRobot\Data\Contact\{Friend, Group, Bot};
+use DiceRobot\Data\Contact\Profile\{BotProfile, FriendProfile, MemberProfile};
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Factory\LoggerFactory;
@@ -26,14 +26,23 @@ class RobotService
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
-    /** @var Robot Robot. */
-    protected Robot $robot;
+    /** @var Bot Bot. */
+    protected Bot $bot;
+
+    /** @var BotProfile Bot profile. */
+    protected BotProfile $profile;
 
     /** @var Friend[] Friend list. */
     protected array $friends = [];
 
     /** @var Group[] Group list. */
     protected array $groups = [];
+
+    /** @var FriendProfile[] Friend profile list. */
+    protected array $friendProfiles = [];
+
+    /** @var MemberProfile[] Group member profile list. */
+    protected array $memberProfiles = [];
 
     /** @var int Friend count. */
     protected int $friendCount = 0;
@@ -66,16 +75,21 @@ class RobotService
 
     /**
      * Initialize robot service.
-     *
-     * @param Config $config DiceRobot config.
      */
-    public function initialize(Config $config): void
+    public function initialize(): void
     {
-        $this->robot = new Robot();
-        $this->robot->id = $config->getInt("mirai.robot.id");
-        $this->robot->nickname = "Unknown";
-        $this->robot->authKey = $config->getString("mirai.robot.authKey");
-        $this->robot->version = "Unknown";
+        $this->bot = new Bot();
+        $this->bot->id = 0;
+        $this->bot->version = "Unknown";
+        $this->profile = new BotProfile();
+        $this->profile->nickname = "Unknown";
+        $this->profile->email = "";
+        $this->profile->age = 0;
+        $this->profile->level = 0;
+        $this->profile->sign = "";
+        $this->profile->sex = "";
+
+        $this->logger->notice("Robot service initialized.");
     }
 
     /**
@@ -92,9 +106,12 @@ class RobotService
             $this->updateFriends($this->api->getFriendList()->all());
             $this->updateGroups($this->api->getGroupList()->all());
 
-            // Update robot
-            $this->updateNickname($this->api->getNickname($this->getId())->nickname);
-            $this->updateVersion($this->api->about()->getString("data.version"));
+            // Update bot and profile
+            $this->updateBot(
+                $this->api->getSessionInfo()->getInt("data.qq.id"),
+                $this->api->about()->getString("data.version")
+            );
+            $this->updateProfile($this->api->getBotProfile()->all());
 
             // Report to DiceRobot API
             $this->api->updateRobotAsync($this->getId());
@@ -112,23 +129,30 @@ class RobotService
     }
 
     /**
-     * Update robot's nickname
+     * Update bot.
      *
-     * @param string $nickname Robot's nickname.
+     * @param int $id Bot ID.
+     * @param string $version Mirai API HTTP plugin version.
      */
-    public function updateNickname(string $nickname): void
+    public function updateBot(int $id, string $version): void
     {
-        $this->robot->nickname = $nickname;
+        $this->bot->id = $id;
+        $this->bot->version = (string) preg_replace("/[a-zA-z]+/", "", $version);
     }
 
     /**
-     * Update version of Mirai API HTTP plugin.
+     * Update bot profile.
      *
-     * @param string $version Plugin version.
+     * @param array $profile Bot profile.
      */
-    public function updateVersion(string $version): void
+    public function updateProfile(array $profile): void
     {
-        $this->robot->version = (string) preg_replace("/[a-zA-z]+/", "", $version);
+        $this->profile->nickname = $profile["nickname"];
+        $this->profile->email = $profile["email"];
+        $this->profile->age = $profile["age"];
+        $this->profile->level = $profile["level"];
+        $this->profile->sign = $profile["sign"];
+        $this->profile->sex = $profile["sex"];
     }
 
     /**
@@ -194,47 +218,37 @@ class RobotService
     }
 
     /**
-     * Get robot's ID.
+     * Get bot ID.
      *
-     * @return int Robot's ID.
+     * @return int Bot ID.
      */
     public function getId(): int
     {
-        return $this->robot->id;
+        return $this->bot->id;
     }
 
     /**
-     * Get robot's nickname.
+     * Get bot nickname.
      *
-     * @return string Robot's nickname.
+     * @return string Bot nickname.
      */
     public function getNickname(): string
     {
-        return $this->robot->nickname;
-    }
-
-    /**
-     * Get authorization key of Mirai API HTTP plugin.
-     *
-     * @return string Authorization key.
-     */
-    public function getAuthKey(): string
-    {
-        return $this->robot->authKey;
+        return $this->profile->nickname;
     }
 
     /**
      * Get version of Mirai API HTTP plugin.
      *
-     * @return string Version.
+     * @return string Plugin version.
      */
     public function getVersion(): string
     {
-        return $this->robot->version;
+        return $this->bot->version;
     }
 
     /**
-     * Get robot's friend.
+     * Get friend.
      *
      * @param int $friendId Friend ID.
      *
@@ -246,7 +260,7 @@ class RobotService
     }
 
     /**
-     * Get robot's group.
+     * Get group.
      *
      * @param int $groupId Group ID.
      *

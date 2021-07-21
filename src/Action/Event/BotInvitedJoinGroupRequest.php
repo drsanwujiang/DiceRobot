@@ -23,8 +23,6 @@ class BotInvitedJoinGroupRequest extends EventAction
 {
     /**
      * @var BotInvitedJoinGroupRequestEvent $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
      */
     public Event $event;
 
@@ -46,7 +44,7 @@ class BotInvitedJoinGroupRequest extends EventAction
             $message = $this->config->getStrategy("botInvitedJoinGroupRequestRejected");
         }
 
-        $this->api->respondToBotInvitedJoinGroupRequestEvent(
+        $this->api->handleBotInvitedJoinGroupRequestEvent(
             $this->event->eventId,
             $this->event->fromId,
             $this->event->groupId,

@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUndefinedMethodInspection */
 
 declare(strict_types=1);
 
@@ -218,8 +218,6 @@ class Server
 
         if ($method == "POST" && $uri == "/report") {
             $this->report($content, $response);
-        } elseif ($method == "POST" && $uri == "/heartbeat") {
-            $this->heartbeat($response);
         } else {
             /** Panel APIs */
 
@@ -283,21 +281,6 @@ class Server
         if ($response->isWritable()) {
             $response->end();
         }
-    }
-
-    /**
-     * Handle heartbeat.
-     *
-     * @param Response $response HTTP response.
-     *
-     * @return Response HTTP response.
-     */
-    protected function heartbeat(Response $response): Response
-    {
-        $this->app->heartbeat();
-
-        // Respond nothing to Mirai API HTTP
-        return $this->responseFactory->createEmpty($response);
     }
 
     /**

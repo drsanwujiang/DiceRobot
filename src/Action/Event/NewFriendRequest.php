@@ -23,8 +23,6 @@ class NewFriendRequest extends EventAction
 {
     /**
      * @var NewFriendRequestEvent $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
      */
     public Event $event;
 
@@ -41,7 +39,7 @@ class NewFriendRequest extends EventAction
         $message = "";
 
         // Approve request by default
-        $this->api->respondToNewFriendRequestEvent(
+        $this->api->handleNewFriendRequestEvent(
             $this->event->eventId,
             $this->event->fromId,
             $this->event->groupId,

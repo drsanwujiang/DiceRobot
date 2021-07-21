@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace DiceRobot\Action\Event;
 
+use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\BotReloginEvent;
-use DiceRobot\Exception\MiraiApiException;
 
 /**
  * Class BotRelogin
@@ -19,24 +19,20 @@ use DiceRobot\Exception\MiraiApiException;
  *
  * @package DiceRobot\Action\Event
  */
-class BotRelogin extends BotOnline
+class BotRelogin extends EventAction
 {
     /**
      * @var BotReloginEvent $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
      */
     public Event $event;
 
     /**
      * @inheritDoc
-     *
-     * @throws MiraiApiException
      */
     public function __invoke(): void
     {
-        $this->logger->notice("Robot is online (relogin).");
+        $this->logger->notice("Bot is online (relogin).");
 
-        $this->init();
+        $this->heartbeat->enable();
     }
 }

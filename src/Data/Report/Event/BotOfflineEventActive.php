@@ -9,7 +9,7 @@ use DiceRobot\Data\Report\Event;
 /**
  * Class BotOfflineEventActive
  *
- * DTO. Event of that robot logs out (goes offline actively).
+ * DTO. Event of that bot logs out (goes offline actively).
  *
  * @package DiceRobot\Data\Report\Event
  *
@@ -17,6 +17,6 @@ use DiceRobot\Data\Report\Event;
  */
 final class BotOfflineEventActive extends Event
 {
-    /** @var int Robot's ID. */
+    /** @var int Bot ID. */
     public int $qq;
 }

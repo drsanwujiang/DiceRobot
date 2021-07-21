@@ -8,7 +8,7 @@ use DiceRobot\Data\{Config, MiraiResponse};
 use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetTokenResponse, GetCardResponse,
     GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
     ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
-use DiceRobot\Exception\{MiraiApiException, RuntimeException};
+use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Handlers\{DiceRobotApiHandler, MiraiApiHandler};
 use Psr\Log\LoggerInterface;
@@ -21,37 +21,51 @@ use Psr\Log\LoggerInterface;
  * @package DiceRobot\Service
  *
  * @method MiraiResponse about()
- * @method MiraiResponse authSession(string $authKey)
- * @method MiraiResponse verifySession(int $robotId)
- * @method MiraiResponse releaseSession(int $robotId)
- * @method MiraiResponse sendFriendMessage(int $targetId, array $messageChain)
- * @method void sendFriendMessageAsync(int $targetId, array $messageChain)
- * @method MiraiResponse sendTempMessage(int $targetId, int $groupId, array $messageChain)
- * @method void sendTempMessageAsync(int $targetId, int $groupId, array $messageChain)
- * @method MiraiResponse sendGroupMessage(int $targetId, array $messageChain)
- * @method void sendGroupMessageAsync(int $targetId, array $messageChain)
+ * @method MiraiResponse getSessionInfo()
+ * @method MiraiResponse getMessageFromId(int $messageId)
+ * @method MiraiResponse getFriendList()
+ * @method MiraiResponse getGroupList()
+ * @method MiraiResponse getGroupMemberList(int $targetId)
+ * @method MiraiResponse getBotProfile()
+ * @method MiraiResponse getFriendProfile(int $targetId)
+ * @method MiraiResponse getMemberProfile(int $targetId, int $memberId)
+ * @method MiraiResponse sendFriendMessage(int $friendId, array $messageChain, ?int $quoteId = null)
+ * @method void sendFriendMessageAsync(int $friendId, array $messageChain, ?int $quoteId = null)
+ * @method MiraiResponse sendGroupMessage(int $groupId, array $messageChain, ?int $quoteId = null)
+ * @method void sendGroupMessageAsync(int $groupId, array $messageChain, ?int $quoteId = null)
+ * @method MiraiResponse sendTempMessage(int $targetId, int $groupId, array $messageChain, ?int $quoteId = null)
+ * @method void sendTempMessageAsync(int $targetId, int $groupId, array $messageChain, ?int $quoteId = null)
+ * @method MiraiResponse sendNudgeMessage(int $targetId, int $subjectId, string $subjectType)
  * @method MiraiResponse recallMessage(int $messageId)
+ * @method MiraiResponse getFileList(string $directoryId, int $targetId)
+ * @method MiraiResponse getFileInfo(string $fileId, int $targetId)
+ * @method MiraiResponse createDirectory(string $parentId, int $targetId, string $directoryName)
+ * @method MiraiResponse deleteFile(string $fileId, int $targetId)
+ * @method MiraiResponse moveFile(string $fileId, int $targetId, string $directoryId)
+ * @method MiraiResponse renameFile(string $fileId, int $targetId, string $fileName)
+ * @method MiraiResponse deleteFriend($friendId)
+ * @method MiraiResponse muteMember(int $groupId, int $memberId, int $time)
+ * @method MiraiResponse unmuteMember(int $groupId, int $memberId)
+ * @method MiraiResponse kickMember(int $groupId, int $memberId, string $message)
+ * @method MiraiResponse quitGroup(int $groupId)
+ * @method MiraiResponse muteAllMembers(int $groupId)
+ * @method MiraiResponse unmuteAllMembers(int $groupId)
+ * @method MiraiResponse setEssenceMessage(int $messageId)
+ * @method MiraiResponse getGroupConfig(int $groupId)
+ * @method MiraiResponse setGroupConfig(int $groupId, ?string $name = null, ?string $announcement = null, ?bool $confessTalk = null, ?bool $allowMemberInvite = null, ?bool $autoApprove = null, ?bool $anonymousChat = null)
+ * @method MiraiResponse getMemberInfo(int $groupId, int $memberId)
+ * @method MiraiResponse setMemberInfo(int $groupId, int $memberId, ?string $name = null, ?string $specialTitle = null)
+ * @method MiraiResponse handleNewFriendRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
+ * @method MiraiResponse handleMemberJoinRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
+ * @method MiraiResponse handleBotInvitedJoinGroupRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
+ * @method MiraiResponse countMessage()
  * @method MiraiResponse fetchMessage(int $count)
  * @method MiraiResponse fetchLatestMessage(int $count)
  * @method MiraiResponse peekMessage(int $count)
  * @method MiraiResponse peekLatestMessage(int $count)
- * @method MiraiResponse countMessage()
- * @method MiraiResponse getFriendList()
- * @method MiraiResponse getGroupList()
- * @method MiraiResponse getGroupMemberList(int $targetId)
- * @method MiraiResponse muteGroupMember(int $targetId, int $memberId, int $time)
- * @method MiraiResponse unmuteGroupMember(int $targetId, int $memberId)
- * @method MiraiResponse kickGroupMember(int $targetId, int $memberId, string $message)
- * @method MiraiResponse quitGroup(int $targetId)
- * @method MiraiResponse muteAllGroupMembers(int $targetId)
- * @method MiraiResponse unmuteAllGroupMembers(int $targetId)
- * @method MiraiResponse getGroupConfig(int $targetId)
- * @method MiraiResponse setGroupConfig(int $targetId, ?string $name = null, ?string $announcement = null, ?bool $confessTalk = null, ?bool $allowMemberInvite = null, ?bool $autoApprove = null, ?bool $anonymousChat = null)
- * @method MiraiResponse getGroupMemberInfo(int $targetId, int $memberId)
- * @method MiraiResponse setGroupMemberInfo(int $targetId, int $memberId, ?string $name = null, ?string $specialTitle = null)
- * @method MiraiResponse respondToNewFriendRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
- * @method MiraiResponse respondToMemberJoinRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
- * @method MiraiResponse respondToBotInvitedJoinGroupRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
+ * @method MiraiResponse uploadImage(string $type, $file)
+ * @method MiraiResponse uploadVoice(string $type, $file)
+ * @method MiraiResponse uploadFile(string $type, int $targetId, string $parentId, $file)
  *
  * @method UpdateRobotResponse updateRobot(int $robotId)
  * @method void updateRobotAsync(int $robotId)
@@ -73,13 +87,16 @@ class ApiService
 {
     /** @var string[] Mirai APIs. */
     private const MIRAI_APIS = [
-        "about",
-        "authSession", "verifySession", "releaseSession",
-        "sendFriendMessage", "sendFriendMessageAsync", "sendTempMessage", "sendTempMessageAsync", "sendGroupMessage", "sendGroupMessageAsync", "recallMessage",
-        "fetchMessage", "fetchLatestMessage", "peekMessage", "peekLatestMessage", "countMessage",
-        "getFriendList", "getGroupList", "getGroupMemberList",
-        "muteGroupMember", "unmuteGroupMember", "kickGroupMember", "quitGroup", "muteAllGroupMembers", "unmuteAllGroupMembers", "getGroupConfig", "setGroupConfig", "getGroupMemberInfo", "setGroupMemberInfo",
-        "respondToNewFriendRequestEvent", "respondToMemberJoinRequestEvent", "respondToBotInvitedJoinGroupRequestEvent"
+        "about", "getSessionInfo",
+        "getMessageFromId", "getFriendList", "getGroupList", "getGroupMemberList",
+        "getBotProfile", "getFriendProfile", "getMemberProfile",
+        "sendFriendMessage", "sendFriendMessageAsync", "sendTempMessage", "sendTempMessageAsync", "sendGroupMessage", "sendGroupMessageAsync", "sendNudgeMessage", "recallMessage",
+        "getFileList", "getFileInfo", "createDirectory", "deleteFile", "moveFile", "renameFile",
+        "deleteFriend",
+        "muteMember", "unmuteMember", "kickMember", "quitGroup", "muteAllMembers", "unmuteAllMembers", "setEssenceMessage", "getGroupConfig", "setGroupConfig", "getMemberInfo", "setMemberInfo",
+        "handleNewFriendRequestEvent", "handleMemberJoinRequestEvent", "handleBotInvitedJoinGroupRequestEvent",
+        "countMessage", "fetchMessage", "fetchLatestMessage", "peekMessage", "peekLatestMessage",
+        "uploadImage", "uploadVoice", "uploadFile"
     ];
 
     /** @var string[] DiceRobot APIs. */
@@ -146,7 +163,7 @@ class ApiService
             return $this->diceRobotHandler->$func(...$arguments);
         }
 
-        throw new RuntimeException("Call to undefined method '{$func}'.");
+        throw new RuntimeException("Call to undefined method \"{$func}\".");
     }
 
     /**
@@ -160,45 +177,5 @@ class ApiService
         $this->diceRobotHandler->initialize($config);
 
         $this->logger->notice("API service initialized.");
-    }
-
-    /**
-     * Initialize Mirai session.
-     *
-     * @param string $authKey Mirai API HTTP plugin authorization key.
-     * @param int $robotId Robot ID.
-     *
-     * @return bool Success.
-     *
-     * @throws MiraiApiException
-     */
-    public function initSession(string $authKey, int $robotId): bool
-    {
-        // Create session
-        $result = $this->miraiHandler->authSession($authKey);
-
-        if (0 != $result->getInt("code", -1)) {
-            $this->logger->alert("Initialize session failed, session not created.");
-
-            return false;
-        }
-
-        $this->miraiHandler->setSession($result->getString("session"));
-
-        $this->logger->info("Session created.");
-
-        // Verify session
-        $code = $this->miraiHandler->verifySession($robotId)->getInt("code", -1);
-
-        if (0 != $code) {
-            $this->logger->alert("Initialize session failed, session unauthorized, code {$code}.");
-
-            return false;
-        }
-
-        $this->logger->info("Session verified.");
-        $this->logger->notice("Session initialized.");
-
-        return true;
     }
 }

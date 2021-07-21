@@ -21,8 +21,8 @@ class DiceTest extends TestCase
 
         $config = $container->get(Config::class);
 
-        Dice::globalInitialize($config);
-        Subexpression::globalInitialize($config);
+        Dice::initialize($config);
+        Subexpression::initialize($config);
     }
 
     public function provideOrder(): array

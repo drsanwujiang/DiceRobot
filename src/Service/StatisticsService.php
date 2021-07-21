@@ -33,6 +33,9 @@ class StatisticsService
     /** @var Statistics Statistics. */
     protected Statistics $statistics;
 
+    /** @var int Timer ID. */
+    protected int $timerId = -1;
+
     /** @var string[] Statistics timeline. */
     protected array $timeline;
 
@@ -64,6 +67,10 @@ class StatisticsService
      */
     public function __destruct()
     {
+        if ($this->timerId >= 0) {
+            Timer::clear($this->timerId);
+        }
+
         $this->logger->debug("Statistics service destructed.");
     }
 
@@ -79,13 +86,15 @@ class StatisticsService
         $this->count = $this->statistics->getInt("sum");
 
         // Update timeline and counts every 10 minutes
-        Timer::tick(600000, function () {
+        $this->timerId = Timer::tick(600000, function () {
             $this->updateTimeline();
             array_shift($this->counts);
             $currentCount = $this->statistics->getInt("sum");
             $this->counts[] = $currentCount - $this->count;
             $this->count = $currentCount;
         });
+
+        $this->logger->notice("Statistics service initialized.");
     }
 
     /**
@@ -95,15 +104,13 @@ class StatisticsService
     {
         $now = Chronos::now();
         $format = "G:i";
+        $this->timeline = [];
 
-        $this->timeline = [
-            $now->subMinutes(50)->format($format),
-            $now->subMinutes(40)->format($format),
-            $now->subMinutes(30)->format($format),
-            $now->subMinutes(20)->format($format),
-            $now->subMinutes(10)->format($format),
-            $now->format($format)
-        ];
+        foreach ([50, 40, 30, 20, 10] as $min) {
+            $this->timeline[] = $now->subMinutes($min)->format($format);
+        }
+
+        $this->timeline[] = $now->format($format);
     }
 
     /**

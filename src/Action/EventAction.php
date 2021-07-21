@@ -9,7 +9,7 @@ use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Interfaces\Action;
-use DiceRobot\Service\{ApiService, ResourceService, RobotService};
+use DiceRobot\Service\{ApiService, HeartbeatService, ResourceService, RobotService};
 use Psr\Log\LoggerInterface;
 
 /**
@@ -36,6 +36,9 @@ abstract class EventAction implements Action
     /** @var RobotService Robot service. */
     protected RobotService $robot;
 
+    /** @var HeartbeatService Heartbeat service. */
+    protected HeartbeatService $heartbeat;
+
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
@@ -50,6 +53,7 @@ abstract class EventAction implements Action
      * @param ApiService $api API service.
      * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
+     * @param HeartbeatService $heartbeat Heartbeat service.
      * @param LoggerFactory $loggerFactory Logger factory.
      * @param Event $event Event.
      */
@@ -59,6 +63,7 @@ abstract class EventAction implements Action
         ApiService $api,
         ResourceService $resource,
         RobotService $robot,
+        HeartbeatService $heartbeat,
         LoggerFactory $loggerFactory,
         Event $event
     ) {
@@ -66,6 +71,7 @@ abstract class EventAction implements Action
         $this->app = $app;
         $this->api = $api;
         $this->resource = $resource;
+        $this->heartbeat = $heartbeat;
         $this->robot = $robot;
 
         $this->logger = $loggerFactory->create("Event");

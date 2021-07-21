@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpUndefinedClassInspection */
+<?php
 
 declare(strict_types=1);
 
@@ -130,7 +130,7 @@ class DiceRobotApiHandler
     /**
      * Update robot online info.
      *
-     * @param int $robotId Robot's ID.
+     * @param int $robotId Robot ID.
      *
      * @return UpdateRobotResponse Response.
      *
@@ -151,7 +151,7 @@ class DiceRobotApiHandler
     /**
      * Update robot online info asynchronously.
      *
-     * @param int $robotId Robot's ID.
+     * @param int $robotId Robot ID.
      */
     final public function updateRobotAsync(int $robotId): void
     {
@@ -165,7 +165,7 @@ class DiceRobotApiHandler
     }
 
     /**
-     * @param int $robotId Robot's ID.
+     * @param int $robotId Robot ID.
      *
      * @return GetNicknameResponse Response.
      *
@@ -186,7 +186,7 @@ class DiceRobotApiHandler
     /**
      * Get access token.
      *
-     * @param int $robotId Robot's ID.
+     * @param int $robotId Robot ID.
      *
      * @return GetTokenResponse Response.
      *
@@ -209,7 +209,7 @@ class DiceRobotApiHandler
     /**
      * Get today's luck.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param string $token Access token.
      *
      * @return GetLuckResponse Response.
@@ -234,7 +234,7 @@ class DiceRobotApiHandler
     /**
      * Get piety.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param string $token Access token.
      *
      * @return GetPietyResponse Response.
@@ -246,7 +246,7 @@ class DiceRobotApiHandler
     final public function getPiety(int $userId, string $token): GetPietyResponse
     {
         $options = [
-            "uri" => "user/{$userId}/kowtow",
+            "uri" => "user/{$userId}/piety",
             "method" => "GET",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
@@ -261,7 +261,7 @@ class DiceRobotApiHandler
     /**
      * Get character card data.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param int $cardId Character card ID.
      * @param string $token Access token.
      *
@@ -287,7 +287,7 @@ class DiceRobotApiHandler
     /**
      * Update character card data.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param int $cardId Character card ID.
      * @param string $item Item name.
      * @param int $change Change to the item.
@@ -325,7 +325,7 @@ class DiceRobotApiHandler
     /**
      * Request a sanity check to the character card.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param int $cardId Character card ID.
      * @param int $checkResult Sanity check result.
      * @param array $decreases Sanity decreases.
@@ -364,7 +364,7 @@ class DiceRobotApiHandler
     /**
      * Query if the group is delinquent.
      *
-     * @param int $groupId Group's ID.
+     * @param int $groupId Group ID.
      * @param string $token Access token.
      *
      * @return QueryGroupResponse Response.
@@ -389,7 +389,7 @@ class DiceRobotApiHandler
     /**
      * Report the delinquent group's ID. These group IDs will be queried when robot is added to a group.
      *
-     * @param int $groupId Delinquent group's ID.
+     * @param int $groupId Delinquent group ID.
      * @param string $token Access token.
      *
      * @return ReportGroupResponse Response.

@@ -26,8 +26,6 @@ class BotJoinGroup extends EventAction
 {
     /**
      * @var BotJoinGroupEvent $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
      */
     public Event $event;
 
