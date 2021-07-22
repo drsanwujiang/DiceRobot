@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Event\BotOnlineEvent;
 /**
  * Class BotOnline
  *
- * Action that responds to BotOnlineEvent.
+ * Action that handles BotOnlineEvent.
  *
  * Initialize API service (auth a new session).
  *
@@ -21,9 +21,7 @@ use DiceRobot\Data\Report\Event\BotOnlineEvent;
  */
 class BotOnline extends EventAction
 {
-    /**
-     * @var BotOnlineEvent $event Event.
-     */
+    /** @var BotOnlineEvent $event Event. */
     public Event $event;
 
     /**

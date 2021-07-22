@@ -76,6 +76,9 @@ class HeartbeatService
         $this->logger->debug("Heartbeat service destructed.");
     }
 
+    /**
+     * Initialize service.
+     */
     public function initialize(): void
     {
         $this->initTimerId = Timer::after(3000, function () {
@@ -152,6 +155,9 @@ class HeartbeatService
         AppStatus::hold();
     }
 
+    /**
+     * Heartbeat logic.
+     */
     protected function heartbeat(): void
     {
         $this->logger->info("Heartbeat started.");

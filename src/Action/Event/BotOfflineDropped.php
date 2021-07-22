@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Event\BotOfflineEventDropped;
 /**
  * Class BotOfflineDropped
  *
- * Action that responds to BotOfflineEventDropped.
+ * Action that handles BotOfflineEventDropped.
  *
  * Hold application (HOLDING).
  *
@@ -21,9 +21,7 @@ use DiceRobot\Data\Report\Event\BotOfflineEventDropped;
  */
 class BotOfflineDropped extends EventAction
 {
-    /**
-     * @var BotOfflineEventDropped $event Event.
-     */
+    /** @var BotOfflineEventDropped $event Event. */
     public Event $event;
 
     /**

@@ -7,15 +7,15 @@ namespace DiceRobot\Data\Report\Contact;
 /**
  * Class Friend
  *
- * DTO. Friend chat.
+ * DTO. Friend sender.
  *
  * @package DiceRobot\Data\Report\Contact
  */
 final class Friend extends Sender
 {
-    /** @var string Friend's nickname. */
+    /** @var string Friend nickname. */
     public string $nickname;
 
-    /** @var string Friend's remark. */
+    /** @var string Friend remark. */
     public string $remark;
 }

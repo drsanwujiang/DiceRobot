@@ -58,7 +58,7 @@ class Dice
     public int $result;
 
     /**
-     * Set maxDiceNumber and bpDiceType.
+     * Initialize dice.
      *
      * @param Config $config DiceRobot config.
      */

@@ -89,7 +89,7 @@ class PanelHandler
     }
 
     /**
-     * Initialize panel handler.
+     * Initialize handler.
      *
      * @param Server $server DiceRobot HTTP server.
      */

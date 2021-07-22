@@ -10,7 +10,6 @@ use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
 use DiceRobot\Exception\RepeatOverstepException;
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Dicing
@@ -52,29 +51,19 @@ class Dicing extends MessageAction
 
         list($vType, $reason, $detail) = $this->dicing($expression, $repetition);
 
-        $reply = Convertor::toCustomString(
-            $this->config->getReply(empty($reason) ? "dicingResult" : "dicingResultWithReason"),
-            [
-                "原因" => $reason,
-                "昵称" => $this->getNickname(),
-                "掷骰结果" => $detail
-            ]
-        );
+        $reply = $this->getCustomReply(empty($reason) ? "dicingResult" : "dicingResultWithReason", [
+            "原因" => $reason,
+            "掷骰结果" => $detail
+        ]);
 
         if ($vType === "H") {
             if ($this->message instanceof GroupMessage) {
-                $this->sendPrivateMessageAsync(Convertor::toCustomString(
-                    $this->config->getReply("dicingPrivateResult"),
-                    [
-                        "群名" => $this->message->sender->group->name,
-                        "群号" => $this->message->sender->group->id,
-                        "掷骰详情" => $reply
-                    ]
-                ));
+                $this->sendPrivateMessageAsync($this->getCustomReply("dicingPrivateResult", [
+                    "掷骰详情" => $reply
+                ]));
 
                 $this->setReply(empty($reason) ? "dicingPrivate" : "dicingPrivateWithReason", [
                     "原因" => $reason,
-                    "昵称" => $this->getNickname(),
                     "掷骰次数" => $repetition
                 ]);
             } else {

@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Message\Robot;
 use DiceRobot\Action\Message\RobotAction;
 use DiceRobot\Exception\FileException\LostException;
 use DiceRobot\Exception\OrderErrorException;
-use DiceRobot\Util\Convertor;
 
 /**
  * Class About
@@ -31,13 +30,11 @@ class About extends RobotAction
     {
         $this->parseOrder();
 
-        $this->setRawReply(Convertor::toCustomString(
+        $this->setRawReply($this->getCustomString(
             $this->resource->getReference("AboutTemplate")->getString("templates.detail"),
             [
                 "DiceRobot版本号" => $this->config->getString("dicerobot.version"),
-                "机器人QQ昵称" => $this->robot->getNickname(),
-                "机器人QQ号" => $this->robot->getId(),
-                "机器人昵称" => $this->getRobotNickname()
+                "机器人QQ昵称" => $this->robot->getNickname()
             ]
         ));
     }

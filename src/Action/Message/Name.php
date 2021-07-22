@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
-use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\FileException\LostException;
 use DiceRobot\Exception\OrderErrorException;
 use DiceRobot\Util\{Convertor, Random};
@@ -41,8 +40,6 @@ class Name extends MessageAction
         }
 
         $this->setReply("nameGenerateResult", [
-            "@发送者" => ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "",
-            "发送者QQ" => $this->message->sender->id,
             "名称" => $this->generateNames($language, $count)
         ]);
     }
@@ -107,14 +104,14 @@ class Name extends MessageAction
         $reference = $this->resource->getReference("NameTemplate");
         $language = $reference->getString("templates.mapping.{$language}");
         $firstNames = $reference->getArray("items.{$language}.firstName");
-        $lastNames = $language == "cn" ?
+        $lastNames = $language == "chinese" ?
             $reference->getArray("items.{$language}.lastNameSingle") :
             $reference->getArray("items.{$language}.lastName");
         $names = [];
 
         while ($count--) {
             $firstName = $this->draw($firstNames);
-            $lastName = $language == "cn" ? $this->draw($lastNames, 2) : $this->draw($lastNames);
+            $lastName = $language == "chinese" ? $this->draw($lastNames, 2) : $this->draw($lastNames);
             $names[] = Convertor::toCustomString($reference->getString("templates.names.{$language}"), [
                 "姓" => $firstName,
                 "名" => $lastName

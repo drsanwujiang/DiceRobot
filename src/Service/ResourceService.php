@@ -74,7 +74,7 @@ class ResourceService
     }
 
     /**
-     * Initialize resource service.
+     * Initialize service.
      *
      * @param \DiceRobot\Data\Config $config DiceRobot config.
      *

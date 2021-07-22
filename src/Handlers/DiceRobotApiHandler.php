@@ -51,7 +51,7 @@ class DiceRobotApiHandler
     }
 
     /**
-     * Initialize DiceRobot API handler.
+     * Initialize handler.
      *
      * @param Config $config DiceRobot config.
      */

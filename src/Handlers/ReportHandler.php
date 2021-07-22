@@ -8,6 +8,7 @@ use DiceRobot\AppStatus;
 use DiceRobot\Action\{EventAction, MessageAction};
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\{Event, InvalidReport, Message};
+use DiceRobot\Data\Report\Message\{OtherClientMessage, StrangerMessage};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\{DiceRobotException, MiraiApiException};
 use DiceRobot\Factory\{LoggerFactory, ReportFactory};
@@ -153,6 +154,7 @@ class ReportHandler
             return;
         }
 
+        // Check matching
         if (empty($actionName = $this->matchEvent($event))) {
             $this->logger->info("Report skipped, matching miss.");
 
@@ -165,7 +167,7 @@ class ReportHandler
         ]);
 
         try {
-            $action();
+            $action();  // Invoke action
 
             $this->logger->info("Report finished.");
         } catch (DiceRobotException $e) {  // Action interrupted, log error
@@ -193,6 +195,14 @@ class ReportHandler
             return;
         }
 
+        // Check message type
+        if ($message instanceof OtherClientMessage || $message instanceof StrangerMessage) {
+            $this->logger->info("Report skipped, message type unacceptable.");
+
+            return;
+        }
+
+        // Check message chain
         if (!$message->parseMessageChain()) {
             $this->logger->info("Report skipped, message not parsable.");
 
@@ -203,6 +213,7 @@ class ReportHandler
 
         list($filter, $at) = $this->filter($message);
 
+        // Check filter
         if (!$filter) {
             $this->logger->info("Report skipped, filter miss.");
 
@@ -211,6 +222,7 @@ class ReportHandler
 
         list($match, $order, $actionName) = $this->matchMessage($message);
 
+        // Check matching
         if (empty($actionName)) {
             $this->logger->info("Report skipped, matching miss.");
 
@@ -225,27 +237,29 @@ class ReportHandler
             "at" => $at
         ]);
 
-        $this->statistics->addCount($match, get_class($message), $message->sender);
+        $action->initialize();  // Initialize action
 
+        // Check active
         if (!$action->checkActive()) {
             $this->logger->info("Report finished, robot inactive.");
 
             return;
         }
 
+        $this->statistics->addCount($match, get_class($message), $message->sender);  // Update statistics
+
         try {
-            $action();
+            $action();  // Invoke action
+            $action->sendReplies();  // Send replies if necessary
 
-            $action->sendReplies();
-
-            $this->log->handle($message, $action);
+            $this->log->handle($message, $action);  // Update log if enabled
 
             $this->logger->info("Report finished.");
         } catch (DiceRobotException $e) {
             // Action interrupted, send error message to group/user
             $action->sendMessage($this->config->getErrMsg((string) $e));
 
-            $this->log->handle($message, $action, $e);
+            $this->log->handle($message, $action, $e);  // Update log if enabled
 
             // TODO: $e::class, $action->message::class, $action::class in PHP 8
             $this->logger->info(

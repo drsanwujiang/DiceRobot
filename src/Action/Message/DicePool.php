@@ -46,7 +46,6 @@ class DicePool extends MessageAction
 
         $this->setReply(empty($reason) ? "dicePoolResult" : "dicePoolResultWithReason", [
             "原因" => $reason,
-            "昵称" => $this->getNickname(),
             "掷骰详情" => $detail
         ]);
     }

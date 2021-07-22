@@ -94,6 +94,7 @@ class Server
         $port = $this->config->getInt("dicerobot.server.port");
 
         try {
+            /** @noinspection PhpMethodParametersCountMismatchInspection */
             $this->server = new SwooleServer($host, $port);
         } catch (Exception $e) {
             $this->logger->emergency("Server exited unexpectedly. Code {$e->getCode()}, message: {$e->getMessage()}.");

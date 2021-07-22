@@ -54,19 +54,16 @@ class Check extends MessageAction
             return;
         }
 
-        $nickname = $this->getNickname();
         $checkDetails = $this->getCheckDetails($bp, $adjustments, $value, $repeat);
 
         if (empty($item)) {
-            $reply = Convertor::toCustomString($this->config->getReply("checkResult"), [
-                "昵称" => $nickname,
+            $reply = $this->getCustomReply("checkResult", [
                 "检定次数" => $repeat,
                 "检定项目" => "",
                 "检定详情" => $checkDetails
             ]);
         } else {
-            $reply = Convertor::toCustomString($this->config->getReply("checkResultWithStates"), [
-                "昵称" => $nickname,
+            $reply = $this->getCustomReply("checkResultWithStates", [
                 "检定次数" => $repeat,
                 "检定项目" => $item,
                 "检定详情" => $checkDetails
@@ -75,17 +72,11 @@ class Check extends MessageAction
 
         if ($private) {
             if ($this->message instanceof GroupMessage) {
-                $this->sendPrivateMessageAsync(Convertor::toCustomString(
-                    $this->config->getReply("checkPrivateResult"),
-                    [
-                        "群名" => $this->message->sender->group->name,
-                        "群号" => $this->message->sender->group->id,
-                        "检定详情" => $reply
-                    ]
-                ));
+                $this->sendPrivateMessageAsync($this->getCustomReply("checkPrivateResult", [
+                    "检定详情" => $reply
+                ]));
 
                 $this->setReply("checkPrivate", [
-                    "昵称" => $nickname,
                     "检定次数" => $repeat
                 ]);
             } else {

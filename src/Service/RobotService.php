@@ -32,6 +32,9 @@ class RobotService
     /** @var BotProfile Bot profile. */
     protected BotProfile $profile;
 
+    /** @var string[] Bot nickname in each group. */
+    protected array $nicknames;
+
     /** @var Friend[] Friend list. */
     protected array $friends = [];
 
@@ -74,7 +77,7 @@ class RobotService
     }
 
     /**
-     * Initialize robot service.
+     * Initialize service.
      */
     public function initialize(): void
     {
@@ -156,6 +159,16 @@ class RobotService
     }
 
     /**
+     * Update robot nicknames cache of the group.
+     *
+     * @param int $groupId Group ID.
+     */
+    public function updateNickname(int $groupId, string $nickname): void
+    {
+        $this->nicknames[$groupId] = $nickname;
+    }
+
+    /**
      * Update friend list.
      *
      * @param array $friends Friend list.
@@ -218,6 +231,16 @@ class RobotService
     }
 
     /**
+     * Get version of Mirai API HTTP plugin.
+     *
+     * @return string Plugin version.
+     */
+    public function getVersion(): string
+    {
+        return $this->bot->version;
+    }
+
+    /**
      * Get bot ID.
      *
      * @return int Bot ID.
@@ -232,19 +255,18 @@ class RobotService
      *
      * @return string Bot nickname.
      */
-    public function getNickname(): string
+    public function getNickname(int $groupId = 0): string
     {
-        return $this->profile->nickname;
-    }
+        if ($groupId <= 0) {
+            return $this->profile->nickname;
+        } else {
+            if (!isset($this->nicknames[$groupId])) {
+                $this->nicknames[$groupId] =
+                    $this->api->getMemberInfo($groupId, $this->getId())->getString("memberName", "");
+            }
 
-    /**
-     * Get version of Mirai API HTTP plugin.
-     *
-     * @return string Plugin version.
-     */
-    public function getVersion(): string
-    {
-        return $this->bot->version;
+            return $this->nicknames[$groupId];
+        }
     }
 
     /**

@@ -37,9 +37,7 @@ class Stop extends Start
 
         $this->chatSettings->set("active", false);
 
-        $this->setReply("robotStop", [
-            "机器人昵称" => $this->getRobotNickname()
-        ]);
+        $this->setReply("robotStop");
     }
 
     /**

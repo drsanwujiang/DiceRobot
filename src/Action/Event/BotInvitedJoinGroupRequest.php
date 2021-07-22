@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Event\BotInvitedJoinGroupRequestEvent;
 /**
  * Class BotInvitedJoinGroupRequest
  *
- * Action that responds to BotInvitedJoinGroupRequestEvent.
+ * Action that handles BotInvitedJoinGroupRequestEvent.
  *
  * Approve the request when the group is normal, or reject the request when the group is delinquent.
  *
@@ -21,9 +21,7 @@ use DiceRobot\Data\Report\Event\BotInvitedJoinGroupRequestEvent;
  */
 class BotInvitedJoinGroupRequest extends EventAction
 {
-    /**
-     * @var BotInvitedJoinGroupRequestEvent $event Event.
-     */
+    /** @var BotInvitedJoinGroupRequestEvent $event Event. */
     public Event $event;
 
     /**

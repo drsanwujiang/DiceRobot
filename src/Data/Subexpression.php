@@ -42,7 +42,7 @@ class Subexpression
     public int $result;
 
     /**
-     * Set maxDiceNumber and maxSurfaceNumber.
+     * Initialize subexpression.
      *
      * @param Config $config DiceRobot config.
      */

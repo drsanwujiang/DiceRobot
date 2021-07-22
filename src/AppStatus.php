@@ -24,7 +24,7 @@ class AppStatus
     protected static LoggerInterface $logger;
 
     /**
-     * Set logger and default status.
+     * Initialize factory.
      *
      * @param LoggerFactory $loggerFactory Logger factory.
      */

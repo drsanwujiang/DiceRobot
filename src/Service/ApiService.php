@@ -167,7 +167,7 @@ class ApiService
     }
 
     /**
-     * Initialize API service.
+     * Initialize service.
      *
      * @param Config $config DiceRobot config.
      */

@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Event\BotReloginEvent;
 /**
  * Class BotRelogin
  *
- * Action that responds to BotReloginEvent.
+ * Action that handles BotReloginEvent.
  *
  * Initialize API service (auth a new session).
  *
@@ -21,9 +21,7 @@ use DiceRobot\Data\Report\Event\BotReloginEvent;
  */
 class BotRelogin extends EventAction
 {
-    /**
-     * @var BotReloginEvent $event Event.
-     */
+    /** @var BotReloginEvent $event Event. */
     public Event $event;
 
     /**

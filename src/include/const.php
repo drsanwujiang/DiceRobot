@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * Constants of DiceRobot.
  *
- * This file contains version (DICEROBOT_VERSION), startup time (DICEROBOT_STARTUP) and default config
- * (DEFAULT_CONFIG) of DiceRobot.
+ * This file contains version (DICEROBOT_VERSION), startup time (DICEROBOT_STARTUP), default config (DEFAULT_CONFIG),
+ * routes (DEFAULT_ROUTES) and chat settings (DEFAULT_CHAT_SETTINGS) of DiceRobot.
  *
  * This file should NOT be modified, for it ensures DiceRobot can work in the default mode and behave as expected.
  *
@@ -15,16 +15,13 @@ declare(strict_types=1);
 
 namespace {
     /** @var string Current version. */
-    const DICEROBOT_VERSION = "3.0.0-alpha";
+    const DICEROBOT_VERSION = "3.0.0";
 
-    /** @var string Root directory. */
+    /** @var int Startup time. */
     define("DICEROBOT_STARTUP", time());
 }
 
 namespace DiceRobot {
-
-    use Monolog\Logger;
-
     /** @var array Default config. */
     const DEFAULT_CONFIG = [
         "dicerobot" => [
@@ -45,10 +42,6 @@ namespace DiceRobot {
         ],
 
         "mirai" => [
-            "robot" => [
-                "id" => 10000,
-                "authKey" => "12345678"
-            ],
             "server" => [
                 "host" => "127.0.0.1",
                 "port" => 8080
@@ -63,8 +56,8 @@ namespace DiceRobot {
             "channel" => "default",
             "filename" => "dicerobot.log",
             "level" => [
-                "file" => Logger::NOTICE,
-                "console" => Logger::CRITICAL
+                "file" => \Monolog\Logger::NOTICE,
+                "console" => \Monolog\Logger::CRITICAL
             ]
         ],
 
@@ -390,6 +383,8 @@ namespace DiceRobot {
                 \DiceRobot\Action\Event\BotOnline::class,
             \DiceRobot\Data\Report\Event\BotReloginEvent::class =>
                 \DiceRobot\Action\Event\BotRelogin::class,
+            \DiceRobot\Data\Report\Event\MemberCardChangeEvent::class =>
+                \DiceRobot\Action\Event\MemberCardChange::class,
             \DiceRobot\Data\Report\Event\NewFriendRequestEvent::class =>
                 \DiceRobot\Action\Event\NewFriendRequest::class
         ]

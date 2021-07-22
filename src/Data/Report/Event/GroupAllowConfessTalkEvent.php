@@ -13,8 +13,6 @@ use DiceRobot\Data\Report\Event;
  * DTO. Event of that confess chat of the group is enabled/disabled.
  *
  * @package DiceRobot\Data\Report\Event
- *
- * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#%E5%9D%A6%E7%99%BD%E8%AF%B4
  */
 final class GroupAllowConfessTalkEvent extends Event
 {

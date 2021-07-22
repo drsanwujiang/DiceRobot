@@ -13,8 +13,6 @@ use DiceRobot\Data\Report\Event;
  * DTO. Event of that a message is recalled in the group.
  *
  * @package DiceRobot\Data\Report\Event
- *
- * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#%E7%BE%A4%E6%B6%88%E6%81%AF%E6%92%A4%E5%9B%9E
  */
 final class GroupRecallEvent extends Event
 {

@@ -10,11 +10,9 @@ use DiceRobot\Data\Report\Event;
 /**
  * Class MemberCardChangeEvent
  *
- * DTO. Event of that a group member's card has changed.
+ * DTO. Event of that a group member's card changed.
  *
  * @package DiceRobot\Data\Report\Event
- *
- * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#%E7%BE%A4%E5%90%8D%E7%89%87%E6%94%B9%E5%8A%A8
  */
 final class MemberCardChangeEvent extends Event
 {

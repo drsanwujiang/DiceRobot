@@ -6,7 +6,6 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
-use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Exception\{DiceRobotException, OrderErrorException};
 use DiceRobot\Exception\FileException\LostException;
 use DiceRobot\Util\Convertor;
@@ -41,11 +40,7 @@ class Dnd extends MessageAction
             return;
         }
 
-        $atSender = ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "";
-
         $this->setReply("dndGenerateResult", [
-            "@发送者" => $atSender,
-            "发送者QQ" => $this->message->sender->id,
             "冒险者属性" => $this->generateAttributes($count)
         ]);
     }

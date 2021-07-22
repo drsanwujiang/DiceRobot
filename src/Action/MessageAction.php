@@ -8,7 +8,7 @@ use Co\System;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\Contact\Friend;
 use DiceRobot\Data\Report\Message;
-use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage};
+use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
 use DiceRobot\Data\Resource\ChatSettings;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Interfaces\Action;
@@ -59,6 +59,9 @@ abstract class MessageAction implements Action
     /** @var bool If message sender at robot. */
     protected bool $at;
 
+    /** @var string[] Variables used in replies. */
+    protected array $variables;
+
     /** @var string[] Replies. */
     protected array $replies = [];
 
@@ -99,8 +102,6 @@ abstract class MessageAction implements Action
         $this->at = $at;
 
         $this->logger->debug("Message action " . static::class . " created.");
-
-        $this->loadChatSetting();
     }
 
     /**
@@ -109,6 +110,17 @@ abstract class MessageAction implements Action
     public function __destruct()
     {
         $this->logger->debug("Message action " . static::class . " destructed.");
+    }
+
+    /**
+     * Initialize action.
+     */
+    public function initialize(): void
+    {
+        $this->loadChatSetting();
+        $this->setVariables();
+
+        $this->logger->debug("Message action " . static::class . " initialized.");
     }
 
     /**
@@ -128,8 +140,26 @@ abstract class MessageAction implements Action
         }
 
         $this->chatSettings = $this->resource->getChatSettings($chatType, $chatId);
+    }
 
-        $this->logger->info("Chat settings loaded.");
+    /**
+     * Set variables commonly used in replies.
+     */
+    private function setVariables(): void
+    {
+        $this->variables = [
+            "机器人昵称" => $this->getRobotNickname(),
+            "机器人QQ" => $this->robot->getId(),
+            "机器人QQ号" => $this->robot->getId(),
+            "群名" => $this->message->sender->group->name ?? "",
+            "群号" => $this->message->sender->group->id ?? "",
+            "@发送者" => ($this->message instanceof GroupMessage) ?
+                "[mirai:at:{$this->message->sender->id}] " : "@{$this->getNickname()} ",
+            "昵称" => $this->getNickname(),
+            "发送者昵称" => $this->getNickname(),
+            "发送者QQ" => $this->message->sender->id,
+            "发送者QQ号" => $this->message->sender->id
+        ];
     }
 
     /**
@@ -219,11 +249,37 @@ abstract class MessageAction implements Action
      * Set reply.
      *
      * @param string $replyKey Reply key.
-     * @param array $variables Variables to replace with.
+     * @param string[] $variables Variables to replace with.
      */
     final protected function setReply(string $replyKey, array $variables = []): void
     {
-        $this->replies[] = Convertor::toCustomString($this->config->getReply($replyKey), $variables);
+        $this->replies[] = $this->getCustomReply($replyKey, $variables);
+    }
+
+    /**
+     * Get custom reply.
+     *
+     * @param string $replyKey Reply key.
+     * @param array $variables Variables to replace with.
+     *
+     * @return string Custom reply.
+     */
+    final protected function getCustomReply(string $replyKey, array $variables = []): string
+    {
+        return $this->getCustomString($this->config->getReply($replyKey), $variables);
+    }
+
+    /**
+     * Convert string with parameters to plain text string, with common variables.
+     *
+     * @param string $string String to be replaced.
+     * @param array $variables Variables to replace with.
+     *
+     * @return string Custom string.
+     */
+    final protected function getCustomString(string $string, array $variables = []): string
+    {
+        return Convertor::toCustomString($string, array_replace($this->variables, $variables));
     }
 
     /**
@@ -251,15 +307,8 @@ abstract class MessageAction implements Action
 
         if (!empty($nickname)) {
             return $nickname;
-        }
-
-        if ($this->message instanceof GroupMessage) {
-            return empty(
-            $nickname = $this->api->getMemberInfo(
-                $this->message->sender->group->id,
-                $this->robot->getId()
-            )->getString("name", "")
-            ) ? $this->robot->getNickname() : $nickname;
+        } elseif ($this->message instanceof GroupMessage) {
+            return $this->robot->getNickname($this->message->sender->group->id);
         } else {
             return $this->robot->getNickname();
         }
@@ -277,12 +326,14 @@ abstract class MessageAction implements Action
                 $this->message->sender->group->id,
                 Convertor::toMessageChain($message)
             );
-        } else {
+        } elseif ($this->message instanceof FriendMessage || $this->message instanceof TempMessage) {
             $this->sendPrivateMessage(
                 $message,
                 $this->message->sender->id,
                 $this->message->sender->group->id ?? 0
             );
+        } else {
+            return;
         }
 
         $this->logger->info("Message sent.");
@@ -300,12 +351,14 @@ abstract class MessageAction implements Action
                 $this->message->sender->group->id,
                 Convertor::toMessageChain($message)
             );
-        } else {
+        } elseif ($this->message instanceof FriendMessage || $this->message instanceof TempMessage) {
             $this->sendPrivateMessageAsync(
                 $message,
                 $this->message->sender->id,
                 $this->message->sender->group->id ?? 0
             );
+        } else {
+            return;
         }
 
         $this->logger->info("Message sent asynchronously.");
@@ -325,8 +378,10 @@ abstract class MessageAction implements Action
 
         if ($this->message instanceof FriendMessage) {
             $this->api->sendFriendMessage($userId, Convertor::toMessageChain($message));
-        } else {
+        } elseif ($this->message instanceof TempMessage) {
             $this->api->sendTempMessage($userId, $groupId, Convertor::toMessageChain($message));
+        } else {
+            return;
         }
 
         $this->logger->info("Private message sent.");
@@ -346,8 +401,10 @@ abstract class MessageAction implements Action
 
         if ($this->message instanceof FriendMessage) {
             $this->api->sendFriendMessageAsync($userId, Convertor::toMessageChain($message));
-        } else {
+        } elseif ($this->message instanceof TempMessage) {
             $this->api->sendTempMessageAsync($userId, $groupId, Convertor::toMessageChain($message));
+        } else {
+            return;
         }
 
         $this->logger->info("Private message sent asynchronously.");

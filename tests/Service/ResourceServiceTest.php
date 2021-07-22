@@ -13,7 +13,9 @@ class ResourceServiceTest extends TestCase
     public function testInitialize(): void
     {
         $container = $this->getContainer();
+        /** @var ResourceService $service */
         $service = $container->get(ResourceService::class);
+        /** @var Config $config */
         $config = $container->get(Config::class);
 
         try {

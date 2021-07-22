@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace DiceRobot\Factory;
 
-use DiceRobot\Data\Report\Fragment\{App, At, AtAll, Face, FlashImage,Image, Json, Plain, Poke, Quote, Source,
-    UnknownFragment, Voice, Xml};
+use DiceRobot\Data\Report\Fragment\{App, At, AtAll, Dice, Face, File, FlashImage, Forward, Image, Json, MusicShare,
+    Plain, Poke, Quote, Source, UnknownFragment, Voice, Xml};
 use DiceRobot\Interfaces\Fragment;
 use DiceRobot\Interfaces\Fragment\ParsableFragment;
 use DiceRobot\Util\Convertor;
@@ -24,10 +24,14 @@ class FragmentFactory
         "App" => App::class,
         "At" => At::class,
         "AtAll" => AtAll::class,
+        "Dice" => Dice::class,
         "Face" => Face::class,
+        "File" => File::class,
         "FlashImage" => FlashImage::class,
+        "Forward" => Forward::class,
         "Image" => Image::class,
         "Json" => Json::class,
+        "MusicShare" => MusicShare::class,
         "Plain" => Plain::class,
         "Poke" => Poke::class,
         "Quote" => Quote::class,

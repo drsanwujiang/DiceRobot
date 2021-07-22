@@ -75,7 +75,7 @@ class StatisticsService
     }
 
     /**
-     * Initialize statistics service.
+     * Initialize service.
      */
     public function initialize(): void
     {

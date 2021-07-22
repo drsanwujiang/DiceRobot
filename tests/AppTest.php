@@ -12,6 +12,7 @@ class AppTest extends TestCase
     public function testInitialize(): void
     {
         $container = $this->getContainer();
+        /** @var App $app */
         $app = $container->get(App::class);
 
         $app->initialize();

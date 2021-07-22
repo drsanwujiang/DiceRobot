@@ -46,9 +46,7 @@ class Create extends LogAction
         $this->chatSettings->set("logUuid", $this->createLog()->uuid);
         $this->chatSettings->set("isLogging", true);
 
-        $this->setReply("logCreate", [
-            "机器人昵称" => $this->getRobotNickname()
-        ]);
+        $this->setReply("logCreate");
     }
 
     /**

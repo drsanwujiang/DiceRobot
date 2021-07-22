@@ -10,11 +10,9 @@ use DiceRobot\Data\Report\Event;
 /**
  * Class GroupEntranceAnnouncementChangeEvent
  *
- * DTO. Event of that the group's entrance announcement has changed.
+ * DTO. Event of that the group's entrance announcement changed.
  *
  * @package DiceRobot\Data\Report\Event
- *
- * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#%E6%9F%90%E7%BE%A4%E5%85%A5%E7%BE%A4%E5%85%AC%E5%91%8A%E6%94%B9%E5%8F%98
  */
 final class GroupEntranceAnnouncementChangeEvent extends Event
 {
