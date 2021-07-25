@@ -12,6 +12,7 @@
 - Dicing order in deck item support
 - Panel API
 - Common reply variables
+- Log service
 
 ### Fixed
 - Some wordings
@@ -24,6 +25,7 @@
 - Heartbeat strategy
 - Default chat settings
 - Check strategy to empty chat settings
+- Application status logic
 
 ### Refactored
 - Long message split strategy

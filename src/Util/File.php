@@ -45,30 +45,42 @@ class File
     }
 
     /**
+     * Get file list of specific directory.
+     *
+     * @param string $path Directory path.
+     *
+     * @return string[] File list.
+     *
+     * @throws RuntimeException Directory is unreadable.
+     */
+    public static function getFileList(string $path): array
+    {
+        self::checkDirectory($path);
+
+        if (false === $files = scandir($path)) {
+            throw new RuntimeException("Get file list in {$path} failed.");
+        }
+
+        return array_diff($files, ["..", "."]);
+    }
+
+    /**
      * Get file content.
      *
      * @param string $path File path.
      *
-     * @return array File content.
+     * @return string File content.
      *
      * @throws RuntimeException Failed to get the file.
      */
-    public static function getFile(string $path): array
+    public static function getFile(string $path): string
     {
         if (!file_exists($path)) {
             throw new RuntimeException("File {$path} does not exist.");
         }
 
-        if (false === $jsonString = file_get_contents($path)) {
+        if (false === $content = file_get_contents($path)) {
             throw new RuntimeException("File {$path} exists but cannot be read.");
-        }
-
-        // Try to decode the file
-        if (!is_array($content = json_decode($jsonString, true))) {
-            // Try to decode as UTF-8 BOM
-            if (!is_array($content = json_decode(ltrim($jsonString, "\xEF\xBB\xBF"), true))) {
-                throw new RuntimeException("File {$path} exists but cannot be parsed.");
-            }
         }
 
         return $content;
@@ -95,5 +107,29 @@ class File
         if (false === file_put_contents($path, $content)) {
             throw new RuntimeException("File {$path} cannot be created, for other reason.");
         }
+    }
+
+    /**
+     * Get JSON file content.
+     *
+     * @param string $path File path.
+     *
+     * @return array JSON array.
+     *
+     * @throws RuntimeException Failed to get the file.
+     */
+    public static function getJsonFile(string $path): array
+    {
+        $content = self::getFile($path);
+
+        // Try to decode the file
+        if (!is_array($json = json_decode($content, true))) {
+            // Try to decode as UTF-8 BOM
+            if (!is_array($json = json_decode(ltrim($content, "\xEF\xBB\xBF"), true))) {
+                throw new RuntimeException("File {$path} exists but cannot be parsed.");
+            }
+        }
+
+        return $json;
     }
 }

@@ -43,8 +43,8 @@ class ReportHandler
     /** @var StatisticsService Statistics service. */
     protected StatisticsService $statistics;
 
-    /** @var LogHandler TRPG log handler. */
-    protected LogHandler $log;
+    /** @var TrpgLogHandler TRPG log handler. */
+    protected TrpgLogHandler $log;
 
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
@@ -59,7 +59,7 @@ class ReportHandler
      * @param ApiService $api API service.
      * @param RobotService $robot Robot service.
      * @param StatisticsService $statistics Statistics service.
-     * @param LogHandler $log TRPG log handler.
+     * @param TrpgLogHandler $log TRPG log handler.
      * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
@@ -68,7 +68,7 @@ class ReportHandler
         ApiService $api,
         RobotService $robot,
         StatisticsService $statistics,
-        LogHandler $log,
+        TrpgLogHandler $log,
         LoggerFactory $loggerFactory
     ) {
         $this->container = $container;
@@ -78,7 +78,7 @@ class ReportHandler
         $this->statistics = $statistics;
         $this->log = $log;
 
-        $this->logger = $loggerFactory->create("Handler");
+        $this->logger = $loggerFactory->create("Report");
 
         $this->logger->debug("Report handler created.");
     }
@@ -124,18 +124,18 @@ class ReportHandler
             }
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Report failed, unable to call Mirai API.");
-        } catch (Throwable $e) {
+        } catch (Throwable $t) {
             $details = sprintf(
-                "Type: %s.\nCode: %s.\nMessage: %s.\nFile: %s.\nLine: %s.\nTrace: %s",
-                get_class($e),
-                $e->getCode(),
-                $e->getMessage(),
-                $e->getFile(),
-                $e->getLine(),
-                $e->getTraceAsString()
+                "Type: %s\nCode: %s\nMessage: %s\nFile: %s\nLine: %s\nTrace: %s",
+                get_class($t),
+                $t->getCode(),
+                $t->getMessage(),
+                $t->getFile(),
+                $t->getLine(),
+                $t->getTraceAsString()
             );
 
-            $this->logger->error("Report failed, unexpected exception occurred:\n{$details}");
+            $this->logger->error("Report failed, unexpected exception occurred:\n{$details}.");
         }
     }
 

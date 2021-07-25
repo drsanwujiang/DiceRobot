@@ -19,14 +19,11 @@ use Psr\Log\LoggerInterface;
  */
 class LoggerFactory
 {
+    /** @var Config DiceRobot config. */
+    protected Config $config;
+
     /** @var Logger Logger. */
     protected Logger $logger;
-
-    /** @var StreamHandler Stream handler. */
-    protected StreamHandler $streamHandler;
-
-    /** @var RotatingFileHandler Rotating file handler. */
-    protected RotatingFileHandler $rotatingFileHandler;
 
     /**
      * The constructor.
@@ -35,25 +32,44 @@ class LoggerFactory
      */
     public function __construct(Config $config)
     {
-        $filenameFormat = "{filename}-{date}";
-        $dateFormat = "Y-m-d H:i:s P";
+        $this->config = $config;
 
         $this->logger = new Logger("default");
-        $formatter = new LineFormatter(null, $dateFormat, false, true);
 
-        $this->streamHandler =
-            new StreamHandler("php://stdout", $config->getInt("log.level.console"));
-        $this->streamHandler->setFormatter($formatter);
-        $this->logger->pushHandler($this->streamHandler);
+        $this->setHandlers();
+    }
 
-        if (!empty($path = $config->getString("log.path"))) {
-            $filename = sprintf('%s/%s', $path, $config->getString("log.filename"));
-            $this->rotatingFileHandler =
-                new RotatingFileHandler($filename, 0, $config->getInt("log.level.file"));
-            $this->rotatingFileHandler->setFilenameFormat($filenameFormat, RotatingFileHandler::FILE_PER_DAY);
-            $this->rotatingFileHandler->setFormatter($formatter);
-            $this->logger->pushHandler($this->rotatingFileHandler);
+    /**
+     * Set handlers.
+     */
+    protected function setHandlers(): void
+    {
+        $handlers = [];
+        $dateFormat = "Y-m-d H:i:s P";
+        $formatter = new LineFormatter(null, $dateFormat, true, true);
+
+        // Set console log
+        $streamHandler =
+            new StreamHandler("php://stdout", $this->config->getInt("log.level.console"));
+        $streamHandler->setFormatter($formatter);
+        $handlers[] = $streamHandler;
+
+        // Set file log
+        if (!empty($path = $this->config->getString("log.path"))) {
+            $filenameFormat = "{filename}-{date}";
+            $filename = sprintf('%s/%s', $path, $this->config->getString("log.filename"));
+            $rotatingFileHandler = new RotatingFileHandler(
+                $filename,
+                $this->config->getInt("log.maxFiles"),
+                $this->config->getInt("log.level.file")
+            );
+
+            $rotatingFileHandler->setFilenameFormat($filenameFormat, RotatingFileHandler::FILE_PER_DAY);
+            $rotatingFileHandler->setFormatter($formatter);
+            $handlers[] = $rotatingFileHandler;
         }
+
+        $this->logger->setHandlers($handlers);
     }
 
     /**
@@ -70,15 +86,9 @@ class LoggerFactory
 
     /**
      * Reload config.
-     *
-     * @param Config $config DiceRobot config.
      */
-    public function reload(Config $config): void
+    public function reload(): void
     {
-        $this->streamHandler->setLevel($config->getInt("log.level.console"));
-
-        if (isset($this->rotatingFileHandler)) {
-            $this->rotatingFileHandler->setLevel($config->getInt("log.level.file"));
-        }
+        $this->setHandlers();
     }
 }

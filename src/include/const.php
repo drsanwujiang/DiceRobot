@@ -53,8 +53,8 @@ namespace DiceRobot {
         ],
 
         "log" => [
-            "channel" => "default",
             "filename" => "dicerobot.log",
+            "maxFiles" => 0,
             "level" => [
                 "file" => \Monolog\Logger::NOTICE,
                 "console" => \Monolog\Logger::CRITICAL

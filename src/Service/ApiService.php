@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\Data\{Config, MiraiResponse};
+use DiceRobot\Data\MiraiResponse;
 use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetTokenResponse, GetCardResponse,
     GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
     ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
@@ -168,13 +168,11 @@ class ApiService
 
     /**
      * Initialize service.
-     *
-     * @param Config $config DiceRobot config.
      */
-    public function initialize(Config $config): void
+    public function initialize(): void
     {
-        $this->miraiHandler->initialize($config);
-        $this->diceRobotHandler->initialize($config);
+        $this->miraiHandler->initialize();
+        $this->diceRobotHandler->initialize();
 
         $this->logger->notice("API service initialized.");
     }

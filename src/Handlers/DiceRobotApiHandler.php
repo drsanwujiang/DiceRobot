@@ -24,6 +24,9 @@ use Swlib\Saber;
  */
 class DiceRobotApiHandler
 {
+    /** @var Config DiceRobot config. */
+    protected Config $config;
+
     /** @var Saber Client pool. */
     protected Saber $pool;
 
@@ -33,11 +36,14 @@ class DiceRobotApiHandler
     /**
      * The constructor.
      *
+     * @param Config $config DiceRobot config.
      * @param LoggerFactory $loggerFactory Logger factory.
      */
-    public function __construct(LoggerFactory $loggerFactory)
+    public function __construct(Config $config, LoggerFactory $loggerFactory)
     {
-        $this->logger = $loggerFactory->create("Handler");
+        $this->config = $config;
+
+        $this->logger = $loggerFactory->create("DiceRobotAPI");
 
         $this->logger->debug("DiceRobot API handler created.");
     }
@@ -52,19 +58,17 @@ class DiceRobotApiHandler
 
     /**
      * Initialize handler.
-     *
-     * @param Config $config DiceRobot config.
      */
-    public function initialize(Config $config): void
+    public function initialize(): void
     {
         $this->pool = Saber::create([
-            "base_uri" => $config->getString("dicerobot.api.uri"),
+            "base_uri" => $this->config->getString("dicerobot.api.uri"),
             "use_pool" => true,
             "headers" => [
                 "Accept" => "application/json",
                 "Accept-Encoding" => "identity",
                 "Content-Type" => ContentType::JSON,
-                "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
+                "User-Agent" => "DiceRobot/{$this->config->getString("dicerobot.version")}"
             ],
             "before" => function (Saber\Request $request) {
                 $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");

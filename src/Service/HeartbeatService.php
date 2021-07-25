@@ -84,7 +84,9 @@ class HeartbeatService
         $this->initTimerId = Timer::after(3000, function () {
             $this->logger->notice("Try to enable heartbeat.");
 
-            $this->enable();
+            if (!$this->enable()) {
+                $this->logger->notice("Auto enable heartbeat failed, wait for Mirai event.");
+            }
         });
 
         $this->logger->notice("Heartbeat service initialized.");

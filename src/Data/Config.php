@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DiceRobot\Data;
 
 use DiceRobot\Traits\ArrayReaderTrait;
-use Psr\Container\ContainerInterface;
 
 use const DiceRobot\DEFAULT_CONFIG;
 
@@ -23,17 +22,23 @@ class Config
     /**
      * The constructor.
      *
-     * @param ContainerInterface $container Container.
+     * @param CustomConfig $customConfig Custom config.
      * @param Resource\Config|null $config Panel config.
      *
-     * @noinspection PhpDocMissingThrowsInspection
-     * @noinspection PhpUnhandledExceptionInspection
      */
-    public function __construct(ContainerInterface $container, Resource\Config $config = null)
+    public function __construct(CustomConfig $customConfig, Resource\Config $config = null)
     {
-        /** @var CustomConfig $customConfig */
-        $customConfig = $container->make(CustomConfig::class);
+        $this->load($customConfig, $config);
+    }
 
+    /**
+     * Load panel config and custom config.
+     *
+     * @param CustomConfig $customConfig Custom config.
+     * @param Resource\Config|null $config Panel config.
+     */
+    public function load(CustomConfig $customConfig, Resource\Config $config = null): void
+    {
         $this->__constructArrayReader((array) array_replace_recursive(
             DEFAULT_CONFIG,
             $config ? $config->all() : [],

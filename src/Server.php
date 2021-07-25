@@ -70,8 +70,6 @@ class Server
         if ($this->app->getStatus()->greaterThan(AppStatusEnum::RUNNING()) && $this->setServer()) {
             $this->setSignals();
             $this->setRoutes();
-
-            $this->panelHandler->initialize($this);
         }
     }
 
@@ -97,7 +95,9 @@ class Server
             /** @noinspection PhpMethodParametersCountMismatchInspection */
             $this->server = new SwooleServer($host, $port);
         } catch (Exception $e) {
-            $this->logger->emergency("Server exited unexpectedly. Code {$e->getCode()}, message: {$e->getMessage()}.");
+            $this->logger->emergency(
+                "Create server failed. Code {$e->getCode()}, message: {$e->getMessage()}."
+            );
 
             $this->emergencyStop();
 
@@ -125,6 +125,9 @@ class Server
 
         // Signal SIGTERM (program terminated), stop the application
         Process::signal(SIGTERM, [$this, "signalStop"]);
+
+        // Signal SIGUSR1 (gracefully stop), stop the application
+        Process::signal(SIGUSR1, [$this, "signalStop"]);
 
         // Signal SIGUSR2 (gracefully reload), reload the application
         Process::signal(SIGUSR2, [$this, "signalReload"]);
@@ -155,6 +158,8 @@ class Server
 
                 $this->emergencyStop();
             }
+        } else {
+            $this->logger->alert("Start server failed.");
         }
     }
 
@@ -163,7 +168,7 @@ class Server
      */
     public function stop(): void
     {
-        $this->logger->info("Shutdown Swoole HTTP server...");
+        $this->logger->info("Stopping server...");
 
         $this->server->shutdown();
     }
@@ -173,7 +178,7 @@ class Server
      */
     protected function emergencyStop(): void
     {
-        $this->logger->info("Stop application...");
+        $this->logger->info("Stopping application...");
 
         $this->app->stop();
     }
@@ -197,9 +202,11 @@ class Server
      */
     public function signalStop(int $signal): void
     {
-        $this->logger->warning("Server received Linux signal {$signal}, stop application.");
+        $this->logger->notice("Server received Linux signal {$signal}, exit.");
 
-        $this->app->stop();
+        if (!$this->app->getStatus()->equals(AppStatusEnum::STOPPED())) {
+            $this->app->stop();
+        }
 
         $this->stop();
     }
@@ -214,69 +221,21 @@ class Server
     {
         $method = $request->server["request_method"] ?? "";
         $uri = $request->server["request_uri"] ?? "";
+        $queryParams = $request->get ?? [];
         $content = (string) ($request->getContent() ?? "");
         $contentType = $request->header["content-type"] ?? "";
 
         if ($method == "POST" && $uri == "/report") {
+            // Handle report
             $this->report($content, $response);
+        } elseif (preg_match(
+            "/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/",
+            $request->header["x-dr-panel"] ?? "")
+        ) {
+            // Handle panel request
+            $this->panelHandler->handle($method, $uri, $queryParams, $content, $contentType, $response);
         } else {
-            /** Panel APIs */
-
-            // Check header
-            if (!preg_match("/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/", $request->header["x-dr-panel"] ?? "")) {
-                $this->panelHandler->notFound($response);
-            } else {
-                // Web APIs
-                if ($method == "OPTIONS") {
-                    $this->panelHandler->preflight($response);
-                } elseif ($method == "POST" && $contentType == "application/json") {
-                    if ($uri == "/config") {
-                        $this->panelHandler->setConfig($content, $response);
-                    } elseif ($uri == "/mirai/update") {
-                        $this->panelHandler->updateMirai($content, $response);
-                    } else {
-                        $this->panelHandler->notFound($response);
-                    }
-                } elseif ($method == "GET") {
-                    if ($uri == "/connect") {
-                        $this->panelHandler->connect($response);
-                    } elseif ($uri == "/profile") {
-                        $this->panelHandler->getProfile($response);
-                    } elseif ($uri == "/status") {
-                        $this->panelHandler->getStatus($response);
-                    } elseif ($uri == "/statistics") {
-                        $this->panelHandler->getStatistics($response);
-                    } elseif ($uri == "/config") {
-                        $this->panelHandler->getConfig($response);
-                    } elseif ($uri == "/pause") {
-                        $this->panelHandler->pause($response);
-                    } elseif ($uri == "/run") {
-                        $this->panelHandler->rerun($response);
-                    } elseif ($uri == "/reload") {
-                        $this->panelHandler->reload($response);
-                    } elseif ($uri == "/stop") {
-                        $this->panelHandler->stop($response);
-                    } elseif ($uri == "/restart") {
-                        $this->panelHandler->restart($response);
-                    } elseif ($uri == "/update") {
-                        $this->panelHandler->update($response);
-                    } elseif ($uri == "/skeleton/update") {
-                        $this->panelHandler->updateSkeleton($response);
-                    } elseif ($uri == "/mirai/status") {
-                        $this->panelHandler->getMiraiStatus($response);
-                    } elseif ($uri == "/mirai/start") {
-                        $this->panelHandler->startMirai($response);
-                    } elseif ($uri == "/mirai/stop") {
-                        $this->panelHandler->stopMirai($response);
-                    } elseif ($uri == "/mirai/restart") {
-                        $this->panelHandler->restartMirai($response);
-                    } else {
-                        $this->panelHandler->notFound($response);
-                    }
-                } else {
-                    $this->panelHandler->notFound($response);
-                }
-            }
+            $this->responseFactory->createNotFound($response);
         }
 
         if ($response->isWritable()) {

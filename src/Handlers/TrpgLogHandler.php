@@ -18,13 +18,13 @@ use DiceRobot\Util\Convertor;
 use Psr\Log\LoggerInterface;
 
 /**
- * Class LogHandler
+ * Class TrpgLogHandler
  *
  * TRPG log handler.
  *
  * @package DiceRobot\Handlers
  */
-class LogHandler
+class TrpgLogHandler
 {
     /** @var Config DiceRobot config. */
     protected Config $config;
@@ -62,7 +62,7 @@ class LogHandler
         $this->resource = $resource;
         $this->robot = $robot;
 
-        $this->logger = $loggerFactory->create("Handler");
+        $this->logger = $loggerFactory->create("TrpgLog");
 
         $this->logger->debug("Log handler created.");
     }
@@ -102,6 +102,8 @@ class LogHandler
             // Avoid empty log
             if (!empty($log["messageChain"])) {
                 $this->updateLog($uuid, $log);
+
+                $this->logger->info("TRPG log updated.");
             }
         } elseif ($message && $action) {
             $log = $this->getLogItem(null, null, $action->getRobotNickname());
@@ -112,6 +114,8 @@ class LogHandler
                 // Avoid empty log
                 if (!empty($log["messageChain"])) {
                     $this->updateLog($uuid, $log);
+
+                    $this->logger->info("TRPG log updated.");
 
                     // Sleep 0.5s
                     System::sleep(0.5);
@@ -131,6 +135,8 @@ class LogHandler
             // Avoid empty log
             if (!empty($log["messageChain"])) {
                 $this->updateLog($uuid, $log);
+
+                $this->logger->info("TRPG log updated.");
             }
         }
     }

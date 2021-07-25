@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace DiceRobot;
 
-use DiceRobot\Data\{Config, Dice, Subexpression};
+use DiceRobot\Data\{Config, CustomConfig, Dice, Subexpression};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Handlers\ReportHandler;
-use DiceRobot\Service\{ApiService, HeartbeatService, ResourceService, RobotService, StatisticsService};
+use DiceRobot\Service\{ApiService, HeartbeatService, LogService, ResourceService, RobotService, StatisticsService};
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use ReflectionClass;
 use Swoole\Timer;
 
 /**
@@ -36,6 +35,9 @@ class App
     /** @var HeartbeatService Heartbeat service. */
     protected HeartbeatService $heartbeat;
 
+    /** @var LogService Log service. */
+    protected LogService $log;
+
     /** @var ResourceService Resource service. */
     protected ResourceService $resource;
 
@@ -58,6 +60,7 @@ class App
      * @param Config $config DiceRobot config.
      * @param ApiService $api API service.
      * @param HeartbeatService $heartbeat Heartbeat service.
+     * @param LogService $log Log service.
      * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
      * @param StatisticsService $statistics Statistics service.
@@ -69,6 +72,7 @@ class App
         Config $config,
         ApiService $api,
         HeartbeatService $heartbeat,
+        LogService $log,
         ResourceService $resource,
         RobotService $robot,
         StatisticsService $statistics,
@@ -79,6 +83,7 @@ class App
         $this->config = $config;
         $this->api = $api;
         $this->heartbeat = $heartbeat;
+        $this->log = $log;
         $this->resource = $resource;
         $this->robot = $robot;
         $this->statistics = $statistics;
@@ -104,8 +109,9 @@ class App
     {
         /** Services initialization */
         try {
-            $this->api->initialize($this->config);
+            $this->api->initialize();
             $this->heartbeat->initialize();
+            $this->log->initialize();
             $this->resource->initialize($this->config);
             $this->robot->initialize();
             $this->statistics->initialize();
@@ -117,7 +123,8 @@ class App
             return;
         }
 
-        $this->loadConfig();
+        // Load panel config
+        $this->config->load($this->container->make(CustomConfig::class), $this->resource->getConfig());
 
         /** Utils initialization */
         Dice::initialize($this->config);
@@ -137,42 +144,6 @@ class App
         $this->reportHandler->registerRoutes($routes);
 
         $this->logger->info("Report routes registered.");
-    }
-
-    /**
-     * Load config.
-     *
-     * @noinspection PhpUndefinedMethodInspection
-     */
-    protected function loadConfig(): void
-    {
-        $reflectionClass = new ReflectionClass(Config::class);
-        $property = $reflectionClass->getProperty("data");
-        $property->setAccessible(true);
-
-        // Set new config
-        $property->setValue($this->config, (new Config($this->container, $this->resource->getConfig()))->all());
-
-        // Reload logger factory
-        $this->container->get(LoggerFactory::class)->reload($this->config);
-    }
-
-    /**
-     * Set panel config.
-     *
-     * @param array $data Panel config data.
-     *
-     * @return bool Success.
-     */
-    public function setConfig(array $data): bool
-    {
-        if (!$this->resource->getConfig()->setConfig($data)) {
-            return false;
-        }
-
-        $this->loadConfig();
-
-        return true;
     }
 
     /**
@@ -249,6 +220,8 @@ class App
      * Reload the resources.
      *
      * @return int Result code.
+     *
+     * @noinspection PhpDocMissingThrowsInspection
      */
     public function reload(): int
     {
@@ -260,10 +233,20 @@ class App
             return -1;
         }
 
-        $this->loadConfig();
-        AppStatus::run();
+        $this->config->load($this->container->make(CustomConfig::class), $this->resource->getConfig());
+
+        // Reload logger factory
+        /** @var LoggerFactory $loggerFactory */
+        $loggerFactory = $this->container->get(LoggerFactory::class);
+        $loggerFactory->reload();
+
+        // Utils reinitialization
+        Dice::initialize($this->config);
+        Subexpression::initialize($this->config);
 
         $this->logger->notice("Application reloaded.");
+
+        AppStatus::run();
 
         return 0;
     }
