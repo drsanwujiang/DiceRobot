@@ -91,7 +91,7 @@ class MiraiApiHandler
         try {
             $response = $this->pool->request($options);
         } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
-            $this->logger->alert("Failed to request Mirai API for network problem.");
+            $this->logger->critical("Failed to request Mirai API for network problem.");
 
             throw new MiraiApiException();
         }

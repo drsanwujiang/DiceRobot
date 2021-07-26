@@ -89,7 +89,7 @@ class HeartbeatService
             }
         });
 
-        $this->logger->notice("Heartbeat service initialized.");
+        $this->logger->info("Heartbeat service initialized.");
     }
 
     /**
@@ -116,7 +116,7 @@ class HeartbeatService
             // Check logined
             $result = $this->api->getSessionInfo();
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-            $this->logger->alert("Enable heartbeat failed, unable to call Mirai API.");
+            $this->logger->critical("Enable heartbeat failed, unable to call Mirai API.");
 
             return false;
         }

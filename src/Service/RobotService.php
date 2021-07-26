@@ -87,7 +87,7 @@ class RobotService
         $this->profile = new BotProfile();
         $this->updateProfile([]);
 
-        $this->logger->notice("Robot service initialized.");
+        $this->logger->info("Robot service initialized.");
     }
 
     /**

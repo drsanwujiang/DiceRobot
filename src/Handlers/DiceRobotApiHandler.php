@@ -117,7 +117,7 @@ class DiceRobotApiHandler
 
         // Log error, but not throw exception
         if (0 != $data["code"]) {
-            $this->logger->warning(
+            $this->logger->error(
                 "DiceRobot API returned unexpected code {$data["code"]}, error message: {$data["message"]}."
             );
         }

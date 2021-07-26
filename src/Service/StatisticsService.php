@@ -94,7 +94,7 @@ class StatisticsService
             $this->count = $currentCount;
         });
 
-        $this->logger->notice("Statistics service initialized.");
+        $this->logger->info("Statistics service initialized.");
     }
 
     /**

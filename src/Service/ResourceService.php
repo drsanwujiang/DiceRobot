@@ -90,7 +90,7 @@ class ResourceService
         }
 
         if ($this->checkDirectories() && $this->load()) {
-            $this->logger->notice("Resource service initialized.");
+            $this->logger->info("Resource service initialized.");
         } else {
             $this->logger->alert("Initialize resource service failed.");
 

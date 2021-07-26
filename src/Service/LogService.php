@@ -56,7 +56,7 @@ class LogService
     public function initialize(): void
     {
         if ($this->checkDirectory($this->config->getString("log.path"))) {
-            $this->logger->notice("Log service initialized.");
+            $this->logger->info("Log service initialized.");
         } else {
             $this->logger->alert("Initialize log service failed.");
 

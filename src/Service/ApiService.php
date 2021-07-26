@@ -174,6 +174,6 @@ class ApiService
         $this->miraiHandler->initialize();
         $this->diceRobotHandler->initialize();
 
-        $this->logger->notice("API service initialized.");
+        $this->logger->info("API service initialized.");
     }
 }
