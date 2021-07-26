@@ -85,12 +85,7 @@ class RobotService
         $this->bot->id = 0;
         $this->bot->version = "Unknown";
         $this->profile = new BotProfile();
-        $this->profile->nickname = "Unknown";
-        $this->profile->email = "";
-        $this->profile->age = 0;
-        $this->profile->level = 0;
-        $this->profile->sign = "";
-        $this->profile->sex = "";
+        $this->updateProfile([]);
 
         $this->logger->notice("Robot service initialized.");
     }
@@ -106,8 +101,8 @@ class RobotService
     {
         try {
             // Update lists
-            $this->updateFriends($this->api->getFriendList()->all());
-            $this->updateGroups($this->api->getGroupList()->all());
+            $this->updateFriends($this->api->getFriendList()->getArray("data"));
+            $this->updateGroups($this->api->getGroupList()->getArray("data"));
 
             // Update bot and profile
             $this->updateBot(
@@ -150,12 +145,12 @@ class RobotService
      */
     public function updateProfile(array $profile): void
     {
-        $this->profile->nickname = $profile["nickname"];
-        $this->profile->email = $profile["email"];
-        $this->profile->age = $profile["age"];
-        $this->profile->level = $profile["level"];
-        $this->profile->sign = $profile["sign"];
-        $this->profile->sex = $profile["sex"];
+        $this->profile->nickname = $profile["nickname"] ?? "Unknown";
+        $this->profile->email = $profile["email"] ?? "";
+        $this->profile->age = $profile["age"] ?? 0;
+        $this->profile->level = $profile["level"] ?? 0;
+        $this->profile->sign = $profile["sign"] ?? "";
+        $this->profile->sex = $profile["sex"] ?? "";
     }
 
     /**

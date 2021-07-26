@@ -106,7 +106,7 @@ class ResponseFactory
             ->withHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
             ->withHeader("Access-Control-Allow-Headers", "*");
 
-        $this->notFoundResponse = $this->emptyResponse
+        $this->notFoundResponse = $this->preflightResponse
             ->withStatus(404)
             ->withHeader("Content-type", "application/json; charset=utf-8")
             ->withBody($this->psr17Factory->createStream((string) json_encode([
@@ -114,7 +114,7 @@ class ResponseFactory
                 "message" => self::RETURN_MESSAGES[-404]
             ])));
 
-        $this->errorResponse = $this->emptyResponse
+        $this->errorResponse = $this->preflightResponse
             ->withStatus(500)
             ->withHeader("Content-type", "application/json; charset=utf-8")
             ->withBody($this->psr17Factory->createStream((string) json_encode([

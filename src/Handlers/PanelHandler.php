@@ -521,6 +521,7 @@ class PanelHandler
      * @return Response HTTP response.
      *
      * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     protected function setConfig(string $content, Response $response): Response
     {

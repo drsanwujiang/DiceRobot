@@ -104,6 +104,8 @@ class App
 
     /**
      * Initialize application.
+     *
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function initialize(): void
     {
@@ -222,6 +224,7 @@ class App
      * @return int Result code.
      *
      * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function reload(): int
     {

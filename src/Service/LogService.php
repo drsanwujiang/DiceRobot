@@ -25,9 +25,6 @@ class LogService
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
-    /** @var string  */
-    protected string $pattern = "/\[(?P<date>.*)\] (?P<logger>\w+).(?P<level>\w+): (?P<message>.*[^ ]+)/";
-
     /**
      * The constructor.
      *
