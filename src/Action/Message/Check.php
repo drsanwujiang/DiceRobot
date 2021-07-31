@@ -144,9 +144,9 @@ class Check extends MessageAction
                 $item,
                 $value,
                 [
-                    "当前HP" => $card->getAttribute("HP"),
-                    "当前MP" => $card->getAttribute("MP"),
-                    "当前SAN" => $card->getAttribute("SAN"),
+                    "当前HP" => $card->getState("HP"),
+                    "当前MP" => $card->getState("MP"),
+                    "当前SAN" => $card->getState("SAN"),
                     "最大HP" => intval(($card->getAttribute("SIZ") + $card->getAttribute("CON")) / 10),
                     "最大MP" => intval($card->getAttribute("POW") / 5),
                     "最大SAN" => 99 - $card->getSkill("克苏鲁神话")
