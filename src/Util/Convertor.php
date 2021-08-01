@@ -63,7 +63,7 @@ class Convertor
      * Convert string with parameters to plain text string.
      *
      * @param string $string String to be replaced.
-     * @param array $variables Variables to replace with.
+     * @param string[] $variables Variables to replace with.
      *
      * @return string Replaced string.
      */

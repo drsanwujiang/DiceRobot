@@ -60,7 +60,6 @@ class Draw extends MessageAction
         list($empty, $result) = $this->draw($deck, $deckName, $count);
 
         $this->setReply("drawResult", [
-            "昵称" => $this->getNickname(),
             "抽牌结果" => $result
         ]);
 

@@ -23,20 +23,20 @@ use Psr\Log\LoggerInterface;
  */
 class ResourceService
 {
-    /** @var LoggerInterface Logger. */
-    protected LoggerInterface $logger;
-
-    /** @var array Resource directories. */
-    protected array $directories = [];
-
-    /** @var bool Whether the resources are loaded. */
-    protected bool $isLoaded = false;
-
     /** @var Config Panel config. */
     protected Config $config;
 
     /** @var Statistics Statistics. */
     protected Statistics $statistics;
+
+    /** @var LoggerInterface Logger. */
+    protected LoggerInterface $logger;
+
+    /** @var bool Whether the resources are loaded. */
+    protected bool $isLoaded = false;
+
+    /** @var array Resource directories. */
+    protected array $directories = [];
 
     /** @var ChatSettings[][] Chat settings. */
     protected array $chatSettings = [ "friend" => [], "group" => [] ];
@@ -74,7 +74,7 @@ class ResourceService
     }
 
     /**
-     * Initialize resource service.
+     * Initialize service.
      *
      * @param \DiceRobot\Data\Config $config DiceRobot config.
      *
@@ -90,7 +90,7 @@ class ResourceService
         }
 
         if ($this->checkDirectories() && $this->load()) {
-            $this->logger->notice("Resource service initialized.");
+            $this->logger->info("Resource service initialized.");
         } else {
             $this->logger->alert("Initialize resource service failed.");
 
@@ -213,7 +213,7 @@ class ResourceService
     {
         if (isset($this->directories["root"])) {
             try {
-                $this->config = new Config(File::getFile("{$this->directories["root"]}/config.json"));
+                $this->config = new Config(File::getJsonFile("{$this->directories["root"]}/config.json"));
             } catch (RuntimeException $e) {
                 $this->config = new Config([]);
             }
@@ -229,7 +229,7 @@ class ResourceService
     {
         if (isset($this->directories["root"])) {
             try {
-                $this->statistics = new Statistics(File::getFile("{$this->directories["root"]}/statistics.json"));
+                $this->statistics = new Statistics(File::getJsonFile("{$this->directories["root"]}/statistics.json"));
             } catch (RuntimeException $e) {
                 $this->statistics = new Statistics([]);
             }
@@ -252,7 +252,7 @@ class ResourceService
                 while (false !== $f = $d->read()) {
                     if (preg_match("/^([1-9][0-9]{4,9}).json$/i", $f, $matches)) {
                         $this->chatSettings[$type][(int) $matches[1]] =
-                            new ChatSettings(File::getFile("{$this->directories["chat.{$type}"]}/{$f}"));
+                            new ChatSettings(File::getJsonFile("{$this->directories["chat.{$type}"]}/{$f}"));
                     }
                 }
 
@@ -274,7 +274,7 @@ class ResourceService
             while (false !== $f = $d->read()) {
                 if (preg_match("/^([1-9][0-9]{0,5}).json$/i", $f, $matches)) {
                     $this->characterCards[(int) $matches[1]] =
-                        new CharacterCard(File::getFile("{$this->directories["card"]}/{$f}"));
+                        new CharacterCard(File::getJsonFile("{$this->directories["card"]}/{$f}"));
                 }
             }
 
@@ -295,7 +295,7 @@ class ResourceService
             while (false !== $f = $d->read()) {
                 if (preg_match("/^([0-9]{1,2}).json$/i", $f, $matches)) {
                     $this->checkRules[(int) $matches[1]] =
-                        new CheckRule(File::getFile("{$this->directories["rule"]}/{$f}"));
+                        new CheckRule(File::getJsonFile("{$this->directories["rule"]}/{$f}"));
                 }
             }
 
@@ -316,7 +316,7 @@ class ResourceService
             while (false !== $f = $d->read()) {
                 if (preg_match("/^([a-zA-z]+).json$/i", $f, $matches)) {
                     $this->references[$matches[1]] =
-                        new Reference(File::getFile("{$this->directories["reference"]}/{$f}"));
+                        new Reference(File::getJsonFile("{$this->directories["reference"]}/{$f}"));
                 }
             }
 
@@ -337,7 +337,7 @@ class ResourceService
             while (false !== $f = $d->read()) {
                 if (preg_match("/^(.+?).json$/i", $f, $matches)) {
                     $this->cardDecks[$matches[1]] =
-                        new CardDeck(File::getFile("{$this->directories["deck"]}/{$f}"));
+                        new CardDeck(File::getJsonFile("{$this->directories["deck"]}/{$f}"));
                 }
             }
 

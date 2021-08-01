@@ -15,14 +15,17 @@ use DiceRobot\Interfaces\Fragment;
  */
 final class Voice implements Fragment
 {
-    /** @var string Voice ID. */
-    public string $voiceId;
+    /** @var string|null Voice ID. */
+    public ?string $voiceId = null;
 
-    /** @var string Voice URL. */
-    public string $url;
+    /** @var string|null Voice URL. */
+    public ?string $url = null;
 
     /** @var string|null Voice local path. */
     public ?string $path = null;
+
+    /** @var string|null Voice base64 encoding. */
+    public ?string $base64 = null;
 
     /**
      * @inheritDoc
@@ -35,7 +38,8 @@ final class Voice implements Fragment
             "type" => "Voice",
             "voiceId" => $this->voiceId,
             "url" => $this->url,
-            "path" => $this->path
+            "path" => $this->path,
+            "base64" => $this->base64
         ];
     }
 }

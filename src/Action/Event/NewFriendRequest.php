@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Event\NewFriendRequestEvent;
 /**
  * Class NewFriendRequest
  *
- * Action that responds to NewFriendRequestEvent.
+ * Action that handles NewFriendRequestEvent.
  *
  * Process the new friend request.
  *
@@ -21,11 +21,7 @@ use DiceRobot\Data\Report\Event\NewFriendRequestEvent;
  */
 class NewFriendRequest extends EventAction
 {
-    /**
-     * @var NewFriendRequestEvent $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
-     */
+    /** @var NewFriendRequestEvent $event Event. */
     public Event $event;
 
     /**
@@ -41,7 +37,7 @@ class NewFriendRequest extends EventAction
         $message = "";
 
         // Approve request by default
-        $this->api->respondToNewFriendRequestEvent(
+        $this->api->handleNewFriendRequestEvent(
             $this->event->eventId,
             $this->event->fromId,
             $this->event->groupId,

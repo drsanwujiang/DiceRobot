@@ -13,13 +13,13 @@ namespace DiceRobot\Data\Report\Contact;
  */
 final class Operator
 {
-    /** @var int Operator's ID. */
+    /** @var int Operator ID. */
     public int $id;
 
-    /** @var string Operator's nickname. */
+    /** @var string Operator nickname. */
     public string $memberName;
 
-    /** @var string Operator's permission. */
+    /** @var string Operator permission. */
     public string $permission;
 
     /** @var Group The group. */

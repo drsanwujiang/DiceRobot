@@ -7,18 +7,18 @@ namespace DiceRobot\Data\Report\Contact;
 /**
  * Class Group
  *
- * DTO. Group chat.
+ * DTO. Sender's group.
  *
  * @package DiceRobot\Data\Report\Contact
  */
 final class Group
 {
-    /** @var int Group's ID. */
+    /** @var int Group ID. */
     public int $id;
 
-    /** @var string Group's name. */
+    /** @var string Group name. */
     public string $name;
 
-    /** @var string Robot's permission. */
+    /** @var string Bot permission. */
     public string $permission;
 }

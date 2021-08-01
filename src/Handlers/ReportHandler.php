@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace DiceRobot\Handlers;
 
+use DiceRobot\AppStatus;
 use DiceRobot\Action\{EventAction, MessageAction};
-use DiceRobot\App;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Report\{Event, InvalidReport, Message};
+use DiceRobot\Data\Report\Message\{OtherClientMessage, StrangerMessage};
 use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\{DiceRobotException, MiraiApiException};
 use DiceRobot\Factory\{LoggerFactory, ReportFactory};
@@ -33,9 +34,6 @@ class ReportHandler
     /** @var Config DiceRobot config. */
     protected Config $config;
 
-    /** @var App Application. */
-    protected App $app;
-
     /** @var ApiService API service. */
     protected ApiService $api;
 
@@ -45,8 +43,8 @@ class ReportHandler
     /** @var StatisticsService Statistics service. */
     protected StatisticsService $statistics;
 
-    /** @var LogHandler TRPG log handler. */
-    protected LogHandler $log;
+    /** @var TrpgLogHandler TRPG log handler. */
+    protected TrpgLogHandler $log;
 
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
@@ -61,7 +59,7 @@ class ReportHandler
      * @param ApiService $api API service.
      * @param RobotService $robot Robot service.
      * @param StatisticsService $statistics Statistics service.
-     * @param LogHandler $log TRPG log handler.
+     * @param TrpgLogHandler $log TRPG log handler.
      * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
@@ -70,7 +68,7 @@ class ReportHandler
         ApiService $api,
         RobotService $robot,
         StatisticsService $statistics,
-        LogHandler $log,
+        TrpgLogHandler $log,
         LoggerFactory $loggerFactory
     ) {
         $this->container = $container;
@@ -80,7 +78,7 @@ class ReportHandler
         $this->statistics = $statistics;
         $this->log = $log;
 
-        $this->logger = $loggerFactory->create("Handler");
+        $this->logger = $loggerFactory->create("Report");
 
         $this->logger->debug("Report handler created.");
     }
@@ -94,18 +92,6 @@ class ReportHandler
     }
 
     /**
-     * Initialize report handler.
-     *
-     * @param App $app Application.
-     */
-    public function initialize(App $app): void
-    {
-        $this->app = $app;
-
-        $this->logger->info("Report handler initialized.");
-    }
-
-    /**
      * Handle message and event report.
      *
      * @param string $content Report content.
@@ -114,7 +100,7 @@ class ReportHandler
      */
     public function handle(string $content): void
     {
-        $this->logger->debug("Receive report, content: {$content}");
+        $this->logger->debug("Report received, content: {$content}");
 
         $this->logger->info("Report started.");
 
@@ -138,18 +124,18 @@ class ReportHandler
             }
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
             $this->logger->alert("Report failed, unable to call Mirai API.");
-        } catch (Throwable $e) {
+        } catch (Throwable $t) {
             $details = sprintf(
                 "Type: %s\nCode: %s\nMessage: %s\nFile: %s\nLine: %s\nTrace: %s",
-                get_class($e),
-                $e->getCode(),
-                $e->getMessage(),
-                $e->getFile(),
-                $e->getLine(),
-                $e->getTraceAsString()
+                get_class($t),
+                $t->getCode(),
+                $t->getMessage(),
+                $t->getFile(),
+                $t->getLine(),
+                $t->getTraceAsString()
             );
 
-            $this->logger->error("Report failed, unexpected exception occurred:\n{$details}");
+            $this->logger->error("Report failed, unexpected exception occurred:\n{$details}.");
         }
     }
 
@@ -163,12 +149,13 @@ class ReportHandler
     protected function event(Event $event): void
     {
         // Check application status
-        if ($this->app->getStatus()->lessThan(AppStatusEnum::RUNNING())) {
-            $this->logger->info("Report skipped. Application status {$this->app->getStatus()}.");
+        if (($status = AppStatus::getStatus())->lessThan(AppStatusEnum::RUNNING())) {
+            $this->logger->info("Report skipped. Application status {$status}.");
 
             return;
         }
 
+        // Check matching
         if (empty($actionName = $this->matchEvent($event))) {
             $this->logger->info("Report skipped, matching miss.");
 
@@ -181,7 +168,7 @@ class ReportHandler
         ]);
 
         try {
-            $action();
+            $action();  // Invoke action
 
             $this->logger->info("Report finished.");
         } catch (DiceRobotException $e) {  // Action interrupted, log error
@@ -203,12 +190,20 @@ class ReportHandler
     protected function message(Message $message): void
     {
         // Check application status
-        if (!$this->app->getStatus()->equals(AppStatusEnum::RUNNING())) {
-            $this->logger->info("Report skipped. Application status {$this->app->getStatus()}.");
+        if (!($status = AppStatus::getStatus())->equals(AppStatusEnum::RUNNING())) {
+            $this->logger->info("Report skipped. Application status {$status}.");
 
             return;
         }
 
+        // Check message type
+        if ($message instanceof OtherClientMessage || $message instanceof StrangerMessage) {
+            $this->logger->info("Report skipped, message type unacceptable.");
+
+            return;
+        }
+
+        // Check message chain
         if (!$message->parseMessageChain()) {
             $this->logger->info("Report skipped, message not parsable.");
 
@@ -219,6 +214,7 @@ class ReportHandler
 
         list($filter, $at) = $this->filter($message);
 
+        // Check filter
         if (!$filter) {
             $this->logger->info("Report skipped, filter miss.");
 
@@ -227,6 +223,7 @@ class ReportHandler
 
         list($match, $order, $actionName) = $this->matchMessage($message);
 
+        // Check matching
         if (empty($actionName)) {
             $this->logger->info("Report skipped, matching miss.");
 
@@ -241,27 +238,29 @@ class ReportHandler
             "at" => $at
         ]);
 
-        $this->statistics->addCount($match, get_class($message), $message->sender);
+        $action->initialize();  // Initialize action
 
+        // Check active
         if (!$action->checkActive()) {
             $this->logger->info("Report finished, robot inactive.");
 
             return;
         }
 
+        $this->statistics->addCount($match, get_class($message), $message->sender);  // Update statistics
+
         try {
-            $action();
+            $action();  // Invoke action
+            $action->sendReplies();  // Send replies if necessary
 
-            $action->sendReplies();
-
-            $this->log->handle($message, $action);
+            $this->log->handle($message, $action);  // Update log if enabled
 
             $this->logger->info("Report finished.");
         } catch (DiceRobotException $e) {
             // Action interrupted, send error message to group/user
             $action->sendMessage($this->config->getErrMsg((string) $e));
 
-            $this->log->handle($message, $action, $e);
+            $this->log->handle($message, $action, $e);  // Update log if enabled
 
             // TODO: $e::class, $action->message::class, $action::class in PHP 8
             $this->logger->info(

@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Event\BotInvitedJoinGroupRequestEvent;
 /**
  * Class BotInvitedJoinGroupRequest
  *
- * Action that responds to BotInvitedJoinGroupRequestEvent.
+ * Action that handles BotInvitedJoinGroupRequestEvent.
  *
  * Approve the request when the group is normal, or reject the request when the group is delinquent.
  *
@@ -21,11 +21,7 @@ use DiceRobot\Data\Report\Event\BotInvitedJoinGroupRequestEvent;
  */
 class BotInvitedJoinGroupRequest extends EventAction
 {
-    /**
-     * @var BotInvitedJoinGroupRequestEvent $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
-     */
+    /** @var BotInvitedJoinGroupRequestEvent $event Event. */
     public Event $event;
 
     /**
@@ -46,7 +42,7 @@ class BotInvitedJoinGroupRequest extends EventAction
             $message = $this->config->getStrategy("botInvitedJoinGroupRequestRejected");
         }
 
-        $this->api->respondToBotInvitedJoinGroupRequestEvent(
+        $this->api->handleBotInvitedJoinGroupRequestEvent(
             $this->event->eventId,
             $this->event->fromId,
             $this->event->groupId,

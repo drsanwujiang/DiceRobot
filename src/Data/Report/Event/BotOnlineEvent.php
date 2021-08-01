@@ -9,14 +9,12 @@ use DiceRobot\Data\Report\Event;
 /**
  * Class BotOnlineEvent
  *
- * DTO. Event of that robot successfully login.
+ * DTO. Event of that bot successfully logins.
  *
  * @package DiceRobot\Data\Report\Event
- *
- * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#bot%E7%99%BB%E5%BD%95%E6%88%90%E5%8A%9F
  */
 final class BotOnlineEvent extends Event
 {
-    /** @var int Robot's ID. */
+    /** @var int Bot ID. */
     public int $qq;
 }

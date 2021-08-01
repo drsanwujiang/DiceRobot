@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpUndefinedClassInspection */
+<?php
 
 declare(strict_types=1);
 
@@ -24,6 +24,9 @@ use Swlib\Saber;
  */
 class DiceRobotApiHandler
 {
+    /** @var Config DiceRobot config. */
+    protected Config $config;
+
     /** @var Saber Client pool. */
     protected Saber $pool;
 
@@ -33,11 +36,14 @@ class DiceRobotApiHandler
     /**
      * The constructor.
      *
+     * @param Config $config DiceRobot config.
      * @param LoggerFactory $loggerFactory Logger factory.
      */
-    public function __construct(LoggerFactory $loggerFactory)
+    public function __construct(Config $config, LoggerFactory $loggerFactory)
     {
-        $this->logger = $loggerFactory->create("Handler");
+        $this->config = $config;
+
+        $this->logger = $loggerFactory->create("DiceRobotAPI");
 
         $this->logger->debug("DiceRobot API handler created.");
     }
@@ -51,20 +57,18 @@ class DiceRobotApiHandler
     }
 
     /**
-     * Initialize DiceRobot API handler.
-     *
-     * @param Config $config DiceRobot config.
+     * Initialize handler.
      */
-    public function initialize(Config $config): void
+    public function initialize(): void
     {
         $this->pool = Saber::create([
-            "base_uri" => $config->getString("dicerobot.api.uri"),
+            "base_uri" => $this->config->getString("dicerobot.api.uri"),
             "use_pool" => true,
             "headers" => [
                 "Accept" => "application/json",
                 "Accept-Encoding" => "identity",
                 "Content-Type" => ContentType::JSON,
-                "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
+                "User-Agent" => "DiceRobot/{$this->config->getString("dicerobot.version")}"
             ],
             "before" => function (Saber\Request $request) {
                 $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
@@ -113,7 +117,7 @@ class DiceRobotApiHandler
 
         // Log error, but not throw exception
         if (0 != $data["code"]) {
-            $this->logger->warning(
+            $this->logger->error(
                 "DiceRobot API returned unexpected code {$data["code"]}, error message: {$data["message"]}."
             );
         }
@@ -130,7 +134,7 @@ class DiceRobotApiHandler
     /**
      * Update robot online info.
      *
-     * @param int $robotId Robot's ID.
+     * @param int $robotId Robot ID.
      *
      * @return UpdateRobotResponse Response.
      *
@@ -151,7 +155,7 @@ class DiceRobotApiHandler
     /**
      * Update robot online info asynchronously.
      *
-     * @param int $robotId Robot's ID.
+     * @param int $robotId Robot ID.
      */
     final public function updateRobotAsync(int $robotId): void
     {
@@ -165,7 +169,7 @@ class DiceRobotApiHandler
     }
 
     /**
-     * @param int $robotId Robot's ID.
+     * @param int $robotId Robot ID.
      *
      * @return GetNicknameResponse Response.
      *
@@ -186,7 +190,7 @@ class DiceRobotApiHandler
     /**
      * Get access token.
      *
-     * @param int $robotId Robot's ID.
+     * @param int $robotId Robot ID.
      *
      * @return GetTokenResponse Response.
      *
@@ -209,7 +213,7 @@ class DiceRobotApiHandler
     /**
      * Get today's luck.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param string $token Access token.
      *
      * @return GetLuckResponse Response.
@@ -234,7 +238,7 @@ class DiceRobotApiHandler
     /**
      * Get piety.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param string $token Access token.
      *
      * @return GetPietyResponse Response.
@@ -246,7 +250,7 @@ class DiceRobotApiHandler
     final public function getPiety(int $userId, string $token): GetPietyResponse
     {
         $options = [
-            "uri" => "user/{$userId}/kowtow",
+            "uri" => "user/{$userId}/piety",
             "method" => "GET",
             "headers" => [
                 "Authorization" => "Bearer {$token}"
@@ -261,7 +265,7 @@ class DiceRobotApiHandler
     /**
      * Get character card data.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param int $cardId Character card ID.
      * @param string $token Access token.
      *
@@ -287,7 +291,7 @@ class DiceRobotApiHandler
     /**
      * Update character card data.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param int $cardId Character card ID.
      * @param string $item Item name.
      * @param int $change Change to the item.
@@ -325,7 +329,7 @@ class DiceRobotApiHandler
     /**
      * Request a sanity check to the character card.
      *
-     * @param int $userId User's ID.
+     * @param int $userId User ID.
      * @param int $cardId Character card ID.
      * @param int $checkResult Sanity check result.
      * @param array $decreases Sanity decreases.
@@ -364,7 +368,7 @@ class DiceRobotApiHandler
     /**
      * Query if the group is delinquent.
      *
-     * @param int $groupId Group's ID.
+     * @param int $groupId Group ID.
      * @param string $token Access token.
      *
      * @return QueryGroupResponse Response.
@@ -389,7 +393,7 @@ class DiceRobotApiHandler
     /**
      * Report the delinquent group's ID. These group IDs will be queried when robot is added to a group.
      *
-     * @param int $groupId Delinquent group's ID.
+     * @param int $groupId Delinquent group ID.
      * @param string $token Access token.
      *
      * @return ReportGroupResponse Response.

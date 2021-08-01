@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Event\BotJoinGroupEvent;
 /**
  * Class BotLeaveKick
  *
- * Action that responds to BotLeaveEventKick.
+ * Action that handles BotLeaveEventKick.
  *
  * Report the group.
  *
@@ -21,11 +21,7 @@ use DiceRobot\Data\Report\Event\BotJoinGroupEvent;
  */
 class BotLeaveKick extends EventAction
 {
-    /**
-     * @var BotJoinGroupEvent $event Event
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
-     */
+    /** @var BotJoinGroupEvent $event Event */
     public Event $event;
 
     /**

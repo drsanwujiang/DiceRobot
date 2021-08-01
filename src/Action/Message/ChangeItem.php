@@ -57,7 +57,6 @@ class ChangeItem extends MessageAction
         $card->setItem($item, $response->currentValue);
 
         $this->setReply("changeItemResult", [
-            "昵称" => $this->getNickname(),
             "项目" => $item,
             "增减" => $this->config->getString("wording.itemChange.{$symbol}", ),
             "变动值" => $fullResult,

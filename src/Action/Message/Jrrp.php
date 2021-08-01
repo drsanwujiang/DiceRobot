@@ -35,7 +35,6 @@ class Jrrp extends MessageAction
         $this->parseOrder();
 
         $this->setReply("jrrpResult", [
-            "昵称" => $this->getNickname(),
             "人品" => $this->getLuck()->luck
         ]);
     }

@@ -13,12 +13,12 @@ namespace DiceRobot\Data\Contact;
  */
 class Friend
 {
-    /** @var int Friend's ID. */
+    /** @var int Friend ID. */
     public int $id;
 
-    /** @var string Friend's nickname. */
+    /** @var string Friend nickname. */
     public string $nickname;
 
-    /** @var string Friend's remark. */
+    /** @var string Friend remark. */
     public string $remark;
 }

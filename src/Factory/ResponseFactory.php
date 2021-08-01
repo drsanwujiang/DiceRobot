@@ -24,6 +24,7 @@ class ResponseFactory
         0 => "Success",
 
         -404 => "Not found",
+        -500 => "Internal server error",
 
         -1000 => "DiceRobot already paused",
         -1001 => "DiceRobot cannot be paused",
@@ -40,6 +41,7 @@ class ResponseFactory
         -1061 => "Config prohibited",
         -1070 => "Update skeleton failed",
         -1071 => "Skeleton cannot be updated",
+        -1080 => "Get log failed",
 
         -2000 => "Mirai not setup as service",
         -2001 => "Start Mirai failed",
@@ -70,6 +72,12 @@ class ResponseFactory
     /** @var ResponseInterface PSR-7 preflight response template. */
     protected ResponseInterface $preflightResponse;
 
+    /** @var ResponseInterface PSR-7 not found response template. */
+    protected ResponseInterface $notFoundResponse;
+
+    /** @var ResponseInterface PSR-7 internal service error response template. */
+    protected ResponseInterface $errorResponse;
+
     /** @var ResponseInterface PSR-7 response template. */
     protected ResponseInterface $response;
 
@@ -98,12 +106,30 @@ class ResponseFactory
             ->withHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
             ->withHeader("Access-Control-Allow-Headers", "*");
 
+        $this->notFoundResponse = $this->preflightResponse
+            ->withStatus(404)
+            ->withHeader("Content-type", "application/json; charset=utf-8")
+            ->withBody($this->psr17Factory->createStream((string) json_encode([
+                "code" => -404,
+                "message" => self::RETURN_MESSAGES[-404]
+            ])));
+
+        $this->errorResponse = $this->preflightResponse
+            ->withStatus(500)
+            ->withHeader("Content-type", "application/json; charset=utf-8")
+            ->withBody($this->psr17Factory->createStream((string) json_encode([
+                "code" => -500,
+                "message" => self::RETURN_MESSAGES[-500]
+            ])));
+
         $this->response = $this->preflightResponse
             ->withHeader("Content-type", "application/json; charset=utf-8");
     }
 
     /**
-     * @param Response $response PSR-7 response.
+     * Create empty response.
+     *
+     * @param Response $response Swoole response.
      *
      * @return Response Merged Swoole response.
      */
@@ -113,26 +139,9 @@ class ResponseFactory
     }
 
     /**
-     * @param Response $response PSR-7 response.
+     * Create preflight response.
      *
-     * @return Response Merged Swoole response.
-     */
-    public function createNotFound(Response $response): Response
-    {
-        $content = [
-            "code" => -404,
-            "message" => self::RETURN_MESSAGES[-404]
-        ];
-
-        return $this->responseMerger->toSwoole(
-            $this->response->withStatus(404)
-                ->withBody($this->psr17Factory->createStream((string) json_encode($content))),
-            $response
-        );
-    }
-
-    /**
-     * @param Response $response PSR-7 response.
+     * @param Response $response Swoole response.
      *
      * @return Response Merged Swoole response.
      */
@@ -142,9 +151,35 @@ class ResponseFactory
     }
 
     /**
+     * Create 404 Not Found response.
+     *
+     * @param Response $response Swoole response.
+     *
+     * @return Response Merged Swoole response.
+     */
+    public function createNotFound(Response $response): Response
+    {
+        return $this->responseMerger->toSwoole(clone $this->notFoundResponse, $response);
+    }
+
+    /**
+     * Create 500 Internal Server Error response.
+     *
+     * @param Response $response Swoole response.
+     *
+     * @return Response Merged Swoole response.
+     */
+    public function createError(Response $response): Response
+    {
+        return $this->responseMerger->toSwoole(clone $this->errorResponse, $response);
+    }
+
+    /**
+     * Create 200 Success or 202 Created response.
+     *
      * @param int $code Result code.
      * @param array|null $data Return data.
-     * @param Response $response PSR-7 response.
+     * @param Response $response Swoole response.
      *
      * @return Response Merged Swoole response.
      */

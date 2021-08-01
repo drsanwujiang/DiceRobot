@@ -7,7 +7,6 @@ namespace DiceRobot\Action\Message;
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Response\GetPietyResponse;
 use DiceRobot\Exception\OrderErrorException;
-use DiceRobot\Util\Convertor;
 
 /**
  * Class Kowtow
@@ -42,12 +41,8 @@ class Kowtow extends MessageAction
         $level = $this->getKowtowLevel($piety);
 
         $this->setReply("kowtowResult", [
-            "发送者QQ" => $this->message->sender->id,
-            "机器人昵称" => $this->getRobotNickname(),
             "虔诚值" => $piety,
-            "虔诚等级" => Convertor::toCustomString($this->config->getReply("kowtowLevel{$level}"), [
-                "机器人昵称" => $this->getRobotNickname()
-            ])
+            "虔诚等级" => $this->getCustomReply("kowtowLevel{$level}", ["机器人昵称" => $this->getRobotNickname()])
         ]);
 
     }

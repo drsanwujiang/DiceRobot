@@ -15,7 +15,6 @@ namespace DiceRobot\Enum;
  * @method static AppStatusEnum PAUSED()
  * @method static AppStatusEnum RUNNING()
  * @method static AppStatusEnum HOLDING()
- * @method static AppStatusEnum WAITING()
  */
 final class AppStatusEnum extends Enum
 {
@@ -28,9 +27,6 @@ final class AppStatusEnum extends Enum
     /** @var int Application running. */
     private const RUNNING = 0;
 
-    /** @var int Application holding, for session initialization.  */
+    /** @var int Application holding, for enabling heartbeat. */
     private const HOLDING = 1;
-
-    /** @var int Application waiting, for self initialization. */
-    private const WAITING = 2;
 }

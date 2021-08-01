@@ -6,14 +6,14 @@ namespace DiceRobot\Factory;
 
 use DiceRobot\Data\Report\Event\{BotGroupPermissionChangeEvent, BotInvitedJoinGroupRequestEvent, BotJoinGroupEvent,
     BotLeaveEventActive, BotLeaveEventKick, BotMuteEvent, BotOfflineEventActive, BotOfflineEventDropped,
-    BotOfflineEventForce, BotOnlineEvent, BotReloginEvent, BotUnmuteEvent, FriendRecallEvent,
-    GroupAllowAnonymousChatEvent, GroupAllowConfessTalkEvent, GroupAllowMemberInviteEvent,
-    GroupEntranceAnnouncementChangeEvent, GroupMuteAllEvent, GroupNameChangeEvent, GroupRecallEvent,
-    MemberCardChangeEvent, MemberJoinEvent, MemberJoinRequestEvent, MemberLeaveEventKick, MemberLeaveEventQuit,
-    MemberMuteEvent, MemberPermissionChangeEvent, MemberSpecialTitleChangeEvent, MemberUnmuteEvent,
-    NewFriendRequestEvent};
+    BotOfflineEventForce, BotOnlineEvent, BotReloginEvent, BotUnmuteEvent, FriendInputStatusChangedEvent,
+    FriendNickChangedEvent, FriendRecallEvent, GroupAllowAnonymousChatEvent, GroupAllowConfessTalkEvent,
+    GroupAllowMemberInviteEvent, GroupEntranceAnnouncementChangeEvent, GroupMuteAllEvent, GroupNameChangeEvent,
+    GroupRecallEvent, MemberCardChangeEvent, MemberJoinEvent, MemberJoinRequestEvent, MemberLeaveEventKick,
+    MemberLeaveEventQuit, MemberMuteEvent, MemberPermissionChangeEvent, MemberSpecialTitleChangeEvent,
+    MemberUnmuteEvent, NewFriendRequestEvent};
 use DiceRobot\Data\Report\InvalidReport;
-use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, TempMessage};
+use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, OtherClientMessage, StrangerMessage, TempMessage};
 use DiceRobot\Interfaces\Report;
 use DiceRobot\Util\Convertor;
 
@@ -30,6 +30,8 @@ class ReportFactory
     protected const REPORTS = [
         "FriendMessage" => FriendMessage::class,
         "GroupMessage" => GroupMessage::class,
+        "OtherClientMessage" => OtherClientMessage::class,
+        "StrangerMessage" => StrangerMessage::class,
         "TempMessage" => TempMessage::class,
 
         "BotGroupPermissionChangeEvent" => BotGroupPermissionChangeEvent::class,
@@ -44,6 +46,8 @@ class ReportFactory
         "BotOnlineEvent" => BotOnlineEvent::class,
         "BotReloginEvent" => BotReloginEvent::class,
         "BotUnmuteEvent" => BotUnmuteEvent::class,
+        "FriendInputStatusChangedEvent" => FriendInputStatusChangedEvent::class,
+        "FriendNickChangedEvent" => FriendNickChangedEvent::class,
         "FriendRecallEvent" => FriendRecallEvent::class,
         "GroupAllowAnonymousChatEvent" => GroupAllowAnonymousChatEvent::class,
         "GroupAllowConfessTalkEvent" => GroupAllowConfessTalkEvent::class,

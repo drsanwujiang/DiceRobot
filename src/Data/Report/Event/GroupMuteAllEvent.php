@@ -10,11 +10,9 @@ use DiceRobot\Data\Report\Event;
 /**
  * Class GroupMuteAllEvent
  *
- * DTO. Event of that all the group's members are muted/unmuted.
+ * DTO. Event of that all the group members are muted/unmuted.
  *
  * @package DiceRobot\Data\Report\Event
- *
- * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#%E5%85%A8%E5%91%98%E7%A6%81%E8%A8%80
  */
 final class GroupMuteAllEvent extends Event
 {

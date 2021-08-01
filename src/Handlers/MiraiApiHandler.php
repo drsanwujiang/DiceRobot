@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpUndefinedClassInspection */
+<?php
 
 declare(strict_types=1);
 
@@ -21,8 +21,8 @@ use Swlib\Saber;
  */
 class MiraiApiHandler
 {
-    /** @var string Mirai API HTTP plugin session key. */
-    protected string $sessionKey = "";
+    /** @var Config DiceRobot config. */
+    protected Config $config;
 
     /** @var Saber Client pool. */
     protected Saber $pool;
@@ -33,11 +33,14 @@ class MiraiApiHandler
     /**
      * The constructor.
      *
+     * @param Config $config DiceRobot config.
      * @param LoggerFactory $loggerFactory Logger factory.
      */
-    public function __construct(LoggerFactory $loggerFactory)
+    public function __construct(Config $config, LoggerFactory $loggerFactory)
     {
-        $this->logger = $loggerFactory->create("Handler");
+        $this->config = $config;
+
+        $this->logger = $loggerFactory->create("MiraiAPI");
 
         $this->logger->debug("Mirai API handler created.");
     }
@@ -51,19 +54,17 @@ class MiraiApiHandler
     }
 
     /**
-     * Initialize Mirai API handler.
-     *
-     * @param Config $config DiceRobot config.
+     * Initialize handler.
      */
-    public function initialize(Config $config): void
+    public function initialize(): void
     {
         $this->pool = Saber::create([
             "base_uri" =>
-                "http://{$config->getString("mirai.server.host")}:{$config->getString("mirai.server.port")}",
+                "http://{$this->config->getString("mirai.server.host")}:{$this->config->getString("mirai.server.port")}",
             "use_pool" => true,
             "headers" => [
                 "Content-Type" => ContentType::JSON,
-                "User-Agent" => "DiceRobot/{$config->getString("dicerobot.version")}"
+                "User-Agent" => "DiceRobot/{$this->config->getString("dicerobot.version")}"
             ],
             "before" => function (Saber\Request $request) {
                 $this->logger->debug("Send to {$request->getUri()}, content: {$request->getBody()}");
@@ -90,32 +91,12 @@ class MiraiApiHandler
         try {
             $response = $this->pool->request($options);
         } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
-            $this->logger->alert("Failed to request Mirai API for network problem.");
+            $this->logger->critical("Failed to request Mirai API for network problem.");
 
             throw new MiraiApiException();
         }
 
         return $response->getParsedJsonArray();
-    }
-
-    /**
-     * Set Mirai API HTTP plugin session key.
-     *
-     * @param string $sessionKey Session key.
-     */
-    public function setSession(string $sessionKey): void
-    {
-        $this->sessionKey = $sessionKey;
-    }
-
-    /**
-     * Test if the Mirai API HTTP plugin session key exists.
-     *
-     * @return bool Existence.
-     */
-    public function hasSession(): bool
-    {
-        return !empty($this->sessionKey);
     }
 
     /******************************************************************************
@@ -141,358 +122,45 @@ class MiraiApiHandler
         return new MiraiResponse($this->request($options));
     }
 
-    /** Session */
-
     /**
-     * Verify identity and return a session.
-     *
-     * @param string $authKey Mirai API HTTP plugin authorization key.
+     * Get session information of Mirai API HTTP plugin.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%AE%A4%E8%AF%81%E4%B8%8E%E4%BC%9A%E8%AF%9D
      */
-    final public function authSession(string $authKey): MiraiResponse
+    final public function getSessionInfo(): MiraiResponse
     {
         $options = [
-            "uri" => "/auth",
-            "method" => "POST",
-            "data" => [
-                "authKey" => $authKey
-            ]
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /**
-     * Verify and activate the session, then bind it to a logined robot.
-     *
-     * @param int $robotId Robot's ID.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E6%A0%A1%E9%AA%8Csession
-     */
-    final public function verifySession(int $robotId): MiraiResponse
-    {
-        $options = [
-            "uri" => "/verify",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "qq" => $robotId
-            ]
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /**
-     * Release the session and the corresponding resources.
-     *
-     * @param int $robotId Robot's ID.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E9%87%8A%E6%94%BEsession
-     */
-    final public function releaseSession(int $robotId): MiraiResponse
-    {
-        $options = [
-            "uri" => "/release",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "qq" => $robotId
-            ]
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /** Message sending */
-
-    /**
-     * Send message to the specified friend.
-     *
-     * @param int $targetId Target friend's ID.
-     * @param array $messageChain Message chain.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E5%8F%91%E9%80%81%E5%A5%BD%E5%8F%8B%E6%B6%88%E6%81%AF
-     */
-    final public function sendFriendMessage(int $targetId, array $messageChain): MiraiResponse
-    {
-        $options = [
-            "uri" => "/sendFriendMessage",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId,
-                "messageChain" => $messageChain
-            ]
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /**
-     * Send message to the specified friend asynchronously.
-     *
-     * @param int $targetId Target friend's ID.
-     * @param array $messageChain Message chain.
-     *
-     * @see MiraiApiHandler::sendFriendMessage()
-     */
-    final public function sendFriendMessageAsync(int $targetId, array $messageChain): void
-    {
-        go(function () use ($targetId, $messageChain) {
-            try {
-                $this->sendFriendMessage($targetId, $messageChain);
-            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-                // Do nothing
-            }
-        });
-    }
-
-    /**
-     * Send message to the specified temporary chat object.
-     *
-     * @param int $targetId Target temporary chat ID.
-     * @param int $groupId Group's ID.
-     * @param array $messageChain Message chain.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E5%8F%91%E9%80%81%E4%B8%B4%E6%97%B6%E4%BC%9A%E8%AF%9D%E6%B6%88%E6%81%AF
-     */
-    final public function sendTempMessage(int $targetId, int $groupId, array $messageChain): MiraiResponse
-    {
-        $options = [
-            "uri" => "/sendTempMessage",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "qq" => $targetId,
-                "group" => $groupId,
-                "messageChain" => $messageChain
-            ]
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /**
-     * Send message to the specified temporary chat object asynchronously.
-     *
-     * @param int $targetId Target temporary chat ID.
-     * @param int $groupId Group's ID.
-     * @param array $messageChain Message chain.
-     *
-     * @see MiraiApiHandler::sendTempMessage()
-     */
-    final public function sendTempMessageAsync(int $targetId, int $groupId, array $messageChain): void
-    {
-        go(function () use ($targetId, $groupId, $messageChain) {
-            try {
-                $this->sendTempMessage($targetId, $groupId, $messageChain);
-            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-                // Do nothing
-            }
-        });
-    }
-
-    /**
-     * Send message to the specified group.
-     *
-     * @param int $targetId Target group's ID.
-     * @param array $messageChain Message chain.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E5%8F%91%E9%80%81%E7%BE%A4%E6%B6%88%E6%81%AF
-     */
-    final public function sendGroupMessage(int $targetId, array $messageChain): MiraiResponse
-    {
-        $options = [
-            "uri" => "/sendGroupMessage",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId,
-                "messageChain" => $messageChain
-            ]
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /**
-     * Send message to the specified group asynchronously.
-     *
-     * @param int $targetId Target group's ID.
-     * @param array $messageChain Message chain.
-     *
-     * @see MiraiApiHandler::sendGroupMessage()
-     */
-    final public function sendGroupMessageAsync(int $targetId, array $messageChain): void
-    {
-        go(function () use ($targetId, $messageChain) {
-            try {
-                $this->sendGroupMessage($targetId, $messageChain);
-            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-                // Do nothing
-            }
-        });
-    }
-
-    /**
-     * Recall the specific message.
-     *
-     * @param int $messageId Target message ID.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E6%92%A4%E5%9B%9E%E6%B6%88%E6%81%AF
-     */
-    final public function recallMessage(int $messageId): MiraiResponse
-    {
-        $options = [
-            "uri" => "/recall",
-            "method" => "POST",
-            "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $messageId
-            ]
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /** Message receipt */
-
-    /**
-     * Get the oldest messages and events that robot received, then delete them from the message log of Mirai API HTTP
-     * plugin.
-     *
-     * @param int $count Message/Event count.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96bot%E6%94%B6%E5%88%B0%E7%9A%84%E6%B6%88%E6%81%AF%E5%92%8C%E4%BA%8B%E4%BB%B6
-     */
-    final public function fetchMessage(int $count): MiraiResponse
-    {
-        $options = [
-            "uri" => "/fetchMessage?sessionKey={$this->sessionKey}&count={$count}",
+            "uri" => "/sessionInfo",
             "method" => "GET"
         ];
 
         return new MiraiResponse($this->request($options));
     }
 
+    /** Cache */
+
     /**
-     * Get the latest messages and events that robot received, then delete them from the message log of Mirai API HTTP
-     * plugin.
+     * Get message by ID.
      *
-     * @param int $count Message/Event count.
+     * @param int $messageId Message ID.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96bot%E6%94%B6%E5%88%B0%E7%9A%84%E6%B6%88%E6%81%AF%E5%92%8C%E4%BA%8B%E4%BB%B6
      */
-    final public function fetchLatestMessage(int $count): MiraiResponse
+    final public function getMessageFromId(int $messageId): MiraiResponse
     {
         $options = [
-            "uri" => "/fetchLatestMessage?sessionKey={$this->sessionKey}&count={$count}",
+            "uri" => "/messageFromId?id={$messageId}",
             "method" => "GET"
         ];
 
         return new MiraiResponse($this->request($options));
     }
 
-    /**
-     * Get the oldest messages and events that robot received.
-     *
-     * @param int $count Message/Event count.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96bot%E6%94%B6%E5%88%B0%E7%9A%84%E6%B6%88%E6%81%AF%E5%92%8C%E4%BA%8B%E4%BB%B6
-     */
-    final public function peekMessage(int $count): MiraiResponse
-    {
-        $options = [
-            "uri" => "/peekMessage?sessionKey={$this->sessionKey}&count={$count}",
-            "method" => "GET"
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /**
-     * Get the latest messages and events that robot received.
-     *
-     * @param int $count Message/Event count.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96bot%E6%94%B6%E5%88%B0%E7%9A%84%E6%B6%88%E6%81%AF%E5%92%8C%E4%BA%8B%E4%BB%B6
-     */
-    final public function peekLatestMessage(int $count): MiraiResponse
-    {
-        $options = [
-            "uri" => "/peekLatestMessage?sessionKey={$this->sessionKey}&count={$count}",
-            "method" => "GET"
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /**
-     * Count the messages and events that robot received and cached.
-     *
-     * @return MiraiResponse Response.
-     *
-     * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E6%9F%A5%E7%9C%8B%E7%BC%93%E5%AD%98%E7%9A%84%E6%B6%88%E6%81%AF%E6%80%BB%E6%95%B0
-     */
-    final public function countMessage(): MiraiResponse
-    {
-        $options = [
-            "uri" => "/countMessage?sessionKey={$this->sessionKey}",
-            "method" => "GET"
-        ];
-
-        return new MiraiResponse($this->request($options));
-    }
-
-    /** List */
+    /** Account */
 
     /**
      * Get friend list of the robot.
@@ -500,13 +168,11 @@ class MiraiApiHandler
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96%E5%A5%BD%E5%8F%8B%E5%88%97%E8%A1%A8
      */
     final public function getFriendList(): MiraiResponse
     {
         $options = [
-            "uri" => "/friendList?sessionKey={$this->sessionKey}",
+            "uri" => "/friendList",
             "method" => "GET"
         ];
 
@@ -519,13 +185,11 @@ class MiraiApiHandler
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96%E7%BE%A4%E5%88%97%E8%A1%A8
      */
     final public function getGroupList(): MiraiResponse
     {
         $options = [
-            "uri" => "/groupList?sessionKey={$this->sessionKey}",
+            "uri" => "/groupList",
             "method" => "GET"
         ];
 
@@ -535,47 +199,474 @@ class MiraiApiHandler
     /**
      * Get group member list of the robot.
      *
-     * @param int $targetId Target group's ID.
+     * @param int $groupId Target group ID.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96%E7%BE%A4%E6%88%90%E5%91%98%E5%88%97%E8%A1%A8
      */
-    final public function getGroupMemberList(int $targetId): MiraiResponse
+    final public function getGroupMemberList(int $groupId): MiraiResponse
     {
         $options = [
-            "uri" => "/memberList?sessionKey={$this->sessionKey}&target={$targetId}",
+            "uri" => "/memberList?target={$groupId}",
             "method" => "GET"
         ];
 
         return new MiraiResponse($this->request($options));
     }
 
-    /** Management */
+    /**
+     * Get profile of the robot.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function getBotProfile(): MiraiResponse
+    {
+        $options = [
+            "uri" => "/botProfile",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Get profile of the specific friend.
+     *
+     * @param int $friendId Target friend ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function getFriendProfile(int $friendId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/friendProfile?target={$friendId}",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Get profile of the specific group member.
+     *
+     * @param int $groupId Target group ID.
+     * @param int $memberId Target group member ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function getMemberProfile(int $groupId, int $memberId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/memberProfile?target={$groupId}&memberId={$memberId}",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /** Message */
+
+    /**
+     * Send message to the specified friend.
+     *
+     * @param int $friendId Target friend ID.
+     * @param array $messageChain Message chain.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function sendFriendMessage(
+        int $friendId,
+        array $messageChain,
+        ?int $quoteId = null
+    ): MiraiResponse {
+        $options = [
+            "uri" => "/sendFriendMessage",
+            "method" => "POST",
+            "data" => [
+                "target" => $friendId,
+                "quote" => $quoteId,
+                "messageChain" => $messageChain
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Send message to the specified friend asynchronously.
+     *
+     * @param int $friendId Target friend ID.
+     * @param array $messageChain Message chain.
+     *
+     * @see MiraiApiHandler::sendFriendMessage()
+     */
+    final public function sendFriendMessageAsync(
+        int $friendId,
+        array $messageChain,
+        ?int $quoteId = null
+    ): void {
+        go(function () use ($friendId, $messageChain, $quoteId) {
+            try {
+                $this->sendFriendMessage($friendId, $messageChain, $quoteId);
+            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
+                // Do nothing
+            }
+        });
+    }
+
+    /**
+     * Send message to the specified group.
+     *
+     * @param int $groupId Target group ID.
+     * @param array $messageChain Message chain.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function sendGroupMessage(
+        int $groupId,
+        array $messageChain,
+        ?int $quoteId = null
+    ): MiraiResponse {
+        $options = [
+            "uri" => "/sendGroupMessage",
+            "method" => "POST",
+            "data" => [
+                "target" => $groupId,
+                "quote" => $quoteId,
+                "messageChain" => $messageChain
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Send message to the specified group asynchronously.
+     *
+     * @param int $groupId Target group ID.
+     * @param array $messageChain Message chain.
+     *
+     * @see MiraiApiHandler::sendGroupMessage()
+     */
+    final public function sendGroupMessageAsync(
+        int $groupId,
+        array $messageChain,
+        ?int $quoteId = null
+    ): void {
+        go(function () use ($groupId, $messageChain, $quoteId) {
+            try {
+                $this->sendGroupMessage($groupId, $messageChain, $quoteId);
+            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
+                // Do nothing
+            }
+        });
+    }
+
+    /**
+     * Send message to the specified temporary chat object.
+     *
+     * @param int $targetId Target temporary chat ID.
+     * @param int $groupId Group ID.
+     * @param array $messageChain Message chain.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function sendTempMessage(
+        int $targetId,
+        int $groupId,
+        array $messageChain,
+        ?int $quoteId = null
+    ): MiraiResponse {
+        $options = [
+            "uri" => "/sendTempMessage",
+            "method" => "POST",
+            "data" => [
+                "qq" => $targetId,
+                "group" => $groupId,
+                "quote" => $quoteId,
+                "messageChain" => $messageChain
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Send message to the specified temporary chat object asynchronously.
+     *
+     * @param int $targetId Target temporary chat ID.
+     * @param int $groupId Group ID.
+     * @param array $messageChain Message chain.
+     *
+     * @see MiraiApiHandler::sendTempMessage()
+     */
+    final public function sendTempMessageAsync(
+        int $targetId,
+        int $groupId,
+        array $messageChain,
+        ?int $quoteId = null
+    ): void {
+        go(function () use ($targetId, $groupId, $messageChain, $quoteId) {
+            try {
+                $this->sendTempMessage($targetId, $groupId, $messageChain, $quoteId);
+            } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
+                // Do nothing
+            }
+        });
+    }
+
+    /**
+     * Send nudge message to the specified subject.
+     *
+     * @param int $targetId Nudge target ID.
+     * @param int $subjectId Nudge subject ID.
+     * @param string $subjectType Subject type.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function sendNudgeMessage(
+        int $targetId,
+        int $subjectId,
+        string $subjectType
+    ): MiraiResponse {
+        $options = [
+            "uri" => "/sendNudge",
+            "method" => "POST",
+            "data" => [
+                "target" => $targetId,
+                "subject" => $subjectId,
+                "kind" => $subjectType
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Recall the specific message.
+     *
+     * @param int $messageId Target message ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function recallMessage(int $messageId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/recall",
+            "method" => "POST",
+            "data" => [
+                "target" => $messageId
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /** File */
+
+    /**
+     * Get file list in the specific directory of the specific target.
+     *
+     * @param string $directoryId Target directory ID.
+     * @param int $targetId Target ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function getFileList(string $directoryId, int $targetId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/file/list?id={$directoryId}&target={$targetId}",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Get the specific file information of the specific target.
+     *
+     * @param string $fileId Target file ID.
+     * @param int $targetId Target ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function getFileInfo(string $fileId, int $targetId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/file/info?id={$fileId}&target={$targetId}",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Create new directory.
+     *
+     * @param string $parentId Parent directory ID.
+     * @param int $targetId Target ID.
+     * @param string $directoryName New directory name.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function createDirectory(string $parentId, int $targetId, string $directoryName): MiraiResponse
+    {
+        $options = [
+            "uri" => "/file/mkdir",
+            "method" => "POST",
+            "data" => [
+                "id" => $parentId,
+                "target" => $targetId,
+                "directoryName" => $directoryName
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Delete the specific file of the specific target.
+     *
+     * @param string $fileId Target file ID.
+     * @param int $targetId Target ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function deleteFile(string $fileId, int $targetId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/file/delete",
+            "method" => "POST",
+            "data" => [
+                "id" => $fileId,
+                "target" => $targetId
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Move the specific file of the specific target.
+     *
+     * @param string $fileId Target file ID.
+     * @param int $targetId Target ID.
+     * @param string $directoryId Target directory ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function moveFile(string $fileId, int $targetId, string $directoryId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/file/move",
+            "method" => "POST",
+            "data" => [
+                "id" => $fileId,
+                "target" => $targetId,
+                "moveTo" => $directoryId
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Rename the specific file of the specific target.
+     *
+     * @param string $fileId Target file ID.
+     * @param int $targetId Target ID.
+     * @param string $fileName New file name.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function renameFile(string $fileId, int $targetId, string $fileName): MiraiResponse
+    {
+        $options = [
+            "uri" => "/file/rename",
+            "method" => "POST",
+            "data" => [
+                "id" => $fileId,
+                "target" => $targetId,
+                "renameTo" => $fileName
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /** Account Management */
+
+    /**
+     * Delete the specific friend.
+     *
+     * @param int $friendId Target friend ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function deleteFriend(int $friendId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/deleteFriend",
+            "method" => "POST",
+            "data" => [
+                "target" => $friendId
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /** Group Management */
 
     /**
      * Mute the specific member in the specific group.
      *
-     * @param int $targetId Target group's ID.
-     * @param int $memberId Target group member's ID.
+     * @param int $groupId Target group ID.
+     * @param int $memberId Target group member ID.
      * @param int $time Muting duration.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E7%A6%81%E8%A8%80%E7%BE%A4%E6%88%90%E5%91%98
      */
-    final public function muteGroupMember(int $targetId, int $memberId, int $time): MiraiResponse
+    final public function muteMember(int $groupId, int $memberId, int $time): MiraiResponse
     {
         $options = [
             "uri" => "/mute",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId,
+                "target" => $groupId,
                 "memberId" => $memberId,
                 "time" => $time
             ]
@@ -587,23 +678,20 @@ class MiraiApiHandler
     /**
      * Unmute the specific member in the specific group.
      *
-     * @param int $targetId Target group's ID.
-     * @param int $memberId Target group member's ID.
+     * @param int $groupId Target group ID.
+     * @param int $memberId Target group member ID.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%A7%A3%E9%99%A4%E7%BE%A4%E6%88%90%E5%91%98%E7%A6%81%E8%A8%80
      */
-    final public function unmuteGroupMember(int $targetId, int $memberId): MiraiResponse
+    final public function unmuteMember(int $groupId, int $memberId): MiraiResponse
     {
         $options = [
             "uri" => "/unmute",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId,
+                "target" => $groupId,
                 "memberId" => $memberId,
             ]
         ];
@@ -614,24 +702,21 @@ class MiraiApiHandler
     /**
      * Kick the specific member in the specific group.
      *
-     * @param int $targetId Target group's ID.
-     * @param int $memberId Target group member's ID.
+     * @param int $groupId Target group ID.
+     * @param int $memberId Target group member ID.
      * @param string $message Kick message.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E7%A7%BB%E9%99%A4%E7%BE%A4%E6%88%90%E5%91%98
      */
-    final public function kickGroupMember(int $targetId, int $memberId, string $message): MiraiResponse
+    final public function kickMember(int $groupId, int $memberId, string $message): MiraiResponse
     {
         $options = [
             "uri" => "/kick",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId,
+                "target" => $groupId,
                 "memberId" => $memberId,
                 "msg" => $message
             ]
@@ -641,24 +726,21 @@ class MiraiApiHandler
     }
 
     /**
-     * Quit the group.
+     * Quit the specific group.
      *
-     * @param int $targetId Target group's ID.
+     * @param int $groupId Target group ID.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E9%80%80%E5%87%BA%E7%BE%A4%E8%81%8A
      */
-    final public function quitGroup(int $targetId): MiraiResponse
+    final public function quitGroup(int $groupId): MiraiResponse
     {
         $options = [
             "uri" => "/quit",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId
+                "target" => $groupId
             ]
         ];
 
@@ -668,7 +750,7 @@ class MiraiApiHandler
     /**
      * Mute all members in the specific group.
      *
-     * @param int $targetId Target group's ID.
+     * @param int $groupId Target group ID.
      *
      * @return MiraiResponse Response.
      *
@@ -676,14 +758,13 @@ class MiraiApiHandler
      *
      * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E5%85%A8%E4%BD%93%E7%A6%81%E8%A8%80
      */
-    final public function muteAllGroupMembers(int $targetId): MiraiResponse
+    final public function muteAllMembers(int $groupId): MiraiResponse
     {
         $options = [
             "uri" => "/muteAll",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId
+                "target" => $groupId
             ]
         ];
 
@@ -693,7 +774,7 @@ class MiraiApiHandler
     /**
      * Unmute all members in the specific group.
      *
-     * @param int $targetId Target group's ID.
+     * @param int $groupId Target group ID.
      *
      * @return MiraiResponse Response.
      *
@@ -701,14 +782,13 @@ class MiraiApiHandler
      *
      * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%A7%A3%E9%99%A4%E5%85%A8%E4%BD%93%E7%A6%81%E8%A8%80
      */
-    final public function unmuteAllGroupMembers(int $targetId): MiraiResponse
+    final public function unmuteAllMembers(int $groupId): MiraiResponse
     {
         $options = [
             "uri" => "/unmuteAll",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId
+                "target" => $groupId
             ]
         ];
 
@@ -716,20 +796,40 @@ class MiraiApiHandler
     }
 
     /**
-     * Get group's config.
+     * Set essence message of the specific group.
      *
-     * @param int $targetId Target group's ID.
+     * @param int $messageId Target essence message ID.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96%E7%BE%A4%E8%AE%BE%E7%BD%AE
      */
-    final public function getGroupConfig(int $targetId): MiraiResponse
+    final public function setEssenceMessage(int $messageId): MiraiResponse
     {
         $options = [
-            "uri" => "/groupConfig?sessionKey={$this->sessionKey}&target={$targetId}",
+            "uri" => "/setEssence",
+            "method" => "POST",
+            "data" => [
+                "target" => $messageId
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Get config of the specific group.
+     *
+     * @param int $groupId Target group ID.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function getGroupConfig(int $groupId): MiraiResponse
+    {
+        $options = [
+            "uri" => "/groupConfig?target={$groupId}",
             "method" => "GET"
         ];
 
@@ -737,11 +837,11 @@ class MiraiApiHandler
     }
 
     /**
-     * Set group's config.
+     * Set config of the specific group.
      *
-     * @param int $targetId Target group's ID.
-     * @param string|null $name Target group's nickname.
-     * @param string|null $announcement Target group's announcement.
+     * @param int $groupId Target group ID.
+     * @param string|null $name Target group nickname.
+     * @param string|null $announcement Target group announcement.
      * @param bool|null $confessTalk Enable confess talk.
      * @param bool|null $allowMemberInvite Allow member invitation.
      * @param bool|null $autoApprove Automatically approve joining request.
@@ -750,11 +850,9 @@ class MiraiApiHandler
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E4%BF%AE%E6%94%B9%E7%BE%A4%E8%AE%BE%E7%BD%AE
      */
     final public function setGroupConfig(
-        int $targetId,
+        int $groupId,
         ?string $name = null,
         ?string $announcement = null,
         ?bool $confessTalk = null,
@@ -766,8 +864,7 @@ class MiraiApiHandler
             "uri" => "/groupConfig",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId,
+                "target" => $groupId,
                 "config" => [
                     "name" => $name,
                     "announcement" => $announcement,
@@ -783,21 +880,19 @@ class MiraiApiHandler
     }
 
     /**
-     * Get group member's information.
+     * Get information of the specific group member.
      *
-     * @param int $targetId Target group's ID.
-     * @param int $memberId Target group member's ID.
+     * @param int $groupId Target group ID.
+     * @param int $memberId Target group member ID.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E8%8E%B7%E5%8F%96%E7%BE%A4%E5%91%98%E8%B5%84%E6%96%99
      */
-    final public function getGroupMemberInfo(int $targetId, int $memberId): MiraiResponse
+    final public function getMemberInfo(int $groupId, int $memberId): MiraiResponse
     {
         $options = [
-            "uri" => "/memberInfo?sessionKey={$this->sessionKey}&target={$targetId}&memberId={$memberId}",
+            "uri" => "/memberInfo?target={$groupId}&memberId={$memberId}",
             "method" => "GET"
         ];
 
@@ -805,21 +900,19 @@ class MiraiApiHandler
     }
 
     /**
-     * Set group member's information.
+     * Set information of the specific group member.
      *
-     * @param int $targetId Target group's ID.
-     * @param int $memberId Target group member's ID.
-     * @param string|null $name Target group member's nickname.
-     * @param string|null $specialTitle Target group member's special title.
+     * @param int $groupId Target group ID.
+     * @param int $memberId Target group member ID.
+     * @param string|null $name Target group member nickname.
+     * @param string|null $specialTitle Target group member special title.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/API.md#%E4%BF%AE%E6%94%B9%E7%BE%A4%E5%91%98%E8%B5%84%E6%96%99
      */
-    final public function setGroupMemberInfo(
-        int $targetId,
+    final public function setMemberInfo(
+        int $groupId,
         int $memberId,
         ?string $name = null,
         ?string $specialTitle = null
@@ -828,8 +921,7 @@ class MiraiApiHandler
             "uri" => "/memberInfo",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
-                "target" => $targetId,
+                "target" => $groupId,
                 "memberId" => $memberId,
                 "info" => [
                     "name" => $name,
@@ -841,24 +933,22 @@ class MiraiApiHandler
         return new MiraiResponse($this->request($options));
     }
 
-    /** Event response */
+    /** Event */
 
     /**
-     * Respond to NewFriendRequestEvent.
+     * Handle NewFriendRequestEvent.
      *
      * @param int $eventId Event ID.
-     * @param int $fromId Requester ID.
-     * @param int $groupId Group's ID if request via a group.
+     * @param int $fromId Sender ID.
+     * @param int $groupId Group ID if request via a group.
      * @param int $operate Response operation type.
      * @param string $message Reply.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#%E6%B7%BB%E5%8A%A0%E5%A5%BD%E5%8F%8B%E7%94%B3%E8%AF%B7
      */
-    final public function respondToNewFriendRequestEvent(
+    final public function handleNewFriendRequestEvent(
         int $eventId,
         int $fromId,
         int $groupId,
@@ -869,7 +959,6 @@ class MiraiApiHandler
             "uri" => "/resp/newFriendRequestEvent",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
                 "eventId" => $eventId,
                 "fromId" => $fromId,
                 "groupId" => $groupId,
@@ -882,21 +971,19 @@ class MiraiApiHandler
     }
 
     /**
-     * Respond to MemberJoinRequestEvent.
+     * Handle MemberJoinRequestEvent.
      *
      * @param int $eventId Event ID.
-     * @param int $fromId Requester ID.
-     * @param int $groupId Requested group's ID.
+     * @param int $fromId Sender ID.
+     * @param int $groupId Target group ID.
      * @param int $operate Response operation type.
      * @param string $message Reply.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#%E7%94%A8%E6%88%B7%E5%85%A5%E7%BE%A4%E7%94%B3%E8%AF%B7bot%E9%9C%80%E8%A6%81%E6%9C%89%E7%AE%A1%E7%90%86%E5%91%98%E6%9D%83%E9%99%90
      */
-    final public function respondToMemberJoinRequestEvent(
+    final public function handleMemberJoinRequestEvent(
         int $eventId,
         int $fromId,
         int $groupId,
@@ -907,7 +994,6 @@ class MiraiApiHandler
             "uri" => "/resp/memberJoinRequestEvent",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
                 "eventId" => $eventId,
                 "fromId" => $fromId,
                 "groupId" => $groupId,
@@ -920,21 +1006,19 @@ class MiraiApiHandler
     }
 
     /**
-     * Respond to BotInvitedJoinGroupRequestEvent.
+     * Handle BotInvitedJoinGroupRequestEvent.
      *
      * @param int $eventId Event ID.
-     * @param int $fromId Requester ID.
-     * @param int $groupId Requested group's ID.
+     * @param int $fromId Sender ID.
+     * @param int $groupId Target group ID.
      * @param int $operate Response operation type.
      * @param string $message Reply.
      *
      * @return MiraiResponse Response.
      *
      * @throws MiraiApiException
-     *
-     * @link https://github.com/project-mirai/mirai-api-http/blob/master/docs/EventType.md#bot%E8%A2%AB%E9%82%80%E8%AF%B7%E5%85%A5%E7%BE%A4%E7%94%B3%E8%AF%B7
      */
-    final public function respondToBotInvitedJoinGroupRequestEvent(
+    final public function handleBotInvitedJoinGroupRequestEvent(
         int $eventId,
         int $fromId,
         int $groupId,
@@ -945,12 +1029,193 @@ class MiraiApiHandler
             "uri" => "/resp/botInvitedJoinGroupRequestEvent",
             "method" => "POST",
             "data" => [
-                "sessionKey" => $this->sessionKey,
                 "eventId" => $eventId,
                 "fromId" => $fromId,
                 "groupId" => $groupId,
                 "operate" => $operate,
                 "message" => $message
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /** Message Queue */
+
+    /**
+     * Count messages and events that robot received and cached.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function countMessage(): MiraiResponse
+    {
+        $options = [
+            "uri" => "/countMessage",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Get oldest messages and events that robot received, then delete them from the message log of Mirai API HTTP
+     * plugin.
+     *
+     * @param int $count Message/Event count.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function fetchMessage(int $count): MiraiResponse
+    {
+        $options = [
+            "uri" => "/fetchMessage?count={$count}",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Get latest messages and events that robot received, then delete them from the message log of Mirai API HTTP
+     * plugin.
+     *
+     * @param int $count Message/Event count.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function fetchLatestMessage(int $count): MiraiResponse
+    {
+        $options = [
+            "uri" => "/fetchLatestMessage?count={$count}",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Get oldest messages and events that robot received.
+     *
+     * @param int $count Message/Event count.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function peekMessage(int $count): MiraiResponse
+    {
+        $options = [
+            "uri" => "/peekMessage?count={$count}",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Get latest messages and events that robot received.
+     *
+     * @param int $count Message/Event count.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function peekLatestMessage(int $count): MiraiResponse
+    {
+        $options = [
+            "uri" => "/peekLatestMessage?count={$count}",
+            "method" => "GET"
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /** Multimedia */
+
+    /**
+     * Upload image.
+     *
+     * @param string $type Target chat type.
+     * @param mixed $file Image file.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function uploadImage(string $type, $file): MiraiResponse
+    {
+        $options = [
+            "uri" => "/uploadImage",
+            "method" => "POST",
+            "headers" => [
+                "Content-Type" => ContentType::MULTIPART
+            ],
+            "data" => [
+                "type" => $type,
+                "img" => $file
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Upload voice.
+     *
+     * @param string $type Target chat type.
+     * @param mixed $file Voice file.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function uploadVoice(string $type, $file): MiraiResponse
+    {
+        $options = [
+            "uri" => "/uploadVoice",
+            "method" => "POST",
+            "headers" => [
+                "Content-Type" => ContentType::MULTIPART
+            ],
+            "data" => [
+                "type" => $type,
+                "voice" => $file
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Upload file.
+     *
+     * @param string $type Target chat type.
+     * @param string $parentId Target directory ID.
+     * @param mixed $file File.
+     *
+     * @return MiraiResponse Response.
+     *
+     * @throws MiraiApiException
+     */
+    final public function uploadFile(string $type, string $parentId, $file): MiraiResponse
+    {
+        $options = [
+            "uri" => "/file/upload",
+            "method" => "POST",
+            "headers" => [
+                "Content-Type" => ContentType::MULTIPART
+            ],
+            "data" => [
+                "type" => $type,
+                "path" => $parentId,
+                "file" => $file
             ]
         ];
 

@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 3.0.0 - 2021-02-05
+## 3.0.0 - 2021-08-02
 
 ### Added
 - TRPG log APIs
@@ -11,20 +11,31 @@
 - Chinese order support
 - Dicing order in deck item support
 - Panel API
+- Common reply variables
+- Log service
 
 ### Fixed
-- Fix some wordings
-- Fix case sensitivity of some orders
+- Some wordings
+- Case sensitivity of some orders
+- Some comments
+- Some keys change
+- Order bugs
 
 ### Changed
 - DiceRobot API v3
-- Session strategy
+- Heartbeat strategy
 - Default chat settings
 - Check strategy to empty chat settings
+- Application status logic
 
 ### Refactored
 - Long message split strategy
+- Cache strategy
+- Initialization strategy
 - Robustness
+
+### Removed
+- Session and APIs
 
 
 ## 2.1.0 - 2020-12-01

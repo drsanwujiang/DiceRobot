@@ -15,14 +15,17 @@ use DiceRobot\Interfaces\Fragment;
  */
 final class FlashImage implements Fragment
 {
-    /** @var string Image ID. */
-    public string $imageId;
+    /** @var string|null Flash image ID. */
+    public ?string $imageId = null;
 
-    /** @var string Image URL. */
-    public string $url;
+    /** @var string|null Flash image URL. */
+    public ?string $url = null;
 
-    /** @var string|null Image local path. */
+    /** @var string|null Flash image local path. */
     public ?string $path = null;
+
+    /** @var string|null Flash image base64 encoding. */
+    public ?string $base64 = null;
 
     /**
      * @inheritDoc
@@ -35,7 +38,8 @@ final class FlashImage implements Fragment
             "type" => "FlashImage",
             "imageId" => $this->imageId,
             "url" => $this->url,
-            "path" => $this->path
+            "path" => $this->path,
+            "base64" => $this->base64
         ];
     }
 }

@@ -6,14 +6,16 @@ namespace DiceRobot\Handlers;
 
 use DiceRobot\App;
 use DiceRobot\Data\Config;
+use DiceRobot\Data\CustomConfig;
 use DiceRobot\Factory\{LoggerFactory, ResponseFactory};
-use DiceRobot\Server;
-use DiceRobot\Service\{RobotService, StatisticsService};
+use DiceRobot\Service\{LogService, ResourceService, RobotService, StatisticsService};
 use DiceRobot\Util\Updater;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Swoole\Coroutine\System;
 use Swoole\Http\Response;
+use Swoole\Process;
+use Throwable;
 
 /**
  * Class PanelHandler
@@ -33,8 +35,11 @@ class PanelHandler
     /** @var App Application. */
     protected App $app;
 
-    /** @var Server DiceRobot HTTP server. */
-    protected Server $server;
+    /** @var LogService Log service. */
+    protected LogService $log;
+
+    /** @var ResourceService Resource service. */
+    protected ResourceService $resource;
 
     /** @var RobotService Robot service. */
     protected RobotService $robot;
@@ -54,6 +59,8 @@ class PanelHandler
      * @param ContainerInterface $container Container.
      * @param Config $config DiceRobot config.
      * @param App $app Application.
+     * @param LogService $log Log service.
+     * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
      * @param StatisticsService $statistics Statistics service.
      * @param ResponseFactory $responseFactory HTTP response factory.
@@ -63,6 +70,8 @@ class PanelHandler
         ContainerInterface $container,
         Config $config,
         App $app,
+        LogService $log,
+        ResourceService $resource,
         RobotService $robot,
         StatisticsService $statistics,
         ResponseFactory $responseFactory,
@@ -71,11 +80,13 @@ class PanelHandler
         $this->container = $container;
         $this->config = $config;
         $this->app = $app;
+        $this->log = $log;
+        $this->resource = $resource;
         $this->robot = $robot;
         $this->statistics = $statistics;
         $this->responseFactory = $responseFactory;
 
-        $this->logger = $loggerFactory->create("Handler");
+        $this->logger = $loggerFactory->create("Panel");
 
         $this->logger->debug("Panel handler created.");
     }
@@ -89,15 +100,121 @@ class PanelHandler
     }
 
     /**
-     * Initialize panel handler.
+     * Handle panel request.
      *
-     * @param Server $server DiceRobot HTTP server.
+     * @param string $method Request method.
+     * @param string $uri Request URL.
+     * @param string[] $queryParams Query parameters.
+     * @param string $content Request content.
+     * @param string $contentType Request content type.
+     * @param Response $response Swoole response.
+     *
+     * @return Response Swoole response.
      */
-    public function initialize(Server $server): void
-    {
-        $this->server = $server;
+    public function handle(
+        string $method,
+        string $uri,
+        array $queryParams,
+        string $content,
+        string $contentType,
+        Response $response
+    ): Response {
+        try {
+            $this->route($method, $uri, $queryParams, $content, $contentType, $response);
+        } catch (Throwable $t) {
+            $details = sprintf(
+                "Type: %s\nCode: %s\nMessage: %s\nFile: %s\nLine: %s\nTrace: %s",
+                get_class($t),
+                $t->getCode(),
+                $t->getMessage(),
+                $t->getFile(),
+                $t->getLine(),
+                $t->getTraceAsString()
+            );
 
-        $this->logger->info("Panel handler initialized.");
+            $this->logger->error("Panel request failed, unexpected exception occurred:\n{$details}.");
+
+            $this->error($response);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Route request.
+     *
+     * @param string $method Request method.
+     * @param string $uri Request URL.
+     * @param string[] $queryParams Query parameters.
+     * @param string $content Request content.
+     * @param string $contentType Request content type.
+     * @param Response $response Swoole response.
+     *
+     * @return Response Swoole response.
+     */
+    protected function route(
+        string $method,
+        string $uri,
+        array $queryParams,
+        string $content,
+        string $contentType,
+        Response $response
+    ): Response {
+        if ($method == "OPTIONS") {
+            $this->preflight($response);
+        } elseif ($method == "POST" && $contentType == "application/json") {
+            if ($uri == "/config") {
+                $this->setConfig($content, $response);
+            } elseif ($uri == "/mirai/update") {
+                $this->updateMirai($content, $response);
+            } else {
+                $this->notFound($response);
+            }
+        } elseif ($method == "GET") {
+            if ($uri == "/connect") {
+                $this->connect($response);
+            } elseif ($uri == "/pause") {
+                $this->pause($response);
+            } elseif ($uri == "/run") {
+                $this->rerun($response);
+            } elseif ($uri == "/reload") {
+                $this->reload($response);
+            } elseif ($uri == "/stop") {
+                $this->stop($response);
+            } elseif ($uri == "/restart") {
+                $this->restart($response);
+            } elseif ($uri == "/update") {
+                $this->update($response);
+            } elseif ($uri == "/profile") {
+                $this->getProfile($response);
+            } elseif ($uri == "/status") {
+                $this->getStatus($response);
+            } elseif ($uri == "/statistics") {
+                $this->getStatistics($response);
+            } elseif ($uri == "/config") {
+                $this->getConfig($response);
+            } elseif ($uri == "/logs") {
+                $this->getLogList($response);
+            } elseif ($uri == "/log") {
+                $this->getLog($queryParams, $response);
+            } elseif ($uri == "/skeleton/update") {
+                $this->updateSkeleton($response);
+            } elseif ($uri == "/mirai/status") {
+                $this->getMiraiStatus($response);
+            } elseif ($uri == "/mirai/start") {
+                $this->startMirai($response);
+            } elseif ($uri == "/mirai/stop") {
+                $this->stopMirai($response);
+            } elseif ($uri == "/mirai/restart") {
+                $this->restartMirai($response);
+            } else {
+                $this->notFound($response);
+            }
+        } else {
+            $this->notFound($response);
+        }
+
+        return $response;
     }
 
     /**
@@ -107,7 +224,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function preflight(Response $response): Response
+    protected function preflight(Response $response): Response
     {
         return $this->responseFactory->createPreflight($response);
     }
@@ -119,9 +236,186 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function notFound(Response $response): Response
+    protected function notFound(Response $response): Response
     {
         return $this->responseFactory->createNotFound($response);
+    }
+
+    /**
+     * 500 Internal Server Error.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function error(Response $response): Response
+    {
+        return $this->responseFactory->createError($response);
+    }
+
+    /**
+     * Connect.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function connect(Response $response): Response
+    {
+        $this->logger->info("HTTP request received, connect to application.");
+
+        return $this->responseFactory->create(0, null, $response);
+    }
+
+    /**
+     * Pause application.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function pause(Response $response): Response
+    {
+        $this->logger->notice("HTTP request received, pause application.");
+
+        $code = $this->app->pause();
+
+        if ($code == -1) {
+            $code = -1000;
+        } elseif ($code == -2) {
+            $code = -1001;
+        }
+
+        return $this->responseFactory->create($code, null, $response);
+    }
+
+    /**
+     * Rerun application.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function rerun(Response $response): Response
+    {
+        $this->logger->notice("HTTP request received, rerun application.");
+
+        $code = $this->app->run();
+
+        if ($code == -1) {
+            $code = -1010;
+        } elseif ($code == -2) {
+            $code = -1011;
+        } elseif ($code == -3) {
+            $code = -1012;
+        }
+
+        return $this->responseFactory->create($code, null, $response);
+    }
+
+    /**
+     * Reload application.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function reload(Response $response): Response
+    {
+        $this->logger->notice("HTTP request received, reload application.");
+
+        $code = $this->app->reload();
+
+        if ($code == -1) {
+            $code = -1020;
+        }
+
+        return $this->responseFactory->create($code, null, $response);
+    }
+
+    /**
+     * Stop application and server.
+     *
+     * @param Response $response HTTP response.
+     */
+    protected function stop(Response $response): void
+    {
+        $this->logger->notice("HTTP request received, stop application.");
+
+        $code = $this->app->stop();
+
+        if ($code == -1) {
+            $code = -1030;
+        }
+
+        $this->responseFactory->create($code, null, $response)->end();
+
+        Process::kill(getmypid(), 10);  // Send SIGUSR1
+    }
+
+    /**
+     * Restart application and server.
+     *
+     * @param Response $response HTTP response.
+     */
+    protected function restart(Response $response): void
+    {
+        $this->logger->notice("HTTP request received, restart application.");
+
+        $code = -1;
+
+        extract(System::exec(
+            "/bin/systemctl status {$this->config->getString("dicerobot.service.name")}"
+        ), EXTR_OVERWRITE);
+
+        if ($code == 0) {
+            $this->responseFactory->create(0, null, $response)->end();
+
+            System::exec("/bin/systemctl restart {$this->config->getString("dicerobot.service.name")}");
+        } else {
+            $this->responseFactory->create(1040, null, $response)->end();
+        }
+    }
+
+    /**
+     * Update DiceRobot.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function update(Response $response): Response
+    {
+        $this->logger->notice("HTTP request received, update DiceRobot.");
+
+        if (!is_dir($root = $this->config->getString("root"))) {
+            return $this->responseFactory->create(-1050, null, $response);
+        }
+
+        $code = $signal = -1;
+        $output = "";
+
+        extract(System::exec(
+            "/usr/local/bin/composer --no-interaction --no-ansi --quiet update --working-dir {$root} --no-dev 2>&1"
+        ), EXTR_OVERWRITE);
+
+        if ($code == 0) {
+            return $this->responseFactory->create($code, null, $response);
+        } else {
+            $this->logger->critical(
+                "Failed to update DiceRobot. Code {$code}, signal {$signal}, output message: {$output}"
+            );
+
+            if ($code == 127) {
+                return $this->responseFactory->create(-1051, null, $response);
+            } else {
+                return $this->responseFactory->create(
+                    -1052,
+                    ["code" => $code, "signal" => $signal, "output" => $output],
+                    $response
+                );
+            }
+        }
     }
 
     /**
@@ -131,7 +425,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function getProfile(Response $response): Response
+    protected function getProfile(Response $response): Response
     {
         $this->logger->info("HTTP request received, get profile.");
 
@@ -157,7 +451,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function getStatus(Response $response): Response
+    protected function getStatus(Response $response): Response
     {
         $this->logger->info("HTTP request received, get application status.");
 
@@ -188,7 +482,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function getStatistics(Response $response): Response
+    protected function getStatistics(Response $response): Response
     {
         $this->logger->info("HTTP request received, get statistics.");
 
@@ -204,7 +498,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function getConfig(Response $response): Response
+    protected function getConfig(Response $response): Response
     {
         $this->logger->info("HTTP request received, get config.");
 
@@ -225,8 +519,11 @@ class PanelHandler
      * @param Response $response HTTP response.
      *
      * @return Response HTTP response.
+     *
+     * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
-    public function setConfig(string $content, Response $response): Response
+    protected function setConfig(string $content, Response $response): Response
     {
         $this->logger->info("HTTP request received, set config.");
 
@@ -234,176 +531,48 @@ class PanelHandler
             return $this->responseFactory->create(-1060, null, $response);
         }
 
-        if (!$this->app->setConfig($data)) {
+        if (!$this->resource->getConfig()->setConfig($data)) {
             return $this->responseFactory->create(-1061, null, $response);
         }
 
-        return $this->responseFactory->create(0, null, $response);
-    }
-
-    /**
-     * Connect.
-     *
-     * @param Response $response HTTP response.
-     *
-     * @return Response HTTP response.
-     */
-    public function connect(Response $response): Response
-    {
-        $this->logger->info("HTTP request received, connect to application.");
+        $this->config->load($this->container->make(CustomConfig::class), $this->resource->getConfig());
 
         return $this->responseFactory->create(0, null, $response);
     }
 
     /**
-     * Pause application.
+     * Get DiceRobot log file list.
      *
      * @param Response $response HTTP response.
      *
      * @return Response HTTP response.
      */
-    public function pause(Response $response): Response
+    protected function getLogList(Response $response): Response
     {
-        $this->logger->notice("HTTP request received, pause application.");
+        $this->logger->info("HTTP request received, get log list.");
 
-        $code = $this->app->pause();
+        $logs = $this->log->getLogList();
 
-        if ($code == -1) {
-            $code = -1000;
-        } elseif ($code == -2) {
-            $code = -1001;
-        }
-
-        return $this->responseFactory->create($code, null, $response);
+        return $this->responseFactory->create(0, ["logs" => $logs], $response);
     }
 
     /**
-     * Rerun application.
+     * Get parsed DiceRobot log file content.
      *
+     * @param array $params Query parameters.
      * @param Response $response HTTP response.
      *
      * @return Response HTTP response.
      */
-    public function rerun(Response $response): Response
+    protected function getLog(array $params, Response $response): Response
     {
-        $this->logger->notice("HTTP request received, rerun application.");
+        $this->logger->info("HTTP request received, get log.");
 
-        $code = $this->app->run();
-
-        if ($code == -1) {
-            $code = -1010;
-        } elseif ($code == -2) {
-            $code = -1011;
-        } elseif ($code == -3) {
-            $code = -1012;
+        if (false === $log = $this->log->getLog($params["name"] ?? "")) {
+            return $this->responseFactory->create(-1080, null, $response);
         }
 
-        return $this->responseFactory->create($code, null, $response);
-    }
-
-    /**
-     * Reload application.
-     *
-     * @param Response $response HTTP response.
-     *
-     * @return Response HTTP response.
-     */
-    public function reload(Response $response): Response
-    {
-        $this->logger->notice("HTTP request received, reload application.");
-
-        $code = $this->app->reload();
-
-        if ($code == -1) {
-            $code = -1020;
-        }
-
-        return $this->responseFactory->create($code, null, $response);
-    }
-
-    /**
-     * Stop application and server.
-     *
-     * @param Response $response HTTP response.
-     */
-    public function stop(Response $response): void
-    {
-        $this->logger->notice("HTTP request received, stop application.");
-
-        $code = $this->app->stop();
-
-        if ($code == -1) {
-            $code = -1030;
-        }
-
-        $this->responseFactory->create($code, null, $response)->end();
-
-        $this->server->stop();
-    }
-
-    /**
-     * Restart application and server.
-     *
-     * @param Response $response HTTP response.
-     */
-    public function restart(Response $response): void
-    {
-        $this->logger->notice("HTTP request received, restart application.");
-
-        $code = -1;
-
-        extract(System::exec(
-            "/bin/systemctl status {$this->config->getString("dicerobot.service.name")}"
-        ), EXTR_OVERWRITE);
-
-        if ($code == 0) {
-            $this->responseFactory->create(0, null, $response)->end();
-
-            System::exec("/bin/systemctl restart {$this->config->getString("dicerobot.service.name")}");
-        } else {
-            $this->responseFactory->create(1040, null, $response)->end();
-        }
-    }
-
-    /**
-     * Update DiceRobot.
-     *
-     * @param Response $response HTTP response.
-     *
-     * @return Response HTTP response.
-     */
-    public function update(Response $response): Response
-    {
-        $this->logger->notice("HTTP request received, update DiceRobot.");
-
-        if (!is_dir($root = $this->config->getString("root"))) {
-            return $this->responseFactory->create(-1050, null, $response);
-        }
-
-        $code = $signal = -1;
-        $output = "";
-
-        extract(System::exec(
-            "/usr/local/bin/composer update --working-dir {$root} --no-ansi --no-interaction --quiet 2>&1"
-        ), EXTR_OVERWRITE);
-
-        if ($code == 0) {
-            return $this->responseFactory->create($code, null, $response);
-        } else {
-            $this->logger->critical(
-                "Failed to update DiceRobot. Code {$code}, signal {$signal}, output message: {$output}"
-            );
-
-            if ($code == 127) {
-                return $this->responseFactory->create(-1051, null, $response);
-            } else {
-                return $this->responseFactory->create(
-                    -1052,
-                    ["code" => $code, "signal" => $signal, "output" => $output],
-                    $response
-                );
-            }
-        }
+        return $this->responseFactory->create(0, ["log" => $log], $response);
     }
 
     /**
@@ -416,7 +585,7 @@ class PanelHandler
      * @noinspection PhpDocMissingThrowsInspection
      * @noinspection PhpUnhandledExceptionInspection
      */
-    public function updateSkeleton(Response $response): Response
+    protected function updateSkeleton(Response $response): Response
     {
         $this->logger->notice("HTTP request received, update skeleton.");
 
@@ -441,7 +610,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function getMiraiStatus(Response $response): Response
+    protected function getMiraiStatus(Response $response): Response
     {
         $this->logger->info("HTTP request received, get Mirai status.");
 
@@ -471,7 +640,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function startMirai(Response $response): Response
+    protected function startMirai(Response $response): Response
     {
         $this->logger->notice("HTTP request received, start Mirai.");
 
@@ -508,7 +677,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function stopMirai(Response $response): Response
+    protected function stopMirai(Response $response): Response
     {
         $this->logger->notice("HTTP request received, stop Mirai.");
 
@@ -545,7 +714,7 @@ class PanelHandler
      *
      * @return Response HTTP response.
      */
-    public function restartMirai(Response $response): Response
+    protected function restartMirai(Response $response): Response
     {
         $this->logger->notice("HTTP request received, restart Mirai.");
 
@@ -575,7 +744,15 @@ class PanelHandler
         }
     }
 
-    public function updateMirai(string $content, Response $response): Response
+    /**
+     * Update Mirai.
+     *
+     * @param string $content HTTP request content.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function updateMirai(string $content, Response $response): Response
     {
         $this->logger->notice("HTTP request received, update Mirai.");
 

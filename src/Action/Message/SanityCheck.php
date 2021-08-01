@@ -53,7 +53,6 @@ class SanityCheck extends MessageAction
                 $this->check($sanity, $successDecrease, $failureDecrease, $checkResult);
 
             $this->setReply("sanityCheckResult", [
-                "昵称" => $this->getNickname(),
                 "掷骰结果" => $fullCheckResult,
                 "检定结果" => $this->config->getString("wording.sanityCheckLevel.$checkLevel"),
                 "SAN值减少" => $decrease,
@@ -65,7 +64,6 @@ class SanityCheck extends MessageAction
             list($checkLevel, $decrease) = $this->check($sanity, $successDecrease, $failureDecrease, $checkResult);
 
             $this->setReply("sanityCheckResultWithSanity", [
-                "昵称" => $this->getNickname(),
                 "掷骰结果" => $fullCheckResult,
                 "检定结果" => $this->config->getString("wording.sanityCheckLevel.$checkLevel"),
                 "SAN值减少" => $decrease,
@@ -206,7 +204,7 @@ class SanityCheck extends MessageAction
      *
      * @param int $cardId Character card ID.
      * @param int $checkResult The check result.
-     * @param array $decreases Decreases.
+     * @param int[] $decreases Decreases.
      *
      * @return SanityCheckResponse The response.
      */

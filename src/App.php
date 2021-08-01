@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace DiceRobot;
 
-use DiceRobot\Data\{Config, Dice, Subexpression};
+use DiceRobot\Data\{Config, CustomConfig, Dice, Subexpression};
 use DiceRobot\Enum\AppStatusEnum;
-use DiceRobot\Exception\{MiraiApiException, RuntimeException};
+use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Factory\LoggerFactory;
-use DiceRobot\Handlers\{HeartbeatHandler, ReportHandler};
-use DiceRobot\Service\{ApiService, ResourceService, RobotService, StatisticsService};
-use DiceRobot\Traits\AppTraits\StatusTrait;
+use DiceRobot\Handlers\ReportHandler;
+use DiceRobot\Service\{ApiService, HeartbeatService, LogService, ResourceService, RobotService, StatisticsService};
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use ReflectionClass;
 use Swoole\Timer;
 
 /**
@@ -34,6 +32,12 @@ class App
     /** @var ApiService API service. */
     protected ApiService $api;
 
+    /** @var HeartbeatService Heartbeat service. */
+    protected HeartbeatService $heartbeat;
+
+    /** @var LogService Log service. */
+    protected LogService $log;
+
     /** @var ResourceService Resource service. */
     protected ResourceService $resource;
 
@@ -43,16 +47,11 @@ class App
     /** @var StatisticsService Statistics service. */
     protected StatisticsService $statistics;
 
-    /** @var HeartbeatHandler Heartbeat handler. */
-    protected HeartbeatHandler $heartbeatHandler;
-
     /** @var ReportHandler Report handler. */
     protected ReportHandler $reportHandler;
 
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
-
-    use StatusTrait;
 
     /**
      * The constructor.
@@ -60,10 +59,11 @@ class App
      * @param ContainerInterface $container Container.
      * @param Config $config DiceRobot config.
      * @param ApiService $api API service.
+     * @param HeartbeatService $heartbeat Heartbeat service.
+     * @param LogService $log Log service.
      * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
      * @param StatisticsService $statistics Statistics service.
-     * @param HeartbeatHandler $heartbeatHandler Heartbeat handler.
      * @param ReportHandler $reportHandler Report handler.
      * @param LoggerFactory $loggerFactory Logger factory.
      */
@@ -71,21 +71,22 @@ class App
         ContainerInterface $container,
         Config $config,
         ApiService $api,
+        HeartbeatService $heartbeat,
+        LogService $log,
         ResourceService $resource,
         RobotService $robot,
         StatisticsService $statistics,
-        HeartbeatHandler $heartbeatHandler,
         ReportHandler $reportHandler,
         LoggerFactory $loggerFactory
     ) {
-        $this->status = AppStatusEnum::WAITING();
         $this->container = $container;
         $this->config = $config;
         $this->api = $api;
+        $this->heartbeat = $heartbeat;
+        $this->log = $log;
         $this->resource = $resource;
         $this->robot = $robot;
         $this->statistics = $statistics;
-        $this->heartbeatHandler = $heartbeatHandler;
         $this->reportHandler = $reportHandler;
 
         $this->logger = $loggerFactory->create("Application");
@@ -103,14 +104,18 @@ class App
 
     /**
      * Initialize application.
+     *
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function initialize(): void
     {
-        /** Primary initialization */
+        /** Services initialization */
         try {
-            $this->api->initialize($this->config);
+            $this->api->initialize();
+            $this->heartbeat->initialize();
+            $this->log->initialize();
             $this->resource->initialize($this->config);
-            $this->robot->initialize($this->config);
+            $this->robot->initialize();
             $this->statistics->initialize();
         } catch (RuntimeException $e) {
             $this->logger->emergency("Initialize application failed.");
@@ -120,15 +125,13 @@ class App
             return;
         }
 
-        $this->loadConfig();
+        // Load panel config
+        $this->config->load($this->container->make(CustomConfig::class), $this->resource->getConfig());
 
-        /** Secondary initialization */
-        $this->heartbeatHandler->initialize($this);
-        $this->reportHandler->initialize($this);
-        Dice::globalInitialize($this->config);
-        Subexpression::globalInitialize($this->config);
-
-        $this->status = AppStatusEnum::HOLDING();
+        /** Utils initialization */
+        Dice::initialize($this->config);
+        Subexpression::initialize($this->config);
+        AppStatus::initialize($this->container->get(LoggerFactory::class));
 
         $this->logger->notice("Application initialized.");
     }
@@ -146,45 +149,13 @@ class App
     }
 
     /**
-     * Load config.
-     */
-    protected function loadConfig(): void
-    {
-        $reflectionClass = new ReflectionClass(Config::class);
-        $property = $reflectionClass->getProperty("data");
-        $property->setAccessible(true);
-
-        // Set new config
-        $property->setValue($this->config, (new Config($this->container, $this->resource->getConfig()))->all());
-
-        // Reload logger factory
-        $this->container->get(LoggerFactory::class)->reload($this->config);
-    }
-
-    /**
-     * Set panel config.
+     * Get application status.
      *
-     * @param array $data Panel config data.
-     *
-     * @return bool Success.
+     * @return AppStatusEnum Application status.
      */
-    public function setConfig(array $data): bool
+    public function getStatus(): AppStatusEnum
     {
-        if (!$this->resource->getConfig()->setConfig($data)) {
-            return false;
-        }
-
-        $this->loadConfig();
-
-        return true;
-    }
-
-    /**
-     * Handle heartbeat.
-     */
-    public function heartbeat(): void
-    {
-        $this->heartbeatHandler->handle();
+        return AppStatus::getStatus();
     }
 
     /**
@@ -204,15 +175,15 @@ class App
      */
     public function pause(): int
     {
-        if ($this->getStatus()->equals(AppStatusEnum::PAUSED())) {
+        if (AppStatus::getStatus()->equals(AppStatusEnum::PAUSED())) {
             // Application is already paused
             return -1;
-        } elseif ($this->getStatus()->lessThan(AppStatusEnum::PAUSED())) {
+        } elseif (AppStatus::getStatus()->lessThan(AppStatusEnum::PAUSED())) {
             // Cannot be paused
             return -2;
         }
 
-        $this->setStatus(AppStatusEnum::PAUSED());
+        AppStatus::pause();
 
         return 0;
     }
@@ -224,40 +195,40 @@ class App
      */
     public function run(): int
     {
-        if ($this->getStatus()->equals(AppStatusEnum::RUNNING())) {
+        if (AppStatus::getStatus()->equals(AppStatusEnum::RUNNING())) {
             // Application is already running
             return -1;
-        } elseif (!$this->getStatus()->equals(AppStatusEnum::PAUSED())) {
+        } elseif (AppStatus::getStatus()->equals(AppStatusEnum::PAUSED())) {
             // Cannot be rerun
             return -2;
-        }
-
-        try {
-            // Initialize session, then update robot service
-            if ($this->api->initSession($this->robot->getAuthKey(), $this->robot->getId()) && $this->robot->update()) {
-                $this->setStatus(AppStatusEnum::RUNNING());
-
+        } elseif (AppStatus::getStatus()->equals(AppStatusEnum::HOLDING())) {
+            // Enable heartbeat
+            if ($this->heartbeat->enable()) {
                 $this->logger->notice("Application rerun.");
 
                 return 0;
             } else {
                 $this->logger->critical("Rerun application failed.");
-            }
-        } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-            $this->logger->alert("Rerun application failed, unable to call Mirai API.");
-        }
 
-        return -3;
+                return -3;
+            }
+        } else {
+            // Cannot be rerun
+            return -2;
+        }
     }
 
     /**
      * Reload the resources.
      *
      * @return int Result code.
+     *
+     * @noinspection PhpDocMissingThrowsInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function reload(): int
     {
-        $this->status = AppStatusEnum::PAUSED();
+        AppStatus::pause();
 
         if (!$this->resource->reload()) {
             $this->logger->critical("Reload application failed.");
@@ -265,11 +236,20 @@ class App
             return -1;
         }
 
-        $this->loadConfig();
+        $this->config->load($this->container->make(CustomConfig::class), $this->resource->getConfig());
 
-        $this->status = AppStatusEnum::RUNNING();
+        // Reload logger factory
+        /** @var LoggerFactory $loggerFactory */
+        $loggerFactory = $this->container->get(LoggerFactory::class);
+        $loggerFactory->reload();
+
+        // Utils reinitialization
+        Dice::initialize($this->config);
+        Subexpression::initialize($this->config);
 
         $this->logger->notice("Application reloaded.");
+
+        AppStatus::run();
 
         return 0;
     }
@@ -281,7 +261,7 @@ class App
      */
     public function stop(): int
     {
-        $this->setStatus(AppStatusEnum::STOPPED());
+        AppStatus::stop();
 
         // Stop, save and release
         Timer::clearAll();

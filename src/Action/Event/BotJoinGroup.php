@@ -13,7 +13,7 @@ use DiceRobot\Util\Convertor;
 /**
  * Class BotJoinGroup
  *
- * Action that responds to BotJoinGroupEvent.
+ * Action that handles BotJoinGroupEvent.
  *
  * Send greetings according to the template when the group is normal, or send message and quit when the group
  * is delinquent.
@@ -24,11 +24,7 @@ use DiceRobot\Util\Convertor;
  */
 class BotJoinGroup extends EventAction
 {
-    /**
-     * @var BotJoinGroupEvent $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
-     */
+    /** @var BotJoinGroupEvent $event Event. */
     public Event $event;
 
     /**

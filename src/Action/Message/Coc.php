@@ -6,7 +6,6 @@ namespace DiceRobot\Action\Message;
 
 use DiceRobot\Action\MessageAction;
 use DiceRobot\Data\Dice;
-use DiceRobot\Data\Report\Message\GroupMessage;
 use DiceRobot\Data\Resource\Reference;
 use DiceRobot\Exception\DiceException\{DiceNumberOverstepException, ExpressionErrorException,
     ExpressionInvalidException, SurfaceNumberOverstepException};
@@ -63,10 +62,8 @@ class Coc extends MessageAction
         $reference = $this->resource->getReference("COCCharacterCardTemplate");  // Load reference
         $attributes = $this->generateAttributes($version, $count, $reference);
         $details = $detailed ? "\n{$this->generateDetails($reference)}" : "";
-        $atSender = ($this->message instanceof GroupMessage) ? "[mirai:at:{$this->message->sender->id}] " : "";
 
         $this->setReply("cocGenerateResult", [
-            "@发送者" => $atSender,
             "COC版本" => $version,
             "调查员属性" => $attributes,
             "调查员详细信息" => $details

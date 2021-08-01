@@ -26,6 +26,9 @@ final class Image implements ParsableFragment
     /** @var string|null Image local path. */
     public ?string $path = null;
 
+    /** @var string|null Image base64 encoding. */
+    public ?string $base64 = null;
+
     /**
      * @inheritDoc
      *
@@ -57,7 +60,8 @@ final class Image implements ParsableFragment
             "type" => "Image",
             "imageId" => $this->imageId,
             "url" => $this->url,
-            "path" => $this->path
+            "path" => $this->path,
+            "base64" => $this->base64
         ];
     }
 
@@ -70,10 +74,10 @@ final class Image implements ParsableFragment
     {
         if ($this->imageId) {
             return "[mirai:image:{$this->imageId}]";
-        } elseif ($this->url) {
-            return "[mirai:image:{$this->url}]";
-        } else {
+        } elseif ($this->path) {
             return "[mirai:image:file={$this->path}]";
+        } else {
+            return "";
         }
     }
 

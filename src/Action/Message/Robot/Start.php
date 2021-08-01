@@ -38,9 +38,7 @@ class Start extends RobotAction
 
         $this->chatSettings->set("active", true);
 
-        $this->setReply("robotStart", [
-            "机器人昵称" => $this->getRobotNickname()
-        ]);
+        $this->setReply("robotStart");
     }
 
     /**

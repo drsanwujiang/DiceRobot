@@ -7,12 +7,11 @@ namespace DiceRobot\Action\Event;
 use DiceRobot\Action\EventAction;
 use DiceRobot\Data\Report\Event;
 use DiceRobot\Data\Report\Event\BotOfflineEventActive;
-use DiceRobot\Enum\AppStatusEnum;
 
 /**
  * Class BotOfflineActive
  *
- * Action that responds to BotOfflineEventActive.
+ * Action that handles BotOfflineEventActive.
  *
  * Hold application (HOLDING).
  *
@@ -22,11 +21,7 @@ use DiceRobot\Enum\AppStatusEnum;
  */
 class BotOfflineActive extends EventAction
 {
-    /**
-     * @var BotOfflineEventActive $event Event.
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
-     */
+    /** @var BotOfflineEventActive $event Event. */
     public Event $event;
 
     /**
@@ -34,8 +29,8 @@ class BotOfflineActive extends EventAction
      */
     public function __invoke(): void
     {
-        $this->logger->warning("Robot is offline (active).");
+        $this->logger->warning("Bot is offline (active).");
 
-        $this->app->setStatus(AppStatusEnum::HOLDING());
+        $this->heartbeat->disable();
     }
 }

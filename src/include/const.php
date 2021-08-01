@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * Constants of DiceRobot.
  *
- * This file contains version (DICEROBOT_VERSION), startup time (DICEROBOT_STARTUP) and default config
- * (DEFAULT_CONFIG) of DiceRobot.
+ * This file contains version (DICEROBOT_VERSION), startup time (DICEROBOT_STARTUP), default config (DEFAULT_CONFIG),
+ * routes (DEFAULT_ROUTES) and chat settings (DEFAULT_CHAT_SETTINGS) of DiceRobot.
  *
  * This file should NOT be modified, for it ensures DiceRobot can work in the default mode and behave as expected.
  *
@@ -15,16 +15,13 @@ declare(strict_types=1);
 
 namespace {
     /** @var string Current version. */
-    const DICEROBOT_VERSION = "3.0.0-alpha";
+    const DICEROBOT_VERSION = "3.0.0";
 
-    /** @var string Root directory. */
+    /** @var int Startup time. */
     define("DICEROBOT_STARTUP", time());
 }
 
 namespace DiceRobot {
-
-    use Monolog\Logger;
-
     /** @var array Default config. */
     const DEFAULT_CONFIG = [
         "dicerobot" => [
@@ -45,10 +42,6 @@ namespace DiceRobot {
         ],
 
         "mirai" => [
-            "robot" => [
-                "id" => 10000,
-                "authKey" => "12345678"
-            ],
             "server" => [
                 "host" => "127.0.0.1",
                 "port" => 8080
@@ -60,11 +53,11 @@ namespace DiceRobot {
         ],
 
         "log" => [
-            "channel" => "default",
             "filename" => "dicerobot.log",
+            "maxFiles" => 0,
             "level" => [
-                "file" => Logger::NOTICE,
-                "console" => Logger::CRITICAL
+                "file" => \Monolog\Logger::NOTICE,
+                "console" => \Monolog\Logger::CRITICAL
             ]
         ],
 
@@ -108,7 +101,7 @@ namespace DiceRobot {
             "cardUnbind" => "人物卡解绑成功",
 
             /* ChangeItem */
-            "changeItemResult" => "{&昵称}的 {&属性} {&增减}了{&变动值}点，当前 {&属性}：{&当前值}点",
+            "changeItemResult" => "{&昵称}的 {&项目} {&增减}了{&变动值}点，当前 {&项目}：{&当前值}点",
             "changeItemWrongExpression" => "指令错误！人物卡的变动只能是非负整数或掷骰表达式",
 
             /* Check */
@@ -168,7 +161,7 @@ namespace DiceRobot {
             "jrrpDisabled" => "Master 已经禁用了 .jrrp (;´Д`)",
 
             /* Kowtow */
-            "kowtowResult" => "[mirai:at:{&发送者QQ}] 唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！\n{&虔诚等级}",
+            "kowtowResult" => "{&@发送者}唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！\n{&虔诚等级}",
             "kowtowLevel0" => "哼(▼ヘ▼#)你明明一点都不虔诚，诅咒你下次超级大失败ヽ(#`Д´)ﾉ",
             "kowtowLevel1" => "只有这么一点虔诚的话，不天降惩罚于你已是恩赐了喵<(￣ ﹌ ￣)>",
             "kowtowLevel2" => "看来你的虔诚很有限的说(￣▽￣)~*不过还是勉强保佑保佑你吧( ･´ω`･ )",
@@ -191,7 +184,7 @@ namespace DiceRobot {
             "logDisabled" => "Master 已经禁用了 .log (;´Д`)",
 
             /* Name */
-            "nameGenerateResult" => "[mirai:at:{&发送者QQ}] 为你寻找到了这些名称：{&名称}",
+            "nameGenerateResult" => "{&@发送者}为你寻找到了这些名称：{&名称}",
             "nameGenerateCountOverstep" => "随机名称生成次数只能介于1~{&最大生成次数}！",
 
             /* Nickname */
@@ -390,6 +383,8 @@ namespace DiceRobot {
                 \DiceRobot\Action\Event\BotOnline::class,
             \DiceRobot\Data\Report\Event\BotReloginEvent::class =>
                 \DiceRobot\Action\Event\BotRelogin::class,
+            \DiceRobot\Data\Report\Event\MemberCardChangeEvent::class =>
+                \DiceRobot\Action\Event\MemberCardChange::class,
             \DiceRobot\Data\Report\Event\NewFriendRequestEvent::class =>
                 \DiceRobot\Action\Event\NewFriendRequest::class
         ]

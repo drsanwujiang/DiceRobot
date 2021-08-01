@@ -58,13 +58,11 @@ class Dice
     public int $result;
 
     /**
-     * Set maxDiceNumber and bpDiceType.
-     *
-     * @GlobalInitialize
+     * Initialize dice.
      *
      * @param Config $config DiceRobot config.
      */
-    public static function globalInitialize(Config $config): void
+    public static function initialize(Config $config): void
     {
         static::$maxDiceNumber = $config->getInt("order.maxDiceNumber");
         static::$bpDiceType = $config->getArray("wording.bpDiceType");

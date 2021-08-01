@@ -11,7 +11,7 @@ use DiceRobot\Data\Report\Event\BotMuteEvent;
 /**
  * Class BotMute
  *
- * Action that responds to BotMuteEvent.
+ * Action that handles BotMuteEvent.
  *
  * Quit the group.
  *
@@ -21,11 +21,7 @@ use DiceRobot\Data\Report\Event\BotMuteEvent;
  */
 class BotMute extends EventAction
 {
-    /**
-     * @var BotMuteEvent $event Event
-     *
-     * @noinspection PhpDocFieldTypeMismatchInspection
-     */
+    /** @var BotMuteEvent $event Event */
     public Event $event;
 
     /**
