@@ -101,7 +101,7 @@ namespace DiceRobot {
             "cardUnbind" => "人物卡解绑成功",
 
             /* ChangeItem */
-            "changeItemResult" => "{&昵称}的 {&属性} {&增减}了{&变动值}点，当前 {&属性}：{&当前值}点",
+            "changeItemResult" => "{&昵称}的 {&项目} {&增减}了{&变动值}点，当前 {&项目}：{&当前值}点",
             "changeItemWrongExpression" => "指令错误！人物卡的变动只能是非负整数或掷骰表达式",
 
             /* Check */
@@ -161,7 +161,7 @@ namespace DiceRobot {
             "jrrpDisabled" => "Master 已经禁用了 .jrrp (;´Д`)",
 
             /* Kowtow */
-            "kowtowResult" => "[mirai:at:{&发送者QQ}] 唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！\n{&虔诚等级}",
+            "kowtowResult" => "{&@发送者}唔姆~既然你都诚心诚意的叩拜了♡那就让我「{&机器人昵称}」看看你今天的虔诚值是 ———— {&虔诚值}！\n{&虔诚等级}",
             "kowtowLevel0" => "哼(▼ヘ▼#)你明明一点都不虔诚，诅咒你下次超级大失败ヽ(#`Д´)ﾉ",
             "kowtowLevel1" => "只有这么一点虔诚的话，不天降惩罚于你已是恩赐了喵<(￣ ﹌ ￣)>",
             "kowtowLevel2" => "看来你的虔诚很有限的说(￣▽￣)~*不过还是勉强保佑保佑你吧( ･´ω`･ )",

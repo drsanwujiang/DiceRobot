@@ -81,6 +81,7 @@ abstract class OrderRouterAction extends MessageAction
             "at" => $this->at
         ]);
 
+        $orderAction->initialize();
         $orderAction();
 
         $this->replies = $orderAction->replies;

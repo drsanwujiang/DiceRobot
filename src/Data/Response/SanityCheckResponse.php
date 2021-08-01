@@ -32,7 +32,7 @@ final class SanityCheckResponse extends DiceRobotResponse
     {
         $this->checkSuccess = (bool) $this->data["check_success"];
         $this->previousSanity = (int) $this->data["previous_value"];
-        $this->currentSanity = (int) $this->data["after_value"];
+        $this->currentSanity = (int) $this->data["current_value"];
     }
 
     /**

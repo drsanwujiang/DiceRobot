@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 3.0.0 - 2021-07-30
+## 3.0.0 - 2021-08-02
 
 ### Added
 - TRPG log APIs
@@ -19,6 +19,7 @@
 - Case sensitivity of some orders
 - Some comments
 - Some keys change
+- Order bugs
 
 ### Changed
 - DiceRobot API v3

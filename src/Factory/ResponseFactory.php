@@ -41,7 +41,7 @@ class ResponseFactory
         -1061 => "Config prohibited",
         -1070 => "Update skeleton failed",
         -1071 => "Skeleton cannot be updated",
-        -1080 => "Log not exists",
+        -1080 => "Get log failed",
 
         -2000 => "Mirai not setup as service",
         -2001 => "Start Mirai failed",
