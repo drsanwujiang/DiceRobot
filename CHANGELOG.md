@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 3.0.2 - 2021-08-03
+
+### Fixed
+- Private message send logic
+- Dice order parsing logic
+
+
 ## 3.0.1 - 2021-08-03
 
 ### Fixed
