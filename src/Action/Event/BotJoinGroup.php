@@ -38,7 +38,7 @@ class BotJoinGroup extends EventAction
             return;
         }
 
-        if ($this->queryGroup() && $this->checkQuitWhenDelinquent()) {
+        if ($this->checkQuitWhenDelinquent() && !$this->queryGroup()) {
             // Group is in black list, quit
             $this->api->sendGroupMessage(
                 $this->event->group->id,
@@ -93,9 +93,9 @@ class BotJoinGroup extends EventAction
     }
 
     /**
-     * Request to query if this group is delinquent.
+     * Request to query the group state, normal or delinquent.
      *
-     * @return bool Delinquent.
+     * @return bool Group state, normal or delinquent.
      */
     protected function queryGroup(): bool
     {
