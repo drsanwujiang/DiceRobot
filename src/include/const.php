@@ -15,7 +15,7 @@ declare(strict_types=1);
 
 namespace {
     /** @var string Current version. */
-    const DICEROBOT_VERSION = "3.0.0";
+    const DICEROBOT_VERSION = "3.0.1";
 
     /** @var int Startup time. */
     define("DICEROBOT_STARTUP", time());

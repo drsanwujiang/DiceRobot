@@ -36,7 +36,7 @@ class BotInvitedJoinGroupRequest extends EventAction
         $operation = $this->checkApprove() ? 0 : 1;
         $message = "";
 
-        if ($operation == 0 && $this->checkRejectWhenDelinquent() && $this->queryGroup()) {
+        if ($operation == 0 && $this->checkRejectWhenDelinquent() && !$this->queryGroup()) {
             // Group is in black list, reject the request
             $operation = 1;
             $message = $this->config->getStrategy("botInvitedJoinGroupRequestRejected");
@@ -82,9 +82,9 @@ class BotInvitedJoinGroupRequest extends EventAction
     }
 
     /**
-     * Request to query whether this group is delinquent.
+     * Request to query the group state, normal or delinquent.
      *
-     * @return bool Delinquent.
+     * @return bool Group state, normal or delinquent.
      */
     protected function queryGroup(): bool
     {
