@@ -135,7 +135,8 @@ class Dice
             $expression = str_replace(["（", "）", "x", "X"], ["(", ")", "*", "*"], $matches[1]);
             $this->reason = $matches[2];
 
-            if (!empty($expression)) {
+            // "0" will be recognized as empty
+            if (is_numeric($expression) || !empty($expression)) {
                 $this->parseExpression($expression);
             }
         }

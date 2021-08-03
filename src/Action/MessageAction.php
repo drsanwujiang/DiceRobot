@@ -376,11 +376,13 @@ abstract class MessageAction implements Action
         $userId ??= $this->message->sender->id;
         $groupId ??= $this->message->sender->group->id ?? 0;
 
-        if ($this->message instanceof FriendMessage) {
+        if ($userId > 10000 && $this->robot->hasFriend($userId)) {
             $this->api->sendFriendMessage($userId, Convertor::toMessageChain($message));
-        } elseif ($this->message instanceof TempMessage) {
+        } elseif ($userId > 10000 && $groupId > 10000 && $this->robot->hasGroup($groupId)) {
             $this->api->sendTempMessage($userId, $groupId, Convertor::toMessageChain($message));
         } else {
+            $this->logger->warning("Friend not exists or user/group ID invalid, private message not sent.");
+
             return;
         }
 
@@ -399,11 +401,13 @@ abstract class MessageAction implements Action
         $userId ??= $this->message->sender->id;
         $groupId ??= $this->message->sender->group->id ?? 0;
 
-        if ($this->message instanceof FriendMessage) {
+        if ($userId > 10000 && $this->robot->hasFriend($userId)) {
             $this->api->sendFriendMessageAsync($userId, Convertor::toMessageChain($message));
-        } elseif ($this->message instanceof TempMessage) {
+        } elseif ($userId > 10000 && $groupId > 10000 && $this->robot->hasGroup($groupId)) {
             $this->api->sendTempMessageAsync($userId, $groupId, Convertor::toMessageChain($message));
         } else {
+            $this->logger->warning("Friend not exists or user/group ID invalid, private message not sent.");
+
             return;
         }
 
