@@ -7,7 +7,7 @@ namespace DiceRobot\Data\Report\Contact;
 /**
  * Class Friend
  *
- * DTO. Friend sender.
+ * DTO. Friend.
  *
  * @package DiceRobot\Data\Report\Contact
  */

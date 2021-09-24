@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace DiceRobot\Data\Report\Contact;
 
 /**
- * Class Operator
+ * Class Member
  *
- * DTO. Group administration operator.
+ * DTO. Group member.
  *
  * @package DiceRobot\Data\Report\Contact
  */
-final class Operator
+class Member extends Sender
 {
-    /** @var int Operator ID. */
-    public int $id;
-
     /** @var string Operator nickname. */
     public string $memberName;
 

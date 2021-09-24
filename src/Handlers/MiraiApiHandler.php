@@ -9,7 +9,7 @@ use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
 use Swlib\Http\ContentType;
-use Swlib\Http\Exception\TransferException;
+use Swlib\Http\Exception\{ClientException, ServerException, TransferException};
 use Swlib\Saber;
 
 /**
@@ -90,13 +90,28 @@ class MiraiApiHandler
     {
         try {
             $response = $this->pool->request($options);
+        } catch (ClientException | ServerException $e) {
+            $this->logger->error(
+                "Failed to request Mirai API. HTTP status code {$e->getResponse()->getStatusCode()}."
+            );
+
+            throw new MiraiApiException();
         } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
-            $this->logger->critical("Failed to request Mirai API for network problem.");
+            $this->logger->error("Failed to request Mirai API for network problem.");
 
             throw new MiraiApiException();
         }
 
-        return $response->getParsedJsonArray();
+        $data = $response->getParsedJsonArray();
+
+        // Log Mirai API error
+        if (isset($data["code"]) && 0 != $data["code"]) {
+            $this->logger->error(
+                "Mirai API returned unexpected code {$data["code"]}, error message: {$data["msg"]}."
+            );
+        }
+
+        return $data;
     }
 
     /******************************************************************************
@@ -927,6 +942,35 @@ class MiraiApiHandler
                     "name" => $name,
                     "specialTitle" => $specialTitle
                 ]
+            ]
+        ];
+
+        return new MiraiResponse($this->request($options));
+    }
+
+    /**
+     * Set the specific group member as administrator/member.
+     *
+     * @param int $groupId Target group ID.
+     * @param int $memberId Target group member ID.
+     * @param bool $assign Whether to assign administrator.
+     *
+     * @return MiraiResponse
+     *
+     * @throws MiraiApiException
+     */
+    final public function setMemberAdmin(
+        int $groupId,
+        int $memberId,
+        bool $assign
+    ): MiraiResponse {
+        $options = [
+            "uri" => "/memberInfo",
+            "method" => "POST",
+            "data" => [
+                "target" => $groupId,
+                "memberId" => $memberId,
+                "assign" => $assign
             ]
         ];
 

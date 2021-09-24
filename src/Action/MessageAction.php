@@ -322,9 +322,9 @@ abstract class MessageAction implements Action
     final public function sendMessage(string $message): void
     {
         if ($this->message instanceof GroupMessage) {
-            $this->api->sendGroupMessage(
+            $this->sendGroupMessage(
+                $message,
                 $this->message->sender->group->id,
-                Convertor::toMessageChain($message)
             );
         } elseif ($this->message instanceof FriendMessage || $this->message instanceof TempMessage) {
             $this->sendPrivateMessage(
@@ -347,9 +347,9 @@ abstract class MessageAction implements Action
     final public function sendMessageAsync(string $message): void
     {
         if ($this->message instanceof GroupMessage) {
-            $this->api->sendGroupMessageAsync(
+            $this->sendGroupMessageAsync(
+                $message,
                 $this->message->sender->group->id,
-                Convertor::toMessageChain($message)
             );
         } elseif ($this->message instanceof FriendMessage || $this->message instanceof TempMessage) {
             $this->sendPrivateMessageAsync(
@@ -412,5 +412,47 @@ abstract class MessageAction implements Action
         }
 
         $this->logger->info("Private message sent asynchronously.");
+    }
+
+    /**
+     * Send message to group (may not the message sender's group).
+     *
+     * @param string $message Message.
+     * @param int|null $groupId Group ID.
+     */
+    final protected function sendGroupMessage(string $message, int $groupId = null): void
+    {
+        $groupId ??= $this->message->sender->group->id ?? 0;
+
+        if ($groupId > 10000 && $this->robot->hasGroup($groupId)) {
+            $this->api->sendGroupMessage($groupId, Convertor::toMessageChain($message));
+        } else {
+            $this->logger->warning("Group not exists or group ID invalid, group message not sent.");
+
+            return;
+        }
+
+        $this->logger->info("Group message sent.");
+    }
+
+    /**
+     * Send message to group (may not the message sender's group) asynchronously.
+     *
+     * @param string $message Message.
+     * @param int|null $groupId Group ID.
+     */
+    final protected function sendGroupMessageAsync(string $message, int $groupId = null): void
+    {
+        $groupId ??= $this->message->sender->group->id ?? 0;
+
+        if ($groupId > 10000 && $this->robot->hasGroup($groupId)) {
+            $this->api->sendGroupMessageAsync($groupId, Convertor::toMessageChain($message));
+        } else {
+            $this->logger->warning("Group not exists or group ID invalid, group message not sent.");
+
+            return;
+        }
+
+        $this->logger->info("Group message sent asynchronously.");
     }
 }

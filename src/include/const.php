@@ -15,7 +15,7 @@ declare(strict_types=1);
 
 namespace {
     /** @var string Current version. */
-    const DICEROBOT_VERSION = "3.0.2";
+    const DICEROBOT_VERSION = "3.1.0";
 
     /** @var int Startup time. */
     define("DICEROBOT_STARTUP", time());
@@ -36,7 +36,7 @@ namespace DiceRobot {
                 "name" => "dicerobot"
             ],
             "skeleton" => [
-                "uri" => "https://dl.drsanwujiang.com/dicerobot/skeleton/3.0.0/"
+                "uri" => "https://dl.drsanwujiang.com/dicerobot/skeleton/" . DICEROBOT_VERSION . "/"
             ],
             "version" => DICEROBOT_VERSION
         ],
@@ -59,6 +59,13 @@ namespace DiceRobot {
                 "file" => \Monolog\Logger::NOTICE,
                 "console" => \Monolog\Logger::CRITICAL
             ]
+        ],
+
+        "panel" => [
+            "password" => "",
+            "token" => "",
+            "autoRestart" => true,
+            "malfunctionReport" => false
         ],
 
         "strategy" => [
@@ -125,7 +132,7 @@ namespace DiceRobot {
             "deckReset" => "【嘭！】牌堆又变回了原来的样子( ﾟ▽ﾟ)/",
             "deckShow" => "当前牌堆还剩下这些卡牌：\n{&卡牌列表}",
             "deckClear" => "牌堆不见惹~",
-            "deckDisabled" => "Master 已经禁用了 .deck (;´Д`)",
+            "deckDisabled" => "Master 已经禁用了牌堆功能(;´Д`)",
             "deckDenied" => "只有群主/管理员才可以管理默认牌堆哦~",
             "deckNotSet" => "还没有设置默认牌堆，不能这样做哦~",
 
@@ -148,10 +155,11 @@ namespace DiceRobot {
 
             /* Draw */
             "drawResult" => "来看看{&昵称}抽到了什么：\n{&抽牌结果}",
+            "drawResultWithRemainder" => "来看看{&昵称}抽到了什么：\n{&抽牌结果}\n\n（牌堆剩余：{&剩余卡牌数量}/{&卡牌总数}）",
             "drawCountOverstep" => "一次最多只能从牌堆中抽{&最大抽牌次数}张牌哦~",
             "drawDeckEmpty" => "这副牌堆已经一张都没有了(=ﾟωﾟ)=",
             "drawDeckNotSet" => "需要先设置默认牌堆，才能愉悦地抽牌哟~",
-            "drawDisabled" => "Master 已经禁用了 .draw (;´Д`)",
+            "drawDisabled" => "Master 已经禁用了抽牌功能(;´Д`)",
 
             /* Help */
             "helpUnknown" => "咦？找不到这条指令诶……",
@@ -190,6 +198,23 @@ namespace DiceRobot {
             /* Nickname */
             "nicknameSet" => "{&昵称}已将自己的昵称修改为{&新昵称}",
             "nicknameUnset" => "{&昵称}解放了自己的真名",
+
+            /* PutBackRouter */
+            "putBackRouterUnknown" => "咦？这是什么奇怪的指令？",
+
+            /* PutBack */
+            "putBackSetGroup" => "指定完毕，可以在私聊中使用放回功能啦~",
+            "putBackSetGroupWithId" => "只能在私聊时指定放回的群号哦~",
+            "putBackSetPrivate" => "指定完毕，可以使用放回功能啦~",
+            "putBackSetPrivateInvalid" => "无法指定该群，请确认人家在群中的说",
+            "putBackSetClear" => "清除完毕，下次放回时需要先指定群号哦~",
+            "putBackSetTemp" => "临时聊天中可以直接使用放回功能，无需指定群聊~",
+            "putBackResult" => "牌堆中的卡牌好像变多了……",
+            "putBackPrivate" => "{&昵称}悄悄地向牌堆中放了一张牌……",
+            "putBackGroupNotSet" => "还没有指定群聊，无法使用放回功能！",
+            "putBackGroupInvalid" => "无法将卡牌放回该群，请确认人家在群中哦",
+            "putBackDeckNotSet" => "需要先设置默认牌堆，才能愉悦地放回哟~",
+            "putBackDisabled" => "Master 已经禁用了放回功能(;´Д`)",
 
             /* RobotRouter */
             "robotRouterUnknown" => "咦？这是什么奇怪的指令？",
@@ -343,6 +368,8 @@ namespace DiceRobot {
                 "抽卡" => \DiceRobot\Action\Message\Draw::class,
                 "deck" => \DiceRobot\Action\Message\DeckRouter::class,
                 "牌堆" => \DiceRobot\Action\Message\DeckRouter::class,
+                "put" => \DiceRobot\Action\Message\PutBackRouter::class,
+                "放回" => \DiceRobot\Action\Message\PutBackRouter::class,
 
                 "jrrp" => \DiceRobot\Action\Message\Jrrp::class,
                 "今日人品" => \DiceRobot\Action\Message\Jrrp::class,
@@ -383,6 +410,8 @@ namespace DiceRobot {
                 \DiceRobot\Action\Event\BotOnline::class,
             \DiceRobot\Data\Report\Event\BotReloginEvent::class =>
                 \DiceRobot\Action\Event\BotRelogin::class,
+            \DiceRobot\Data\Report\Event\FriendInputStatusChangedEvent::class =>
+                \DiceRobot\Action\Event\FriendInputStatusChanged::class,
             \DiceRobot\Data\Report\Event\MemberCardChangeEvent::class =>
                 \DiceRobot\Action\Event\MemberCardChange::class,
             \DiceRobot\Data\Report\Event\NewFriendRequestEvent::class =>
@@ -397,13 +426,18 @@ namespace DiceRobot {
 
         "defaultSurfaceNumber" => 100,
         "cocCheckRule" => 0,
+
         "defaultCardDeck" => "",
         "cardDeck" => null,
 
-        "logUuid" => "",
         "isLogging" => false,
+        "logUuid" => "",
 
         "characterCards" => [],
-        "nicknames" => []
+        "nicknames" => [],
+
+        /** Settings below only used in private chat */
+
+        "putBackGroup" => -1
     ];
 }

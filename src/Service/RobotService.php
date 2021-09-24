@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace DiceRobot\Service;
 
 use DiceRobot\Data\Contact\{Friend, Group, Bot};
-use DiceRobot\Data\Contact\Profile\{BotProfile, FriendProfile, MemberProfile};
+use DiceRobot\Data\Contact\Profile\BotProfile;
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Factory\LoggerFactory;
@@ -41,12 +41,6 @@ class RobotService
     /** @var Group[] Group list. */
     protected array $groups = [];
 
-    /** @var FriendProfile[] Friend profile list. */
-    protected array $friendProfiles = [];
-
-    /** @var MemberProfile[] Group member profile list. */
-    protected array $memberProfiles = [];
-
     /** @var int Friend count. */
     protected int $friendCount = 0;
 
@@ -81,13 +75,25 @@ class RobotService
      */
     public function initialize(): void
     {
+        $this->reset();
+
+        $this->logger->info("Robot service initialized.");
+    }
+
+    /**
+     * Reset bot, profile, lists and counts.
+     */
+    public function reset(): void
+    {
         $this->bot = new Bot();
         $this->bot->id = 0;
         $this->bot->version = "Unknown";
         $this->profile = new BotProfile();
         $this->updateProfile([]);
-
-        $this->logger->info("Robot service initialized.");
+        $this->friends = [];
+        $this->groups = [];
+        $this->friendCount = 0;
+        $this->groupCount = 0;
     }
 
     /**
@@ -100,10 +106,6 @@ class RobotService
     public function update(): bool
     {
         try {
-            // Update lists
-            $this->updateFriends($this->api->getFriendList()->getArray("data"));
-            $this->updateGroups($this->api->getGroupList()->getArray("data"));
-
             // Update bot and profile
             $this->updateBot(
                 $this->api->getSessionInfo()->getInt("data.qq.id"),
@@ -111,16 +113,20 @@ class RobotService
             );
             $this->updateProfile($this->api->getBotProfile()->all());
 
-            // Report to DiceRobot API
+            // Update friend/group list
+            $this->updateFriends($this->api->getFriendList()->getArray("data"));
+            $this->updateGroups($this->api->getGroupList()->getArray("data"));
+
+            // DiceRobot API heartbeat
             $this->api->updateRobotAsync($this->getId());
 
             $this->logger->info("Robot updated.");
 
             return true;
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-            $this->logger->alert("Failed to update robot, unable to call Mirai API.");
+            $this->logger->critical("Failed to update robot, unable to call Mirai API.");
         } catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException $e) {  // TODO: catch (InternalErrorException | NetworkErrorException | UnexpectedErrorException) in PHP 8
-            $this->logger->alert("Failed to update robot, unable to call DiceRobot API.");
+            $this->logger->critical("Failed to update robot, unable to call DiceRobot API.");
         }
 
         return false;
@@ -254,14 +260,14 @@ class RobotService
     {
         if ($groupId <= 0) {
             return $this->profile->nickname;
-        } else {
-            if (!isset($this->nicknames[$groupId])) {
-                $this->nicknames[$groupId] =
-                    $this->api->getMemberInfo($groupId, $this->getId())->getString("memberName", "");
-            }
-
-            return $this->nicknames[$groupId];
         }
+
+        if (!isset($this->nicknames[$groupId])) {
+            $this->nicknames[$groupId] =
+                $this->api->getMemberInfo($groupId, $this->getId())->getString("memberName", "");
+        }
+
+        return $this->nicknames[$groupId];
     }
 
     /**

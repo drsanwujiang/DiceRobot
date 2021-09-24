@@ -10,6 +10,7 @@ use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Handlers\ReportHandler;
 use DiceRobot\Service\{ApiService, HeartbeatService, LogService, ResourceService, RobotService, StatisticsService};
+use DiceRobot\Util\Environment;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Swoole\Timer;
@@ -129,6 +130,7 @@ class App
         $this->config->load($this->container->make(CustomConfig::class), $this->resource->getConfig());
 
         /** Utils initialization */
+        Environment::initialize();
         Dice::initialize($this->config);
         Subexpression::initialize($this->config);
         AppStatus::initialize($this->container->get(LoggerFactory::class));
@@ -198,20 +200,12 @@ class App
         if (AppStatus::getStatus()->equals(AppStatusEnum::RUNNING())) {
             // Application is already running
             return -1;
-        } elseif (AppStatus::getStatus()->equals(AppStatusEnum::PAUSED())) {
-            // Cannot be rerun
-            return -2;
-        } elseif (AppStatus::getStatus()->equals(AppStatusEnum::HOLDING())) {
-            // Enable heartbeat
-            if ($this->heartbeat->enable()) {
-                $this->logger->notice("Application rerun.");
+        }
 
-                return 0;
-            } else {
-                $this->logger->critical("Rerun application failed.");
+        if (AppStatus::getStatus()->equals(AppStatusEnum::PAUSED())) {
+            AppStatus::run();
 
-                return -3;
-            }
+            return 0;
         } else {
             // Cannot be rerun
             return -2;

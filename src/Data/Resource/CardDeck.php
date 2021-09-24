@@ -165,8 +165,8 @@ class CardDeck extends Resource
      */
     protected function drawCard(Deck $deck, bool $isFirst = false): string
     {
+        // If the deck is the first (entry), check count
         if ($isFirst && $deck->getCount() <= 0) {
-            // If the deck is the first (entry), check count
             throw new RuntimeException("Deck empty.");
         }
 

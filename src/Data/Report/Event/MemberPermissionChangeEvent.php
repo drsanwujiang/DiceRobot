@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Report\Event;
 
-use DiceRobot\Data\Report\Contact\GroupMember;
+use DiceRobot\Data\Report\Contact\Member;
 use DiceRobot\Data\Report\Event;
 
 /**
@@ -22,6 +22,6 @@ final class MemberPermissionChangeEvent extends Event
     /** @var string Current permission. */
     public string $current;
 
-    /** @var GroupMember The group member. */
-    public GroupMember $member;
+    /** @var Member The group member. */
+    public Member $member;
 }

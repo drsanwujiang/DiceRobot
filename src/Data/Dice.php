@@ -136,7 +136,7 @@ class Dice
             $this->reason = $matches[2];
 
             // "0" will be recognized as empty
-            if (is_numeric($expression) || !empty($expression)) {
+            if (!empty($expression) || is_numeric($expression)) {
                 $this->parseExpression($expression);
             }
         }

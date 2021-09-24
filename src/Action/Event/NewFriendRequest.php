@@ -33,10 +33,10 @@ class NewFriendRequest extends EventAction
             return;
         }
 
-        $operation = $this->checkApprove() ? 0 : 1;
+        $approval = $this->checkApprove();
+        $operation = $approval ? 0 : 1;
         $message = "";
 
-        // Approve request by default
         $this->api->handleNewFriendRequestEvent(
             $this->event->eventId,
             $this->event->fromId,
@@ -44,6 +44,11 @@ class NewFriendRequest extends EventAction
             $operation,
             $message
         );
+
+        // Check if friend exists
+        if ($approval && !$this->robot->hasFriend($this->event->fromId)) {
+            $this->robot->updateFriends($this->api->getFriendList()->getArray("data"));
+        }
     }
 
     /**
@@ -63,6 +68,6 @@ class NewFriendRequest extends EventAction
      */
     protected function checkApprove(): bool
     {
-        return $this->config->getBool("approveFriendRequest");
+        return $this->config->getStrategy("approveFriendRequest");
     }
 }

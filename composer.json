@@ -23,11 +23,13 @@
     "ext-swoole": "^4.6.0",
     "ext-zip": "*",
     "cakephp/chronos": "^2.2",
-    "imefisto/psr-swoole-native": "^0.0.2",
+    "imefisto/psr-swoole-native": "^1.0",
+    "lcobucci/jwt": "^4.1",
     "monolog/monolog": "^2.3",
     "myclabs/php-enum": "^1.8",
     "nyholm/psr7": "^1.4",
     "php-di/php-di": "^6.3",
+    "ramsey/uuid": "^4.2",
     "swlib/saber": "^1.0"
   },
   "require-dev": {

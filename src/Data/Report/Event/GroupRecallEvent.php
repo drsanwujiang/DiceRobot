@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Report\Event;
 
-use DiceRobot\Data\Report\Contact\{Group, Operator};
+use DiceRobot\Data\Report\Contact\{Group, GroupMember};
 use DiceRobot\Data\Report\Event;
 
 /**
@@ -28,6 +28,6 @@ final class GroupRecallEvent extends Event
     /** @var Group The group. */
     public Group $group;
 
-    /** @var Operator|null The operator, null if the operator is the robot. */
-    public ?Operator $operator;
+    /** @var GroupMember|null The operator, null if the operator is the robot. */
+    public ?GroupMember $operator;
 }

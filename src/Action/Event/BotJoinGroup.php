@@ -34,6 +34,11 @@ class BotJoinGroup extends EventAction
      */
     public function __invoke(): void
     {
+        // Check if group exists
+        if (!$this->robot->hasGroup($this->event->group->id)) {
+            $this->robot->updateGroups($this->api->getGroupList()->getArray("data"));
+        }
+
         if (!$this->checkListen()) {
             return;
         }

@@ -9,9 +9,10 @@ use DiceRobot\Data\Report\Event\{BotGroupPermissionChangeEvent, BotInvitedJoinGr
     BotOfflineEventForce, BotOnlineEvent, BotReloginEvent, BotUnmuteEvent, FriendInputStatusChangedEvent,
     FriendNickChangedEvent, FriendRecallEvent, GroupAllowAnonymousChatEvent, GroupAllowConfessTalkEvent,
     GroupAllowMemberInviteEvent, GroupEntranceAnnouncementChangeEvent, GroupMuteAllEvent, GroupNameChangeEvent,
-    GroupRecallEvent, MemberCardChangeEvent, MemberJoinEvent, MemberJoinRequestEvent, MemberLeaveEventKick,
-    MemberLeaveEventQuit, MemberMuteEvent, MemberPermissionChangeEvent, MemberSpecialTitleChangeEvent,
-    MemberUnmuteEvent, NewFriendRequestEvent};
+    GroupRecallEvent, MemberCardChangeEvent, MemberHonorChangeEvent, MemberJoinEvent, MemberJoinRequestEvent,
+    MemberLeaveEventKick, MemberLeaveEventQuit, MemberMuteEvent, MemberPermissionChangeEvent,
+    MemberSpecialTitleChangeEvent, MemberUnmuteEvent, NewFriendRequestEvent, NudgeEvent, OtherClientOfflineEvent,
+    OtherClientOnlineEvent};
 use DiceRobot\Data\Report\InvalidReport;
 use DiceRobot\Data\Report\Message\{FriendMessage, GroupMessage, OtherClientMessage, StrangerMessage, TempMessage};
 use DiceRobot\Interfaces\Report;
@@ -57,6 +58,7 @@ class ReportFactory
         "GroupNameChangeEvent" => GroupNameChangeEvent::class,
         "GroupRecallEvent" => GroupRecallEvent::class,
         "MemberCardChangeEvent" => MemberCardChangeEvent::class,
+        "MemberHonorChangeEvent" => MemberHonorChangeEvent::class,
         "MemberJoinEvent" => MemberJoinEvent::class,
         "MemberJoinRequestEvent" => MemberJoinRequestEvent::class,
         "MemberLeaveEventKick" => MemberLeaveEventKick::class,
@@ -66,6 +68,9 @@ class ReportFactory
         "MemberSpecialTitleChangeEvent" => MemberSpecialTitleChangeEvent::class,
         "MemberUnmuteEvent" => MemberUnmuteEvent::class,
         "NewFriendRequestEvent" => NewFriendRequestEvent::class,
+        "NudgeEvent" => NudgeEvent::class,
+        "OtherClientOfflineEvent" => OtherClientOfflineEvent::class,
+        "OtherClientOnlineEvent" => OtherClientOnlineEvent::class,
 
         "InvalidReport" => InvalidReport::class
     ];

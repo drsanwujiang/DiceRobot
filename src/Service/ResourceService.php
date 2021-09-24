@@ -92,7 +92,7 @@ class ResourceService
         if ($this->checkDirectories() && $this->load()) {
             $this->logger->info("Resource service initialized.");
         } else {
-            $this->logger->alert("Initialize resource service failed.");
+            $this->logger->critical("Initialize resource service failed.");
 
             throw new RuntimeException("Initialize resource service failed");
         }
@@ -250,7 +250,7 @@ class ResourceService
                 $d = dir($this->directories["chat.{$type}"]);
 
                 while (false !== $f = $d->read()) {
-                    if (preg_match("/^([1-9][0-9]{4,9}).json$/i", $f, $matches)) {
+                    if (preg_match("/^([1-9][0-9]{4,9})\.json$/i", $f, $matches)) {
                         $this->chatSettings[$type][(int) $matches[1]] =
                             new ChatSettings(File::getJsonFile("{$this->directories["chat.{$type}"]}/{$f}"));
                     }
@@ -272,7 +272,7 @@ class ResourceService
             $d = dir($this->directories["card"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([1-9][0-9]{0,5}).json$/i", $f, $matches)) {
+                if (preg_match("/^([1-9][0-9]{0,5})\.json$/i", $f, $matches)) {
                     $this->characterCards[(int) $matches[1]] =
                         new CharacterCard(File::getJsonFile("{$this->directories["card"]}/{$f}"));
                 }
@@ -293,7 +293,7 @@ class ResourceService
             $d = dir($this->directories["rule"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([0-9]{1,2}).json$/i", $f, $matches)) {
+                if (preg_match("/^([0-9]{1,2})\.json$/i", $f, $matches)) {
                     $this->checkRules[(int) $matches[1]] =
                         new CheckRule(File::getJsonFile("{$this->directories["rule"]}/{$f}"));
                 }
@@ -314,7 +314,7 @@ class ResourceService
             $d = dir($this->directories["reference"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([a-zA-z]+).json$/i", $f, $matches)) {
+                if (preg_match("/^([a-zA-z]+)\.json$/i", $f, $matches)) {
                     $this->references[$matches[1]] =
                         new Reference(File::getJsonFile("{$this->directories["reference"]}/{$f}"));
                 }
@@ -335,7 +335,7 @@ class ResourceService
             $d = dir($this->directories["deck"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^(.+?).json$/i", $f, $matches)) {
+                if (preg_match("/^(.+?)\.json$/i", $f, $matches)) {
                     $this->cardDecks[$matches[1]] =
                         new CardDeck(File::getJsonFile("{$this->directories["deck"]}/{$f}"));
                 }
@@ -397,17 +397,6 @@ class ResourceService
                 File::putFile("{$this->directories["card"]}/{$cardId}.json", (string) $card);
             }
         }
-    }
-
-    /**
-     * Set character card.
-     *
-     * @param int $cardId Character card ID.
-     * @param CharacterCard $card Character card.
-     */
-    public function setCharacterCard(int $cardId, CharacterCard $card): void
-    {
-        $this->characterCards[$cardId] = $card;
     }
 
     /**
@@ -524,5 +513,249 @@ class ResourceService
 
         // Clone deck to prevent source deck from being modified
         return clone $deck;
+    }
+
+    /**
+     * Get check rule file list.
+     *
+     * @return string[] Check rule file list.
+     */
+    public function getCheckRuleList(): array
+    {
+        $list = [];
+
+        foreach (File::getFileList($this->directories["rule"]) as $rule) {
+            if (preg_match("/^([0-9]{1,2}).json$/i", $rule, $matches)) {
+                $list[] = $matches[1];
+            }
+        }
+
+        return $list;
+    }
+
+    /**
+     * Get reference file list.
+     *
+     * @return string[] Reference file list.
+     */
+    public function getReferenceList(): array
+    {
+        $list = [];
+
+        foreach (File::getFileList($this->directories["reference"]) as $reference) {
+            if (preg_match("/^([a-zA-z]+).json$/i", $reference, $matches)) {
+                $list[] = $matches[1];
+            }
+        }
+
+        return $list;
+    }
+
+    /**
+     * Get card deck file list.
+     *
+     * @return string[] Card deck file list.
+     */
+    public function getCardDeckList(): array
+    {
+        $list = [];
+
+        foreach (File::getFileList($this->directories["deck"]) as $deck) {
+            if (preg_match("/^(.+?).json$/i", $deck, $matches)) {
+                $list[] = $matches[1];
+            }
+        }
+
+        return $list;
+    }
+
+    /**
+     * Get check rule file content.
+     *
+     * @param string $filename Check rule file name.
+     *
+     * @return array|false Parsed check rule file content, or false if check rule file not exists.
+     */
+    public function getCheckRuleContent(string $filename)
+    {
+        if (!preg_match("/^[0-9]{1,2}$/i", $filename)) {
+            return false;
+        }
+
+        try {
+            $content = File::getJsonFile("{$this->directories["rule"]}/{$filename}.json");
+        } catch (RuntimeException $e) {
+            return false;
+        }
+
+        return $content;
+    }
+
+    /**
+     * Get reference file content.
+     *
+     * @param string $filename Reference file name.
+     *
+     * @return array|false Parsed reference file content, or false if reference file not exists.
+     */
+    public function getReferenceContent(string $filename)
+    {
+        if (!preg_match("/^[a-zA-z]+$/i", $filename)) {
+            return false;
+        }
+
+        try {
+            $content = File::getJsonFile("{$this->directories["reference"]}/{$filename}.json");
+        } catch (RuntimeException $e) {
+            return false;
+        }
+
+        return $content;
+    }
+
+    /**
+     * Get card deck file content.
+     *
+     * @param string $filename Card deck file name.
+     *
+     * @return array|false Parsed card deck file content, or false if card deck file not exists.
+     */
+    public function getCardDeckContent(string $filename)
+    {
+        if (!preg_match("/^.+$/i", $filename)) {
+            return false;
+        }
+
+        try {
+            $content = File::getJsonFile("{$this->directories["deck"]}/{$filename}.json");
+        } catch (RuntimeException $e) {
+            return false;
+        }
+
+        return $content;
+    }
+
+    /**
+     * Set character card.
+     *
+     * @param int $cardId Character card ID.
+     * @param CharacterCard $card Character card.
+     */
+    public function setCharacterCard(int $cardId, CharacterCard $card): void
+    {
+        $this->characterCards[$cardId] = $card;
+    }
+
+    /**
+     * Set check rule file content.
+     *
+     * @param string $filename Check rule file name.
+     * @param array $content Check rule file content.
+     *
+     * @return bool Success.
+     */
+    public function setCheckRuleContent(string $filename, array $content): bool
+    {
+        if (!preg_match("/^[0-9]{1,2}$/i", $filename)) {
+            return false;
+        }
+
+        try {
+            File::putJsonFile("{$this->directories["rule"]}/{$filename}.json", $content);
+        } catch (RuntimeException $e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Set reference file content.
+     *
+     * @param string $filename Reference file name.
+     * @param array $content Reference file content.
+     *
+     * @return bool Success.
+     */
+    public function setReferenceContent(string $filename, array $content): bool
+    {
+        if (!preg_match("/^[a-zA-z]+$/i", $filename)) {
+            return false;
+        }
+
+        try {
+            File::putJsonFile("{$this->directories["reference"]}/{$filename}.json", $content);
+        } catch (RuntimeException $e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Set card deck file content.
+     *
+     * @param string $filename Card deck file name.
+     * @param array $content Card deck file content.
+     *
+     * @return bool Success.
+     */
+    public function setCardDeckContent(string $filename, array $content): bool
+    {
+        if (!preg_match("/^.+$/i", $filename)) {
+            return false;
+        }
+
+        try {
+            File::putJsonFile("{$this->directories["deck"]}/{$filename}.json", $content);
+        } catch (RuntimeException $e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Delete check rule file.
+     *
+     * @param string $filename Check rule file name.
+     *
+     * @return bool Success.
+     */
+    public function deleteCheckRule(string $filename): bool
+    {
+        if (!preg_match("/^[0-9]{1,2}$/i", $filename)) {
+            return false;
+        }
+
+        try {
+            File::deleteFile("{$this->directories["rule"]}/{$filename}.json");
+        } catch (RuntimeException $e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Delete card deck file.
+     *
+     * @param string $filename Card deck file name.
+     *
+     * @return bool Success.
+     */
+    public function deleteCardDeck(string $filename): bool
+    {
+        if (!preg_match("/^.+$/i", $filename)) {
+            return false;
+        }
+
+        try {
+            File::deleteFile("{$this->directories["deck"]}/{$filename}.json");
+        } catch (RuntimeException $e) {
+            return false;
+        }
+
+        return true;
     }
 }

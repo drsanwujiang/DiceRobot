@@ -17,6 +17,9 @@ use const DiceRobot\DEFAULT_CONFIG;
  */
 class Config extends Resource
 {
+    /** @var string[] Acceptable groups. */
+    private const ACCEPTABLE_GROUPS = [ "panel", "strategy", "order", "reply", "errMsg" ];
+
     /**
      * Set config.
      *
@@ -26,73 +29,47 @@ class Config extends Resource
      */
     public function setConfig(array $config): bool
     {
-        if (!$this->checkConfig($config)) {
+        $data = array_replace_recursive($this->data, $config);
+
+        if (!$this->check($data)) {
             return false;
         }
 
-        $this->data = $this->checkValue(array_replace_recursive($this->data, $config));
+        $this->data = $data;
 
         return true;
     }
 
     /**
-     * Check whether the config is valid.
+     * Check groups and values.
      *
      * @param array $config Config data.
      *
-     * @return bool Validity.
+     * @return bool Success.
      */
-    protected function checkConfig(array $config): bool
+    protected function check(array &$config): bool
     {
-        // Only accept "strategy", "order", "reply" and "errMsg"
-        foreach ($config as $key => $value) {
-            if (!is_array($value)) {
+        foreach ($config as $group => $items) {
+            // Only accept ACCEPTABLE_GROUPS
+            if (!in_array($group, self::ACCEPTABLE_GROUPS) || !is_array($items)) {
                 return false;
             }
 
-            if ($key === "strategy") {
-                foreach ($value as $itemValue) {
-                    if (!is_bool($itemValue) && !is_null($itemValue)) {
-                        return false;
-                    }
+            $default = DEFAULT_CONFIG[$group];
+
+            foreach ($items as $item => $value) {
+                // Can NOT add item, new and default value must be of the same type
+                if (!array_key_exists($item, $default) || gettype($value) != gettype($default[$item])) {
+                    return false;
                 }
-            } elseif ($key === "order") {
-                foreach ($value as $itemValue) {
-                    if (!is_int($itemValue) && !is_null($itemValue)) {
-                        return false;
-                    }
+
+                // Reset
+                if ($value === $default[$item] || is_null($value)) {
+                    unset($config[$group][$item]);
                 }
-            } elseif ($key === "reply" || $key === "errMsg") {
-                foreach ($value as $itemValue) {
-                    if (!is_string($itemValue) && !is_null($itemValue)) {
-                        return false;
-                    }
-                }
-            } else {
-                return false;
             }
         }
 
         return true;
-    }
-
-    /**
-     * Check config value.
-     *
-     * @param array $config Config data.
-     *
-     * @return array Checked config.
-     */
-    protected function checkValue(array $config): array
-    {
-        foreach ($config as $key => $value) {
-            foreach ($value as $itemKey => $itemValue) {
-                if ($itemValue === DEFAULT_CONFIG[$key][$itemKey] || is_null($itemValue)) {
-                    unset($config[$key][$itemKey]);
-                }
-            }
-        }
-
-        return $config;
     }
 }
