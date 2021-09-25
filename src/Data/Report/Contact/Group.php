@@ -7,7 +7,7 @@ namespace DiceRobot\Data\Report\Contact;
 /**
  * Class Group
  *
- * DTO. Sender's group.
+ * DTO. Group.
  *
  * @package DiceRobot\Data\Report\Contact
  */

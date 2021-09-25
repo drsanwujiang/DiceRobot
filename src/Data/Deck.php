@@ -16,14 +16,23 @@ use DiceRobot\Util\Random;
  */
 class Deck
 {
-    /** @var string[] Cards. */
+    /** @var string[] Top of the deck. */
+    protected array $deckTop = [];
+
+    /** @var string[] Bottom of the deck. */
+    protected array $deckBottom = [];
+
+    /** @var string[] Remaining cards. */
     protected array $cards = [];
 
-    /** @var int[] Card counts. */
+    /** @var int[] Remaining card counts. */
     protected array $counts = [];
 
     /** @var int[] Original card counts. */
     protected array $originalCounts = [];
+
+    /** @var int Total card counts. */
+    protected int $sum;
 
     /**
      * The constructor.
@@ -53,16 +62,49 @@ class Deck
         }
 
         $this->counts = $this->originalCounts;
+        $this->sum = array_sum($this->originalCounts);
     }
 
     /**
-     * Get remanent cards number.
+     * Put a card back on the top of the deck.
      *
-     * @return int Remanent cards number.
+     * @param string $card The card.
+     */
+    public function putBackOnTop(string $card): void
+    {
+        array_unshift($this->deckTop, $card);
+    }
+
+    /**
+     * Put a card back on the bottom of the deck.
+     *
+     * @param string $card The card.
+     */
+    public function putBackOnBottom(string $card): void
+    {
+        array_push($this->deckBottom, $card);
+    }
+
+    /**
+     * Get total cards number.
+     *
+     * @return int Total cards number.
+     */
+    public function getSum(): int
+    {
+        $sum = $this->sum ?? array_sum($this->originalCounts);  // For compatibility
+
+        return $sum + count($this->deckTop) + count($this->deckBottom);
+    }
+
+    /**
+     * Get remaining cards number.
+     *
+     * @return int Remaining cards number.
      */
     public function getCount(): int
     {
-        return array_sum($this->counts);
+        return array_sum($this->counts) + count($this->deckTop) + count($this->deckBottom);
     }
 
     /**
@@ -96,6 +138,16 @@ class Deck
         // Auto reset
         if ($this->getCount() <= 0) {
             $this->reset();
+        }
+
+        // Check top of the deck
+        if (!empty($this->deckTop)) {
+            return (string) array_shift($this->deckTop);
+        }
+
+        // Check bottom of the deck
+        if (array_sum($this->counts) <= 0 && !empty($this->deckBottom)) {
+            return (string) array_shift($this->deckBottom);
         }
 
         $rand = Random::generate(1, $this->getCount())[0];

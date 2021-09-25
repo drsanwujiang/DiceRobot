@@ -29,7 +29,7 @@ class BotOfflineDropped extends EventAction
      */
     public function __invoke(): void
     {
-        $this->logger->notice("Bot is offline (dropped).");
+        $this->logger->warning("Bot is offline (dropped).");
 
         $this->heartbeat->disable();
     }

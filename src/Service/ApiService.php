@@ -7,7 +7,7 @@ namespace DiceRobot\Service;
 use DiceRobot\Data\MiraiResponse;
 use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetTokenResponse, GetCardResponse,
     GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
-    ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
+    ReportMalfunctionResponse, ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
 use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Handlers\{DiceRobotApiHandler, MiraiApiHandler};
@@ -55,6 +55,7 @@ use Psr\Log\LoggerInterface;
  * @method MiraiResponse setGroupConfig(int $groupId, ?string $name = null, ?string $announcement = null, ?bool $confessTalk = null, ?bool $allowMemberInvite = null, ?bool $autoApprove = null, ?bool $anonymousChat = null)
  * @method MiraiResponse getMemberInfo(int $groupId, int $memberId)
  * @method MiraiResponse setMemberInfo(int $groupId, int $memberId, ?string $name = null, ?string $specialTitle = null)
+ * @method MiraiResponse setMemberAdmin(int $groupId, int $memberId, bool $assign)
  * @method MiraiResponse handleNewFriendRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
  * @method MiraiResponse handleMemberJoinRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
  * @method MiraiResponse handleBotInvitedJoinGroupRequestEvent(int $eventId, int $fromId, int $groupId, int $operate, string $message)
@@ -71,6 +72,7 @@ use Psr\Log\LoggerInterface;
  * @method void updateRobotAsync(int $robotId)
  * @method GetNicknameResponse getNickname(int $robotId)
  * @method GetTokenResponse getToken(int $robotId)
+ * @method ReportMalfunctionResponse reportMalfunction(int $robotId, string $token)
  * @method GetLuckResponse getLuck(int $userId, string $token)
  * @method GetPietyResponse getPiety(int $userId, string $token)
  * @method GetCardResponse getCard(int $userId, int $cardId, string $token)
@@ -93,7 +95,7 @@ class ApiService
         "sendFriendMessage", "sendFriendMessageAsync", "sendTempMessage", "sendTempMessageAsync", "sendGroupMessage", "sendGroupMessageAsync", "sendNudgeMessage", "recallMessage",
         "getFileList", "getFileInfo", "createDirectory", "deleteFile", "moveFile", "renameFile",
         "deleteFriend",
-        "muteMember", "unmuteMember", "kickMember", "quitGroup", "muteAllMembers", "unmuteAllMembers", "setEssenceMessage", "getGroupConfig", "setGroupConfig", "getMemberInfo", "setMemberInfo",
+        "muteMember", "unmuteMember", "kickMember", "quitGroup", "muteAllMembers", "unmuteAllMembers", "setEssenceMessage", "getGroupConfig", "setGroupConfig", "getMemberInfo", "setMemberInfo", "setMemberAdmin",
         "handleNewFriendRequestEvent", "handleMemberJoinRequestEvent", "handleBotInvitedJoinGroupRequestEvent",
         "countMessage", "fetchMessage", "fetchLatestMessage", "peekMessage", "peekLatestMessage",
         "uploadImage", "uploadVoice", "uploadFile"
@@ -102,6 +104,7 @@ class ApiService
     /** @var string[] DiceRobot APIs. */
     private const DICEROBOT_APIS = [
         "updateRobot", "updateRobotAsync", "getNickname", "getToken",
+        "reportMalfunction",
         "getLuck", "getPiety",
         "getCard", "updateCard", "sanityCheck",
         "queryGroup", "reportGroup",

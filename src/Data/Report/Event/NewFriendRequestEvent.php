@@ -21,7 +21,7 @@ final class NewFriendRequestEvent extends Event
     /** @var int Sender ID. */
     public int $fromId;
 
-    /** @var int Target group ID. */
+    /** @var int Target group ID if request via group. */
     public int $groupId;
 
     /** @var string Sender nickname. */

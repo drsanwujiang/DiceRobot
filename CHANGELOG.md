@@ -1,6 +1,28 @@
 # Changelog
 
 
+## 3.1.0 - 2021-09-25
+
+### Added
+- Resource APIs
+- Panel APIs for data
+- Authentication for panel connection
+- Auto restart mechanism
+- Put back card (.put)
+- Group/friend list refresh logic
+
+### Fixed
+- Log service pattern
+- New friend request handling logic
+
+### Changed
+- Restart logic
+
+### Refactored
+- Draw (.draw) logic
+- Panel handler routing logic
+
+
 ## 3.0.2 - 2021-08-03
 
 ### Fixed

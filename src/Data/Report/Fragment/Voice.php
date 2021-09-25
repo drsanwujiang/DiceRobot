@@ -27,6 +27,9 @@ final class Voice implements Fragment
     /** @var string|null Voice base64 encoding. */
     public ?string $base64 = null;
 
+    /** @var int|null Voice length. */
+    public ?int $length = null;
+
     /**
      * @inheritDoc
      *

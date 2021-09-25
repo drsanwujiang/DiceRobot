@@ -87,6 +87,30 @@ class File
     }
 
     /**
+     * Get JSON file content.
+     *
+     * @param string $path File path.
+     *
+     * @return array JSON array.
+     *
+     * @throws RuntimeException Failed to get the file.
+     */
+    public static function getJsonFile(string $path): array
+    {
+        $content = self::getFile($path);
+
+        // Try to decode the file
+        if (!is_array($json = json_decode($content, true))) {
+            // Try to decode as UTF-8 BOM
+            if (!is_array($json = json_decode(ltrim($content, "\xEF\xBB\xBF"), true))) {
+                throw new RuntimeException("File {$path} exists but cannot be parsed.");
+            }
+        }
+
+        return $json;
+    }
+
+    /**
      * Write content to the file.
      *
      * @param string $path File path.
@@ -110,26 +134,33 @@ class File
     }
 
     /**
-     * Get JSON file content.
+     * Write JSON content to the file.
+     *
+     * @param string $path File path.
+     * @param array $content JSON file content.
+     *
+     * @throws RuntimeException Failed to put the file.
+     */
+    public static function putJsonFile(string $path, array $content): void
+    {
+        self::putFile($path, (string) json_encode($content, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Delete the file.
      *
      * @param string $path File path.
      *
-     * @return array JSON array.
-     *
-     * @throws RuntimeException Failed to get the file.
+     * @throws RuntimeException Failed to delete the file.
      */
-    public static function getJsonFile(string $path): array
+    public static function deleteFile(string $path): void
     {
-        $content = self::getFile($path);
-
-        // Try to decode the file
-        if (!is_array($json = json_decode($content, true))) {
-            // Try to decode as UTF-8 BOM
-            if (!is_array($json = json_decode(ltrim($content, "\xEF\xBB\xBF"), true))) {
-                throw new RuntimeException("File {$path} exists but cannot be parsed.");
-            }
+        if (!file_exists($path)) {
+            throw new RuntimeException("File {$path} not exists.");
         }
 
-        return $json;
+        if (!unlink($path)) {
+            throw new RuntimeException("File {$path} cannot be deleted.");
+        }
     }
 }

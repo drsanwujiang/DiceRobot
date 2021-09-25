@@ -109,6 +109,8 @@ class Server
             "http_parse_cookie" => false
         ]);
 
+        $this->panelHandler->initialize();
+
         return true;
     }
 
@@ -126,11 +128,14 @@ class Server
         // Signal SIGTERM (program terminated), stop the application
         Process::signal(SIGTERM, [$this, "signalStop"]);
 
-        // Signal SIGUSR1 (gracefully stop), stop the application
+        // Signal SIGUSR1 (stop), stop the application
         Process::signal(SIGUSR1, [$this, "signalStop"]);
 
-        // Signal SIGUSR2 (gracefully reload), reload the application
+        // Signal SIGUSR2 (reload), reload the application
         Process::signal(SIGUSR2, [$this, "signalReload"]);
+
+        // Signal SIGTSTP (restart), restart the application
+        Process::signal(SIGTSTP, [$this, "signalRestart"]);
     }
 
     /**
@@ -171,6 +176,8 @@ class Server
         $this->logger->info("Stopping server...");
 
         $this->server->shutdown();
+
+        $this->logger->info("Server stopped.");
     }
 
     /**
@@ -205,10 +212,34 @@ class Server
         $this->logger->notice("Server received Linux signal {$signal}, exit.");
 
         if (!$this->app->getStatus()->equals(AppStatusEnum::STOPPED())) {
+            $this->logger->info("Stopping application...");
+
             $this->app->stop();
         }
 
         $this->stop();
+    }
+
+    /**
+     * Stop application and server with exit code.
+     *
+     * @param int $signal Linux signal.
+     */
+    public function signalRestart(int $signal): void
+    {
+        $this->logger->notice("Server received Linux signal {$signal}, restart.");
+
+        if (!$this->app->getStatus()->equals(AppStatusEnum::STOPPED())) {
+            $this->logger->info("Stopping application...");
+
+            $this->app->stop();
+        }
+
+        $this->stop();
+
+        // Exit with code 99
+        global $dicerobot_exit_code;
+        $dicerobot_exit_code = 99;
     }
 
     /**
@@ -219,21 +250,18 @@ class Server
      */
     public function route(Request $request, Response $response): void
     {
+        $header = $request->header;
         $method = $request->server["request_method"] ?? "";
         $uri = $request->server["request_uri"] ?? "";
         $queryParams = $request->get ?? [];
         $content = (string) ($request->getContent() ?? "");
-        $contentType = $request->header["content-type"] ?? "";
 
-        if ($method == "POST" && $uri == "/report") {
+        if ($uri == "/report" && $method == "POST") {
             // Handle report
             $this->report($content, $response);
-        } elseif (preg_match(
-            "/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/",
-            $request->header["x-dr-panel"] ?? "")
-        ) {
+        } elseif ($this->panelHandler->hasApi($uri)) {
             // Handle panel request
-            $this->panelHandler->handle($method, $uri, $queryParams, $content, $contentType, $response);
+            $this->panelHandler->handle($header, $method, $uri, $queryParams, $content, $response);
         } else {
             $this->responseFactory->createNotFound($response);
         }

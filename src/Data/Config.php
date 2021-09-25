@@ -55,7 +55,7 @@ class Config
      */
     public function getStrategy(string $key): bool
     {
-        return (bool) ($this->data["strategy"][$key] ?? false);
+        return $this->getBool("strategy.{$key}");
     }
 
     /**
@@ -67,7 +67,7 @@ class Config
      */
     public function getOrder(string $key): int
     {
-        return (int) ($this->data["order"][$key] ?? -1);
+        return $this->getInt("order.{$key}");
     }
 
     /**
@@ -79,7 +79,7 @@ class Config
      */
     public function getReply(string $key): string
     {
-        return (string) ($this->data["reply"][$key] ?? "");
+        return $this->getString("reply.{$key}");
     }
 
     /**
@@ -91,6 +91,6 @@ class Config
      */
     public function getErrMsg(string $key): string
     {
-        return (string) ($this->data["errMsg"][$key] ?? "");
+        return $this->getString("errMsg.{$key}");
     }
 }

@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace DiceRobot\Handlers;
 
 use DiceRobot\App;
-use DiceRobot\Data\Config;
-use DiceRobot\Data\CustomConfig;
+use DiceRobot\Data\{Config, CustomConfig};
 use DiceRobot\Factory\{LoggerFactory, ResponseFactory};
 use DiceRobot\Service\{LogService, ResourceService, RobotService, StatisticsService};
-use DiceRobot\Util\Updater;
+use DiceRobot\Util\{Environment, Jwt, Updater};
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Swoole\Coroutine\System;
@@ -26,6 +25,33 @@ use Throwable;
  */
 class PanelHandler
 {
+    /** @var string[] Panel APIs. */
+    private const PANEL_APIS = [
+        "GET" => [
+            "/pause", "/run", "/reload", "/stop", "/restart", "/update",
+            "/profile", "/status", "/statistics",
+            "/config", "/logs", "/log", "/references", "/reference", "/decks", "/deck", "/rules", "/rule",
+            "/mirai/status", "/mirai/start", "/mirai/stop", "/mirai/restart"
+        ],
+        "POST" => [
+            "/connect",
+            "/skeleton/update",
+            "/mirai/update"
+        ],
+        "PATCH" => [
+            "/config", "/reference", "/deck", "/rule"
+        ],
+        "PUT" => [
+            "/deck", "/rule"
+        ],
+        "DELETE" => [
+            "/deck", "/rule"
+        ]
+    ];
+
+    /** @var string[] Panel APIs. */
+    private static array $panelApis;
+
     /** @var ContainerInterface Container. */
     protected ContainerInterface $container;
 
@@ -50,6 +76,9 @@ class PanelHandler
     /** @var ResponseFactory HTTP response factory. */
     protected ResponseFactory $responseFactory;
 
+    /** @var Jwt JSON Web Token util. */
+    protected Jwt $jwt;
+
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
@@ -64,6 +93,7 @@ class PanelHandler
      * @param RobotService $robot Robot service.
      * @param StatisticsService $statistics Statistics service.
      * @param ResponseFactory $responseFactory HTTP response factory.
+     * @param Jwt $jwt JSON Web Token util.
      * @param LoggerFactory $loggerFactory Logger factory.
      */
     public function __construct(
@@ -75,6 +105,7 @@ class PanelHandler
         RobotService $robot,
         StatisticsService $statistics,
         ResponseFactory $responseFactory,
+        Jwt $jwt,
         LoggerFactory $loggerFactory
     ) {
         $this->container = $container;
@@ -85,6 +116,7 @@ class PanelHandler
         $this->robot = $robot;
         $this->statistics = $statistics;
         $this->responseFactory = $responseFactory;
+        $this->jwt = $jwt;
 
         $this->logger = $loggerFactory->create("Panel");
 
@@ -100,27 +132,54 @@ class PanelHandler
     }
 
     /**
+     * Initialize handler.
+     */
+    public function initialize(): void
+    {
+        self::$panelApis = array_unique(array_merge(
+            self::PANEL_APIS["GET"], self::PANEL_APIS["POST"], self::PANEL_APIS["PATCH"],
+            self::PANEL_APIS["PUT"], self::PANEL_APIS["DELETE"]
+        ));
+
+
+
+        $this->logger->info("Panel handler initialized.");
+    }
+
+    /**
+     * Test whether the API exists.
+     *
+     * @param string $uri The API URI.
+     *
+     * @return bool Existence.
+     */
+    public function hasApi(string $uri): bool
+    {
+        return in_array($uri, self::$panelApis);
+    }
+
+    /**
      * Handle panel request.
      *
+     * @param array $headers Request headers.
      * @param string $method Request method.
      * @param string $uri Request URL.
      * @param string[] $queryParams Query parameters.
      * @param string $content Request content.
-     * @param string $contentType Request content type.
      * @param Response $response Swoole response.
      *
      * @return Response Swoole response.
      */
     public function handle(
+        array $headers,
         string $method,
         string $uri,
         array $queryParams,
         string $content,
-        string $contentType,
         Response $response
     ): Response {
         try {
-            $this->route($method, $uri, $queryParams, $content, $contentType, $response);
+            $this->route($headers, $method, $uri, $queryParams, $content, $response);
         } catch (Throwable $t) {
             $details = sprintf(
                 "Type: %s\nCode: %s\nMessage: %s\nFile: %s\nLine: %s\nTrace: %s",
@@ -134,7 +193,7 @@ class PanelHandler
 
             $this->logger->error("Panel request failed, unexpected exception occurred:\n{$details}.");
 
-            $this->error($response);
+            $this->responseFactory->createInternalServerError(null, null, $response);
         }
 
         return $response;
@@ -143,37 +202,51 @@ class PanelHandler
     /**
      * Route request.
      *
+     * @param array $headers Request headers.
      * @param string $method Request method.
      * @param string $uri Request URL.
      * @param string[] $queryParams Query parameters.
      * @param string $content Request content.
-     * @param string $contentType Request content type.
      * @param Response $response Swoole response.
      *
      * @return Response Swoole response.
      */
     protected function route(
+        array $headers,
         string $method,
         string $uri,
         array $queryParams,
         string $content,
-        string $contentType,
         Response $response
     ): Response {
         if ($method == "OPTIONS") {
-            $this->preflight($response);
-        } elseif ($method == "POST" && $contentType == "application/json") {
-            if ($uri == "/config") {
-                $this->setConfig($content, $response);
-            } elseif ($uri == "/mirai/update") {
-                $this->updateMirai($content, $response);
-            } else {
-                $this->notFound($response);
-            }
-        } elseif ($method == "GET") {
-            if ($uri == "/connect") {
-                $this->connect($response);
-            } elseif ($uri == "/pause") {
+            return $this->responseFactory->createPreflight($response);
+        }
+
+        // Check header
+        if (!preg_match("/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/", $headers["x-dr-panel"] ?? "")) {
+            return $this->responseFactory->createForbidden(null, null, $response);
+        }
+
+        // Check method
+        if (!in_array($uri, self::PANEL_APIS[$method] ?? [])) {
+            return $this->responseFactory->createMethodNotAllowed(null, null, $response);
+        }
+
+        if ($method == "POST" && $uri == "/connect") {
+            return $this->connect($content, $response);
+        }
+
+        // Check authorization
+        if (empty($auth = $headers["authorization"] ?? "") ||
+            !preg_match("/Bearer\s(\S+)/", $auth, $matches) ||
+            !$this->jwt->validate($matches[1])
+        ) {
+            return $this->responseFactory->createUnauthorized(null, null, $response);
+        }
+
+        if ($method == "GET") {
+            if ($uri == "/pause") {
                 $this->pause($response);
             } elseif ($uri == "/run") {
                 $this->rerun($response);
@@ -192,13 +265,23 @@ class PanelHandler
             } elseif ($uri == "/statistics") {
                 $this->getStatistics($response);
             } elseif ($uri == "/config") {
-                $this->getConfig($response);
+                $this->getConfig($queryParams, $response);
             } elseif ($uri == "/logs") {
                 $this->getLogList($response);
             } elseif ($uri == "/log") {
                 $this->getLog($queryParams, $response);
-            } elseif ($uri == "/skeleton/update") {
-                $this->updateSkeleton($response);
+            } elseif ($uri == "/references") {
+                $this->getReferenceList($response);
+            } elseif ($uri == "/reference") {
+                $this->getReference($queryParams, $response);
+            } elseif ($uri == "/decks") {
+                $this->getDeckList($response);
+            } elseif ($uri == "/deck") {
+                $this->getDeck($queryParams, $response);
+            } elseif ($uri == "/rules") {
+                $this->getRuleList($response);
+            } elseif ($uri == "/rule") {
+                $this->getRule($queryParams, $response);
             } elseif ($uri == "/mirai/status") {
                 $this->getMiraiStatus($response);
             } elseif ($uri == "/mirai/start") {
@@ -207,64 +290,84 @@ class PanelHandler
                 $this->stopMirai($response);
             } elseif ($uri == "/mirai/restart") {
                 $this->restartMirai($response);
-            } else {
-                $this->notFound($response);
             }
-        } else {
-            $this->notFound($response);
+
+            return $response;
         }
 
-        return $response;
-    }
+        // Check content type
+        if (($headers["content-type"] ?? "") != "application/json") {
+            return $this->responseFactory->createBadRequest(null, null, $response);
+        }
 
-    /**
-     * CORS preflight.
-     *
-     * @param Response $response  HTTP response.
-     *
-     * @return Response HTTP response.
-     */
-    protected function preflight(Response $response): Response
-    {
-        return $this->responseFactory->createPreflight($response);
-    }
+        if ($method == "POST") {
+            if ($uri == "/skeleton/update") {
+                $this->updateSkeleton($content, $response);
+            } elseif ($uri == "/mirai/update") {
+                $this->updateMirai($content, $response);
+            }
 
-    /**
-     * 404 Not Found.
-     *
-     * @param Response $response HTTP response.
-     *
-     * @return Response HTTP response.
-     */
-    protected function notFound(Response $response): Response
-    {
-        return $this->responseFactory->createNotFound($response);
-    }
+            return $response;
+        }
 
-    /**
-     * 500 Internal Server Error.
-     *
-     * @param Response $response HTTP response.
-     *
-     * @return Response HTTP response.
-     */
-    protected function error(Response $response): Response
-    {
-        return $this->responseFactory->createError($response);
+        if ($method == "PATCH") {
+            if ($uri == "/config") {
+                $this->setConfig($content, $response);
+            } elseif ($uri == "/reference") {
+                $this->setReference($queryParams, $content, $response);
+            } elseif ($uri == "/deck") {
+                $this->setDeck($queryParams, $content, $response);
+            } elseif ($uri == "/rule") {
+                $this->setRule($queryParams, $content, $response);
+            }
+
+            return $response;
+        }
+
+        if ($method == "PUT") {
+            if ($uri == "/deck") {
+                $this->addDeck($queryParams, $content, $response);
+            } elseif ($uri == "/rule") {
+                $this->addRule($queryParams, $content, $response);
+            }
+
+            return $response;
+        }
+
+        if ($method == "DELETE") {
+            if ($uri == "/deck") {
+                $this->deleteDeck($queryParams, $response);
+            } elseif ($uri == "/rule") {
+                $this->deleteRule($queryParams, $response);
+            }
+
+            return $response;
+        }
+
+        return $this->responseFactory->createBadRequest(null, null, $response);
     }
 
     /**
      * Connect.
      *
+     * @param string $content HTTP request content.
      * @param Response $response HTTP response.
      *
      * @return Response HTTP response.
      */
-    protected function connect(Response $response): Response
+    protected function connect(string $content, Response $response): Response
     {
         $this->logger->info("HTTP request received, connect to application.");
 
-        return $this->responseFactory->create(0, null, $response);
+        if (!is_array($data = json_decode($content, true))) {
+            return $this->responseFactory->createBadRequest(null, null, $response);
+        }
+
+        if (!isset($data["password"]) || $data["password"] != $this->config->getString("panel.password")) {
+            return $this->responseFactory->createForbidden(-900, null, $response);
+        }
+
+        return $this->responseFactory->create(0, ["token" => $this->jwt->generate()], $response);
     }
 
     /**
@@ -350,7 +453,7 @@ class PanelHandler
 
         $this->responseFactory->create($code, null, $response)->end();
 
-        Process::kill(getmypid(), 10);  // Send SIGUSR1
+        Process::kill(getmypid(), SIGUSR1);  // Send SIGUSR1
     }
 
     /**
@@ -365,15 +468,15 @@ class PanelHandler
         $code = -1;
 
         extract(System::exec(
-            "/bin/systemctl status {$this->config->getString("dicerobot.service.name")}"
+            Environment::getSystemctl() . " status {$this->config->getString("dicerobot.service.name")}"
         ), EXTR_OVERWRITE);
 
         if ($code == 0) {
             $this->responseFactory->create(0, null, $response)->end();
 
-            System::exec("/bin/systemctl restart {$this->config->getString("dicerobot.service.name")}");
+            Process::kill(getmypid(), SIGTSTP);  // Send SIGTSTP
         } else {
-            $this->responseFactory->create(1040, null, $response)->end();
+            $this->responseFactory->create(1040, null, $response);
         }
     }
 
@@ -388,6 +491,10 @@ class PanelHandler
     {
         $this->logger->notice("HTTP request received, update DiceRobot.");
 
+        if (is_null(Environment::getComposer())) {
+            return $this->responseFactory->create(-910, null, $response);
+        }
+
         if (!is_dir($root = $this->config->getString("root"))) {
             return $this->responseFactory->create(-1050, null, $response);
         }
@@ -396,25 +503,25 @@ class PanelHandler
         $output = "";
 
         extract(System::exec(
-            "/usr/local/bin/composer --no-interaction --no-ansi --quiet update --working-dir {$root} --no-dev 2>&1"
+            Environment::getComposer() . " --no-interaction --no-ansi --quiet update --working-dir {$root} --no-dev 2>&1"
         ), EXTR_OVERWRITE);
 
         if ($code == 0) {
+            $this->logger->notice(
+                "DiceRobot updated."
+            );
+
             return $this->responseFactory->create($code, null, $response);
         } else {
             $this->logger->critical(
                 "Failed to update DiceRobot. Code {$code}, signal {$signal}, output message: {$output}"
             );
 
-            if ($code == 127) {
-                return $this->responseFactory->create(-1051, null, $response);
-            } else {
-                return $this->responseFactory->create(
-                    -1052,
-                    ["code" => $code, "signal" => $signal, "output" => $output],
-                    $response
-                );
-            }
+            return $this->responseFactory->create(
+                -1051,
+                ["code" => $code, "signal" => $signal, "output" => $output],
+                $response
+            );
         }
     }
 
@@ -459,7 +566,7 @@ class PanelHandler
         $code = -1;
 
         extract(System::exec(
-            "/bin/systemctl status {$this->config->getString("dicerobot.service.name")}"
+            Environment::getSystemctl() . " status {$this->config->getString("dicerobot.service.name")}"
         ), EXTR_OVERWRITE);
 
         if ($code == 4) {
@@ -494,20 +601,26 @@ class PanelHandler
     /**
      * Get DiceRobot config.
      *
+     * @param array $params Query parameters.
      * @param Response $response HTTP response.
      *
      * @return Response HTTP response.
      */
-    protected function getConfig(Response $response): Response
+    protected function getConfig(array $params, Response $response): Response
     {
         $this->logger->info("HTTP request received, get config.");
 
-        $data = [
-            "strategy" => $this->config->getArray("strategy"),
-            "order" => $this->config->getArray("order"),
-            "reply" => $this->config->getArray("reply"),
-            "errMsg" => $this->config->getArray("errMsg"),
-        ];
+        $acceptableGroups = ["panel", "strategy", "order", "reply", "errMsg"];
+        $groups = explode(",", $params["groups"] ?? "");
+        $data = [];
+
+        foreach ($groups as $group) {
+            if (in_array($group, $acceptableGroups)) {
+                $data[$group] = $this->config->getArray($group);
+            } else {
+                return $this->responseFactory->createBadRequest(-901, null, $response);
+            }
+        }
 
         return $this->responseFactory->create(0, $data, $response);
     }
@@ -527,15 +640,17 @@ class PanelHandler
     {
         $this->logger->info("HTTP request received, set config.");
 
-        if (!is_array($data = json_decode($content, true))) {
-            return $this->responseFactory->create(-1060, null, $response);
+        if (!is_array($data = json_decode($content, true)) || empty($data)) {
+            return $this->responseFactory->createBadRequest(-1060, null, $response);
         }
 
         if (!$this->resource->getConfig()->setConfig($data)) {
-            return $this->responseFactory->create(-1061, null, $response);
+            return $this->responseFactory->createBadRequest(-1061, null, $response);
         }
 
         $this->config->load($this->container->make(CustomConfig::class), $this->resource->getConfig());
+
+        $this->logger->notice("Config set via panel.");
 
         return $this->responseFactory->create(0, null, $response);
     }
@@ -576,8 +691,330 @@ class PanelHandler
     }
 
     /**
+     * Get reference file list.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function getReferenceList(Response $response): Response
+    {
+        $this->logger->info("HTTP request received, get reference list.");
+
+        $references = $this->resource->getReferenceList();
+
+        return $this->responseFactory->create(0, ["references" => $references], $response);
+    }
+
+    /**
+     * Get parsed reference file content.
+     *
+     * @param array $params Query parameters.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function getReference(array $params, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, get reference.");
+
+        if (false === $reference = $this->resource->getReferenceContent($params["name"] ?? "")) {
+            return $this->responseFactory->create(-1090, null, $response);
+        }
+
+        return $this->responseFactory->create(0, ["reference" => $reference], $response);
+    }
+
+    /**
+     * Set reference file content.
+     *
+     * @param array $params Query parameters.
+     * @param string $content HTTP request content.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function setReference(array $params, string $content, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, set reference.");
+
+        $filename = $params["name"] ?? "";
+
+        if (empty($filename) || !is_array($data = json_decode($content, true)) || empty($data)) {
+            return $this->responseFactory->createBadRequest(-1120, null, $response);
+        }
+
+        if (!$this->resource->setReferenceContent($filename, $data)) {
+            return $this->responseFactory->create(-1121, null, $response);
+        }
+
+        $this->logger->notice("Reference {$filename} set via panel.");
+
+        $this->resource->reload();
+
+        return $this->responseFactory->create(0, null, $response);
+    }
+
+    /**
+     * Get card deck file list.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function getDeckList(Response $response): Response
+    {
+        $this->logger->info("HTTP request received, get card deck list.");
+
+        $decks = $this->resource->getCardDeckList();
+
+        return $this->responseFactory->create(0, ["decks" => $decks], $response);
+    }
+
+    /**
+     * Get parsed card deck file content.
+     *
+     * @param array $params Query parameters.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function getDeck(array $params, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, get card deck.");
+
+        if (false === $deck = $this->resource->getCardDeckContent($params["name"] ?? "")) {
+            return $this->responseFactory->create(-1100, null, $response);
+        }
+
+        return $this->responseFactory->create(0, ["deck" => $deck], $response);
+    }
+
+    /**
+     * Set card deck file content.
+     *
+     * @param array $params Query parameters.
+     * @param string $content HTTP request content.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function setDeck(array $params, string $content, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, set card deck.");
+
+        $filename = $params["name"] ?? "";
+
+        if (empty($filename) || !is_array($data = json_decode($content, true)) || empty($data)) {
+            return $this->responseFactory->createBadRequest(-1130, null, $response);
+        }
+
+        if (!$this->resource->setCardDeckContent($filename, $data)) {
+            return $this->responseFactory->create(-1131, null, $response);
+        }
+
+        $this->logger->notice("Card deck {$filename} set via panel.");
+
+        $this->resource->reload();
+
+        return $this->responseFactory->create(0, null, $response);
+    }
+
+    /**
+     * Create card deck file.
+     *
+     * @param array $params Query parameters.
+     * @param string $content HTTP request content.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function addDeck(array $params, string $content, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, add card deck.");
+
+        $filename = $params["name"] ?? "";
+
+        if (empty($filename) || !is_array($data = json_decode($content, true)) || empty($data)) {
+            return $this->responseFactory->createBadRequest(-1150, null, $response);
+        }
+
+        if (false !== $this->resource->getCardDeckContent($filename)) {
+            return $this->responseFactory->create(-1151, null, $response);
+        }
+
+        if (!$this->resource->setCardDeckContent($filename, $data)) {
+            return $this->responseFactory->create(-1152, null, $response);
+        }
+
+        $this->logger->notice("Card deck {$filename} added via panel.");
+
+        $this->resource->reload();
+
+        return $this->responseFactory->create(0, null, $response);
+    }
+
+    /**
+     * Delete card deck file.
+     *
+     * @param array $params Query parameters.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function deleteDeck(array $params, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, delete card deck.");
+
+        $filename = $params["name"] ?? "";
+
+        if (empty($filename)) {
+            return $this->responseFactory->createBadRequest(-1170, null, $response);
+        }
+
+        if (!$this->resource->deleteCardDeck($filename)) {
+            return $this->responseFactory->create(-1171, null, $response);
+        }
+
+        $this->logger->notice("Card deck {$filename} deleted via panel.");
+
+        $this->resource->reload();
+
+        return $this->responseFactory->create(0, null, $response);
+    }
+
+    /**
+     * Get check rule file list.
+     *
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function getRuleList(Response $response): Response
+    {
+        $this->logger->info("HTTP request received, get check rule list.");
+
+        $rules = $this->resource->getCheckRuleList();
+
+        return $this->responseFactory->create(0, ["rules" => $rules], $response);
+    }
+
+    /**
+     * Get parsed check rule file content.
+     *
+     * @param array $params Query parameters.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function getRule(array $params, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, get check rule.");
+
+        if (false === $rule = $this->resource->getCheckRuleContent($params["name"] ?? "")) {
+            return $this->responseFactory->create(-1110, null, $response);
+        }
+
+        return $this->responseFactory->create(0, ["rule" => $rule], $response);
+    }
+
+    /**
+     * Set check rule file content.
+     *
+     * @param array $params Query parameters.
+     * @param string $content HTTP request content.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function setRule(array $params, string $content, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, set check rule.");
+
+        $filename = $params["name"] ?? "";
+
+        if (empty($filename) || !is_array($data = json_decode($content, true)) || empty($data)) {
+            return $this->responseFactory->createBadRequest(-1140, null, $response);
+        }
+
+        if (!$this->resource->setCheckRuleContent($filename, $data)) {
+            return $this->responseFactory->create(-1141, null, $response);
+        }
+
+        $this->logger->notice("Check rule {$filename} set via panel.");
+
+        $this->resource->reload();
+
+        return $this->responseFactory->create(0, null, $response);
+    }
+
+    /**
+     * Create check rule file.
+     *
+     * @param array $params Query parameters.
+     * @param string $content HTTP request content.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function addRule(array $params, string $content, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, add check rule.");
+
+        $filename = $params["name"] ?? "";
+
+        if (empty($filename) || !is_array($data = json_decode($content, true)) || empty($data)) {
+            return $this->responseFactory->createBadRequest(-1160, null, $response);
+        }
+
+        if (false !== $this->resource->getCheckRuleContent($filename)) {
+            return $this->responseFactory->create(-1161, null, $response);
+        }
+
+        if (!$this->resource->setCheckRuleContent($filename, $data)) {
+            return $this->responseFactory->create(-1162, null, $response);
+        }
+
+        $this->logger->notice("Check rule {$filename} added via panel.");
+
+        $this->resource->reload();
+
+        return $this->responseFactory->create(0, null, $response);
+    }
+
+    /**
+     * Delete check rule file.
+     *
+     * @param array $params Query parameters.
+     * @param Response $response HTTP response.
+     *
+     * @return Response HTTP response.
+     */
+    protected function deleteRule(array $params, Response $response): Response
+    {
+        $this->logger->info("HTTP request received, delete check rule.");
+
+        $filename = $params["name"] ?? "";
+
+        if (empty($filename)) {
+            return $this->responseFactory->createBadRequest(-1180, null, $response);
+        }
+
+        if (!$this->resource->deleteCheckRule($filename)) {
+            return $this->responseFactory->create(-1181, null, $response);
+        }
+
+        $this->logger->notice("Check rule {$filename} deleted via panel.");
+
+        $this->resource->reload();
+
+        return $this->responseFactory->create(0, null, $response);
+    }
+
+    /**
      * Update DiceRobot skeleton.
      *
+     * @param string $content HTTP request content.
      * @param Response $response HTTP response.
      *
      * @return Response HTTP response.
@@ -585,19 +1022,22 @@ class PanelHandler
      * @noinspection PhpDocMissingThrowsInspection
      * @noinspection PhpUnhandledExceptionInspection
      */
-    protected function updateSkeleton(Response $response): Response
+    protected function updateSkeleton(string $content, Response $response): Response
     {
         $this->logger->notice("HTTP request received, update skeleton.");
 
+        if (!is_array($files = json_decode($content, true))) {
+            return $this->responseFactory->createBadRequest(-1070, null, $response);
+        }
+
         /** @var Updater $updater */
         $updater = $this->container->make(Updater::class);
-
-        $code = $updater->update();
+        $code = $updater->update($files);
 
         if ($code == -1) {
-            $code = -1070;
-        } elseif ($code == -2) {
             $code = -1071;
+        } elseif ($code == -2) {
+            $code = -1072;
         }
 
         return $this->responseFactory->create($code, null, $response);
@@ -617,7 +1057,7 @@ class PanelHandler
         $code = -1;
 
         extract(System::exec(
-            "/bin/systemctl status {$this->config->getString("mirai.service.name")}"
+            Environment::getSystemctl() . " status {$this->config->getString("mirai.service.name")}"
         ), EXTR_OVERWRITE);
 
         if ($code == 4) {
@@ -648,10 +1088,12 @@ class PanelHandler
         $output = "";
 
         extract(System::exec(
-            "/bin/systemctl start {$this->config->getString("mirai.service.name")}"
+            Environment::getSystemctl() . " start {$this->config->getString("mirai.service.name")}"
         ), EXTR_OVERWRITE);
 
         if ($code == 0) {
+            $this->logger->notice("Mirai started.");
+
             return $this->responseFactory->create($code, null, $response);
         } else {
             $this->logger->critical(
@@ -685,10 +1127,12 @@ class PanelHandler
         $output = "";
 
         extract(System::exec(
-            "/bin/systemctl stop {$this->config->getString("mirai.service.name")}"
+            Environment::getSystemctl() . " stop {$this->config->getString("mirai.service.name")}"
         ), EXTR_OVERWRITE);
 
         if ($code == 0) {
+            $this->logger->notice("Mirai stopped.");
+
             return $this->responseFactory->create($code, null, $response);
         } else {
             $this->logger->critical(
@@ -722,10 +1166,12 @@ class PanelHandler
         $output = "";
 
         extract(System::exec(
-            "/bin/systemctl restart {$this->config->getString("mirai.service.name")}"
+            Environment::getSystemctl() . " restart {$this->config->getString("mirai.service.name")}"
         ), EXTR_OVERWRITE);
 
         if ($code == 0) {
+            $this->logger->notice("Mirai restarted.");
+
             return $this->responseFactory->create($code, null, $response);
         } else {
             $this->logger->critical(
@@ -757,12 +1203,12 @@ class PanelHandler
         $this->logger->notice("HTTP request received, update Mirai.");
 
         if (!is_array($params = json_decode($content, true))) {
-            return $this->responseFactory->create(-2030, null, $response);
+            return $this->responseFactory->createBadRequest(-2030, null, $response);
         }
 
         foreach ($params as $param) {
             if (!preg_match("/^[1-9]\.[0-9]\.[0-9]$/", $param)) {
-                return $this->responseFactory->create(-2031, null, $response);
+                return $this->responseFactory->createBadRequest(-2031, null, $response);
             }
         }
 
@@ -780,6 +1226,8 @@ class PanelHandler
         ), EXTR_OVERWRITE);
 
         if ($code == 0) {
+            $this->logger->notice("Mirai updated.");
+
             return $this->responseFactory->create($code, null, $response);
         } else {
             $this->logger->critical(

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Data\Report\Event;
 
-use DiceRobot\Data\Report\Contact\{GroupMember, Operator};
+use DiceRobot\Data\Report\Contact\GroupMember;
 use DiceRobot\Data\Report\Event;
 
 /**
@@ -22,6 +22,6 @@ final class MemberMuteEvent extends Event
     /** @var GroupMember The muted group member. */
     public GroupMember $member;
 
-    /** @var Operator|null The operator, null if the operator is the robot. */
-    public ?Operator $operator;
+    /** @var GroupMember|null The operator, null if the operator is the robot. */
+    public ?GroupMember $operator;
 }

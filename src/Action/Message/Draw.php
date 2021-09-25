@@ -40,32 +40,48 @@ class Draw extends MessageAction
 
         list($deckName, $count) = $this->parseOrder();
 
+        $hasDeckName = !is_null($deckName);
+
         if (!$this->checkRange($count)) {
             return;
         }
 
-        if (is_null($deckName)) {
+        if ($hasDeckName) {
+            // Draw with deck name
+            $cardDeck = $this->resource->getCardDeck($deckName);
+        } else {
+            // Draw without deck name
             $deckName = $this->chatSettings->get("defaultCardDeck");
-            $deck = $this->chatSettings->get("cardDeck");
+            $cardDeck = $this->chatSettings->get("cardDeck");
 
-            if (empty($deckName) || !($deck instanceof CardDeck)) {
+            if (empty($deckName) || !($cardDeck instanceof CardDeck)) {
                 $this->setReply("drawDeckNotSet");
 
                 return;
             }
-        } else {
-            $deck = $this->resource->getCardDeck($deckName);
         }
 
-        list($empty, $result) = $this->draw($deck, $deckName, $count);
+        $deck = $cardDeck->getDeck($deckName);
 
-        $this->setReply("drawResult", [
-            "抽牌结果" => $result
-        ]);
+        list($empty, $result) = $this->draw($cardDeck, $deckName, $count);
+
+        if ($hasDeckName) {
+            // Draw with deck name
+            $this->setReply("drawResult", [
+                "抽牌结果" => $result
+            ]);
+        } else {
+            // Draw without deck name
+            $this->setReply("drawResultWithRemainder", [
+                "抽牌结果" => $result,
+                "剩余卡牌数量" => $deck->getCount(),
+                "卡牌总数" => $deck->getSum(),
+            ]);
+        }
 
         // If the deck is empty, reset the card deck
-        if ($deck->getDeck($deckName)->getCount() <= 0) {
-            $deck->reset();
+        if ($deck->getCount() <= 0) {
+            $cardDeck->reset();
         }
 
         // If the deck is run out of, send message

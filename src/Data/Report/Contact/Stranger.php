@@ -7,7 +7,7 @@ namespace DiceRobot\Data\Report\Contact;
 /**
  * Class Stranger
  *
- * DTO. Stranger sender.
+ * DTO. Stranger.
  *
  * @package DiceRobot\Data\Report\Contact
  */

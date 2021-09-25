@@ -58,7 +58,7 @@ class LogService
         if ($this->checkDirectory($this->config->getString("log.path"))) {
             $this->logger->info("Log service initialized.");
         } else {
-            $this->logger->alert("Initialize log service failed.");
+            $this->logger->critical("Initialize log service failed.");
 
             throw new RuntimeException("Initialize log service failed");
         }
@@ -103,7 +103,7 @@ class LogService
 
         foreach (File::getFileList($this->config->getString("log.path")) as $log) {
             if (preg_match(
-                "/^{$fileInfo["filename"]}-20\d{2}-(0[1-9]|1[0-2])-([0-2][1-9]|3[0-1])\.{$fileInfo["extension"]}$/",
+                "/^{$fileInfo["filename"]}-20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])\.{$fileInfo["extension"]}$/",
                 $log
             )) {
                 $list[] = $log;
@@ -116,23 +116,23 @@ class LogService
     /**
      * Get log file content.
      *
-     * @param string $logFileName Log file name.
+     * @param string $filename Log file name.
      *
      * @return array|false Parsed log file content, or false if log file not exists.
      */
-    public function getLog(string $logFileName)
+    public function getLog(string $filename)
     {
         $fileInfo = pathinfo($this->config->getString("log.filename"));
 
         if (!preg_match(
-            "/^{$fileInfo["filename"]}-20\d{2}-(0[1-9]|1[0-2])-([0-2][1-9]|3[0-1])\.{$fileInfo["extension"]}$/",
-            $logFileName
+            "/^{$fileInfo["filename"]}-20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])\.{$fileInfo["extension"]}$/",
+            $filename
         )) {
             return false;
         }
 
         try {
-            $content = File::getFile("{$this->config->getString("log.path")}/{$logFileName}");
+            $content = File::getFile("{$this->config->getString("log.path")}/{$filename}");
         } catch (RuntimeException $e) {
             return false;
         }
@@ -141,7 +141,7 @@ class LogService
         $splitLog = array_map(
             "trim",
             preg_split(
-                "/(\[20\d{2}-(?:0[1-9]|1[0-2])-(?:[0-2][1-9]|3[0-1]) (?:[0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9] [+-][0-1][0-9]:[0-5][0-9]])/",
+                "/(\[20\d{2}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1]) (?:[0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9] [+-][0-1][0-9]:[0-5][0-9]])/",
                 $content,
                 -1,
                 PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
@@ -149,7 +149,7 @@ class LogService
         );
 
         for ($i = 0, $max = count($splitLog) - 1; $i < $max; $i++) {
-            if (preg_match("/^\[20\d{2}-(?:0[1-9]|1[0-2])-(?:[0-2][1-9]|3[0-1]) (?P<time>(?:[0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]) [+-][0-1][0-9]:[0-5][0-9]] (?P<channel>[a-zA-Z]+)\.(?P<level>[A-Z]+): (?P<message>[\S\s]+)$/",
+            if (preg_match("/^\[20\d{2}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1]) (?P<time>(?:[0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]) [+-][0-1][0-9]:[0-5][0-9]] (?P<channel>[a-zA-Z]+)\.(?P<level>[A-Z]+): (?P<message>[\S\s]+)$/",
                 "{$splitLog[$i]} {$splitLog[$i + 1]}", $matches
             )) {
                 $logs[] = [

@@ -13,7 +13,7 @@ use DiceRobot\Exception\ApiException\UnexpectedErrorException;
  *
  * @package DiceRobot\Data
  */
-abstract class DiceRobotResponse
+class DiceRobotResponse
 {
     /** @var int Return code. */
     public int $code;

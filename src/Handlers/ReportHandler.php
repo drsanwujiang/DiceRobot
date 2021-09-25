@@ -123,7 +123,7 @@ class ReportHandler
                 $this->message($report);
             }
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-            $this->logger->alert("Report failed, unable to call Mirai API.");
+            $this->logger->critical("Report failed, unable to call Mirai API.");
         } catch (Throwable $t) {
             $details = sprintf(
                 "Type: %s\nCode: %s\nMessage: %s\nFile: %s\nLine: %s\nTrace: %s",

@@ -16,13 +16,13 @@ DiceRobot 由 PHP 编写，并由 Swoole 驱动，意味着你可以在抛开传
 
 * ~~使用 CoolQ 并加载了 [CQHTTP](https://github.com/richardchien/coolq-http-api) 插件的机器人~~（1.0.0 ~ 1.3.2）
 * ~~使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [CQHTTP Mirai](https://github.com/yyuueexxiinngg/cqhttp-mirai) 插件的机器人~~（1.4.0）
-* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http) 插件的机器人（2.0.0 ~ 3.0.0）
+* 使用 [Mirai](https://github.com/mamoe/mirai) 并加载了 [Mirai API HTTP](https://github.com/project-mirai/mirai-api-http) 插件的机器人（2.0.0 ~ 3.1.0）
 
 ### 部署
 
 部署 DiceRobot 十分简单！
 
-如果你追求极致简洁的 [一键部署](https://docs.dicerobot.tech/deploy/how-to-deploy#onekey) ，那么只需几分钟，就可以直接使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以基于我们推荐的流程进行 [手动部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#manual) 。
+如果你追求极致简洁的部署方式，通过 [Docker 部署（推荐）](https://docs.dicerobot.tech/deploy/how-to-deploy#docker) 或 [一键部署](https://docs.dicerobot.tech/deploy/how-to-deploy#onekey) ，只需几分钟即可使用；如果你有更复杂的需求（例如在已有环境中部署），那么可以基于我们推荐的流程进行 [手动部署](https://docs.drsanwujiang.com/dicerobot/deploy/how-to-deploy#manual) 。
 
 ### 自定义
 

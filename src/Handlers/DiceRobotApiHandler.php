@@ -7,7 +7,7 @@ namespace DiceRobot\Handlers;
 use DiceRobot\Data\Config;
 use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetTokenResponse, GetCardResponse,
     GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
-    ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
+    ReportMalfunctionResponse, ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
@@ -102,22 +102,22 @@ class DiceRobotApiHandler
             $options["headers"]["Timestamp"] = time();
             $response = $this->pool->request($options);
         } catch (ClientException | ServerException $e) {
-            $this->logger->critical(
+            $this->logger->error(
                 "Failed to request DiceRobot API. HTTP status code {$e->getResponse()->getStatusCode()}."
             );
 
             throw new InternalErrorException();
         } catch (TransferException $e) {  // TODO: catch (TransferException) in PHP 8
-            $this->logger->critical("Failed to request DiceRobot API for network problem.");
+            $this->logger->error("Failed to request DiceRobot API for network problem.");
 
             throw new NetworkErrorException();
         }
 
         $data = $response->getParsedJsonArray();
 
-        // Log error, but not throw exception
+        // Log DiceRobot API error
         if (0 != $data["code"]) {
-            $this->logger->error(
+            $this->logger->warning(
                 "DiceRobot API returned unexpected code {$data["code"]}, error message: {$data["message"]}."
             );
         }
@@ -206,6 +206,32 @@ class DiceRobotApiHandler
         ];
 
         return new GetTokenResponse($this->request($options));
+    }
+
+    /** Report */
+
+    /**
+     * Report malfunction info.
+     *
+     * @param int $robotId Robot ID.
+     * @param string $dicerobotToken DiceRobot token.
+     *
+     * @return ReportMalfunctionResponse
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function reportMalfunction(int $robotId, string $dicerobotToken): ReportMalfunctionResponse {
+        $options = [
+            "uri" => "robot/{$robotId}/report/malfunction",
+            "method" => "POST",
+            "data" => [
+                "dicerobot_token" => $dicerobotToken
+            ]
+        ];
+
+        return new ReportMalfunctionResponse($this->request($options));
     }
 
     /** User */

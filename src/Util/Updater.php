@@ -41,36 +41,34 @@ class Updater
             "container.php",
             "README.md"
         ],
-        "data" => [
-            "root" => [
-                "README.md"
-            ],
-            "card" => [
-                "README.md"
-            ],
-            "chat" => [
-                "friend/README.md",
-                "group/README.md",
-                "README.md"
-            ],
-            "deck" => [
-                "README.md",
-                "塔罗牌.json"
-            ],
-            "reference" => [
-                "AboutTemplate.json",
-                "COCCharacterCardTemplate.json",
-                "DNDCharacterCardTemplate.json",
-                "HelloTemplate.json",
-                "HelpTemplate.json",
-                "NameTemplate.json",
-                "README.md"
-            ],
-            "rule" => [
-                "0.json",
-                "1.json",
-                "README.md"
-            ],
+        "data.root" => [
+            "README.md"
+        ],
+        "data.card" => [
+            "README.md"
+        ],
+        "data.chat" => [
+            "friend/README.md",
+            "group/README.md",
+            "README.md"
+        ],
+        "data.deck" => [
+            "塔罗牌.json",
+            "README.md"
+        ],
+        "data.reference" => [
+            "AboutTemplate.json",
+            "COCCharacterCardTemplate.json",
+            "DNDCharacterCardTemplate.json",
+            "HelloTemplate.json",
+            "HelpTemplate.json",
+            "NameTemplate.json",
+            "README.md"
+        ],
+        "data.rule" => [
+            "0.json",
+            "1.json",
+            "README.md"
         ],
         "logs" => [
             "README.md"
@@ -127,28 +125,34 @@ class Updater
     /**
      * Update skeleton.
      *
+     * @param array $files Files to be updated.
+     *
      * @return int Result code.
      */
-    public function update(): int
+    public function update(array $files): int
     {
         try {
-            $this->updateFiles("", "root", self::FILES["root"]);
-            $this->updateFiles("config/", "config", self::FILES["config"]);
-            $this->updateFiles("logs/", "log.path", self::FILES["logs"]);
-            $this->updateFiles("data/", "data.root", self::FILES["data"]["root"]);
-            $this->updateFiles("data/card/", "data.card", self::FILES["data"]["card"]);
-            $this->updateFiles("data/chat/", "data.chat", self::FILES["data"]["chat"]);
-            $this->updateFiles("data/deck/", "data.deck", self::FILES["data"]["deck"]);
-            $this->updateFiles("data/reference/", "data.reference", self::FILES["data"]["reference"]);
-            $this->updateFiles("data/rule/", "data.rule", self::FILES["data"]["rule"]);
+            $this->updateFiles($files, "", "root", "root");
+            $this->updateFiles($files, "config/", "config", "config");
+            $this->updateFiles($files, "logs/", "log.path", "logs");
+            $this->updateFiles($files, "data/", "data.root", "data.root");
+            $this->updateFiles($files, "data/card/", "data.card", "data.card");
+            $this->updateFiles($files, "data/chat/", "data.chat", "data.chat");
+            $this->updateFiles($files, "data/deck/", "data.deck", "data.deck");
+            $this->updateFiles($files, "data/reference/", "data.reference", "data.reference");
+            $this->updateFiles($files, "data/rule/", "data.rule", "data.rule");
+
+            $this->logger->notice("Skeleton updated.");
 
             return 0;
         } catch (TransferException $e) {
-            $this->logger->error("Failed to update for network problem.");
+            $this->logger->error("Failed to update skeleton for network problem.");
+            $this->logger->warning("Skeleton update interrupted.");
 
             return -1;
         } catch (RuntimeException $e) {
-            $this->logger->error($e);
+            $this->logger->error($e->getMessage());
+            $this->logger->warning("Skeleton update interrupted.");
 
             return -2;
         }
@@ -157,30 +161,36 @@ class Updater
     /**
      * Update specific files.
      *
+     * @param array $files Files to be updated.
      * @param string $uri URI.
      * @param string $dirKey Directory key.
-     * @param array $files File list.
+     * @param string $groupKey Group key.
      *
      * @throws RuntimeException File cannot be updated
      */
-    protected function updateFiles(string $uri, string $dirKey, array $files): void
+    protected function updateFiles(array &$files, string $uri, string $dirKey, string $groupKey): void
     {
         $dir = $this->config->getString($dirKey);
 
         // Check directory
         if (empty($dir)) {
-            $this->logger->info("{$dirKey} not set, update skipped.");
+            $this->logger->warning("Directory {$dirKey} not set, update skipped.");
 
             return;
         }
 
-        foreach ($files as $file) {
-            $fileName = "{$dir}/{$file}";
+        $items = $files[$groupKey] ?? [];
 
-            if ($this->downloader->download("{$uri}{$file}", $fileName)->getSuccess()) {
-                $this->logger->info("{$fileName} updated.");
-            } else {
-                throw new RuntimeException("File {$fileName} cannot be updated.");
+        foreach ($items as $item) {
+            // Only accept files in the file list
+            if (in_array($item, self::FILES[$groupKey])) {
+                $fileName = "{$dir}/{$item}";
+
+                if ($this->downloader->download("{$uri}{$item}", $fileName)->getSuccess()) {
+                    $this->logger->info("{$fileName} updated.");
+                } else {
+                    throw new RuntimeException("File {$fileName} cannot be updated.");
+                }
             }
         }
     }
