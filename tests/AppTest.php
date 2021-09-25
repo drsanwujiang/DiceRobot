@@ -7,18 +7,22 @@ namespace DiceRobot\Tests;
 use DiceRobot\App;
 use DiceRobot\Enum\AppStatusEnum;
 
+use function Co\run;
+
 class AppTest extends TestCase
 {
     public function testInitialize(): void
     {
-        $container = $this->getContainer();
-        /** @var App $app */
-        $app = $container->get(App::class);
+        run(function () {
+            $container = $this->getContainer();
+            /** @var App $app */
+            $app = $container->get(App::class);
 
-        $app->initialize();
+            $app->initialize();
 
-        $this->assertEquals(AppStatusEnum::HOLDING(), $app->getStatus());
+            $this->assertEquals(AppStatusEnum::HOLDING(), $app->getStatus());
 
-        $app->stop();
+            $app->stop();
+        });
     }
 }
