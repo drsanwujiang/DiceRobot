@@ -49,8 +49,7 @@ class LoggerFactory
         $formatter = new LineFormatter(null, $dateFormat, true, true);
 
         // Set console log
-        $streamHandler =
-            new StreamHandler("php://stdout", $this->config->getInt("log.level.console"));
+        $streamHandler = new StreamHandler("php://stdout", $this->config->getInt("log.level.console"));
         $streamHandler->setFormatter($formatter);
         $handlers[] = $streamHandler;
 

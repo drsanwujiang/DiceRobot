@@ -29,6 +29,7 @@
     "myclabs/php-enum": "^1.8",
     "nyholm/psr7": "^1.4",
     "php-di/php-di": "^6.3",
+    "php-mqtt/client": "^1.1",
     "ramsey/uuid": "^4.2",
     "swlib/saber": "^1.0"
   },

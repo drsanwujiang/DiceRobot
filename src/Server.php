@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpUndefinedMethodInspection */
+<?php
 
 declare(strict_types=1);
 
@@ -92,7 +92,6 @@ class Server
         $port = $this->config->getInt("dicerobot.server.port");
 
         try {
-            /** @noinspection PhpMethodParametersCountMismatchInspection */
             $this->server = new SwooleServer($host, $port);
         } catch (Exception $e) {
             $this->logger->emergency(

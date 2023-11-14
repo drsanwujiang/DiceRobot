@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace DiceRobot\Service;
 
 use DiceRobot\Data\MiraiResponse;
-use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetTokenResponse, GetCardResponse,
-    GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
+use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetMqCredentialResponse, GetTokenResponse,
+    GetCardResponse, GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
     ReportMalfunctionResponse, ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
 use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Factory\LoggerFactory;
@@ -72,6 +72,7 @@ use Psr\Log\LoggerInterface;
  * @method void updateRobotAsync(int $robotId)
  * @method GetNicknameResponse getNickname(int $robotId)
  * @method GetTokenResponse getToken(int $robotId)
+ * @method GetMqCredentialResponse getMqCredential(int $robotId, string $token)
  * @method ReportMalfunctionResponse reportMalfunction(int $robotId, string $token)
  * @method GetLuckResponse getLuck(int $userId, string $token)
  * @method GetPietyResponse getPiety(int $userId, string $token)
@@ -103,7 +104,7 @@ class ApiService
 
     /** @var string[] DiceRobot APIs. */
     private const DICEROBOT_APIS = [
-        "updateRobot", "updateRobotAsync", "getNickname", "getToken",
+        "updateRobot", "updateRobotAsync", "getNickname", "getToken", "getMqCredential",
         "reportMalfunction",
         "getLuck", "getPiety",
         "getCard", "updateCard", "sanityCheck",

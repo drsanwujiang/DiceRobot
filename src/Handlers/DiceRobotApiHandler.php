@@ -5,9 +5,21 @@ declare(strict_types=1);
 namespace DiceRobot\Handlers;
 
 use DiceRobot\Data\Config;
-use DiceRobot\Data\Response\{CreateLogResponse, FinishLogResponse, GetTokenResponse, GetCardResponse,
-    GetNicknameResponse, GetLuckResponse, GetPietyResponse, QueryGroupResponse, SanityCheckResponse,
-    ReportMalfunctionResponse, ReportGroupResponse, UpdateCardResponse, UpdateLogResponse, UpdateRobotResponse};
+use DiceRobot\Data\Response\{CreateLogResponse,
+    FinishLogResponse,
+    GetMqCredentialResponse,
+    GetTokenResponse,
+    GetCardResponse,
+    GetNicknameResponse,
+    GetLuckResponse,
+    GetPietyResponse,
+    QueryGroupResponse,
+    SanityCheckResponse,
+    ReportMalfunctionResponse,
+    ReportGroupResponse,
+    UpdateCardResponse,
+    UpdateLogResponse,
+    UpdateRobotResponse};
 use DiceRobot\Exception\ApiException\{InternalErrorException, NetworkErrorException, UnexpectedErrorException};
 use DiceRobot\Factory\LoggerFactory;
 use Psr\Log\LoggerInterface;
@@ -65,7 +77,7 @@ class DiceRobotApiHandler
             "base_uri" => $this->config->getString("dicerobot.api.uri"),
             "use_pool" => true,
             "headers" => [
-                "Accept" => "application/json",
+                "Accept" => ContentType::JSON,
                 "Accept-Encoding" => "identity",
                 "Content-Type" => ContentType::JSON,
                 "User-Agent" => "DiceRobot/{$this->config->getString("dicerobot.version")}"
@@ -96,7 +108,7 @@ class DiceRobotApiHandler
         /**
          * DiceRobot API will often return 2xx Success status code, which will not throw ClientException or
          * ServerException, except when request is unauthorized (401), API does not exist (404) or server-side error
-         * occurs (50x).
+         * occurred (50x).
          */
         try {
             $options["headers"]["Timestamp"] = time();
@@ -206,6 +218,31 @@ class DiceRobotApiHandler
         ];
 
         return new GetTokenResponse($this->request($options));
+    }
+
+    /**
+     * Get message queue credential.
+     *
+     * @param int $robotId Robot ID.
+     * @param string $token Access token.
+     *
+     * @return GetMqCredentialResponse Response.
+     *
+     * @throws InternalErrorException
+     * @throws NetworkErrorException
+     * @throws UnexpectedErrorException
+     */
+    final public function getMqCredential(int $robotId, string $token): GetMqCredentialResponse
+    {
+        $options = [
+            "uri" => "robot/{$robotId}/mq/credential",
+            "method" => "GET",
+            "headers" => [
+                "Authorization" => "Bearer {$token}"
+            ]
+        ];
+
+        return new GetMqCredentialResponse($this->request($options));
     }
 
     /** Report */

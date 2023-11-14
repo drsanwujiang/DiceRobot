@@ -97,7 +97,7 @@ class Check extends MessageAction
     protected function parseOrder(): array
     {
         if (!preg_match(
-            "/^(h)?\s*([bp](?:\s*[1-9][0-9]*)?\s+)?([\x{4e00}-\x{9fa5}a-z0-9\s]+)\s*((?:[+-][1-9][0-9]*\s*)*)(?:#([1-9][0-9]*)?)?$/ui",
+            "/^(h)?\s*([bp](?:\s*[1-9]\d*)?\s+)?([\x{4e00}-\x{9fa5}a-z0-9\s]+)\s*((?:[+-][1-9]\d*\s*)*)(?:#([1-9]\d*)?)?$/ui",
             $this->order,
             $matches
         )) {

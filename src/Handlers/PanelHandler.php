@@ -224,7 +224,7 @@ class PanelHandler
         }
 
         // Check header
-        if (!preg_match("/^DiceRobot Panel\/[1-9]\.[0-9]\.[0-9]$/", $headers["x-dr-panel"] ?? "")) {
+        if (!preg_match("/^DiceRobot Panel\/[1-9]\.(\d|[1-9]\d)\.(\d|[1-9]\d)$/", $headers["x-dr-panel"] ?? "")) {
             return $this->responseFactory->createForbidden(null, null, $response);
         }
 
@@ -1207,7 +1207,7 @@ class PanelHandler
         }
 
         foreach ($params as $param) {
-            if (!preg_match("/^[1-9]\.[0-9]\.[0-9]$/", $param)) {
+            if (!preg_match("/^[1-9]\.(\d|[1-9]\d)\.(\d|[1-9]\d)$/", $param)) {
                 return $this->responseFactory->createBadRequest(-2031, null, $response);
             }
         }

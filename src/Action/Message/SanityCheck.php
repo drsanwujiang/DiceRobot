@@ -83,7 +83,7 @@ class SanityCheck extends MessageAction
     protected function parseOrder(): array
     {
         if (!preg_match(
-            "/^([0-9DK+\-x*()（）]+)\s*\/\s*([0-9DK+\-x*()（）]+)(?:\s+(-?[1-9][0-9]*))?$/i",
+            "/^([\dDK+\-x*()（）]+)\s*\/\s*([\dDK+\-x*()（）]+)(?:\s+(-?[1-9]\d*))?$/i",
             $this->order,
             $matches
         )) {

@@ -64,7 +64,7 @@ class SetCoc extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([0-9]+)?$/", $this->order, $matches)) {
+        if (!preg_match("/^(\d+)?$/", $this->order, $matches)) {
             $ruleId = -1;
         } else {
             $ruleId = isset($matches[1]) ? (int) $matches[1] : null;

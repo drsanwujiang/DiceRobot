@@ -29,6 +29,8 @@ class BotInvitedJoinGroupRequest extends EventAction
      */
     public function __invoke(): void
     {
+        $this->logger->notice("Robot received invitation to join group {$this->event->groupId} from friend {$this->event->fromId}.");
+
         if (!$this->checkListen()) {
             return;
         }
@@ -36,10 +38,23 @@ class BotInvitedJoinGroupRequest extends EventAction
         $operation = $this->checkApprove() ? 0 : 1;
         $message = "";
 
-        if ($operation == 0 && $this->checkRejectWhenDelinquent() && !$this->queryGroup()) {
-            // Group is in black list, reject the request
-            $operation = 1;
-            $message = $this->config->getStrategy("botInvitedJoinGroupRequestRejected");
+        if ($operation == 0) {
+            if (!$this->queryGroup()) {
+                // Group is in black list
+                $this->logger->warning("Robot is invited to join delinquent group {$this->event->groupId}.");
+
+                if ($this->checkRejectWhenDelinquent()) {
+                    // Reject the invitation
+                    $operation = 1;
+                    $message = $this->config->getStrategy("botInvitedJoinGroupRequestRejected");
+                }
+            }
+        }
+
+        if ($operation == 0) {
+            $this->logger->notice("Invitation to join group {$this->event->groupId} has been approved.");
+        } else {
+            $this->logger->notice("Invitation to join group {$this->event->groupId} has been rejected.");
         }
 
         $this->api->handleBotInvitedJoinGroupRequestEvent(

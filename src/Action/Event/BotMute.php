@@ -30,6 +30,8 @@ class BotMute extends EventAction
      */
     public function __invoke(): void
     {
+        $this->logger->warning("Robot is muted in group {$this->event->operator->group->id}.");
+
         if (!$this->checkListen()) {
             return;
         }
@@ -37,6 +39,8 @@ class BotMute extends EventAction
         if ($this->checkQuitWhenMuted()) {
             // Quit the group
             $this->api->quitGroup($this->event->operator->group->id);
+
+            $this->logger->notice("Robot quit group {$this->event->operator->group->id}.");
         }
     }
 

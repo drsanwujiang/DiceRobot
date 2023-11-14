@@ -15,7 +15,7 @@ use DiceRobot\Data\DiceRobotResponse;
  */
 final class QueryGroupResponse extends DiceRobotResponse
 {
-    /** @var bool Group state, normal or delinquent. */
+    /** @var bool Group state, TRUE for normal and FALSE for delinquent. */
     public bool $state;
 
     /**

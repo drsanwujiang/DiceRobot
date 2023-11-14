@@ -72,7 +72,7 @@ class Nickname extends RobotAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([0-9]{4,})?\s*(.*)$/", $this->order, $matches)) {
+        if (!preg_match("/^(\d{4,})?\s*(.*)$/", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 

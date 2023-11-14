@@ -34,7 +34,9 @@ class BotJoinGroup extends EventAction
      */
     public function __invoke(): void
     {
-        // Check if group exists
+        $this->logger->notice("Robot joined group {$this->event->group->id}.");
+
+        // If group doesn't exist, update group list
         if (!$this->robot->hasGroup($this->event->group->id)) {
             $this->robot->updateGroups($this->api->getGroupList()->getArray("data"));
         }
@@ -43,14 +45,25 @@ class BotJoinGroup extends EventAction
             return;
         }
 
-        if ($this->checkQuitWhenDelinquent() && !$this->queryGroup()) {
-            // Group is in black list, quit
-            $this->api->sendGroupMessage(
-                $this->event->group->id,
-                Convertor::toMessageChain($this->config->getReply("botJoinGroupRejected"))
-            );
-            $this->api->quitGroup($this->event->group->id);
-        } elseif ($this->checkSendHelloMessage()) {
+        if (!$this->queryGroup()) {
+            // Group is in black list
+            $this->logger->warning("Robot joined delinquent group {$this->event->group->id}.");
+
+            if ($this->checkQuitWhenDelinquent()) {
+                // Quit group
+                $this->api->sendGroupMessage(
+                    $this->event->group->id,
+                    Convertor::toMessageChain($this->config->getReply("botJoinGroupRejected"))
+                );
+                $this->api->quitGroup($this->event->group->id);
+
+                $this->logger->notice("Robot quit group {$this->event->group->id}.");
+
+                return;
+            }
+        }
+
+        if ($this->checkSendHelloMessage()) {
             // Send hello message
             $message = Convertor::toCustomString(
                 $this->resource->getReference("HelloTemplate")->getString("templates.detail"),
@@ -100,7 +113,7 @@ class BotJoinGroup extends EventAction
     /**
      * Request to query the group state, normal or delinquent.
      *
-     * @return bool Group state, normal or delinquent.
+     * @return bool Group state, TRUE for normal and FALSE for delinquent.
      */
     protected function queryGroup(): bool
     {

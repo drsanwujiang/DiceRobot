@@ -52,7 +52,7 @@ class Deck
     protected function parseDeck(array $cards): void
     {
         foreach ($cards as $card) {
-            if (preg_match("/^::([1-9][0-9]*)::\s*(.*)$/", $card, $matches)) {
+            if (preg_match("/^::([1-9]\d*)::\s*(.*)$/", $card, $matches)) {
                 $this->originalCounts[] = (int) $matches[1];
                 $this->cards[] = $matches[2];
             } else {

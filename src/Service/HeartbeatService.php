@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DiceRobot\Service;
 
-use DiceRobot\AppStatus;
+use DiceRobot\App;
 use DiceRobot\Data\Config;
 use DiceRobot\Exception\MiraiApiException;
 use DiceRobot\Factory\LoggerFactory;
@@ -24,6 +24,9 @@ class HeartbeatService
 {
     /** @var Config DiceRobot config. */
     protected Config $config;
+
+    /** @var App Application. */
+    protected App $app;
 
     /** @var ApiService API service. */
     protected ApiService $api;
@@ -94,15 +97,9 @@ class HeartbeatService
     /**
      * Initialize service.
      */
-    public function initialize(): void
+    public function initialize(App $app): void
     {
-        $this->initTimerId = Timer::after(10000, function () {
-            $this->logger->notice("Try to enable heartbeat.");
-
-            if (!$this->enable()) {
-                $this->logger->notice("Auto enable heartbeat failed, wait for Mirai event.");
-            }
-        });
+        $this->app = $app;
 
         $this->logger->info("Heartbeat service initialized.");
     }
@@ -116,13 +113,13 @@ class HeartbeatService
      */
     public function enable(): bool
     {
-        // Check initialization timer existence.
+        // Check initialization timer.
         if ($this->initTimerId >= 0) {
             Timer::clear($this->initTimerId);
             $this->initTimerId = -1;
         }
 
-        // Check heartbeat timer existence.
+        // Check heartbeat timer.
         if ($this->heartbeatTimerId >= 0) {
             Timer::clear($this->heartbeatTimerId);
             $this->heartbeatTimerId = -1;
@@ -133,14 +130,14 @@ class HeartbeatService
         try {
             $result = $this->api->getSessionInfo();
         } catch (MiraiApiException $e) {  // TODO: catch (MiraiApiException) in PHP 8
-            $this->logger->critical("Enable heartbeat failed, unable to call Mirai API.");
+            $this->logger->critical("Failed to enable heartbeat, unable to call Mirai API.");
 
             return false;
         }
 
         // Check Mirai
         if (0 != $result->getInt("code", -1)) {
-            $this->logger->warning("Enable heartbeat failed, bot not logined.");
+            $this->logger->warning("Failed to enable heartbeat, bot not logined.");
 
             return false;
         } elseif ($result->getString("data.sessionKey") != "SINGLE_SESSION") {
@@ -167,26 +164,27 @@ class HeartbeatService
             $this->reenableTimerId = -1;
         }
 
-        AppStatus::run();
-
         return true;
     }
 
     /**
      * Disable heartbeat.
+     *
+     * @param bool $logError Whether error should be logged.
      */
-    public function disable(): void
+    public function disable(bool $logError = true): void
     {
         Timer::clear($this->heartbeatTimerId);
         $this->heartbeatTimerId = -1;
 
-        $this->logger->warning("Heartbeat disabled.");
-
-        AppStatus::hold();
+        if ($logError) {
+            $this->logger->warning("Heartbeat disabled.");
+        }
     }
 
     /**
-     * Heartbeat logic.
+     * Heartbeat logic. Perform periodic tasks, such as saving resources, check Mirai status, update bot info and
+     * report to DiceRobot server etc.
      *
      * @return bool Success.
      */
@@ -195,17 +193,23 @@ class HeartbeatService
         $this->logger->info("Heartbeat started.");
 
         if ($this->resource->save() && $this->checkSession() && $this->robot->update()) {
+            // Function normally, report
+            $this->api->updateRobotAsync($this->robot->getId());
+
             $this->logger->info("Heartbeat finished.");
 
             return $this->lastHeartbeat = true;
         } else {
             $this->logger->critical("Heartbeat failed.");
 
-            $this->disable();
+            $this->app->disable();  // Disable application, not just disable this service
 
             // Only auto restart when last heartbeat succeeded
             if ($this->lastHeartbeat && $this->config->getBool("panel.autoRestart")) {
-                $this->restart();
+                // Auto restart Mirai
+                $this->logger->notice("Auto restart Mirai.");
+
+                $this->restartMirai();
 
                 // If Mirai successfully restarted and logined, heartbeat will be enabled and the timer will be cleared
                 $this->reenableTimerId = Timer::after(30000, function () {
@@ -220,11 +224,8 @@ class HeartbeatService
     /**
      * Restart Mirai.
      */
-    protected function restart(): void
+    protected function restartMirai(): void
     {
-        // Auto restart Mirai
-        $this->logger->notice("Auto restart Mirai.");
-
         $code = $signal = -1;
         $output = "";
 

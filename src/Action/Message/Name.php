@@ -53,7 +53,7 @@ class Name extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^(cn|en|jp|中文|英文|日文|汉语|英语|日语)?\s*([1-9][0-9]*)?$/i", $this->order, $matches)) {
+        if (!preg_match("/^(cn|en|jp|中文|英文|日文|汉语|英语|日语)?\s*([1-9]\d*)?$/i", $this->order, $matches)) {
             throw new OrderErrorException();
         }
 

@@ -79,7 +79,7 @@ class Coc extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([6-7]?)\s*(?:([1-9][0-9]*)|(d))?$/i", $this->order, $matches)) {
+        if (!preg_match("/^([6-7]?)\s*(?:([1-9]\d*)|(d))?$/i", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 

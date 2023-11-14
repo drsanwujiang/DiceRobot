@@ -92,9 +92,9 @@ class ResourceService
         if ($this->checkDirectories() && $this->load()) {
             $this->logger->info("Resource service initialized.");
         } else {
-            $this->logger->critical("Initialize resource service failed.");
+            $this->logger->critical("Failed to initialize resource service.");
 
-            throw new RuntimeException("Initialize resource service failed");
+            throw new RuntimeException("Failed to initialize resource service.");
         }
     }
 
@@ -250,7 +250,7 @@ class ResourceService
                 $d = dir($this->directories["chat.{$type}"]);
 
                 while (false !== $f = $d->read()) {
-                    if (preg_match("/^([1-9][0-9]{4,9})\.json$/i", $f, $matches)) {
+                    if (preg_match("/^([1-9]\d{4,9})\.json$/i", $f, $matches)) {
                         $this->chatSettings[$type][(int) $matches[1]] =
                             new ChatSettings(File::getJsonFile("{$this->directories["chat.{$type}"]}/{$f}"));
                     }
@@ -272,7 +272,7 @@ class ResourceService
             $d = dir($this->directories["card"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([1-9][0-9]{0,5})\.json$/i", $f, $matches)) {
+                if (preg_match("/^([1-9]\d{0,5})\.json$/i", $f, $matches)) {
                     $this->characterCards[(int) $matches[1]] =
                         new CharacterCard(File::getJsonFile("{$this->directories["card"]}/{$f}"));
                 }
@@ -293,7 +293,7 @@ class ResourceService
             $d = dir($this->directories["rule"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([0-9]{1,2})\.json$/i", $f, $matches)) {
+                if (preg_match("/^(\d{1,2})\.json$/i", $f, $matches)) {
                     $this->checkRules[(int) $matches[1]] =
                         new CheckRule(File::getJsonFile("{$this->directories["rule"]}/{$f}"));
                 }
@@ -314,7 +314,7 @@ class ResourceService
             $d = dir($this->directories["reference"]);
 
             while (false !== $f = $d->read()) {
-                if (preg_match("/^([a-zA-z]+)\.json$/i", $f, $matches)) {
+                if (preg_match("/^([a-z]+)\.json$/i", $f, $matches)) {
                     $this->references[$matches[1]] =
                         new Reference(File::getJsonFile("{$this->directories["reference"]}/{$f}"));
                 }
@@ -525,7 +525,7 @@ class ResourceService
         $list = [];
 
         foreach (File::getFileList($this->directories["rule"]) as $rule) {
-            if (preg_match("/^([0-9]{1,2}).json$/i", $rule, $matches)) {
+            if (preg_match("/^(\d{1,2}).json$/i", $rule, $matches)) {
                 $list[] = $matches[1];
             }
         }
@@ -543,7 +543,7 @@ class ResourceService
         $list = [];
 
         foreach (File::getFileList($this->directories["reference"]) as $reference) {
-            if (preg_match("/^([a-zA-z]+).json$/i", $reference, $matches)) {
+            if (preg_match("/^([a-z]+).json$/i", $reference, $matches)) {
                 $list[] = $matches[1];
             }
         }
@@ -578,7 +578,7 @@ class ResourceService
      */
     public function getCheckRuleContent(string $filename)
     {
-        if (!preg_match("/^[0-9]{1,2}$/i", $filename)) {
+        if (!preg_match("/^\d{1,2}$/i", $filename)) {
             return false;
         }
 
@@ -600,7 +600,7 @@ class ResourceService
      */
     public function getReferenceContent(string $filename)
     {
-        if (!preg_match("/^[a-zA-z]+$/i", $filename)) {
+        if (!preg_match("/^[a-z]+$/i", $filename)) {
             return false;
         }
 
@@ -656,7 +656,7 @@ class ResourceService
      */
     public function setCheckRuleContent(string $filename, array $content): bool
     {
-        if (!preg_match("/^[0-9]{1,2}$/i", $filename)) {
+        if (!preg_match("/^\d{1,2}$/i", $filename)) {
             return false;
         }
 
@@ -679,7 +679,7 @@ class ResourceService
      */
     public function setReferenceContent(string $filename, array $content): bool
     {
-        if (!preg_match("/^[a-zA-z]+$/i", $filename)) {
+        if (!preg_match("/^[a-z]+$/i", $filename)) {
             return false;
         }
 
@@ -724,7 +724,7 @@ class ResourceService
      */
     public function deleteCheckRule(string $filename): bool
     {
-        if (!preg_match("/^[0-9]{1,2}$/i", $filename)) {
+        if (!preg_match("/^\d{1,2}$/i", $filename)) {
             return false;
         }
 

@@ -25,15 +25,19 @@ namespace DiceRobot {
     /** @var array Default config. */
     const DEFAULT_CONFIG = [
         "dicerobot" => [
-            "api" => [
-                "uri" => "https://api.dicerobot.tech/v3/"
-            ],
             "server" => [
                 "host" => "0.0.0.0",
                 "port" => 9500
             ],
             "service" => [
                 "name" => "dicerobot"
+            ],
+            "api" => [
+                "uri" => "https://api.dicerobot.tech/v3/"
+            ],
+            "mq" => [
+                "server" => "mq.dicerobot.tech",
+                "port" => 1883
             ],
             "skeleton" => [
                 "uri" => "https://dl.drsanwujiang.com/dicerobot/skeleton/" . DICEROBOT_VERSION . "/"

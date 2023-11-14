@@ -13,7 +13,7 @@ use DiceRobot\Data\Report\Event\BotReloginEvent;
  *
  * Action that handles BotReloginEvent.
  *
- * Initialize API service (auth a new session).
+ * Enable application.
  *
  * @event BotReloginEvent
  *
@@ -31,6 +31,6 @@ class BotRelogin extends EventAction
     {
         $this->logger->notice("Bot is online (relogin).");
 
-        $this->heartbeat->enable();
+        $this->app->enable();
     }
 }

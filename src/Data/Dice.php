@@ -125,12 +125,12 @@ class Dice
 
         if ($this->bpType) {
             // Bonus/Punishment dice
-            preg_match("/^([1-9][0-9]*)?\s*([\S\s]*)$/i", $order, $matches);
+            preg_match("/^([1-9]\d*)?\s*([\S\s]*)$/i", $order, $matches);
             $this->bpDiceNumber = empty($matches[1]) ? 1 : (int) $matches[1];
             $this->reason = $matches[2];
         } else {
             // Normal dice, parse expressions. Sample: x1Dy1Kz1+x2Dy2+c reason
-            preg_match("/^([0-9dk+\-x*()（）]+)?\s*([\S\s]*)$/i", $order, $matches);
+            preg_match("/^([\ddk+\-x*()（）]+)?\s*([\S\s]*)$/i", $order, $matches);
             // Replace Chinese brackets, d, k, x and X
             $expression = str_replace(["（", "）", "x", "X"], ["(", ")", "*", "*"], $matches[1]);
             $this->reason = $matches[2];
@@ -164,7 +164,7 @@ class Dice
 
         // Parse expression. Sample: 3D5+5+2D6k2
         $expressions = preg_split(
-            "/((?:[1-9][0-9]*)?D(?:[1-9][0-9]*)?(?:K(?:[1-9][0-9]*)?)?)/i",
+            "/((?:[1-9]\d*)?D(?:[1-9]\d*)?(?:K(?:[1-9]\d*)?)?)/i",
             $expression,
             -1,
             PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
@@ -174,7 +174,7 @@ class Dice
         foreach ($expressions as $index => &$splitExpression) {
             // Screen out subexpression (xDy or xDyKz)
             if (preg_match(
-                "/^([1-9][0-9]*)?D([1-9][0-9]*)?(K([1-9][0-9]*)?)?$/i",
+                "/^([1-9]\d*)?D([1-9]\d*)?(K([1-9]\d*)?)?$/i",
                 $splitExpression,
                 $matches
             )) {
@@ -254,7 +254,7 @@ class Dice
         $arithmeticExpression = $this->toArithmeticExpression();
 
         // Rest of the possible invalid expression
-        if (preg_match("/^\)|^\*|[0-9]\(|[+\-*]\)|\)[0-9]|\($|[+\-*]$/", $arithmeticExpression)) {
+        if (preg_match("/^\)|^\*|\d\(|[+\-*]\)|\)\d|\($|[+\-*]$/", $arithmeticExpression)) {
             throw new ExpressionInvalidException();
         }
 

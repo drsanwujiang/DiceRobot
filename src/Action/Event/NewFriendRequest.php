@@ -29,6 +29,8 @@ class NewFriendRequest extends EventAction
      */
     public function __invoke(): void
     {
+        $this->logger->notice("Robot received friend request from {$this->event->fromId}.");
+
         if (!$this->checkListen()) {
             return;
         }
@@ -45,9 +47,15 @@ class NewFriendRequest extends EventAction
             $message
         );
 
-        // Check if friend exists
-        if ($approval && !$this->robot->hasFriend($this->event->fromId)) {
-            $this->robot->updateFriends($this->api->getFriendList()->getArray("data"));
+        if ($approval) {
+            $this->logger->notice("Friend request from {$this->event->fromId} has been approved.");
+
+            // If friend doesn't exist, update friend list
+            if (!$this->robot->hasFriend($this->event->fromId)) {
+                $this->robot->updateFriends($this->api->getFriendList()->getArray("data"));
+            }
+        } else {
+            $this->logger->notice("Friend request from {$this->event->fromId} has been rejected.");
         }
     }
 

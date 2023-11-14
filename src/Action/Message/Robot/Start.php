@@ -50,7 +50,7 @@ class Start extends RobotAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([0-9]{4,})?$/", $this->order, $matches)) {
+        if (!preg_match("/^(\d{4,})?$/", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 

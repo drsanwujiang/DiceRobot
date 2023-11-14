@@ -60,7 +60,7 @@ class DicePool extends MessageAction
     protected function parseOrder(): array
     {
         if (!preg_match(
-            "/^(w?)\s*(?:([1-9][0-9]*)?\s*a\s*([1-9][0-9]*)?)?\s*([\S\s]*)$/i",
+            "/^(w?)\s*(?:([1-9]\d*)?\s*a\s*([1-9]\d*)?)?\s*([\S\s]*)$/i",
             $this->order,
             $matches
         )) {

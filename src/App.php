@@ -9,10 +9,12 @@ use DiceRobot\Enum\AppStatusEnum;
 use DiceRobot\Exception\RuntimeException;
 use DiceRobot\Factory\LoggerFactory;
 use DiceRobot\Handlers\ReportHandler;
-use DiceRobot\Service\{ApiService, HeartbeatService, LogService, ResourceService, RobotService, StatisticsService};
+use DiceRobot\Service\{ApiService, HeartbeatService, LogService, MqService, ResourceService, RobotService,
+    StatisticsService};
 use DiceRobot\Util\Environment;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Swoole\Coroutine\System;
 use Swoole\Timer;
 
 /**
@@ -36,6 +38,9 @@ class App
     /** @var HeartbeatService Heartbeat service. */
     protected HeartbeatService $heartbeat;
 
+    /** @var MqService Message queue service. */
+    protected MqService $mq;
+
     /** @var LogService Log service. */
     protected LogService $log;
 
@@ -54,6 +59,9 @@ class App
     /** @var LoggerInterface Logger. */
     protected LoggerInterface $logger;
 
+    /** @var bool Enabling flag. */
+    protected bool $enabling = false;
+
     /**
      * The constructor.
      *
@@ -61,6 +69,7 @@ class App
      * @param Config $config DiceRobot config.
      * @param ApiService $api API service.
      * @param HeartbeatService $heartbeat Heartbeat service.
+     * @param MqService $mq Message queue service.
      * @param LogService $log Log service.
      * @param ResourceService $resource Resource service.
      * @param RobotService $robot Robot service.
@@ -73,6 +82,7 @@ class App
         Config $config,
         ApiService $api,
         HeartbeatService $heartbeat,
+        MqService $mq,
         LogService $log,
         ResourceService $resource,
         RobotService $robot,
@@ -84,6 +94,7 @@ class App
         $this->config = $config;
         $this->api = $api;
         $this->heartbeat = $heartbeat;
+        $this->mq = $mq;
         $this->log = $log;
         $this->resource = $resource;
         $this->robot = $robot;
@@ -110,16 +121,17 @@ class App
      */
     public function initialize(): void
     {
-        /** Services initialization */
+        // Initialize services
         try {
             $this->api->initialize();
-            $this->heartbeat->initialize();
             $this->log->initialize();
             $this->resource->initialize($this->config);
             $this->robot->initialize();
             $this->statistics->initialize();
+            $this->heartbeat->initialize($this);
+            $this->mq->initialize();
         } catch (RuntimeException $e) {
-            $this->logger->emergency("Initialize application failed.");
+            $this->logger->emergency("Failed to initialize application.");
 
             $this->stop();
 
@@ -129,11 +141,20 @@ class App
         // Load panel config
         $this->config->load($this->container->make(CustomConfig::class), $this->resource->getConfig());
 
-        /** Utils initialization */
+        // Initialize utils
         Environment::initialize();
         Dice::initialize($this->config);
         Subexpression::initialize($this->config);
         AppStatus::initialize($this->container->get(LoggerFactory::class));
+
+        // Auto enable timer
+        Timer::after(10000, function () {
+            $this->logger->notice("Try to enable application.");
+
+            if ($this->enable(false) < 0) {
+                $this->logger->warning("Auto enable application failed, wait for Mirai event.");
+            }
+        });
 
         $this->logger->notice("Application initialized.");
     }
@@ -168,6 +189,62 @@ class App
     public function report(string $content): void
     {
         $this->reportHandler->handle($content);
+    }
+
+    /**
+     * Enable application.
+     *
+     * @param bool $logError Whether error should be logged.
+     *
+     * @return int Result.
+     */
+    public function enable(bool $logError = true): int
+    {
+        if ($this->enabling) {
+            return 1;
+        }
+
+        $this->enabling = true;
+
+        if ($this->heartbeat->enable()) {
+            // After heartbeat enabled, application should be enabled whether MQ service is enabled
+            go(function () {
+                System::sleep(3);  // Wait for report
+                $this->mq->enable();
+            });
+
+            AppStatus::run();
+            $this->enabling = false;
+
+            $this->logger->notice("Application enabled.");
+
+            return 0;
+        } else {
+            $this->disable($logError);
+            $this->enabling = false;
+
+            if ($logError) {
+                $this->logger->critical("Failed to enable application.");
+            }
+
+            return -1;
+        }
+    }
+
+    /**
+     * Disable application.
+     *
+     * @param bool $logError Whether error should be logged.
+     */
+    public function disable(bool $logError = true): void
+    {
+        $this->heartbeat->disable($logError);
+        $this->mq->disable($logError);
+        AppStatus::hold();
+
+        if ($logError) {
+            $this->logger->warning("Application disabled.");
+        }
     }
 
     /**
@@ -241,9 +318,9 @@ class App
         Dice::initialize($this->config);
         Subexpression::initialize($this->config);
 
-        $this->logger->notice("Application reloaded.");
-
         AppStatus::run();
+
+        $this->logger->notice("Application reloaded.");
 
         return 0;
     }
@@ -257,7 +334,11 @@ class App
     {
         AppStatus::stop();
 
-        // Stop, save and release
+        // Disable stateful services
+        $this->heartbeat->disable(false);
+        $this->mq->disable(false);
+
+        // Clear all timers, release HTTP clients
         Timer::clearAll();
         saber_pool_release();
 

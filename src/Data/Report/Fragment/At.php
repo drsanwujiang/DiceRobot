@@ -30,7 +30,7 @@ final class At implements ParsableFragment
      */
     public function fromMiraiCode(string $code): bool
     {
-        if (!preg_match("/^\[mirai:at:([1-9][0-9]*)(?:,(.*?))?]$/i", $code, $matches)) {
+        if (!preg_match("/^\[mirai:at:([1-9]\d*)(?:,(.*?))?]$/i", $code, $matches)) {
             return false;
         }
 

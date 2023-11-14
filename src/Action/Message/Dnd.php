@@ -54,7 +54,7 @@ class Dnd extends MessageAction
      */
     protected function parseOrder(): array
     {
-        if (!preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches)) {
+        if (!preg_match("/^([1-9]\d*)?$/", $this->order, $matches)) {
             throw new OrderErrorException;
         }
 

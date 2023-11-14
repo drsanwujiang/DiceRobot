@@ -117,9 +117,6 @@ class RobotService
             $this->updateFriends($this->api->getFriendList()->getArray("data"));
             $this->updateGroups($this->api->getGroupList()->getArray("data"));
 
-            // DiceRobot API heartbeat
-            $this->api->updateRobotAsync($this->getId());
-
             $this->logger->info("Robot updated.");
 
             return true;
@@ -141,7 +138,7 @@ class RobotService
     public function updateBot(int $id, string $version): void
     {
         $this->bot->id = $id;
-        $this->bot->version = (string) preg_replace("/[a-zA-z]+/", "", $version);
+        $this->bot->version = (string) preg_replace("/[a-z]+/i", "", $version);
     }
 
     /**

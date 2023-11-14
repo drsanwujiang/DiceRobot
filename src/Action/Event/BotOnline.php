@@ -13,7 +13,7 @@ use DiceRobot\Data\Report\Event\BotOnlineEvent;
  *
  * Action that handles BotOnlineEvent.
  *
- * Initialize API service (auth a new session).
+ * Enable application.
  *
  * @event BotOnlineEvent
  *
@@ -31,6 +31,6 @@ class BotOnline extends EventAction
     {
         $this->logger->notice("Bot is online (login).");
 
-        $this->heartbeat->enable();
+        $this->app->enable();
     }
 }

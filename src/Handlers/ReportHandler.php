@@ -296,7 +296,7 @@ class ReportHandler
     protected function filter(Message $message): array
     {
         if (preg_match(
-            "/^(?:\[mirai:at:([1-9][0-9]*),.*?])?\s*[.\x{3002}]\s*([\S\s]+)$/u",
+            "/^(?:\[mirai:at:([1-9]\d*),.*?])?\s*[.\x{3002}]\s*([\S\s]+)$/u",
             (string) $message,
             $matches
         )) {

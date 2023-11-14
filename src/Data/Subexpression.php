@@ -88,7 +88,7 @@ class Subexpression
      */
     protected function parseExpression(): void
     {
-        if (preg_match("/^([1-9][0-9]*)D([1-9][0-9]*)(?:K([1-9][0-9]*))?$/", $this->expression, $matches)) {
+        if (preg_match("/^([1-9]\d*)D([1-9]\d*)(?:K([1-9]\d*))?$/", $this->expression, $matches)) {
             $this->diceNumber = (int) $matches[1];
             $this->surfaceNumber = (int) $matches[2];
 

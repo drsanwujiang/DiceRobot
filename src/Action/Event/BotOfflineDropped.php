@@ -13,7 +13,7 @@ use DiceRobot\Data\Report\Event\BotOfflineEventDropped;
  *
  * Action that handles BotOfflineEventDropped.
  *
- * Hold application (HOLDING).
+ * Disable application.
  *
  * @event BotOfflineEventDropped
  *
@@ -31,6 +31,6 @@ class BotOfflineDropped extends EventAction
     {
         $this->logger->warning("Bot is offline (dropped).");
 
-        $this->heartbeat->disable();
+        $this->app->disable();
     }
 }

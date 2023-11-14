@@ -13,6 +13,6 @@ use DiceRobot\Data\DiceRobotResponse;
  *
  * @package DiceRobot\Data\Response
  */
-class ReportMalfunctionResponse extends DiceRobotResponse
+final class ReportMalfunctionResponse extends DiceRobotResponse
 {
 }

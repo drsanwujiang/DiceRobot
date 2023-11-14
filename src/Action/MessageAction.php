@@ -211,8 +211,6 @@ abstract class MessageAction implements Action
 
     /**
      * Send replies.
-     *
-     * @noinspection PhpUndefinedMethodInspection
      */
     final public function sendReplies(): void
     {

@@ -118,9 +118,9 @@ class Draw extends MessageAction
         $deckName = null;
         $count = 1;
 
-        if (preg_match("/^([1-9][0-9]*)?$/", $this->order, $matches)) {
+        if (preg_match("/^([1-9]\d*)?$/", $this->order, $matches)) {
             $count = (int) ($matches[1] ?? 1);
-        } elseif (preg_match("/^(\S+?)\s+([1-9][0-9]*)$/", $this->order, $matches)) {
+        } elseif (preg_match("/^(\S+?)\s+([1-9]\d*)$/", $this->order, $matches)) {
             $deckName = $matches[1];
             $count = (int) $matches[2];
         } elseif (preg_match("/^(\S+?)$/", $this->order, $matches)) {
