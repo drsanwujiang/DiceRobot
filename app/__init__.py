@@ -15,7 +15,17 @@ __version__ = VERSION
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(app: FastAPI):
+    logger.success(f"DiceRobot {VERSION} started")
+
+    init_db()
+    init_config()
+    init_handlers(app)
+    init_routers(app)
+    init_internal()
+
+    logger.success("DiceRobot initialized")
+
     yield
 
     logger.warning("Stopping DiceRobot")
@@ -37,13 +47,3 @@ dicerobot = FastAPI(
         "url": "https://github.com/drsanwujiang/DiceRobot/blob/master/LICENSE",
     }
 )
-
-logger.success(f"DiceRobot {VERSION} started")
-
-init_db()
-init_config()
-init_handlers(dicerobot)
-init_routers(dicerobot)
-init_internal()
-
-logger.success("DiceRobot initialized")

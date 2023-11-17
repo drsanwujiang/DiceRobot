@@ -6,7 +6,9 @@ from plugins import EventPlugin
 
 class BotOfflineHandler(EventPlugin):
     name = "dicerobot.bot_offline"
-    description = ""
+    display_name = "Bot 离线"
+    description = "处理 Bot 离线事件"
+    version = "1.0.0"
 
     events = [BotOfflineEventActive, BotOfflineEventForce, BotOfflineEventDropped]
 

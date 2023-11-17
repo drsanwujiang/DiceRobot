@@ -1,12 +1,17 @@
 from .order import Dice, Chat, Paint
 
-from .event import BotOnlineHandler, BotOfflineHandler, FriendRequestHandler
+from .event import BotOnlineHandler, BotOfflineHandler, FriendRequestHandler, GroupInvitationHandler
 
 
 __all__ = [
     # Orders
-    "Dice", "Chat", "Paint",
+    "Dice",
+    "Chat",
+    "Paint",
 
     # Events
-    "BotOnlineHandler", "BotOfflineHandler", "FriendRequestHandler"
+    "BotOnlineHandler",
+    "BotOfflineHandler",
+    "FriendRequestHandler",
+    "GroupInvitationHandler"
 ]

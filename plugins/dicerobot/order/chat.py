@@ -1,6 +1,6 @@
 from pydantic import conlist, ValidationError
 
-from app.exceptions import OrderInvalidException, OrderException
+from app.exceptions import OrderInvalidError, OrderException
 from app.internal import BaseModel
 from app.internal.network import client
 from plugins import OrderPlugin
@@ -8,7 +8,10 @@ from plugins import OrderPlugin
 
 class Chat(OrderPlugin):
     name = "dicerobot.chat"
-    description = ""
+    display_name = "聊天（GPT）"
+    description = "使用 OpenAI 的 GPT 模型进行聊天对话"
+    version = "1.0.0"
+
     default_settings = {
         "domain": "api.openai.com",
         "api_key": "",
@@ -21,12 +24,12 @@ class Chat(OrderPlugin):
     orders = [
         "chat", "聊天"
     ]
-    default_priority = 100
+    orders_priority = 100
 
     def __call__(self) -> None:
         try:
             request = ChatCompletionRequest.model_validate({
-                "model": self.plugin_settings["model"],
+                "model": self.settings["model"],
                 "messages": [{
                     "role": "user",
                     "content": self.order_content
@@ -34,12 +37,12 @@ class Chat(OrderPlugin):
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
         except ValidationError:
-            raise OrderInvalidException()
+            raise OrderInvalidError()
 
         result = client.post(
-            "https://" + self.plugin_settings["domain"] + "/v1/chat/completions",
+            "https://" + self.settings["domain"] + "/v1/chat/completions",
             headers={
-                "Authorization": "Bearer " + self.plugin_settings["api_key"]
+                "Authorization": "Bearer " + self.settings["api_key"]
             },
             json=request.model_dump(exclude_none=True),
             timeout=30

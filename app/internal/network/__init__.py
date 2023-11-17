@@ -6,7 +6,7 @@ import httpx
 
 from ...version import VERSION
 from ...log import logger
-from ...exceptions import NetworkServerException, NetworkClientException, NetworkInvalidContentException, NetworkErrorException
+from ...exceptions import NetworkServerError, NetworkClientError, NetworkInvalidContentError, NetworkError
 
 if typing.TYPE_CHECKING:
     # For type checking and IDE support
@@ -41,15 +41,15 @@ class Client(httpx.Client):
 
         if response.status_code >= 500:
             logger.error(f"Failed to request {response.request.url}, HTTP status code {response.status_code} returned")
-            raise NetworkServerException()
+            raise NetworkServerError()
         elif response.status_code >= 400:
             logger.error(f"Failed to request {response.request.url}, HTTP status code {response.status_code} returned")
-            raise NetworkClientException()
+            raise NetworkClientError()
 
         # Check if the content is valid json
         if not json_decoded:
             logger.error(f"Failed to request {response.request.url}, invalid content returned")
-            raise NetworkInvalidContentException()
+            raise NetworkInvalidContentError()
 
         if "code" in result and result["code"] != 0:
             error_code = result["code"]
@@ -80,7 +80,7 @@ class Client(httpx.Client):
             return super().request(*args, **kwargs)
         except httpx.HTTPError as e:
             logger.error(f"Failed to request {e.request.url}, {e.__class__.__name__} occurred")
-            raise NetworkErrorException()
+            raise NetworkError()
 
 
 _dynamic_imports: dict[str, str] = {

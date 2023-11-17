@@ -5,16 +5,16 @@ from fastapi import Request
 from fastapi.security import HTTPBearer as _HTTPBearer, HTTPAuthorizationCredentials
 
 from .config import settings
-from .exceptions import TokenInvalidException, AuthenticationException
+from .exceptions import TokenInvalidError, AuthenticationError
 
 
 def verify_token(request: Request) -> None:
     token: str = request.query_params.get("token")
 
     if not token:
-        raise TokenInvalidException()
+        raise TokenInvalidError()
     elif token != settings["security"]["webhook"]["token"]:
-        raise AuthenticationException()
+        raise AuthenticationError()
 
 
 class HTTPBearer(_HTTPBearer):
@@ -22,12 +22,12 @@ class HTTPBearer(_HTTPBearer):
         authorization = request.headers.get("Authorization")
 
         if not authorization:
-            raise TokenInvalidException()
+            raise TokenInvalidError()
 
         scheme, _, credentials = authorization.partition(" ")
 
         if scheme != "Bearer" or not credentials:
-            raise TokenInvalidException()
+            raise TokenInvalidError()
 
         return HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
 
@@ -58,6 +58,6 @@ class JWTBearer(HTTPBearer):
         credentials: HTTPAuthorizationCredentials = await super().__call__(request)
 
         if not self.verify_jwt(credentials.credentials):
-            raise TokenInvalidException()
+            raise TokenInvalidError()
 
         return credentials.credentials

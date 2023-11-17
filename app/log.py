@@ -1,19 +1,23 @@
+import os
 import sys
 
 from loguru import logger
 
 
-FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>\n"
 MAX_LENGTH = 1000
 
 
-def format_message(record: dict) -> str:
+def truncate_message(record: dict) -> None:
     if len(record["message"]) > MAX_LENGTH:
         record["message"] = record["message"][:MAX_LENGTH] + "..."
 
-    return FORMAT
 
+log_level = os.environ.get("DICEROBOT_LOG_LEVEL") or "SUCCESS"
 
 logger.remove()
-logger.add(sys.stdout, level="DEBUG", format=format_message)
-logger.add("logs/dicerobot-{time:YYYY-MM-DD}.log", level="DEBUG", format=format_message, rotation="1 day", retention="6 months", compression="tar.gz")
+logger.add("logs/dicerobot-{time:YYYY-MM-DD}.log", level=log_level, rotation="1 day", retention="6 months", compression="tar.gz")
+
+if os.environ.get("DICEROBOT_DEBUG"):
+    logger.add(sys.stdout, level="DEBUG")
+
+logger = logger.patch(truncate_message)

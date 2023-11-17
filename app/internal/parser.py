@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from ..exceptions import MessageInvalidException
+from ..exceptions import MessageInvalidError
 from .message import *
 from .event import *
 
@@ -17,17 +17,17 @@ parsable_events = [
 ]
 
 
-def parse_message_chain_or_event(message_change_or_event: dict) -> MessageChain | Event:
+def parse_message_chain_or_event(message_chain_or_event: dict) -> MessageChain | Event:
     try:
-        if message_change_or_event["type"] in parsable_message_chains:
-            message_change_or_event["messageChain"] = parse_messages(message_change_or_event["messageChain"])
-            return globals()[message_change_or_event["type"]].model_validate(message_change_or_event)
-        elif message_change_or_event["type"] in parsable_events:
-            return globals()[message_change_or_event["type"]].model_validate(message_change_or_event)
+        if message_chain_or_event["type"] in parsable_message_chains:
+            message_chain_or_event["messageChain"] = parse_messages(message_chain_or_event["messageChain"])
+            return globals()[message_chain_or_event["type"]].model_validate(message_chain_or_event)
+        elif message_chain_or_event["type"] in parsable_events:
+            return globals()[message_chain_or_event["type"]].model_validate(message_chain_or_event)
         else:
-            raise ValueError("Unparsable message chain or event type: " + message_change_or_event["type"])
+            raise ValueError("Unparsable message chain or event type: " + message_chain_or_event["type"])
     except (KeyError, ValidationError):
-        raise MessageInvalidException()
+        raise MessageInvalidError()
 
 
 def parse_messages(messages: list[dict]) -> list[Message]:
@@ -40,6 +40,6 @@ def parse_messages(messages: list[dict]) -> list[Message]:
             else:
                 raise ValueError("Unparsable message type: " + message["type"])
         except (KeyError, ValidationError):
-            raise MessageInvalidException()
+            raise MessageInvalidError()
 
     return parsed_messages

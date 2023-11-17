@@ -4,7 +4,7 @@ import base64
 from pydantic import ValidationError, model_validator
 from PIL import Image as PILImage
 
-from app.exceptions import OrderInvalidException, OrderException
+from app.exceptions import OrderInvalidError, OrderException
 from app.internal import BaseModel
 from app.internal.network import client
 from app.internal.message import Image
@@ -13,7 +13,10 @@ from plugins import OrderPlugin
 
 class Paint(OrderPlugin):
     name = "dicerobot.paint"
-    description = ""
+    display_name = "画图（DALL·E）"
+    description = "使用 OpenAI 的 DALL·E 模型生成图片"
+    version = "1.0.0"
+
     default_settings = {
         "domain": "api.openai.com",
         "api_key": "",
@@ -26,28 +29,28 @@ class Paint(OrderPlugin):
     }
 
     orders = [
-        "paint", "画图"
+        "paint", "画图", "画画", "生成图片", "生成图像"
     ]
-    default_priority = 100
+    orders_priority = 100
 
     def __call__(self) -> None:
         try:
             request = ImageGenerationRequest.model_validate({
-                "model": self.plugin_settings["model"],
+                "model": self.settings["model"],
                 "prompt": self.order_content,
                 "n": 1,
-                "quality": self.plugin_settings["quality"],
+                "quality": self.settings["quality"],
                 "response_format": "b64_json",
-                "size": self.plugin_settings["size"],
+                "size": self.settings["size"],
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
         except ValidationError:
-            raise OrderInvalidException()
+            raise OrderInvalidError()
 
         result = client.post(
-            "https://" + self.plugin_settings["domain"] + "/v1/images/generations",
+            "https://" + self.settings["domain"] + "/v1/images/generations",
             headers={
-                "Authorization": "Bearer " + self.plugin_settings["api_key"]
+                "Authorization": "Bearer " + self.settings["api_key"]
             },
             json=request.model_dump(exclude_none=True),
             timeout=30
@@ -82,17 +85,8 @@ class ImageGenerationRequest(BaseModel):
 
 class ImageGenerationResponse(BaseModel):
     class Image(BaseModel):
-        url: str = None
-        b64_json: str = None
+        b64_json: str
         revised_prompt: str
-
-        @model_validator(mode="before")
-        @classmethod
-        def check_card_number_omitted(cls, d: dict) -> dict:
-            if "url" not in d and "b64_json" not in d:
-                raise ValueError("Either url or b64_json must be set")
-
-            return d
 
     created: int
     data: list[Image]

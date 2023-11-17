@@ -1,15 +1,16 @@
 import re
 import random
 
-from plugins import OrderPlugin
-
-from app.config import Config
 from app.exceptions import OrderException
+from plugins import OrderPlugin
 
 
 class Dice(OrderPlugin):
     name = "dicerobot.dice"
-    description = ""
+    display_name = "掷骰"
+    description = "掷一个或一堆骰子"
+    version = "1.0.0"
+
     default_settings = {
         "max_count": 100,
         "max_surface": 1000
@@ -22,7 +23,10 @@ class Dice(OrderPlugin):
         "expression_invalid": "掷骰表达式不符合规则！",
         "expression_error": "掷骰表达式无法解析！"
     }
-    supported_reply_variables = ["掷骰原因", "掷骰结果"]
+    supported_reply_variables = [
+        "掷骰原因",
+        "掷骰结果"
+    ]
     default_chat_settings = {
         "default_surface": 100
     }
@@ -30,12 +34,12 @@ class Dice(OrderPlugin):
     orders = [
         "r", "掷骰"
     ]
-    default_priority = 1
+    orders_priority = 1
 
     _content_pattern = re.compile(r"^([\ddk+\-x*()（）]+)?\s*([\S\s]*)$", re.I)
-    _repeated_symbol_pattern = re.compile(r"([dk+\-*])\\1+", re.I)
-    _subexpression_split_pattern = re.compile(r"((?:[1-9]\d*)?d(?:[1-9]\d*)?(?:k(?:[1-9]\d*)?)?)", re.I)
-    _subexpression_pattern = re.compile(r"^([1-9]\d*)?d([1-9]\d*)?(k([1-9]\d*)?)?$", re.I)
+    _repeated_symbol_pattern = re.compile(r"([dk+\-*])\1+", re.I)
+    _dice_expression_split_pattern = re.compile(r"((?:[1-9]\d*)?d(?:[1-9]\d*)?(?:k(?:[1-9]\d*)?)?)", re.I)
+    _dice_expression_pattern = re.compile(r"^([1-9]\d*)?d([1-9]\d*)?(k([1-9]\d*)?)?$", re.I)
     _math_expression_pattern = re.compile(r"^[\d+\-*()]+$")
 
     def __init__(self, *args, **kwargs) -> None:
@@ -43,6 +47,7 @@ class Dice(OrderPlugin):
 
         self.expression = "d"
         self.reason = ""
+
         self.detailed_dice_result = ""
         self.dice_result = ""
         self.final_result = ""
@@ -56,6 +61,7 @@ class Dice(OrderPlugin):
         self.detailed_dice_result = self.detailed_dice_result.replace("*", "×")
         self.dice_result = self.dice_result.replace("*", "×")
 
+        # Omit duplicate results
         complete_expression = f"{self.expression}={self.detailed_dice_result}"
         complete_expression += "" if self.detailed_dice_result == self.dice_result else f"={self.dice_result}"
         complete_expression += "" if self.dice_result == self.final_result else f"={self.final_result}"
@@ -68,6 +74,7 @@ class Dice(OrderPlugin):
         self.reply_to_sender(self.replies["dice_result_with_reason" if self.reason else "dice_result"])
 
     def parse_content(self) -> None:
+        # Parse order content into possible expression and reason
         match = Dice._content_pattern.fullmatch(self.order_content)
         self.expression = match.group(1) if match.group(1) else self.expression
         self.reason = match.group(2)
@@ -83,22 +90,37 @@ class Dice(OrderPlugin):
             self.reason = self.order_content
             return self.calculate_expression()
 
-        parts = Dice._subexpression_split_pattern.split(self.expression)
+        # Search possible dice expressions
+        parts = Dice._dice_expression_split_pattern.split(self.expression)
         detailed_parts = parts.copy()
         result_parts = parts.copy()
 
         for i in range(len(parts)):
-            if Dice._subexpression_pattern.fullmatch(parts[i]):
-                subexpression = Subexpression(
+            # Check if the part is dice expression like "D100", "2D50" or "5D10K2"
+            if Dice._dice_expression_pattern.fullmatch(parts[i]):
+                dice_expression = DiceExpression(
                     parts[i],
-                    self.plugin_settings,
-                    self.replies,
-                    self.chat_settings
+                    self.chat_settings["default_surface"],
+                    self.settings["max_count"],
+                    self.settings["max_surface"]
                 )
-                parts[i] = str(subexpression)
-                detailed_parts[i] = subexpression.detailed_dice_result
-                result_parts[i] = subexpression.dice_result
 
+                # Check count, surface and max result count (K number)
+                if dice_expression.count > dice_expression.max_count:
+                    raise OrderException(self.replies["max_count_exceeded"])
+                elif dice_expression.surface > dice_expression.max_surface:
+                    raise OrderException(self.replies["max_surface_exceeded"])
+                elif dice_expression.max_result_count > dice_expression.count:
+                    raise OrderException(self.replies["expression_invalid"])
+
+                # Calculate results
+                dice_expression.calculate()
+
+                parts[i] = str(dice_expression)
+                detailed_parts[i] = dice_expression.detailed_dice_result
+                result_parts[i] = dice_expression.dice_result
+
+        # Reassemble expression and results
         self.expression = "".join(parts)
         self.detailed_dice_result = "".join(detailed_parts)
         self.dice_result = "".join(result_parts)
@@ -112,21 +134,21 @@ class Dice(OrderPlugin):
             raise OrderException(self.replies["expression_error"])
 
 
-class Subexpression:
-    subexpression_pattern = re.compile(r"^([1-9]\d*)?d([1-9]\d*)?(?:k([1-9]\d*)?)?$", re.I)
+class DiceExpression:
+    expression_pattern = re.compile(r"^([1-9]\d*)?d([1-9]\d*)?(?:k([1-9]\d*)?)?$", re.I)
 
     def __init__(
         self,
-        subexpression: str,
-        plugin_settings: Config[str, str],
-        replies: Config[str, str],
-        chat_settings: Config[str, str]
+        expression: str,
+        default_surface: int,
+        max_count: int,
+        max_surface: int
     ) -> None:
-        self.plugin_settings = plugin_settings
-        self.replies = replies
-        self.chat_settings = chat_settings
+        self.default_surface = default_surface
+        self.max_count = max_count
+        self.max_surface = max_surface
 
-        self.subexpression = subexpression
+        self.expression = expression
         self.count = 0
         self.surface = 0
         self.max_result_count = 0
@@ -134,22 +156,12 @@ class Subexpression:
         self.dice_result = ""
 
         self.parse()
-        self.check_range()
-        self.calculate()
 
     def parse(self) -> None:
-        match = Subexpression.subexpression_pattern.fullmatch(self.subexpression)
+        match = DiceExpression.expression_pattern.fullmatch(self.expression)
         self.count = int(match.group(1)) if match.group(1) else 1
-        self.surface = int(match.group(2)) if match.group(2) else self.chat_settings["default_surface"]
+        self.surface = int(match.group(2)) if match.group(2) else self.default_surface
         self.max_result_count = int(match.group(3)) if match.group(3) else 0
-
-    def check_range(self) -> None:
-        if self.count > self.plugin_settings["max_count"]:
-            raise OrderException(self.replies["max_count_exceeded"])
-        elif self.surface > self.plugin_settings["max_surface"]:
-            raise OrderException(self.replies["max_surface_exceeded"])
-        elif self.max_result_count > self.count:
-            raise OrderException(self.replies["expression_invalid"])
 
     def calculate(self) -> None:
         results = [random.randint(1, self.surface) for _ in range(self.count)]

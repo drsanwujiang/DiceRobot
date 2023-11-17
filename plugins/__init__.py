@@ -10,13 +10,16 @@ from app.internal.util import reply_to_sender
 
 class DiceRobotPlugin(ABC):
     name: str
+    display_name: str
     description: str
+    version: str
+
     default_settings: dict[str] = {}
     default_replies: dict[str] = {}
     supported_reply_variables: list[str] = []
 
     def __init__(self):
-        self.plugin_settings: Config[str] = plugin_settings[self.__class__.name]
+        self.settings: Config[str] = plugin_settings[self.__class__.name]
         self.replies: Config[str, str] = replies[self.__class__.name]
 
     @abstractmethod
@@ -25,20 +28,34 @@ class DiceRobotPlugin(ABC):
 
 
 class OrderPlugin(DiceRobotPlugin):
-    supported_reply_variables: list[str] = ["机器人昵称", "机器人QQ", "机器人QQ号", "群名", "群号", "昵称", "发送者昵称", "发送者QQ", "发送者QQ号"]
+    supported_reply_variables: list[str] = [
+        "机器人昵称",
+        "机器人QQ",
+        "机器人QQ号",
+        "群名",
+        "群号",
+        "昵称",
+        "发送者昵称",
+        "发送者QQ",
+        "发送者QQ号"
+    ]
     default_chat_settings = {}
+
     orders: str | list[str]
-    default_priority: int = 100
+    orders_priority: int = 100
 
     def __init__(self, message_chain: MessageChain, order: str, order_content: str) -> None:
         super().__init__()
 
-        self.chat_type = ChatType.FRIEND if type(message_chain) == FriendMessage \
-            else ChatType.GROUP if type(message_chain) == GroupMessage \
-            else ChatType.TEMP if type(message_chain) == TempMessage \
+        self.chat_type = ChatType.FRIEND if type(message_chain) is FriendMessage \
+            else ChatType.GROUP if type(message_chain) is GroupMessage \
+            else ChatType.TEMP if type(message_chain) is TempMessage \
             else ChatType.OTHER
-        self.chat_id = message_chain.sender.id if isinstance(message_chain, FriendMessage) else message_chain.sender.group.id
-        self.chat_settings: Config[str] = chat_settings[self.chat_type.value].setdefault(self.chat_id, {}).setdefault(self.__class__.name, self.__class__.default_chat_settings)
+        self.chat_id = message_chain.sender.id if isinstance(message_chain, FriendMessage) \
+            else message_chain.sender.group.id
+        self.chat_settings: Config[str] = chat_settings[self.chat_type.value] \
+            .setdefault(self.chat_id, {}) \
+            .setdefault(self.__class__.name, self.__class__.default_chat_settings)
 
         self.message_chain = message_chain
         self.order = order

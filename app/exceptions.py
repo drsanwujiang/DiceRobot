@@ -10,27 +10,27 @@ class DiceRobotException(Exception):
         self.reply = reply
 
 
-class NetworkClientException(DiceRobotException):
+class NetworkClientError(DiceRobotException):
     def __init__(self) -> None:
         super().__init__(replies["dicerobot"]["network_client_error"])
 
 
-class NetworkServerException(DiceRobotException):
+class NetworkServerError(DiceRobotException):
     def __init__(self) -> None:
         super().__init__(replies["dicerobot"]["network_server_error"])
 
 
-class NetworkInvalidContentException(DiceRobotException):
+class NetworkInvalidContentError(DiceRobotException):
     def __init__(self) -> None:
         super().__init__(replies["dicerobot"]["network_invalid_content"])
 
 
-class NetworkErrorException(DiceRobotException):
+class NetworkError(DiceRobotException):
     def __init__(self) -> None:
         super().__init__(replies["dicerobot"]["network_error"])
 
 
-class OrderInvalidException(DiceRobotException):
+class OrderInvalidError(DiceRobotException):
     def __init__(self) -> None:
         super().__init__(replies["dicerobot"]["order_invalid"])
 
@@ -39,14 +39,14 @@ class OrderException(DiceRobotException):
     pass
 
 
-class HTTPException(Exception):
+class HTTPError(Exception):
     def __init__(self, status_code: int, code: int, message: str) -> None:
         self.status_code = status_code
         self.code = code
         self.message = message
 
 
-class TokenInvalidException(HTTPException):
+class TokenInvalidError(HTTPError):
     def __init__(
         self,
         status_code: int = 401,
@@ -56,7 +56,7 @@ class TokenInvalidException(HTTPException):
         super().__init__(status_code, code, message)
 
 
-class AuthenticationException(HTTPException):
+class AuthenticationError(HTTPError):
     def __init__(
         self,
         status_code: int = 401,
@@ -66,7 +66,7 @@ class AuthenticationException(HTTPException):
         super().__init__(status_code, code, message)
 
 
-class MessageInvalidException(HTTPException):
+class MessageInvalidError(HTTPError):
     def __init__(
         self,
         status_code: int = 400,
@@ -76,7 +76,7 @@ class MessageInvalidException(HTTPException):
         super().__init__(status_code, code, message)
 
 
-class ParametersInvalidException(HTTPException):
+class ParametersInvalidError(HTTPError):
     def __init__(
             self,
             status_code: int = 400,
@@ -89,8 +89,8 @@ class ParametersInvalidException(HTTPException):
 def init_handlers(app: FastAPI) -> None:
     logger.info("Initializing exception handlers")
 
-    @app.exception_handler(HTTPException)
-    async def http_exception_handler(_, e: HTTPException):
+    @app.exception_handler(HTTPError)
+    async def http_exception_handler(_, e: HTTPError):
         return JSONResponse(
             status_code=e.status_code,
             content={"code": e.code, "message": e.message}

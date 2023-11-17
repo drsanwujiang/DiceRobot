@@ -6,7 +6,9 @@ from plugins import EventPlugin
 
 class BotOnlineHandler(EventPlugin):
     name = "dicerobot.bot_online"
-    description = ""
+    display_name = "Bot 上线"
+    description = "处理 Bot 上线事件"
+    version = "1.0.0"
 
     events = [BotOnlineEvent, BotReloginEvent]
 

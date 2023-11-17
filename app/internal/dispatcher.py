@@ -65,15 +65,15 @@ class Dispatcher:
         orders = {}
 
         for plugin_name, plugin in self.order_plugins.items():
-            if hasattr(plugin, "orders") and hasattr(plugin, "default_priority"):
-                if isinstance(plugin.default_priority, int) and plugin.default_priority not in orders:
-                    orders[plugin.default_priority] = {}
+            if hasattr(plugin, "orders") and hasattr(plugin, "orders_priority"):
+                if isinstance(plugin.orders_priority, int) and plugin.orders_priority not in orders:
+                    orders[plugin.orders_priority] = {}
 
                 plugin_orders = plugin.orders if isinstance(plugin.orders, list) else [plugin.orders]
 
                 for order in plugin_orders:
                     if isinstance(order, str):
-                        orders[plugin.default_priority][order] = {
+                        orders[plugin.orders_priority][order] = {
                             "pattern": re.compile(fr"^{order}\s*([\S\s]*)$"),
                             "name": plugin_name
                         }
@@ -111,11 +111,15 @@ class Dispatcher:
         logger.info(f"Dispatch to plugin {plugin_name}")
 
         try:
-            self.order_plugins[plugin_name](message_chain, order, order_content)()
+            self.order_plugins[plugin_name](message_chain, order.lower(), order_content)()
         except DiceRobotException as e:
             reply_to_sender(message_chain, e.reply)
 
             logger.info(
+                f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {message_chain.__class__.__name__}"
+            )
+        except Exception as e:
+            logger.exception(
                 f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {message_chain.__class__.__name__}"
             )
 
@@ -140,6 +144,8 @@ class Dispatcher:
                 logger.error(
                     f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {event.__class__.__name__}"
                 )
+            except Exception as e:
+                logger.exception(f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {event.__class__.__name__}")
 
         return True
 

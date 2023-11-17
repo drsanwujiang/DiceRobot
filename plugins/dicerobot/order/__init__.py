@@ -4,4 +4,9 @@ from .paint import Paint
 from .conversation import Conversation
 
 
-__all__ = ["Dice", "Chat", "Paint", "Conversation"]
+__all__ = [
+    "Dice",
+    "Chat",
+    "Paint",
+    "Conversation"
+]

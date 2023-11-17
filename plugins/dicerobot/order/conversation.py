@@ -2,7 +2,7 @@ import re
 
 from pydantic import TypeAdapter, ValidationError
 
-from app.exceptions import OrderInvalidException, OrderException
+from app.exceptions import OrderInvalidError, OrderException
 from app.internal.network import client
 from plugins import OrderPlugin
 from plugins.dicerobot.order.chat import ChatCompletion, ChatCompletionRequest, ChatCompletionResponse
@@ -10,7 +10,10 @@ from plugins.dicerobot.order.chat import ChatCompletion, ChatCompletionRequest, 
 
 class Conversation(OrderPlugin):
     name = "dicerobot.conversation"
-    description = ""
+    display_name = "对话（GPT）"
+    description = "使用 OpenAI 的 GPT 模型进行连续的聊天对话"
+    version = "1.0.0"
+
     default_settings = {
         "domain": "api.openai.com",
         "api_key": "",
@@ -32,7 +35,12 @@ class Conversation(OrderPlugin):
         "guidance_not_found": "找不到这个设定呢……",
         "no_guidance": "还没有保存过设定呀，赶快写一个吧~"
     }
-    supported_reply_variables = ["设定名称", "设定内容", "设定列表", "当前使用量"]
+    supported_reply_variables = [
+        "设定名称",
+        "设定内容",
+        "设定列表",
+        "当前使用量"
+    ]
     default_chat_settings = {
         "conversation": [],
         "tokens": 0,
@@ -47,7 +55,7 @@ class Conversation(OrderPlugin):
         "show_guide", "设定列表", "查询设定",
         "usage", "使用量"
     ]
-    default_priority = 100
+    orders_priority = 100
 
     def __call__(self) -> None:
         if self.order in ["convo", "对话"]:
@@ -74,17 +82,17 @@ class Conversation(OrderPlugin):
 
             try:
                 request = ChatCompletionRequest.model_validate({
-                    "model": self.plugin_settings["model"],
+                    "model": self.settings["model"],
                     "messages": conversation,
                     "user": f"{self.chat_type.value}-{self.chat_id}"
                 })
             except ValidationError:
-                raise OrderInvalidException()
+                raise OrderInvalidError()
 
             result = client.post(
-                "https://" + self.plugin_settings["domain"] + "/v1/chat/completions",
+                "https://" + self.settings["domain"] + "/v1/chat/completions",
                 headers={
-                    "Authorization": "Bearer " + self.plugin_settings["api_key"]
+                    "Authorization": "Bearer " + self.settings["api_key"]
                 },
                 json=request.model_dump(exclude_none=True),
                 timeout=60
@@ -108,7 +116,7 @@ class Conversation(OrderPlugin):
 
     def set_guidance(self) -> None:
         if not self.order_content:
-            raise OrderInvalidException()
+            raise OrderInvalidError()
 
         conversation = self.load_conversation()
         conversation.append(ChatCompletion(
@@ -124,7 +132,7 @@ class Conversation(OrderPlugin):
         split = re.split(r"\s+", self.order_content, 1)
 
         if len(split) < 2:
-            raise OrderInvalidException()
+            raise OrderInvalidError()
 
         self.update_reply_variables({
             "设定名称": split[0]
@@ -144,7 +152,7 @@ class Conversation(OrderPlugin):
         })
 
         # Check saved guidance count
-        if len(self.chat_settings["saved_guidance"]) >= self.plugin_settings["max_saved_guidance"]:
+        if len(self.chat_settings["saved_guidance"]) >= self.settings["max_saved_guidance"]:
             # Delete the oldest guidance
             self.chat_settings["saved_guidance"] = self.chat_settings["saved_guidance"].pop(0)
             self.reply_to_sender(self.replies["save_guidance_with_delete"])
@@ -199,7 +207,7 @@ class Conversation(OrderPlugin):
 
     def query_usage(self) -> None:
         if self.order_content:
-            raise OrderInvalidException()
+            raise OrderInvalidError()
 
         self.update_reply_variables({
             "当前使用量": self.chat_settings["tokens"]
