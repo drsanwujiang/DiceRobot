@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "dicerobot"
+version = "4.0.0"
+description = "A TRPG game assistant robot"
+authors = ["Drsanwujiang <drsanwujiang@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://dicerobot.tech/"
+repository = "https://github.com/drsanwujiang/DiceRobot"
+documentation = "https://docs.dicerobot.tech/"
+packages = [
+    { include = "app" },
+    { include = "plugins" },
+]
+include = [
+    "LICENSE",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+uvicorn = "^0.24.0.post1"
+fastapi = "^0.104.1"
+loguru = "^0.7.2"
+sqlalchemy = "^2.0.23"
+pydantic = "^2.5.2"
+pyjwt = "^2.8.0"
+httpx = "^0.25.2"
+schedule = "^1.2.1"
+pillow = "^10.1.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
