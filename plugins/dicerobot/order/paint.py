@@ -1,7 +1,7 @@
 from io import BytesIO
 import base64
 
-from pydantic import ValidationError, model_validator
+from pydantic import ValidationError
 from PIL import Image as PILImage
 
 from app.exceptions import OrderInvalidError, OrderException
@@ -31,7 +31,7 @@ class Paint(OrderPlugin):
     orders = [
         "paint", "画图", "画画", "生成图片", "生成图像"
     ]
-    orders_priority = 100
+    priority = 100
 
     def __call__(self) -> None:
         try:

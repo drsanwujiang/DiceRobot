@@ -16,12 +16,12 @@ class Dice(OrderPlugin):
         "max_surface": 1000
     }
     default_replies = {
-        "dice_result": "{&发送者}骰出了：{&掷骰结果}",
-        "dice_result_with_reason": "由于{&掷骰原因}，{&发送者}骰出了：{&掷骰结果}",
+        "result": "{&发送者}骰出了：{&掷骰结果}",
+        "result_with_reason": "由于{&掷骰原因}，{&发送者}骰出了：{&掷骰结果}",
         "max_count_exceeded": "被骰子淹没，不知所措……",
         "max_surface_exceeded": "为什么会有这么多面的骰子啊(　д ) ﾟ ﾟ",
-        "expression_invalid": "掷骰表达式不符合规则！",
-        "expression_error": "掷骰表达式无法解析！"
+        "expression_invalid": "掷骰表达式不符合规则……",
+        "expression_error": "掷骰表达式无法解析……"
     }
     supported_reply_variables = [
         "掷骰原因",
@@ -34,7 +34,7 @@ class Dice(OrderPlugin):
     orders = [
         "r", "掷骰"
     ]
-    orders_priority = 1
+    priority = 1
 
     _content_pattern = re.compile(r"^([\ddk+\-x*()（）]+)?\s*([\S\s]*)$", re.I)
     _repeated_symbol_pattern = re.compile(r"([dk+\-*])\1+", re.I)
@@ -71,7 +71,7 @@ class Dice(OrderPlugin):
             "掷骰结果": complete_expression
         })
 
-        self.reply_to_sender(self.replies["dice_result_with_reason" if self.reason else "dice_result"])
+        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
 
     def parse_content(self) -> None:
         # Parse order content into possible expression and reason

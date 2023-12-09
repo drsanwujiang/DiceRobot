@@ -12,12 +12,15 @@ from .enum import AppStatus
 from .network import get_bot_list, get_bot_profile
 
 
-schedules: dict[str, schedule.Job] = {}
+schedules: dict[str, schedule.Job | None] = {}
 stop_schedule: Event
 
 
 def init_schedule():
     logger.info("Initializing schedule")
+
+    global stop_schedule
+    stop_schedule = schedule_continuously()
 
     # Check bot status every minute
     schedules["check_bot_status"] = schedule.every(1).minutes.do(check_bot_status)
@@ -25,9 +28,6 @@ def init_schedule():
     schedules["save_config"] = schedule.every(5).minutes.do(save_config)
     # Check bot status immediately
     schedule_once(check_bot_status, delay=1)
-
-    global stop_schedule
-    stop_schedule = schedule_continuously()
 
     logger.info("Schedule initialized")
 
@@ -79,14 +79,22 @@ def check_bot_status() -> None:
         bot_profile = get_bot_profile()
         status["bot"] = {"id": bot_list[0], "nickname": bot_profile.nickname}
 
+        # Check schedule
+        if schedules["check_bot_status"] is None:
+            schedules["check_bot_status"] = schedule.every(1).minutes.do(check_bot_status)
+
         if status["app"] != AppStatus.RUNNING:
             status["app"] = AppStatus.RUNNING
 
             logger.success("DiceRobot running")
-    except (DiceRobotException, ValidationError):
+    except (DiceRobotException, ValidationError, RuntimeError):
+        # Clear bot status
         status["bot"] = {"id": -1, "nickname": ""}
+        # Cancel schedule
+        schedule.cancel_job(schedules["check_bot_status"])
+        schedules["check_bot_status"] = None
 
         if status["app"] != AppStatus.HOLDING:
             status["app"] = AppStatus.HOLDING
 
-            logger.error("DiceRobot holding")
+            logger.warning("DiceRobot holding")

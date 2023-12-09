@@ -88,8 +88,7 @@ replies: Config[str, Config[str, str]] = Config({
 })
 chat_settings: Config[str, Config[int, Config]] = Config({
     ChatType.FRIEND.value: {},
-    ChatType.GROUP.value: {},
-    ChatType.TEMP.value: {}
+    ChatType.GROUP.value: {}
 })
 
 

@@ -1,6 +1,6 @@
 from app.log import logger
 from app.internal.event import BotOnlineEvent, BotReloginEvent
-from app.internal.schedule import schedules
+from app.internal.schedule import check_bot_status
 from plugins import EventPlugin
 
 
@@ -15,5 +15,5 @@ class BotOnlineHandler(EventPlugin):
     def __call__(self) -> None:
         logger.info(f"Bot online ({self.event.__class__.__name__})")
 
-        schedules["check_bot_status"].run()
+        check_bot_status()
 

@@ -24,7 +24,7 @@ class Chat(OrderPlugin):
     orders = [
         "chat", "聊天"
     ]
-    orders_priority = 100
+    priority = 100
 
     def __call__(self) -> None:
         try:

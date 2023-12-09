@@ -12,8 +12,8 @@ if typing.TYPE_CHECKING:
     # For type checking and IDE support
     from .mirai import (
         get_bot_list, get_bot_profile, get_friend_list, get_group_list, get_friend_profile, get_group_member_profile,
-        send_friend_message, send_group_message, send_temp_message, respond_new_friend_request_event,
-        respond_bot_invited_join_group_request_event
+        set_group_member_info, send_friend_message, send_group_message, send_temp_message,
+        respond_new_friend_request_event, respond_bot_invited_join_group_request_event
     )
 
 
@@ -90,6 +90,7 @@ _dynamic_imports: dict[str, str] = {
     "get_group_list": ".mirai",
     "get_friend_profile": ".mirai",
     "get_group_member_profile": ".mirai",
+    "set_group_member_info": ".mirai",
     "send_friend_message": ".mirai",
     "send_group_message": ".mirai",
     "send_temp_message": ".mirai",

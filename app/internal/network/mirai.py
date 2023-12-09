@@ -109,6 +109,29 @@ def get_group_member_profile(group_id: int, member_id: int) -> GetGroupMemberPro
     )
 
 
+class SetGroupMemberInfoRequest(Request):
+    class Info(BaseModel):
+        name: str
+        special_title: str | None = Field(default=None, serialization_alias="specialTitle")
+
+    target: int
+    member_id: int = Field(serialization_alias="memberId")
+    info: Info
+
+
+class SetGroupMemberInfoResponse(Response):
+    pass
+
+
+def set_group_member_info(data: dict) -> SetGroupMemberInfoResponse:
+    return SetGroupMemberInfoResponse.model_validate(
+        client.post(
+            settings["mirai"]["api"]["base_url"] + "/memberInfo",
+            json=SetGroupMemberInfoRequest.model_validate(data).model_dump(by_alias=True, exclude_none=True)
+        ).json()
+    )
+
+
 class SendFriendMessageRequest(Request):
     target: int
     message_chain: list[Message] = Field(serialization_alias="messageChain")

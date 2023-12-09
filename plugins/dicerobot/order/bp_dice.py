@@ -1,0 +1,88 @@
+import re
+import random
+
+from app.exceptions import OrderException
+from plugins import OrderPlugin
+
+
+class BPDice(OrderPlugin):
+    name = "dicerobot.bp_dice"
+    display_name = "奖励骰/惩罚骰"
+    description = "掷一个骰子，以及一个或多个奖励骰/惩罚骰"
+    version = "1.0.0"
+
+    default_settings = {
+        "max_count": 100
+    }
+    default_replies = {
+        "result": "{&发送者}骰出了：{&掷骰结果}",
+        "result_with_reason": "由于{&掷骰原因}，{&发送者}骰出了：{&掷骰结果}",
+        "max_count_exceeded": "被骰子淹没，不知所措……"
+    }
+    supported_reply_variables = [
+        "掷骰原因",
+        "掷骰结果"
+    ]
+
+    orders = [
+        r"r\s*b", "奖励骰",
+        r"r\s*p", "惩罚骰"
+    ]
+    priority = 10
+
+    _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.order = re.sub(r"\s", "", self.order)  # Remove whitespace characters
+
+        self.count = 1
+        self.reason = ""
+
+        self.dice_result = -1
+        self.bp_results: list[int] = []
+        self.final_result = -1
+
+    def __call__(self) -> None:
+        self.parse_content()
+        self.calculate()
+        self.bonus_or_penalty()
+
+        bp_type = "奖励骰" if self.order == "rb" else "惩罚骰" if self.order == "rp" else ""
+        result = f"B{self.count}={self.dice_result}[{bp_type}:{' '.join(map(str, self.bp_results))}]={self.final_result}"
+
+        self.update_reply_variables({
+            "掷骰原因": self.reason,
+            "掷骰结果": result
+        })
+
+        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
+
+    def parse_content(self) -> None:
+        # Parse order content into possible count and reason
+        match = BPDice._content_pattern.fullmatch(self.order_content)
+        self.count = int(match.group(1)) if match.group(1) else self.count
+        self.reason = match.group(2)
+
+    def calculate(self) -> None:
+        # Check count
+        if self.count > self.settings["max_count"]:
+            raise OrderException(self.replies["max_count_exceeded"])
+
+        # Calculate result
+        self.dice_result = random.randint(1, 100)
+        self.bp_results = [random.randint(1, 10) for _ in range(self.count)]
+
+    def bonus_or_penalty(self) -> None:
+        ones = self.dice_result % 10
+        tens = self.dice_result // 10
+
+        if self.order == "rb":
+            min_result = min(self.bp_results)
+            tens = min_result if tens > min_result else tens
+        elif self.order == "rp":
+            max_result = max(self.bp_results)
+            tens = max_result if tens < max_result else tens
+
+        self.final_result = tens * 10 + ones

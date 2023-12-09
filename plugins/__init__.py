@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Type
+from typing import Type, Any
+import copy
 
 from app.config import Config, status, plugin_settings, replies, chat_settings
 from app.internal.message import Message, MessageChain, FriendMessage, GroupMessage, TempMessage
@@ -42,43 +43,75 @@ class OrderPlugin(DiceRobotPlugin):
     default_chat_settings = {}
 
     orders: str | list[str]
-    orders_priority: int = 100
+    priority: int = 100
 
     def __init__(self, message_chain: MessageChain, order: str, order_content: str) -> None:
         super().__init__()
 
-        self.chat_type = ChatType.FRIEND if type(message_chain) is FriendMessage \
-            else ChatType.GROUP if type(message_chain) is GroupMessage \
-            else ChatType.TEMP if type(message_chain) is TempMessage \
-            else ChatType.OTHER
-        self.chat_id = message_chain.sender.id if isinstance(message_chain, FriendMessage) \
-            else message_chain.sender.group.id
-        self.chat_settings: Config[str] = chat_settings[self.chat_type.value] \
-            .setdefault(self.chat_id, {}) \
-            .setdefault(self.__class__.name, self.__class__.default_chat_settings)
+        self.chat_type = ChatType.OTHER
+        self.chat_id = -1
+        self.chat_settings = Config()
 
         self.message_chain = message_chain
         self.order = order
         self.order_content = order_content
 
-        self.reply_variables = {
-            "机器人": status["bot"]["nickname"],
-            "机器人昵称": status["bot"]["nickname"],
-            "机器人QQ": status["bot"]["id"],
-            "机器人QQ号": status["bot"]["id"],
-            "群名": message_chain.sender.group.name if isinstance(message_chain, GroupMessage) else "",
-            "群号": message_chain.sender.group.id if isinstance(message_chain, GroupMessage) else "",
-            "发送者": message_chain.sender.member_name if isinstance(message_chain, GroupMessage) else message_chain.sender.nickname,
-            "发送者昵称": message_chain.sender.member_name if isinstance(message_chain, GroupMessage) else message_chain.sender.nickname,
-            "发送者QQ": message_chain.sender.id,
-            "发送者QQ号": message_chain.sender.id
-        }
+        self.reply_variables = {}
+
+        self.load_chat_config()
+        self.init_reply_variables()
 
     @abstractmethod
     def __call__(self) -> None:
         pass
 
-    def update_reply_variables(self, d: dict[str]) -> None:
+    def load_chat_config(self) -> None:
+        if type(self.message_chain) is FriendMessage:
+            self.chat_type = ChatType.FRIEND
+            self.chat_id = self.message_chain.sender.id
+            chat_settings[self.chat_type].setdefault(self.chat_id, {}).setdefault("dicerobot", {})
+
+            if self.__class__.default_chat_settings:
+                self.chat_settings = chat_settings[self.chat_type][self.chat_id] \
+                    .setdefault(self.__class__.name, self.__class__.default_chat_settings)
+        elif type(self.message_chain) is GroupMessage:
+            self.chat_type = ChatType.GROUP
+            self.chat_id = self.message_chain.sender.group.id
+            chat_settings[self.chat_type].setdefault(self.chat_id, {}).setdefault("dicerobot", {})
+
+            if self.__class__.default_chat_settings:
+                self.chat_settings = chat_settings[self.chat_type][self.chat_id] \
+                    .setdefault(self.__class__.name, self.__class__.default_chat_settings)
+        elif type(self.message_chain) is TempMessage:
+            self.chat_type = ChatType.TEMP
+            self.chat_id = self.message_chain.sender.group.id
+
+            if self.__class__.default_chat_settings:
+                self.chat_settings = copy.deepcopy(self.__class__.default_chat_settings)
+
+    def check_enabled(self) -> bool:
+        return chat_settings[self.chat_type][self.chat_id]["dicerobot"].setdefault("enabled", True)
+
+    def init_reply_variables(self) -> None:
+        bot_id = status["bot"]["id"]
+        bot_nickname = chat_settings[self.chat_type][self.chat_id]["dicerobot"].setdefault("nickname", "")
+        sender_id = self.message_chain.sender.id,
+        sender_nickname = self.message_chain.sender.member_name if isinstance(self.message_chain, GroupMessage) else self.message_chain.sender.nickname
+
+        self.reply_variables = {
+            "机器人QQ": bot_id,
+            "机器人QQ号": bot_id,
+            "机器人": bot_nickname if bot_nickname else status["bot"]["nickname"],
+            "机器人昵称": bot_nickname if bot_nickname else status["bot"]["nickname"],
+            "群号": self.message_chain.sender.group.id if isinstance(self.message_chain, GroupMessage) else "",
+            "群名": self.message_chain.sender.group.name if isinstance(self.message_chain, GroupMessage) else "",
+            "发送者QQ": sender_id,
+            "发送者QQ号": sender_id,
+            "发送者": sender_nickname,
+            "发送者昵称": sender_nickname
+        }
+
+    def update_reply_variables(self, d: dict[str, Any]) -> None:
         self.reply_variables |= d
 
     def format_reply(self, reply: str) -> str:

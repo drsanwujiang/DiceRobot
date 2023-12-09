@@ -2,6 +2,7 @@ from typing import Type
 import importlib
 import pkgutil
 import re
+import copy
 
 from plugins import DiceRobotPlugin, OrderPlugin, EventPlugin
 from ..log import logger
@@ -47,14 +48,14 @@ class Dispatcher:
     @staticmethod
     def load_defaults(plugin: Type[DiceRobotPlugin]) -> None:
         # Load default plugin settings, replies
-        if plugin.name not in plugin_settings:
-            plugin_settings[plugin.name] = plugin.default_settings
+        if plugin.name not in plugin_settings and plugin.default_settings:
+            plugin_settings[plugin.name] = copy.deepcopy(plugin.default_settings)
         else:
             for key, value in plugin.default_settings.items():
                 plugin_settings[plugin.name].setdefault(key, value)
 
-        if plugin.name not in replies:
-            replies[plugin.name] = plugin.default_replies
+        if plugin.name not in replies and plugin.default_replies:
+            replies[plugin.name] = copy.deepcopy(plugin.default_replies)
         else:
             for key, value in plugin.default_replies.items():
                 replies[plugin.name].setdefault(key, value)
@@ -65,15 +66,15 @@ class Dispatcher:
         orders = {}
 
         for plugin_name, plugin in self.order_plugins.items():
-            if hasattr(plugin, "orders") and hasattr(plugin, "orders_priority"):
-                if isinstance(plugin.orders_priority, int) and plugin.orders_priority not in orders:
-                    orders[plugin.orders_priority] = {}
+            if hasattr(plugin, "orders") and hasattr(plugin, "priority"):
+                if isinstance(plugin.priority, int) and plugin.priority not in orders:
+                    orders[plugin.priority] = {}
 
                 plugin_orders = plugin.orders if isinstance(plugin.orders, list) else [plugin.orders]
 
                 for order in plugin_orders:
                     if isinstance(order, str):
-                        orders[plugin.orders_priority][order] = {
+                        orders[plugin.priority][order] = {
                             "pattern": re.compile(fr"^{order}\s*([\S\s]*)$"),
                             "name": plugin_name
                         }
@@ -111,7 +112,10 @@ class Dispatcher:
         logger.info(f"Dispatch to plugin {plugin_name}")
 
         try:
-            self.order_plugins[plugin_name](message_chain, order.lower(), order_content)()
+            plugin = self.order_plugins[plugin_name](message_chain, order.lower(), order_content)
+
+            if plugin.check_enabled():
+                plugin()
         except DiceRobotException as e:
             reply_to_sender(message_chain, e.reply)
 
