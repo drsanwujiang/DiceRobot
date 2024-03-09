@@ -1,4 +1,4 @@
-from .order import Bot, Dice, BPDice, SkillRoll, Chat, Conversation, Paint
+from .order import Bot, Dice, BPDice, SkillRoll, Chat, Conversation, Paint, DailySixtySeconds
 
 from .event import BotOnlineHandler, BotOfflineHandler, FriendRequestHandler, GroupInvitationHandler
 
@@ -12,6 +12,7 @@ __all__ = [
     "Chat",
     "Conversation",
     "Paint",
+    "DailySixtySeconds",
 
     # Events
     "BotOnlineHandler",

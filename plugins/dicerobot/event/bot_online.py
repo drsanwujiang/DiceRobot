@@ -1,7 +1,7 @@
+from plugins import EventPlugin
 from app.log import logger
 from app.internal.event import BotOnlineEvent, BotReloginEvent
-from app.internal.schedule import check_bot_status
-from plugins import EventPlugin
+from app.internal.task import check_bot_status
 
 
 class BotOnlineHandler(EventPlugin):

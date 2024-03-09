@@ -53,14 +53,15 @@ def handle_order(message_chain: MessageChain) -> None:
             if message.target == status["bot"]["id"]:
                 continue
             else:
+                logger.debug("Message to others detected")
                 raise RuntimeError("Message to others")
         elif isinstance(message, Plain):
             message_content += message.text
         else:
+            logger.debug("Unsupported message type detected")
             raise RuntimeError("Unsupported message type")
 
-    if not dispatcher.dispatch_order(message_chain, message_content.strip()):
-        raise RuntimeError("Dispatch missed")
+    dispatcher.dispatch_order(message_chain, message_content.strip())
 
     logger.info("Report finished")
 
@@ -71,7 +72,6 @@ def handle_event(event: Event) -> None:
         logger.info("Report skipped, event handler disabled")
         return
 
-    if not dispatcher.dispatch_event(event):
-        raise RuntimeError("Dispatch missed")
+    dispatcher.dispatch_event(event)
 
     logger.info("Report finished")

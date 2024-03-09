@@ -1,5 +1,3 @@
-import importlib
-
 import pydantic
 from pydantic.alias_generators import to_camel
 
@@ -12,12 +10,11 @@ class CamelizableModel(BaseModel):
     model_config = pydantic.ConfigDict(alias_generator=to_camel)
 
 
-def init_internal():
-    importlib.import_module(".dispatcher", __package__).init_dispatcher()
-    importlib.import_module(".schedule", __package__).init_schedule()
+def init_internal() -> None:
+    from .dispatcher import init_dispatcher
+
+    init_dispatcher()
 
 
-def clean_internal():
-    from .schedule import clean_schedule
-
-    clean_schedule()
+def clean_internal() -> None:
+    pass

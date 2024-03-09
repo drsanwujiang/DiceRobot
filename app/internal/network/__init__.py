@@ -51,7 +51,7 @@ class Client(httpx.Client):
             logger.error(f"Failed to request {response.request.url}, invalid content returned")
             raise NetworkInvalidContentError()
 
-        if "code" in result and result["code"] != 0:
+        if "code" in result and result["code"] != 0 and result["code"] != 200:
             error_code = result["code"]
             error_message = result["msg"] if "msg" in result else result["message"] if "message" in result else None
 

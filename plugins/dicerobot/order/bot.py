@@ -1,10 +1,10 @@
 from datetime import date
 
+from plugins import OrderPlugin
 from app.config import status, chat_settings
 from app.exceptions import OrderInvalidError, OrderException
 from app.internal.enum import ChatType
 from app.internal.network import set_group_member_info
-from plugins import OrderPlugin
 
 
 class Bot(OrderPlugin):
@@ -52,6 +52,12 @@ class Bot(OrderPlugin):
                     self.suborder = suborder
                     self.suborder_content = self.order_content[len(_suborder):].strip()
 
+    def check_enabled(self) -> bool:
+        if self.suborder == "enable":
+            return True
+
+        return super().check_enabled()
+
     def __call__(self) -> None:
         if self.suborder == "" or self.suborder == "about":
             self.about()
@@ -64,12 +70,6 @@ class Bot(OrderPlugin):
         else:
             raise OrderInvalidError()
 
-    def check_enabled(self) -> bool:
-        if self.suborder == "enable":
-            return True
-
-        return super().check_enabled()
-
     def about(self) -> None:
         if self.suborder_content:
             raise OrderInvalidError()
@@ -78,8 +78,7 @@ class Bot(OrderPlugin):
             "版本": status["version"],
             "当前年份": date.today().year
         })
-
-        self.reply_to_sender(self.replies["about"])
+        self.reply_to_sender(self.get_reply("about"))
 
     def enable(self) -> None:
         # Ignore if not in group chat
@@ -90,11 +89,10 @@ class Bot(OrderPlugin):
             raise OrderInvalidError()
 
         if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
-            raise OrderException(self.replies["enable_denied"])
+            raise OrderException(self.get_reply("enable_denied"))
 
-        chat_settings[self.chat_type][self.chat_id]["dicerobot"]["enabled"] = True
-
-        self.reply_to_sender(self.replies["enable"])
+        self.set_chat_setting("enabled", True, group="dicerobot")
+        self.reply_to_sender(self.get_setting("enable"))
 
     def disable(self) -> None:
         # Ignore if not in group chat
@@ -105,11 +103,10 @@ class Bot(OrderPlugin):
             raise OrderInvalidError()
 
         if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
-            raise OrderException(self.replies["disable_denied"])
+            raise OrderException(self.get_reply("disable_denied"))
 
-        chat_settings[self.chat_type][self.chat_id]["dicerobot"]["enabled"] = False
-
-        self.reply_to_sender(self.replies["disable"])
+        self.set_chat_setting("enabled", True, group="dicerobot")
+        self.reply_to_sender(self.get_reply("disable"))
 
     def nickname(self) -> None:
         # Ignore if not in group chat
@@ -117,11 +114,11 @@ class Bot(OrderPlugin):
             return
 
         if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
-            raise OrderException(self.replies["nickname_denied"])
+            raise OrderException(self.get_reply("nickname_denied"))
 
         if self.suborder_content:
             # Set nickname
-            chat_settings[self.chat_type][self.chat_id]["dicerobot"]["nickname"] = self.suborder_content
+            self.set_chat_setting("nickname", self.suborder_content, group="dicerobot")
             set_group_member_info({
                 "target": self.chat_id,
                 "member_id": status["bot"]["id"],
@@ -129,16 +126,14 @@ class Bot(OrderPlugin):
                     "name": self.suborder_content
                 }
             })
-
             self.update_reply_variables({
                 "机器人": self.suborder_content,
                 "机器人昵称": self.suborder_content
             })
-
-            self.reply_to_sender(self.replies["nickname_set"])
+            self.reply_to_sender(self.get_reply("nickname_set"))
         else:
             # Unset nickname
-            chat_settings[self.chat_type][self.chat_id]["dicerobot"]["nickname"] = ""
+            self.set_chat_setting("nickname", "", group="dicerobot")
             set_group_member_info({
                 "target": self.chat_id,
                 "member_id": status["bot"]["id"],
@@ -146,10 +141,8 @@ class Bot(OrderPlugin):
                     "name": ""
                 }
             })
-
             self.update_reply_variables({
                 "机器人": status["bot"]["nickname"],
                 "机器人昵称": status["bot"]["nickname"]
             })
-
-            self.reply_to_sender(self.replies["nickname_unset"])
+            self.reply_to_sender(self.get_reply("nickname_unset"))

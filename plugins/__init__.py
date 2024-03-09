@@ -3,10 +3,11 @@ from typing import Type, Any
 import copy
 
 from app.config import Config, status, plugin_settings, replies, chat_settings
+from app.exceptions import OrderException
 from app.internal.message import Message, MessageChain, FriendMessage, GroupMessage, TempMessage
 from app.internal.event import Event
 from app.internal.enum import ChatType
-from app.internal.util import reply_to_sender
+from app.internal.util import reply_to_sender, send_messages
 
 
 class DiceRobotPlugin(ABC):
@@ -19,9 +20,23 @@ class DiceRobotPlugin(ABC):
     default_replies: dict[str] = {}
     supported_reply_variables: list[str] = []
 
-    def __init__(self):
-        self.settings: Config[str] = plugin_settings[self.__class__.name]
-        self.replies: Config[str, str] = replies[self.__class__.name]
+    @classmethod
+    def init_plugin(cls) -> None:
+        pass
+
+    @classmethod
+    def get_setting(cls, key: str, group: str = None) -> Any:
+        if group:
+            return plugin_settings[group][key]
+        else:
+            return plugin_settings[cls.name][key]
+
+    @classmethod
+    def get_reply(cls, key: str, group: str = None) -> str:
+        if group:
+            return replies[group][key]
+        else:
+            return replies[cls.name][key]
 
     @abstractmethod
     def __call__(self) -> None:
@@ -69,28 +84,32 @@ class OrderPlugin(DiceRobotPlugin):
         if type(self.message_chain) is FriendMessage:
             self.chat_type = ChatType.FRIEND
             self.chat_id = self.message_chain.sender.id
-            chat_settings[self.chat_type].setdefault(self.chat_id, {}).setdefault("dicerobot", {})
-
-            if self.__class__.default_chat_settings:
-                self.chat_settings = chat_settings[self.chat_type][self.chat_id] \
-                    .setdefault(self.__class__.name, self.__class__.default_chat_settings)
         elif type(self.message_chain) is GroupMessage:
             self.chat_type = ChatType.GROUP
             self.chat_id = self.message_chain.sender.group.id
-            chat_settings[self.chat_type].setdefault(self.chat_id, {}).setdefault("dicerobot", {})
-
-            if self.__class__.default_chat_settings:
-                self.chat_settings = chat_settings[self.chat_type][self.chat_id] \
-                    .setdefault(self.__class__.name, self.__class__.default_chat_settings)
         elif type(self.message_chain) is TempMessage:
             self.chat_type = ChatType.TEMP
             self.chat_id = self.message_chain.sender.group.id
+            self.chat_settings = copy.deepcopy(self.default_chat_settings)
 
-            if self.__class__.default_chat_settings:
-                self.chat_settings = copy.deepcopy(self.__class__.default_chat_settings)
+            return
 
-    def check_enabled(self) -> bool:
-        return chat_settings[self.chat_type][self.chat_id]["dicerobot"].setdefault("enabled", True)
+        # Create chat settings if not exists
+        chat_settings[self.chat_type].setdefault(self.chat_id, {}).setdefault("dicerobot", {})
+        self.chat_settings = chat_settings[self.chat_type][self.chat_id][self.name] = \
+            Config(self.default_chat_settings).update(chat_settings[self.chat_type][self.chat_id].setdefault(self.name, {}))
+
+    def get_chat_setting(self, key: str, group: str = None) -> Any:
+        if group:
+            return chat_settings[self.chat_type][self.chat_id][group][key]
+        else:
+            return self.chat_settings[key]
+
+    def set_chat_setting(self, key: str, value: Any, group: str = None) -> None:
+        if group:
+            chat_settings[self.chat_type][self.chat_id][group][key] = value
+        else:
+            self.chat_settings[key] = value
 
     def init_reply_variables(self) -> None:
         bot_id = status["bot"]["id"]
@@ -111,6 +130,13 @@ class OrderPlugin(DiceRobotPlugin):
             "发送者昵称": sender_nickname
         }
 
+    def check_enabled(self) -> bool:
+        return chat_settings[self.chat_type][self.chat_id]["dicerobot"].setdefault("enabled", True)
+
+    def check_order_content(self) -> None:
+        if not self.order_content:
+            raise OrderException(self.get_reply(group="dicerobot", key="order_invalid"))
+
     def update_reply_variables(self, d: dict[str, Any]) -> None:
         self.reply_variables |= d
 
@@ -125,6 +151,10 @@ class OrderPlugin(DiceRobotPlugin):
             reply_messages = self.format_reply(reply_messages)
 
         reply_to_sender(self.message_chain, reply_messages)
+
+    @classmethod
+    def send_messages(cls, chat_type: ChatType, chat_id: int, messages: str | list[Message]) -> None:
+        send_messages(chat_type, chat_id, messages)
 
 
 class EventPlugin(DiceRobotPlugin):

@@ -1,8 +1,8 @@
 import re
 import random
 
-from app.exceptions import OrderException
 from plugins import OrderPlugin
+from app.exceptions import OrderException
 
 
 class BPDice(OrderPlugin):
@@ -56,8 +56,7 @@ class BPDice(OrderPlugin):
             "掷骰原因": self.reason,
             "掷骰结果": result
         })
-
-        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
+        self.reply_to_sender(self.get_reply("result_with_reason" if self.reason else "result"))
 
     def parse_content(self) -> None:
         # Parse order content into possible count and reason
@@ -67,8 +66,8 @@ class BPDice(OrderPlugin):
 
     def calculate(self) -> None:
         # Check count
-        if self.count > self.settings["max_count"]:
-            raise OrderException(self.replies["max_count_exceeded"])
+        if self.count > self.get_setting("max_count"):
+            raise OrderException(self.get_reply("max_count_exceeded"))
 
         # Calculate result
         self.dice_result = random.randint(1, 100)

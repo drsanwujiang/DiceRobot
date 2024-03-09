@@ -5,6 +5,7 @@ from .skill_roll import SkillRoll
 from .chat import Chat
 from .conversation import Conversation
 from .paint import Paint
+from .daily_60s import DailySixtySeconds
 
 
 __all__ = [
@@ -14,5 +15,6 @@ __all__ = [
     "SkillRoll",
     "Chat",
     "Conversation",
-    "Paint"
+    "Paint",
+    "DailySixtySeconds"
 ]

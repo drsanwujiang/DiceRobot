@@ -9,7 +9,7 @@ engine = create_engine("sqlite:///database.db", connect_args={"check_same_thread
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def init_db():
+def init_db() -> None:
     logger.info("Initializing database")
 
     engine.connect()
@@ -18,7 +18,7 @@ def init_db():
     logger.info("Database initialized")
 
 
-def clean_db():
+def clean_db() -> None:
     logger.info("Cleaning database")
 
     engine.dispose()

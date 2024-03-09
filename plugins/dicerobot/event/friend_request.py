@@ -1,7 +1,7 @@
+from plugins import EventPlugin
 from app.log import logger
 from app.internal.event import NewFriendRequestEvent
 from app.internal.network import respond_new_friend_request_event
-from plugins import EventPlugin
 
 
 class FriendRequestHandler(EventPlugin):
@@ -19,7 +19,7 @@ class FriendRequestHandler(EventPlugin):
     def __call__(self) -> None:
         logger.success(f"Friend request from {self.event.from_id} received")
 
-        if self.settings["auto_approve"]:
+        if self.get_setting("auto_approve"):
             respond_new_friend_request_event({
                 "event_id": self.event.event_id,
                 "from_id": self.event.from_id,

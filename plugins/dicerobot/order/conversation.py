@@ -1,9 +1,9 @@
 from pydantic import TypeAdapter, ValidationError
 
-from app.exceptions import OrderInvalidError, OrderException
-from app.internal.network import client
 from plugins import OrderPlugin
 from plugins.dicerobot.order.chat import ChatCompletion, ChatCompletionRequest, ChatCompletionResponse
+from app.exceptions import OrderInvalidError, OrderException
+from app.internal.network import client
 
 
 class Conversation(OrderPlugin):
@@ -15,7 +15,7 @@ class Conversation(OrderPlugin):
     default_settings = {
         "domain": "api.openai.com",
         "api_key": "",
-        "model": "gpt-4",
+        "model": "gpt-4-turbo-preview",
         "max_saved_guidance": 10
     }
     default_replies = {
@@ -68,7 +68,7 @@ class Conversation(OrderPlugin):
 
             try:
                 request = ChatCompletionRequest.model_validate({
-                    "model": self.settings["model"],
+                    "model": self.get_setting("model"),
                     "messages": conversation,
                     "user": f"{self.chat_type.value}-{self.chat_id}"
                 })
@@ -76,9 +76,9 @@ class Conversation(OrderPlugin):
                 raise OrderInvalidError()
 
             result = client.post(
-                "https://" + self.settings["domain"] + "/v1/chat/completions",
+                "https://" + self.get_setting("domain") + "/v1/chat/completions",
                 headers={
-                    "Authorization": "Bearer " + self.settings["api_key"]
+                    "Authorization": "Bearer " + self.get_setting("api_key")
                 },
                 json=request.model_dump(exclude_none=True),
                 timeout=60
@@ -87,27 +87,27 @@ class Conversation(OrderPlugin):
             try:
                 response = ChatCompletionResponse.model_validate(result)
             except ValidationError:
-                raise OrderException(self.replies["rate_limit_exceeded"])
+                raise OrderException(self.get_reply("rate_limit_exceeded"))
 
             conversation.append(response.choices[0].message)
 
             # Save conversation and tokens
-            self.chat_settings["conversation"] = [completion.model_dump() for completion in conversation]
-            self.chat_settings["tokens"] = response.usage.total_tokens
+            self.set_chat_setting("conversation", [completion.model_dump() for completion in conversation])
+            self.set_chat_setting("tokens", response.usage.total_tokens)
             self.reply_to_sender(response.choices[0].message.content)
         else:
             # Clear conversation
             self.chat_settings.update(Conversation.default_chat_settings)
-            self.reply_to_sender(self.replies["new_conversation"])
+            self.reply_to_sender(self.get_reply("new_conversation"))
 
     def query_usage(self) -> None:
         if self.order_content:
             raise OrderInvalidError()
 
         self.update_reply_variables({
-            "当前使用量": self.chat_settings["tokens"]
+            "当前使用量": self.get_chat_setting("tokens")
         })
-        self.reply_to_sender(self.replies["query_usage"])
+        self.reply_to_sender(self.get_reply("query_usage"))
 
     def set_guidance(self) -> None:
         if not self.order_content:
@@ -120,8 +120,8 @@ class Conversation(OrderPlugin):
         ))
 
         # Save conversation
-        self.chat_settings["conversation"] = [completion.model_dump() for completion in conversation]
-        self.reply_to_sender(self.replies["set_guidance"])
+        self.set_chat_setting("conversation", [completion.model_dump() for completion in conversation])
+        self.reply_to_sender(self.get_reply("set_guidance"))
 
     # def load_guidance(self) -> None:
     #     guidance = None
@@ -158,6 +158,6 @@ class Conversation(OrderPlugin):
             except ValidationError:
                 # Clear conversation
                 self.chat_settings.update(Conversation.default_chat_settings)
-                raise OrderException(self.replies["conversation_invalid"])
+                raise OrderException(self.get_reply("conversation_invalid"))
 
         return conversation

@@ -34,23 +34,25 @@ class Paint(OrderPlugin):
     priority = 100
 
     def __call__(self) -> None:
+        self.check_order_content()
+
         try:
             request = ImageGenerationRequest.model_validate({
-                "model": self.settings["model"],
+                "model": self.get_setting("model"),
                 "prompt": self.order_content,
                 "n": 1,
-                "quality": self.settings["quality"],
+                "quality": self.get_setting("quality"),
                 "response_format": "b64_json",
-                "size": self.settings["size"],
+                "size": self.get_setting("size"),
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
         except ValidationError:
             raise OrderInvalidError()
 
         result = client.post(
-            "https://" + self.settings["domain"] + "/v1/images/generations",
+            "https://" + self.get_setting("domain") + "/v1/images/generations",
             headers={
-                "Authorization": "Bearer " + self.settings["api_key"]
+                "Authorization": "Bearer " + self.get_setting("api_key")
             },
             json=request.model_dump(exclude_none=True),
             timeout=30
@@ -59,7 +61,7 @@ class Paint(OrderPlugin):
         try:
             response = ImageGenerationResponse.model_validate(result)
         except (ValidationError, ValueError):
-            raise OrderException(self.replies["content_policy_violated"])
+            raise OrderException(self.get_reply("content_policy_violated"))
 
         # Convert WebP to PNG
         image = PILImage.open(BytesIO(base64.b64decode(response.data[0].b64_json))).convert("RGB")

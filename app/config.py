@@ -83,7 +83,7 @@ replies: Config[str, Config[str, str]] = Config({
         "network_server_error": "糟糕，致远星出错了……请稍后再试",
         "network_invalid_content": "致远星返回了无法解析的内容……请稍后再试",
         "network_error": "无法连接到致远星，请检查星际通讯是否正常",
-        "order_invalid": "不太理解这个指令……",
+        "order_invalid": "不太理解这个指令呢……",
     })
 })
 chat_settings: Config[str, Config[int, Config]] = Config({
@@ -92,7 +92,7 @@ chat_settings: Config[str, Config[int, Config]] = Config({
 })
 
 
-def init_config():
+def init_config() -> None:
     logger.info("Initializing config")
 
     with Session() as session, session.begin():
@@ -137,7 +137,7 @@ def init_config():
     logger.info("Config initialized")
 
 
-def save_config():
+def save_config() -> None:
     logger.info("Saving config")
 
     with Session() as session, session.begin():
