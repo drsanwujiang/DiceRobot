@@ -8,28 +8,30 @@ readme = "README.md"
 homepage = "https://dicerobot.tech/"
 repository = "https://github.com/drsanwujiang/DiceRobot"
 documentation = "https://docs.dicerobot.tech/"
-packages = [
-    { include = "app" },
-    { include = "plugins" },
-]
 include = [
     "LICENSE",
 ]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-uvicorn = "^0.28.0"
-fastapi = "^0.110.0"
-loguru = "^0.7.2"
-sqlalchemy = "^2.0.23"
-pydantic = "^2.5.2"
+uvicorn = "^0.29.0"
+fastapi = "^0.111.0"
+loguru = "^0.7.0"
+sqlalchemy = "^2.0.0"
+pydantic = "^2.7.0"
 pyjwt = "^2.8.0"
 httpx = "^0.27.0"
 pillow = "^10.1.0"
-apscheduler = "^3.10.4"
+apscheduler = "^3.10.0"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7.4.3"
+pytest = "^8.1.0"
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "primary"
 
 [build-system]
 requires = ["poetry-core"]

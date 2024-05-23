@@ -1,0 +1,9 @@
+.idea
+
+poetry.lock
+
+logs
+database.db
+
+test/logs
+tests/database.db
