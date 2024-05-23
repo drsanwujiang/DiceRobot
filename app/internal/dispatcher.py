@@ -19,7 +19,7 @@ class Dispatcher:
     def __init__(self):
         self.order_plugins: dict[str, Type[OrderPlugin]] = {}
         self.event_plugins: dict[str, Type[EventPlugin]] = {}
-        self.orders: dict[int, dict[str, dict[str, re.Pattern | str]]] = {}
+        self.orders: dict[int, list[dict[str, re.Pattern | str]]] = {}
         self.events: dict[str, list[str]] = {}
 
     def load_plugins(self) -> None:
@@ -60,16 +60,16 @@ class Dispatcher:
         for plugin_name, plugin in self.order_plugins.items():
             if hasattr(plugin, "orders") and hasattr(plugin, "priority"):
                 if isinstance(plugin.priority, int) and plugin.priority not in orders:
-                    orders[plugin.priority] = {}
+                    orders[plugin.priority] = []
 
                 plugin_orders = plugin.orders if isinstance(plugin.orders, list) else [plugin.orders]
 
                 for order in plugin_orders:
-                    if isinstance(order, str):
-                        orders[plugin.priority][order] = {
-                            "pattern": re.compile(fr"^{order}\s*([\S\s]*)$"),
+                    if isinstance(order, str) and order:
+                        orders[plugin.priority].append({
+                            "pattern": re.compile(fr"^({order})\s*([\S\s]*)$"),
                             "name": plugin_name
-                        }
+                        })
 
         events = {}
 
@@ -115,10 +115,6 @@ class Dispatcher:
                 plugin()
         except DiceRobotException as e:
             reply_to_sender(message_chain, e.reply)
-
-            logger.info(
-                f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {message_chain.__class__.__name__}"
-            )
         except Exception as e:
             logger.exception(
                 f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {message_chain.__class__.__name__}"
@@ -126,9 +122,9 @@ class Dispatcher:
 
     def match_plugin(self, order_and_content: str) -> tuple[str | None, str | None, str | None]:
         for priority, orders in self.orders.items():
-            for order, pattern_and_name in orders.items():
+            for pattern_and_name in orders:
                 if match := pattern_and_name["pattern"].fullmatch(order_and_content):
-                    return pattern_and_name["name"], order, match.group(1)
+                    return pattern_and_name["name"], match.group(1), match.group(2)
 
         return None, None, None
 

@@ -1,7 +1,6 @@
 from io import BytesIO
 import base64
 
-from pydantic import ValidationError
 from PIL import Image as PILImage
 
 from app.exceptions import OrderInvalidError, OrderException
@@ -25,6 +24,7 @@ class Paint(OrderPlugin):
         "quality": "hd"
     }
     default_replies = {
+        "unusable": "请先设置神秘代码~",
         "content_policy_violated": "啊嘞，画出来的图图不见了……请重新再试一次吧~"
     }
 
@@ -36,6 +36,9 @@ class Paint(OrderPlugin):
     def __call__(self) -> None:
         self.check_order_content()
 
+        if not (api_key := self.get_setting("api_key")):
+            raise OrderException(self.get_reply("unusable"))
+
         try:
             request = ImageGenerationRequest.model_validate({
                 "model": self.get_setting("model"),
@@ -46,13 +49,13 @@ class Paint(OrderPlugin):
                 "size": self.get_setting("size"),
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
-        except ValidationError:
+        except ValueError:
             raise OrderInvalidError()
 
         result = client.post(
             "https://" + self.get_setting("domain") + "/v1/images/generations",
             headers={
-                "Authorization": "Bearer " + self.get_setting("api_key")
+                "Authorization": f"Bearer {api_key}"
             },
             json=request.model_dump(exclude_none=True),
             timeout=30
@@ -60,7 +63,7 @@ class Paint(OrderPlugin):
 
         try:
             response = ImageGenerationResponse.model_validate(result)
-        except (ValidationError, ValueError):
+        except (ValueError, ValueError):
             raise OrderException(self.get_reply("content_policy_violated"))
 
         # Convert WebP to PNG

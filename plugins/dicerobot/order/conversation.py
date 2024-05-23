@@ -1,4 +1,4 @@
-from pydantic import TypeAdapter, ValidationError
+from pydantic import TypeAdapter
 
 from plugins import OrderPlugin
 from plugins.dicerobot.order.chat import ChatCompletion, ChatCompletionRequest, ChatCompletionResponse
@@ -15,17 +15,15 @@ class Conversation(OrderPlugin):
     default_settings = {
         "domain": "api.openai.com",
         "api_key": "",
-        "model": "gpt-4-turbo-preview",
-        "max_saved_guidance": 10
+        "model": "gpt-4o"
     }
     default_replies = {
+        "unusable": "请先设置神秘代码~",
         "new_conversation": "让我们开始吧~",
-        "set_guidance": "之后的对话将遵循以上设定",
-        "load_guidance": "已读取设定【{&设定名称}】，之后的对话将遵循这个设定",
+        "set_guidance": "【之后的对话将遵循以上设定】",
         "query_usage": "当前对话使用了{&当前使用量}个计费单位",
         "rate_limit_exceeded": "哎呀，思考不过来了呢……请重新再试一次吧~",
-        "conversation_invalid": "唔……想不起来之前的对话了呢，让我们重新开始吧~",
-        "guidance_not_found": "找不到这个设定呢……"
+        "conversation_invalid": "唔……想不起来之前的对话了呢，让我们重新开始吧~"
     }
     supported_reply_variables = [
         "设定名称",
@@ -35,27 +33,26 @@ class Conversation(OrderPlugin):
     ]
     default_chat_settings = {
         "conversation": [],
-        "tokens": 0,
-        "saved_guidance": []
+        "tokens": 0
     }
 
     orders = [
-        "convo", "对话",
+        "conv", "对话",
         "guide", "设定",
-        # "load_guide", "读取设定", "加载设定"
     ]
     priority = 100
 
     def __call__(self) -> None:
-        if self.order in ["convo", "对话"]:
+        if not self.get_setting("api_key"):
+            raise OrderException(self.get_reply("unusable"))
+
+        if self.order in ["conv", "对话"]:
             if self.order_content in ["usage", "使用量"]:
                 self.query_usage()
             else:
                 self.conversation()
         elif self.order in ["guide", "设定"]:
             self.set_guidance()
-        # elif self.order in ["load_guide", "读取设定", "加载设定"]:
-        #     self.load_guidance()
 
     def conversation(self) -> None:
         if self.order_content:
@@ -72,7 +69,7 @@ class Conversation(OrderPlugin):
                     "messages": conversation,
                     "user": f"{self.chat_type.value}-{self.chat_id}"
                 })
-            except ValidationError:
+            except ValueError:
                 raise OrderInvalidError()
 
             result = client.post(
@@ -86,7 +83,7 @@ class Conversation(OrderPlugin):
 
             try:
                 response = ChatCompletionResponse.model_validate(result)
-            except ValidationError:
+            except ValueError:
                 raise OrderException(self.get_reply("rate_limit_exceeded"))
 
             conversation.append(response.choices[0].message)
@@ -101,9 +98,6 @@ class Conversation(OrderPlugin):
             self.reply_to_sender(self.get_reply("new_conversation"))
 
     def query_usage(self) -> None:
-        if self.order_content:
-            raise OrderInvalidError()
-
         self.update_reply_variables({
             "当前使用量": self.get_chat_setting("tokens")
         })
@@ -123,31 +117,6 @@ class Conversation(OrderPlugin):
         self.set_chat_setting("conversation", [completion.model_dump() for completion in conversation])
         self.reply_to_sender(self.get_reply("set_guidance"))
 
-    # def load_guidance(self) -> None:
-    #     guidance = None
-    #
-    #     for _guidance in self.chat_settings["saved_guidance"]:
-    #         if _guidance["name"] == self.order_content:
-    #             guidance = _guidance
-    #             break
-    #
-    #     if not guidance:
-    #         self.reply_to_sender(self.replies["guidance_not_found"])
-    #         return
-    #
-    #     conversation = self.load_conversation()
-    #     conversation.append(ChatCompletion(
-    #         role="system",
-    #         content=guidance["guidance"]
-    #     ))
-    #
-    #     # Save conversation
-    #     self.chat_settings["conversation"] = [completion.model_dump() for completion in conversation]
-    #     self.update_reply_variables({
-    #         "设定名称": self.order_content
-    #     })
-    #     self.reply_to_sender(self.replies["load_guidance"])
-
     def load_conversation(self) -> list[ChatCompletion]:
         conversation = []
 
@@ -155,7 +124,7 @@ class Conversation(OrderPlugin):
             try:
                 # Load saved conversation
                 conversation = TypeAdapter(list[ChatCompletion]).validate_python(self.chat_settings["conversation"])
-            except ValidationError:
+            except ValueError:
                 # Clear conversation
                 self.chat_settings.update(Conversation.default_chat_settings)
                 raise OrderException(self.get_reply("conversation_invalid"))

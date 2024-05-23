@@ -12,9 +12,6 @@ from .scheduler import init_scheduler, start_scheduler, clean_scheduler
 from .internal import init_internal, clean_internal
 
 
-__version__ = VERSION
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.success(f"DiceRobot {VERSION} started")

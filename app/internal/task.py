@@ -1,5 +1,3 @@
-from pydantic import ValidationError
-
 from ..log import logger
 from ..scheduler import scheduler
 from ..config import status
@@ -29,7 +27,7 @@ def check_bot_status() -> None:
             status["app"] = AppStatus.RUNNING
 
             logger.success("DiceRobot running")
-    except (DiceRobotException, ValidationError, RuntimeError):
+    except (DiceRobotException, ValueError, RuntimeError):
         status["bot"] = {"id": -1, "nickname": ""}  # Clear bot status
         scheduler.pause_job("dicerobot.check_bot_status")  # Pause job
 

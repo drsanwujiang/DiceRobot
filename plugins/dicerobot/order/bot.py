@@ -1,7 +1,7 @@
 from datetime import date
 
 from plugins import OrderPlugin
-from app.config import status, chat_settings
+from app.config import status
 from app.exceptions import OrderInvalidError, OrderException
 from app.internal.enum import ChatType
 from app.internal.network import set_group_member_info
@@ -92,7 +92,7 @@ class Bot(OrderPlugin):
             raise OrderException(self.get_reply("enable_denied"))
 
         self.set_chat_setting("enabled", True, group="dicerobot")
-        self.reply_to_sender(self.get_setting("enable"))
+        self.reply_to_sender(self.get_reply("enable"))
 
     def disable(self) -> None:
         # Ignore if not in group chat

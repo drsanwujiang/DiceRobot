@@ -1,8 +1,16 @@
-from . import CamelizableModel
+from typing import Any
+
+from pydantic import field_validator
+
+from . import CamelizableModel, MessageChainOrEvent
+
+parsable_messages = [
+    "Source", "Quote", "At", "Plain", "Image"
+]
 
 
 class Message(CamelizableModel):
-    pass
+    type: str
 
 
 class Source(Message):
@@ -38,8 +46,25 @@ class Image(Message):
     base64: str | None = None
 
 
-class MessageChain(CamelizableModel):
-    pass
+class MessageChain(MessageChainOrEvent):
+    type: str
+    sender: Any
+    message_chain: list[Message]
+
+    @field_validator("message_chain", mode="before")
+    def validate_message_chain(cls, messages: list[dict]) -> list[Message]:
+        parsed_messages: list[Message] = []
+
+        for message in messages:
+            try:
+                if message["type"] in parsable_messages:
+                    parsed_messages.append(globals()[message["type"]].model_validate(message))
+                else:
+                    raise ValueError("Unparsable message type: " + message["type"])
+            except KeyError:
+                raise ValueError("Message type not found")
+
+        return parsed_messages
 
 
 class FriendMessage(MessageChain):
@@ -48,9 +73,8 @@ class FriendMessage(MessageChain):
         nickname: str
         remark: str
 
-    type: str
+    type: str = "FriendMessage"
     sender: Sender
-    message_chain: list[Message]
 
 
 class GroupMessage(MessageChain):
@@ -69,10 +93,9 @@ class GroupMessage(MessageChain):
         mute_time_remaining: int
         group: Group
 
-    type: str
+    type: str = "GroupMessage"
     sender: Sender
-    message_chain: list[Message]
 
 
 class TempMessage(GroupMessage):
-    pass
+    type: str = "TempMessage"

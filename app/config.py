@@ -20,13 +20,13 @@ class Config(dict):
         for key, value in d.items():
             self[key] = value
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         if isinstance(value, dict):
             value = Config(value)
 
         super().__setitem__(key, value)
 
-    def __missing__(self, _):
+    def __missing__(self, _) -> None:
         return None
 
     def update(self, d: dict) -> "Config":
@@ -40,12 +40,6 @@ class Config(dict):
                 self[key] = value
 
         return self
-
-    def setdefault(self, key, default):
-        if key not in self:
-            self[key] = default
-
-        return self[key]
 
 
 status: Config[str] = Config({

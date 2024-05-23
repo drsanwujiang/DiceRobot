@@ -1,49 +1,40 @@
-import pytest
-
-import tests.base
-from app.exceptions import OrderException
-from plugins.dicerobot.order.bot import Bot
+from . import BaseTest
 
 
-def test_bot():
-    print()
+class TestBot(BaseTest):
+    def test_bot(self, client):
+        self.wait_for_online(client)
 
-    about = Bot(order="bot", order_content="")
-    about()
-    assert about.suborder == ""
-    assert about.suborder_content == ""
+        # Bot info
+        message_chain = self.build_group_message(".bot")
+        self.post_message(client, message_chain)
 
-    about = Bot(order="bot", order_content="about")
-    about()
-    assert about.suborder == "about"
-    assert about.suborder_content == ""
+        message_chain = self.build_group_message(".bot about")
+        self.post_message(client, message_chain)
 
-    with pytest.raises(OrderException):
-        on = Bot(order="bot", order_content="on")
-        on()
+        # Bot on
+        message_chain = self.build_group_message(".bot on")
+        self.post_message(client, message_chain)
 
-    on = Bot(order="bot", order_content="on")
-    on.message_chain.sender.permission = "ADMINISTRATOR"
-    on()
-    assert on.suborder == "enable"
-    assert on.suborder_content == ""
+        message_chain.sender.permission = "ADMINISTRATOR"
+        self.post_message(client, message_chain)
 
-    with pytest.raises(OrderException):
-        off = Bot(order="bot", order_content="off")
-        off()
+        # Bot off
+        message_chain = self.build_group_message(".bot off")
+        self.post_message(client, message_chain)
 
-    off = Bot(order="bot", order_content="off")
-    off.message_chain.sender.permission = "ADMINISTRATOR"
-    off()
-    assert off.suborder == "disable"
-    assert off.suborder_content == ""
+        message_chain.sender.permission = "ADMINISTRATOR"
+        self.post_message(client, message_chain)
 
-    with pytest.raises(OrderException):
-        nickname = Bot(order="bot", order_content="name Adam")
-        nickname()
+        # Bot nickname
+        message_chain = self.build_group_message(".bot name Adam")
+        self.post_message(client, message_chain)
 
-    nickname = Bot(order="bot", order_content="name Adam")
-    nickname.message_chain.sender.permission = "ADMINISTRATOR"
-    nickname()
-    assert nickname.suborder == "nickname"
-    assert nickname.suborder_content == "Adam"
+        message_chain.sender.permission = "ADMINISTRATOR"
+        self.post_message(client, message_chain)
+
+        message_chain = self.build_group_message(".bot name")
+        self.post_message(client, message_chain)
+
+        message_chain.sender.permission = "ADMINISTRATOR"
+        self.post_message(client, message_chain)

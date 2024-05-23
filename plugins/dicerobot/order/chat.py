@@ -1,4 +1,4 @@
-from pydantic import conlist, ValidationError
+from pydantic import conlist
 
 from plugins import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderException
@@ -15,9 +15,10 @@ class Chat(OrderPlugin):
     default_settings = {
         "domain": "api.openai.com",
         "api_key": "",
-        "model": "gpt-4-turbo-preview"
+        "model": "gpt-4o"
     }
     default_replies = {
+        "unusable": "请先设置神秘代码~",
         "rate_limit_exceeded": "哎呀，思考不过来了呢……请重新再试一次吧~"
     }
 
@@ -29,6 +30,9 @@ class Chat(OrderPlugin):
     def __call__(self) -> None:
         self.check_order_content()
 
+        if not (api_key := self.get_setting("api_key")):
+            raise OrderException(self.get_reply("unusable"))
+
         try:
             request = ChatCompletionRequest.model_validate({
                 "model": self.get_setting("model"),
@@ -38,13 +42,13 @@ class Chat(OrderPlugin):
                 }],
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
-        except ValidationError:
+        except ValueError:
             raise OrderInvalidError()
 
         result = client.post(
             "https://" + self.get_setting("domain") + "/v1/chat/completions",
             headers={
-                "Authorization": "Bearer " + self.get_setting("api_key")
+                "Authorization": f"Bearer {api_key}"
             },
             json=request.model_dump(exclude_none=True),
             timeout=30
@@ -52,7 +56,7 @@ class Chat(OrderPlugin):
 
         try:
             response = ChatCompletionResponse.model_validate(result)
-        except ValidationError:
+        except ValueError:
             raise OrderException(self.get_reply("rate_limit_exceeded"))
 
         self.reply_to_sender(response.choices[0].message.content)

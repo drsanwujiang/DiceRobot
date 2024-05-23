@@ -95,9 +95,16 @@ class OrderPlugin(DiceRobotPlugin):
             return
 
         # Create chat settings if not exists
-        chat_settings[self.chat_type].setdefault(self.chat_id, {}).setdefault("dicerobot", {})
-        self.chat_settings = chat_settings[self.chat_type][self.chat_id][self.name] = \
-            Config(self.default_chat_settings).update(chat_settings[self.chat_type][self.chat_id].setdefault(self.name, {}))
+        if self.chat_id not in chat_settings[self.chat_type]:
+            chat_settings[self.chat_type][self.chat_id] = {}
+
+        if "dicerobot" not in chat_settings[self.chat_type][self.chat_id]:
+            chat_settings[self.chat_type][self.chat_id]["dicerobot"] = {}
+
+        if self.name not in chat_settings[self.chat_type][self.chat_id]:
+            chat_settings[self.chat_type][self.chat_id][self.name] = copy.deepcopy(self.default_chat_settings)
+
+        self.chat_settings = chat_settings[self.chat_type][self.chat_id][self.name]
 
     def get_chat_setting(self, key: str, group: str = None) -> Any:
         if group:

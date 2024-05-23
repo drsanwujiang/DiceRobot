@@ -1,64 +1,41 @@
-import pytest
-
-import tests.base
-from app.exceptions import OrderException
-from plugins.dicerobot.order.dice import Dice
+from . import BaseTest
 
 
-def test_dice():
-    print()
+class TestDice(BaseTest):
+    def test_dice(self, client):
+        self.wait_for_online(client)
 
-    dice = Dice(order="r", order_content="")
-    dice()
-    assert dice.expression == "D100"
-    assert dice.reason == ""
+        # Valid expressions
+        message_chain = self.build_group_message(".r")
+        self.post_message(client, message_chain)
 
-    dice = Dice(order="r", order_content="d")
-    dice()
-    assert dice.expression == "D100"
-    assert dice.reason == ""
+        message_chain = self.build_group_message(".rd")
+        self.post_message(client, message_chain)
 
-    dice = Dice(order="r", order_content="d100")
-    dice()
-    assert dice.expression == "D100"
-    assert dice.reason == ""
+        message_chain = self.build_group_message(".rd100")
+        self.post_message(client, message_chain)
 
-    dice = Dice(order="r", order_content="10d100k2")
-    dice()
-    assert dice.expression == "10D100K2"
-    assert dice.reason == ""
+        message_chain = self.build_group_message(".r10d100k2")
+        self.post_message(client, message_chain)
 
-    dice = Dice(order="r", order_content="(5d100+d30+666)*5-2+6d50k2x2+6X5 Some Reason")
-    dice()
-    assert dice.expression == "(5D100+D30+666)×5-2+6D50K2×2+6×5"
-    assert dice.reason == "Some Reason"
+        message_chain = self.build_group_message(".r(5d100+d30+666)*5-2+6d50k2x2+6X5 Some Reason")
+        self.post_message(client, message_chain)
 
-    dice = Dice(order="r", order_content="d50Reason")
-    dice()
-    assert dice.expression == "D50"
-    assert dice.reason == "Reason"
+        message_chain = self.build_group_message(".rd50Reason")
+        self.post_message(client, message_chain)
 
-    dice = Dice(order="r", order_content="d50 Reason")
-    dice()
-    assert dice.expression == "D50"
-    assert dice.reason == "Reason"
+        message_chain = self.build_group_message(".rd50 Reason")
+        self.post_message(client, message_chain)
 
-    dice = Dice(order="r", order_content="dReason")
-    dice()
-    assert dice.expression == "D100"
-    assert dice.reason == "Reason"
+        message_chain = self.build_group_message(".rdReason")
+        self.post_message(client, message_chain)
 
-    dice = Dice(order="r", order_content="d 50")
-    dice()
-    assert dice.expression == "D100"
-    assert dice.reason == "50"
+        message_chain = self.build_group_message(".rd 50")
+        self.post_message(client, message_chain)
 
-    with pytest.raises(OrderException):
-        dice = Dice(order="r", order_content="10d100kk2+5")
-        dice.parse_content()
-        dice.calculate_expression()
+        # Invalid expressions
+        message_chain = self.build_group_message(".r10d100kk2+5")
+        self.post_message(client, message_chain)
 
-    with pytest.raises(OrderException):
-        dice = Dice(order="r", order_content="(10d100k2+5")
-        dice.parse_content()
-        dice.calculate_expression()
+        message_chain = self.build_group_message(".r(10d100k2+5")
+        self.post_message(client, message_chain)

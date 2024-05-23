@@ -1,18 +1,17 @@
-import tests.base
-from plugins.dicerobot.order.skill_roll import SkillRoll
+from . import BaseTest
 
 
-def test_skill_roll():
-    print()
+class TestSkillRoll(BaseTest):
+    def test_skill_roll(self, client):
+        self.wait_for_online(client)
 
-    skill_roll = SkillRoll(order="ra", order_content="50")
+        message_chain = self.build_group_message(".ra50")
 
-    for n in range(1, 101):
-        skill_roll.skill_roll(n)
+        for n in range(50):
+            self.post_message(client, message_chain)
 
+    def test_show_rule(self, client):
+        self.wait_for_online(client)
 
-def test_show_rule():
-    print()
-
-    skill_roll = SkillRoll(order="rule", order_content="")
-    skill_roll.show_rule()
+        message_chain = self.build_group_message(".rule")
+        self.post_message(client, message_chain)

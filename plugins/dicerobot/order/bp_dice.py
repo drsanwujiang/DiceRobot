@@ -31,11 +31,16 @@ class BPDice(OrderPlugin):
     priority = 10
 
     _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
+    _bp_types = {
+        "bonus": ["rb", "奖励骰"],
+        "penalty": ["rp", "惩罚骰"]
+    }
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self.order = re.sub(r"\s", "", self.order)  # Remove whitespace characters
+        self.bp_type = None
 
         self.count = 1
         self.reason = ""
@@ -49,7 +54,9 @@ class BPDice(OrderPlugin):
         self.calculate()
         self.bonus_or_penalty()
 
-        bp_type = "奖励骰" if self.order == "rb" else "惩罚骰" if self.order == "rp" else ""
+        print(f"Order: {self.order}")
+
+        bp_type = "奖励骰" if self.bp_type == "bonus" else "惩罚骰" if self.bp_type == "penalty" else ""
         result = f"B{self.count}={self.dice_result}[{bp_type}:{' '.join(map(str, self.bp_results))}]={self.final_result}"
 
         self.update_reply_variables({
@@ -59,6 +66,13 @@ class BPDice(OrderPlugin):
         self.reply_to_sender(self.get_reply("result_with_reason" if self.reason else "result"))
 
     def parse_content(self) -> None:
+        if self.order in BPDice._bp_types["bonus"]:
+            self.bp_type = "bonus"
+        elif self.order in BPDice._bp_types["penalty"]:
+            self.bp_type = "penalty"
+        else:
+            raise OrderException("Invalid order")
+
         # Parse order content into possible count and reason
         match = BPDice._content_pattern.fullmatch(self.order_content)
         self.count = int(match.group(1)) if match.group(1) else self.count
@@ -77,11 +91,12 @@ class BPDice(OrderPlugin):
         ones = self.dice_result % 10
         tens = self.dice_result // 10
 
-        if self.order == "rb":
+        if self.bp_type == "bonus":
             min_result = min(self.bp_results)
             tens = min_result if tens > min_result else tens
-        elif self.order == "rp":
+        elif self.bp_type == "penalty":
             max_result = max(self.bp_results)
             tens = max_result if tens < max_result else tens
 
         self.final_result = tens * 10 + ones
+        self.final_result = 100 if self.final_result > 100 else self.final_result

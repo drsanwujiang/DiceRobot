@@ -1,8 +1,8 @@
-from . import CamelizableModel
+from . import MessageChainOrEvent
 
 
-class Event(CamelizableModel):
-    pass
+class Event(MessageChainOrEvent):
+    type: str
 
 
 class BotOnlineEvent(Event):

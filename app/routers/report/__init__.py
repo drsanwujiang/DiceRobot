@@ -31,6 +31,8 @@ async def report(content: dict) -> Response:
             handle_order(message_chain_or_event)
         elif isinstance(message_chain_or_event, Event):
             handle_event(message_chain_or_event)
+
+        logger.info("Report finished")
     except RuntimeError:
         logger.info("Report filtered")
         return Response(code=1, message="Filtered")
@@ -63,8 +65,6 @@ def handle_order(message_chain: MessageChain) -> None:
 
     dispatcher.dispatch_order(message_chain, message_content.strip())
 
-    logger.info("Report finished")
-
 
 def handle_event(event: Event) -> None:
     # Check handler status
@@ -73,5 +73,3 @@ def handle_event(event: Event) -> None:
         return
 
     dispatcher.dispatch_event(event)
-
-    logger.info("Report finished")

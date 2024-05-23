@@ -1,71 +1,49 @@
-import pytest
-
-import tests.base
-from app.exceptions import OrderException
-from plugins.dicerobot.order.bp_dice import BPDice
+from . import BaseTest
 
 
-def test_bonus_dice():
-    print()
+class TestBPDice(BaseTest):
+    def test_bonus_dice(self, client):
+        self.wait_for_online(client)
 
-    bonus_dice = BPDice(order="rb", order_content="")
-    bonus_dice()
-    assert bonus_dice.count == 1
-    assert bonus_dice.reason == ""
+        # Valid expressions
+        message_chain = self.build_group_message(".rb")
+        self.post_message(client, message_chain)
 
-    bonus_dice = BPDice(order="rb", order_content="2")
-    bonus_dice()
-    assert bonus_dice.count == 2
-    assert bonus_dice.reason == ""
+        message_chain = self.build_group_message(".rb2")
+        self.post_message(client, message_chain)
 
-    bonus_dice = BPDice(order="rb", order_content="Reason")
-    bonus_dice()
-    assert bonus_dice.count == 1
-    assert bonus_dice.reason == "Reason"
+        message_chain = self.build_group_message(".rbReason")
+        self.post_message(client, message_chain)
 
-    bonus_dice = BPDice(order="r b", order_content="3Reason")
-    bonus_dice()
-    assert bonus_dice.count == 3
-    assert bonus_dice.reason == "Reason"
+        message_chain = self.build_group_message(".r b3Reason")
+        self.post_message(client, message_chain)
 
-    bonus_dice = BPDice(order="r b", order_content="4 Reason")
-    bonus_dice()
-    assert bonus_dice.count == 4
-    assert bonus_dice.reason == "Reason"
+        message_chain = self.build_group_message(".r b4 Reason")
+        self.post_message(client, message_chain)
 
-    with pytest.raises(OrderException):
-        bonus_dice = BPDice(order="rb", order_content="101")
-        bonus_dice()
+        # Invalid expressions
+        message_chain = self.build_group_message(".rb101")
+        self.post_message(client, message_chain)
 
+    def test_penalty_dice(self, client):
+        self.wait_for_online(client)
 
-def test_penalty_dice():
-    print()
+        # Valid expressions
+        message_chain = self.build_group_message(".rp")
+        self.post_message(client, message_chain)
 
-    penalty_dice = BPDice(order="rp", order_content="")
-    penalty_dice()
-    assert penalty_dice.count == 1
-    assert penalty_dice.reason == ""
+        message_chain = self.build_group_message(".rp2")
+        self.post_message(client, message_chain)
 
-    penalty_dice = BPDice(order="rp", order_content="2")
-    penalty_dice()
-    assert penalty_dice.count == 2
-    assert penalty_dice.reason == ""
+        message_chain = self.build_group_message(".rpReason")
+        self.post_message(client, message_chain)
 
-    penalty_dice = BPDice(order="rp", order_content="Reason")
-    penalty_dice()
-    assert penalty_dice.count == 1
-    assert penalty_dice.reason == "Reason"
+        message_chain = self.build_group_message(".r p3Reason")
+        self.post_message(client, message_chain)
 
-    penalty_dice = BPDice(order="r p", order_content="3Reason")
-    penalty_dice()
-    assert penalty_dice.count == 3
-    assert penalty_dice.reason == "Reason"
+        message_chain = self.build_group_message(".r p4 Reason")
+        self.post_message(client, message_chain)
 
-    penalty_dice = BPDice(order="r p", order_content="4 Reason")
-    penalty_dice()
-    assert penalty_dice.count == 4
-    assert penalty_dice.reason == "Reason"
-
-    with pytest.raises(OrderException):
-        penalty_dice = BPDice(order="rp", order_content="101")
-        penalty_dice()
+        # Invalid expressions
+        message_chain = self.build_group_message(".rp101")
+        self.post_message(client, message_chain)
