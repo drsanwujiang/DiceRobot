@@ -2,7 +2,7 @@ from . import BaseTest
 
 
 class TestChat(BaseTest):
-    def test_chat(self, client):
+    def test_chat(self, client, openai):
         self.wait_for_online(client)
 
         # Valid usage

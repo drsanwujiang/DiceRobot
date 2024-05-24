@@ -54,8 +54,6 @@ class BPDice(OrderPlugin):
         self.calculate()
         self.bonus_or_penalty()
 
-        print(f"Order: {self.order}")
-
         bp_type = "奖励骰" if self.bp_type == "bonus" else "惩罚骰" if self.bp_type == "penalty" else ""
         result = f"B{self.count}={self.dice_result}[{bp_type}:{' '.join(map(str, self.bp_results))}]={self.final_result}"
 

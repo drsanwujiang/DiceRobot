@@ -87,13 +87,9 @@ class ParametersInvalidError(HTTPError):
 
 
 def init_handlers(app: FastAPI) -> None:
-    logger.info("Initializing exception handlers")
-
     @app.exception_handler(HTTPError)
     async def http_exception_handler(_, e: HTTPError):
         return JSONResponse(
             status_code=e.status_code,
             content={"code": e.code, "message": e.message}
         )
-
-    logger.info("Exception handlers initialized")

@@ -27,6 +27,7 @@ apscheduler = "^3.10.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.1.0"
+python-dotenv = "^1.0.0"
 
 [[tool.poetry.source]]
 name = "tsinghua"

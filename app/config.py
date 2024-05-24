@@ -52,7 +52,9 @@ status: Config[str] = Config({
     "bot": {
         "id": -1,
         "nickname": ""
-    }
+    },
+    "friends": [],
+    "groups": []
 })
 settings: Config[str, Config] = Config({
     "security": {
@@ -87,8 +89,6 @@ chat_settings: Config[str, Config[int, Config]] = Config({
 
 
 def init_config() -> None:
-    logger.info("Initializing config")
-
     with Session() as session, session.begin():
         for item in session.execute(select(Settings)).scalars().fetchall():  # type: Settings
             try:
@@ -200,5 +200,3 @@ def save_config() -> None:
                             set_={"json": serialized}
                         )
                     )
-
-    logger.info("Config saved")

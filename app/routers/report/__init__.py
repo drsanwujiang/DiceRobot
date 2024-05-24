@@ -6,6 +6,7 @@ from ...log import logger
 from ...config import status
 from ...auth import verify_token
 from ...routers import Response
+from ...internal.enum import AppStatus
 from ...internal.parser import parse_message_chain_or_event
 from ...internal.message import Source, Quote, At, Plain, MessageChain
 from ...internal.event import Event
@@ -41,6 +42,11 @@ async def report(content: dict) -> Response:
 
 
 def handle_order(message_chain: MessageChain) -> None:
+    # Check app status
+    if status["app"] != AppStatus.RUNNING:
+        logger.info("Report skipped, DiceRobot not running")
+        return
+
     # Check handler status
     if not status["report"]["order"]:
         logger.info("Report skipped, order handler disabled")

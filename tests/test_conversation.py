@@ -2,7 +2,7 @@ from . import BaseTest
 
 
 class TestConversation(BaseTest):
-    def test_conversation(self, client):
+    def test_conversation(self, client, openai):
         self.wait_for_online(client)
 
         message_chain = self.build_group_message(".conv")

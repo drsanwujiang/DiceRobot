@@ -11,6 +11,21 @@ from app.internal.enum import AppStatus
 
 
 class BaseTest:
+    def wait_for_online(self, client: TestClient) -> None:
+        settings["security"]["webhook"]["token"] = "test"
+
+        logger.debug("Waiting for bot online")
+
+        client.post(
+            "/report",
+            params={"token": "test"},
+            json=self.build_bot_online_event().model_dump(by_alias=True)
+        )
+
+        time.sleep(1)
+
+        assert status["app"] == AppStatus.RUNNING
+
     @staticmethod
     def post_message(client: TestClient, message_chain: MessageChainOrEvent) -> dict:
         settings["security"]["webhook"]["token"] = "test"
@@ -79,16 +94,3 @@ class BaseTest:
                 }
             ]
         })
-
-    def wait_for_online(self, client: TestClient) -> None:
-        logger.debug("Waiting for bot online")
-
-        client.post(
-            "/report",
-            params={"token": "test"},
-            json=self.build_bot_online_event().model_dump(by_alias=True)
-        )
-
-        time.sleep(1)
-
-        assert status["app"] == AppStatus.RUNNING

@@ -4,10 +4,13 @@ import copy
 
 from app.config import Config, status, plugin_settings, replies, chat_settings
 from app.exceptions import OrderException
-from app.internal.message import Message, MessageChain, FriendMessage, GroupMessage, TempMessage
+from app.internal.message import Message, Plain, MessageChain, FriendMessage, GroupMessage, TempMessage
 from app.internal.event import Event
 from app.internal.enum import ChatType
-from app.internal.util import reply_to_sender, send_messages
+from app.internal.network import (
+    send_friend_message as mirai_send_friend_message, send_group_message as mirai_send_group_message,
+    send_temp_message as mirai_send_temp_message
+)
 
 
 class DiceRobotPlugin(ABC):
@@ -153,15 +156,60 @@ class OrderPlugin(DiceRobotPlugin):
 
         return reply
 
-    def reply_to_sender(self, reply_messages: str | list[Message]) -> None:
-        if isinstance(reply_messages, str):
-            reply_messages = self.format_reply(reply_messages)
+    def reply_to_sender(self, reply: str | list[Message]) -> None:
+        if isinstance(reply, str):
+            reply = [Plain.model_validate({"type": "Plain", "text": self.format_reply(reply)})]
 
-        reply_to_sender(self.message_chain, reply_messages)
+        self.reply_to_message_sender(self.message_chain, reply)
 
     @classmethod
-    def send_messages(cls, chat_type: ChatType, chat_id: int, messages: str | list[Message]) -> None:
-        send_messages(chat_type, chat_id, messages)
+    def reply_to_message_sender(cls, message_chain: MessageChain, reply: str | list[Message]) -> None:
+        if type(message_chain) is FriendMessage:
+            cls.send_friend_message(message_chain.sender.id, reply)
+        elif type(message_chain) is GroupMessage:
+            cls.send_group_message(message_chain.sender.group.id, reply)
+        elif type(message_chain) is TempMessage:
+            cls.send_temp_message(message_chain.sender.id, message_chain.sender.group.id, reply)
+        else:
+            raise RuntimeError("Invalid message chain type")
+
+    @staticmethod
+    def send_friend_message(chat_id: int, message: str | list[Message]) -> None:
+        if isinstance(message, str):
+            message = [Plain.model_validate({"type": "Plain", "text": message})]
+
+        mirai_send_friend_message({
+            "target": chat_id,
+            "message_chain": message
+        })
+
+    @staticmethod
+    def send_group_message(chat_id: int, message: str | list[Message]) -> None:
+        if isinstance(message, str):
+            message = [Plain.model_validate({"type": "Plain", "text": message})]
+
+        mirai_send_group_message({
+            "target": chat_id,
+            "message_chain": message
+        })
+
+    @staticmethod
+    def send_temp_message(target_id: int, group_id: int, message: str | list[Message]) -> None:
+        if isinstance(message, str):
+            message = [Plain.model_validate({"type": "Plain", "text": message})]
+
+        mirai_send_temp_message({
+            "qq": target_id,
+            "group": group_id,
+            "message_chain": message
+        })
+
+    @classmethod
+    def send_friend_or_temp_message(cls, target_id: int, group_id: int, messages: str | list[Message]) -> None:
+        if target_id in status["friends"]:
+            cls.send_friend_message(target_id, messages)
+        else:
+            cls.send_temp_message(target_id, group_id, messages)
 
 
 class EventPlugin(DiceRobotPlugin):

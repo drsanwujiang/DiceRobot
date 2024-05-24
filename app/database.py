@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .log import logger
 from .models import Base
 
 
@@ -9,18 +8,10 @@ engine = create_engine("sqlite:///database.db", connect_args={"check_same_thread
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def init_db() -> None:
-    logger.info("Initializing database")
-
+def init_database() -> None:
     engine.connect()
     Base.metadata.create_all(bind=engine)
 
-    logger.info("Database initialized")
 
-
-def clean_db() -> None:
-    logger.info("Cleaning database")
-
+def clean_database() -> None:
     engine.dispose()
-
-    logger.info("Database cleaned")

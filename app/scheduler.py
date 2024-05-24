@@ -10,19 +10,17 @@ scheduler = BackgroundScheduler()
 
 
 def init_scheduler() -> None:
-    from .internal.task import check_bot_status
+    from .internal.task import check_bot_status, refresh_friend_list, refresh_group_list
 
-    logger.info("Initializing scheduler")
-
-    scheduler.add_job(check_bot_status, id="dicerobot.check_bot_status", trigger="interval", minutes=1)
     scheduler.add_job(save_config, id="dicerobot.save_config", trigger="interval", minutes=5)
+    scheduler.add_job(check_bot_status, id="dicerobot.check_bot_status", trigger="interval", minutes=1)
+    scheduler.add_job(refresh_friend_list, id="dicerobot.refresh_friend_list", trigger="interval", minutes=5)
+    scheduler.add_job(refresh_group_list, id="dicerobot.refresh_group_list", trigger="interval", minutes=5)
 
     logger.info("Scheduler initialized")
 
 
 def start_scheduler() -> None:
-    logger.info("Starting scheduler")
-
     scheduler.modify_job("dicerobot.check_bot_status", next_run_time=datetime.now() + timedelta(seconds=3))
     scheduler.start()
 
@@ -30,8 +28,6 @@ def start_scheduler() -> None:
 
 
 def clean_scheduler() -> None:
-    logger.info("Cleaning scheduler")
+    logger.info("Clean scheduler")
 
     scheduler.shutdown()
-
-    logger.info("Scheduler cleaned")

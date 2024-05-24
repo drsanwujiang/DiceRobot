@@ -10,7 +10,6 @@ from ..config import plugin_settings, replies, Config
 from ..exceptions import DiceRobotException
 from .message import MessageChain
 from .event import Event
-from .util import reply_to_sender
 
 
 class Dispatcher:
@@ -23,8 +22,6 @@ class Dispatcher:
         self.events: dict[str, list[str]] = {}
 
     def load_plugins(self) -> None:
-        logger.info("Loading plugins")
-
         package = importlib.import_module("plugins")
 
         for _, name, _ in pkgutil.walk_packages(package.__path__):
@@ -45,7 +42,7 @@ class Dispatcher:
                 self.load_plugin_settings(plugin)
                 plugin.init_plugin()
 
-        logger.success(f"{len(self.order_plugins)} order plugins and {len(self.event_plugins)} event plugins loaded")
+        logger.info(f"{len(self.order_plugins)} order plugins and {len(self.event_plugins)} event plugins loaded")
 
     @staticmethod
     def load_plugin_settings(plugin: Type[DiceRobotPlugin]) -> None:
@@ -53,8 +50,6 @@ class Dispatcher:
         replies[plugin.name] = Config().update(copy.deepcopy(plugin.default_replies)).update(replies.get(plugin.name, {}))
 
     def load_orders_and_events(self) -> None:
-        logger.info("Loading orders and events")
-
         orders = {}
 
         for plugin_name, plugin in self.order_plugins.items():
@@ -87,7 +82,7 @@ class Dispatcher:
         self.orders = dict(sorted(orders.items(), reverse=True))
         self.events = events
 
-        logger.success(f"{sum(len(orders) for orders in self.orders.values())} orders and {len(self.events)} events loaded")
+        logger.info(f"{sum(len(orders) for orders in self.orders.values())} orders and {len(self.events)} events loaded")
 
     def dispatch_order(self, message_chain: MessageChain, message_content: str) -> None:
         match = Dispatcher.order_pattern.fullmatch(message_content)
@@ -108,13 +103,15 @@ class Dispatcher:
 
         logger.info(f"Dispatch to plugin {plugin_name}")
 
+        plugin_class = self.order_plugins[plugin_name]
+
         try:
-            plugin = self.order_plugins[plugin_name](message_chain, order.lower(), order_content)
+            plugin = plugin_class(message_chain, order.lower(), order_content)
 
             if plugin.check_enabled():
                 plugin()
         except DiceRobotException as e:
-            reply_to_sender(message_chain, e.reply)
+            plugin_class.reply_to_message_sender(message_chain, e.reply)
         except Exception as e:
             logger.exception(
                 f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {message_chain.__class__.__name__}"
@@ -148,8 +145,6 @@ dispatcher = Dispatcher()
 
 
 def init_dispatcher() -> None:
-    logger.info("Initializing dispatcher")
-
     dispatcher.load_plugins()
     dispatcher.load_orders_and_events()
 

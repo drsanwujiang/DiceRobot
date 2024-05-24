@@ -51,26 +51,17 @@ class Dice(OrderPlugin):
         self.detailed_dice_result = ""
         self.dice_result = ""
         self.final_result = ""
+        self.complete_expression = ""
 
     def __call__(self) -> None:
         self.parse_content()
         self.calculate_expression()
-
-        # Beautify expression and results
-        self.expression = self.expression.replace("*", "×")
-        self.detailed_dice_result = self.detailed_dice_result.replace("*", "×")
-        self.dice_result = self.dice_result.replace("*", "×")
-
-        # Omit duplicate results
-        complete_expression = f"{self.expression}={self.detailed_dice_result}"
-        complete_expression += "" if self.detailed_dice_result == self.dice_result else f"={self.dice_result}"
-        complete_expression += "" if self.dice_result == self.final_result else f"={self.final_result}"
+        self.generate_results()
 
         self.update_reply_variables({
             "掷骰原因": self.reason,
-            "掷骰结果": complete_expression
+            "掷骰结果": self.complete_expression
         })
-
         self.reply_to_sender(self.get_reply("result_with_reason" if self.reason else "result"))
 
     def parse_content(self) -> None:
@@ -132,6 +123,17 @@ class Dice(OrderPlugin):
             self.final_result = str(eval(self.dice_result, {}, {}))
         except (ValueError, SyntaxError):
             raise OrderException(self.get_reply("expression_error"))
+
+    def generate_results(self) -> None:
+        # Beautify expression and results
+        self.expression = self.expression.replace("*", "×")
+        self.detailed_dice_result = self.detailed_dice_result.replace("*", "×")
+        self.dice_result = self.dice_result.replace("*", "×")
+
+        # Omit duplicate results
+        self.complete_expression = f"{self.expression}={self.detailed_dice_result}"
+        self.complete_expression += "" if self.detailed_dice_result == self.dice_result else f"={self.dice_result}"
+        self.complete_expression += "" if self.dice_result == self.final_result else f"={self.final_result}"
 
 
 class DiceExpression:

@@ -63,4 +63,4 @@ class DailySixtySeconds(OrderPlugin):
             message = cls.get_reply("api_error")
 
         for chat_id in cls.get_setting("subscribers"):
-            cls.send_messages(ChatType.GROUP, chat_id, message)
+            cls.send_group_message(chat_id, message)
