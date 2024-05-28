@@ -1,9 +1,9 @@
-from ..log import logger
-from ..scheduler import scheduler
-from ..config import status
-from ..exceptions import DiceRobotException
+from .log import logger
+from .schedule import scheduler
+from .config import status
+from .exceptions import DiceRobotException
 from .enum import AppStatus
-from .network import get_bot_list, get_bot_profile, get_friend_list, get_group_list
+from .network.mirai import get_bot_list, get_bot_profile, get_friend_list, get_group_list
 
 state_tasks = [
     "dicerobot.check_bot_status",

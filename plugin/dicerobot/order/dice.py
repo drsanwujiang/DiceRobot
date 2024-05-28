@@ -1,8 +1,8 @@
 import re
 import random
 
-from app.exceptions import OrderException
-from plugins import OrderPlugin
+from plugin import OrderPlugin
+from app.exceptions import OrderError
 
 
 class Dice(OrderPlugin):
@@ -11,10 +11,14 @@ class Dice(OrderPlugin):
     description = "掷一个或一堆骰子"
     version = "1.0.0"
 
-    default_settings = {
+    default_plugin_settings = {
         "max_count": 100,
         "max_surface": 1000
     }
+    default_chat_settings = {
+        "default_surface": 100
+    }
+
     default_replies = {
         "result": "{&发送者}骰出了：{&掷骰结果}",
         "result_with_reason": "由于{&掷骰原因}，{&发送者}骰出了：{&掷骰结果}",
@@ -27,9 +31,6 @@ class Dice(OrderPlugin):
         "掷骰原因",
         "掷骰结果"
     ]
-    default_chat_settings = {
-        "default_surface": 100
-    }
 
     orders = [
         "r", "掷骰"
@@ -62,7 +63,7 @@ class Dice(OrderPlugin):
             "掷骰原因": self.reason,
             "掷骰结果": self.complete_expression
         })
-        self.reply_to_sender(self.get_reply("result_with_reason" if self.reason else "result"))
+        self.reply_to_sender(self.get_reply(key="result_with_reason" if self.reason else "result"))
 
     def parse_content(self) -> None:
         # Parse order content into possible expression and reason
@@ -91,18 +92,18 @@ class Dice(OrderPlugin):
             if Dice._dice_expression_pattern.fullmatch(parts[i]):
                 dice_expression = DiceExpression(
                     parts[i],
-                    self.get_chat_setting("default_surface"),
-                    self.get_setting("max_count"),
-                    self.get_setting("max_surface")
+                    self.get_chat_setting(key="default_surface"),
+                    self.get_plugin_setting(key="max_count"),
+                    self.get_plugin_setting(key="max_surface")
                 )
 
                 # Check count, surface and max result count (K number)
                 if dice_expression.count > dice_expression.max_count:
-                    raise OrderException(self.get_reply("max_count_exceeded"))
+                    raise OrderError(self.get_reply(key="max_count_exceeded"))
                 elif dice_expression.surface > dice_expression.max_surface:
-                    raise OrderException(self.get_reply("max_surface_exceeded"))
+                    raise OrderError(self.get_reply(key="max_surface_exceeded"))
                 elif dice_expression.max_result_count > dice_expression.count:
-                    raise OrderException(self.get_reply("expression_invalid"))
+                    raise OrderError(self.get_reply(key="expression_invalid"))
 
                 # Calculate results
                 dice_expression.calculate()
@@ -117,12 +118,12 @@ class Dice(OrderPlugin):
         self.dice_result = "".join(result_parts)
 
         if not Dice._math_expression_pattern.fullmatch(self.dice_result):
-            raise OrderException(self.get_reply("expression_invalid"))
+            raise OrderError(self.get_reply(key="expression_invalid"))
 
         try:
             self.final_result = str(eval(self.dice_result, {}, {}))
         except (ValueError, SyntaxError):
-            raise OrderException(self.get_reply("expression_error"))
+            raise OrderError(self.get_reply(key="expression_error"))
 
     def generate_results(self) -> None:
         # Beautify expression and results

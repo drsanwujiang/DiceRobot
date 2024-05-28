@@ -1,10 +1,11 @@
 from datetime import date
 
-from plugins import OrderPlugin
+from plugin import OrderPlugin
 from app.config import status
-from app.exceptions import OrderInvalidError, OrderException
-from app.internal.enum import ChatType
-from app.internal.network import set_group_member_info
+from app.exceptions import OrderInvalidError, OrderError
+from app.enum import ChatType
+from app.models.network.mirai import SetGroupMemberInfoRequest
+from app.network.mirai import set_group_member_info
 
 
 class Bot(OrderPlugin):
@@ -78,7 +79,7 @@ class Bot(OrderPlugin):
             "版本": status["version"],
             "当前年份": date.today().year
         })
-        self.reply_to_sender(self.get_reply("about"))
+        self.reply_to_sender(self.get_reply(key="about"))
 
     def enable(self) -> None:
         # Ignore if not in group chat
@@ -89,10 +90,10 @@ class Bot(OrderPlugin):
             raise OrderInvalidError()
 
         if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
-            raise OrderException(self.get_reply("enable_denied"))
+            raise OrderError(self.get_reply(key="enable_denied"))
 
-        self.set_chat_setting("enabled", True, group="dicerobot")
-        self.reply_to_sender(self.get_reply("enable"))
+        self.set_chat_setting(group="dicerobot", key="enabled", value=True)
+        self.reply_to_sender(self.get_reply(key="enable"))
 
     def disable(self) -> None:
         # Ignore if not in group chat
@@ -103,10 +104,10 @@ class Bot(OrderPlugin):
             raise OrderInvalidError()
 
         if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
-            raise OrderException(self.get_reply("disable_denied"))
+            raise OrderError(self.get_reply(key="disable_denied"))
 
-        self.set_chat_setting("enabled", True, group="dicerobot")
-        self.reply_to_sender(self.get_reply("disable"))
+        self.set_chat_setting(group="dicerobot", key="enabled", value=False)
+        self.reply_to_sender(self.get_reply(key="disable"))
 
     def nickname(self) -> None:
         # Ignore if not in group chat
@@ -114,35 +115,35 @@ class Bot(OrderPlugin):
             return
 
         if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
-            raise OrderException(self.get_reply("nickname_denied"))
+            raise OrderError(self.get_reply(key="nickname_denied"))
 
         if self.suborder_content:
             # Set nickname
-            self.set_chat_setting("nickname", self.suborder_content, group="dicerobot")
-            set_group_member_info({
-                "target": self.chat_id,
-                "member_id": status["bot"]["id"],
-                "info": {
-                    "name": self.suborder_content
-                }
-            })
+            self.set_chat_setting(group="dicerobot", key="nickname", value=self.suborder_content)
+            set_group_member_info(SetGroupMemberInfoRequest(
+                target=self.chat_id,
+                member_id=status["bot"]["id"],
+                info=SetGroupMemberInfoRequest.Info(
+                    name=self.suborder_content
+                )
+            ))
             self.update_reply_variables({
                 "机器人": self.suborder_content,
                 "机器人昵称": self.suborder_content
             })
-            self.reply_to_sender(self.get_reply("nickname_set"))
+            self.reply_to_sender(self.get_reply(key="nickname_set"))
         else:
             # Unset nickname
-            self.set_chat_setting("nickname", "", group="dicerobot")
-            set_group_member_info({
-                "target": self.chat_id,
-                "member_id": status["bot"]["id"],
-                "info": {
-                    "name": ""
-                }
-            })
+            self.set_chat_setting(group="dicerobot", key="nickname", value="")
+            set_group_member_info(SetGroupMemberInfoRequest(
+                target=self.chat_id,
+                member_id=status["bot"]["id"],
+                info=SetGroupMemberInfoRequest.Info(
+                    name=""
+                )
+            ))
             self.update_reply_variables({
                 "机器人": status["bot"]["nickname"],
                 "机器人昵称": status["bot"]["nickname"]
             })
-            self.reply_to_sender(self.get_reply("nickname_unset"))
+            self.reply_to_sender(self.get_reply(key="nickname_unset"))

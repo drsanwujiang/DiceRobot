@@ -1,8 +1,8 @@
 import re
 import random
 
-from plugins import OrderPlugin
-from app.exceptions import OrderException
+from plugin import OrderPlugin
+from app.exceptions import OrderError
 
 
 class BPDice(OrderPlugin):
@@ -11,9 +11,10 @@ class BPDice(OrderPlugin):
     description = "掷一个骰子，以及一个或多个奖励骰/惩罚骰"
     version = "1.0.0"
 
-    default_settings = {
+    default_plugin_settings = {
         "max_count": 100
     }
+
     default_replies = {
         "result": "{&发送者}骰出了：{&掷骰结果}",
         "result_with_reason": "由于{&掷骰原因}，{&发送者}骰出了：{&掷骰结果}",
@@ -61,7 +62,7 @@ class BPDice(OrderPlugin):
             "掷骰原因": self.reason,
             "掷骰结果": result
         })
-        self.reply_to_sender(self.get_reply("result_with_reason" if self.reason else "result"))
+        self.reply_to_sender(self.get_reply(key="result_with_reason" if self.reason else "result"))
 
     def parse_content(self) -> None:
         if self.order in BPDice._bp_types["bonus"]:
@@ -69,7 +70,7 @@ class BPDice(OrderPlugin):
         elif self.order in BPDice._bp_types["penalty"]:
             self.bp_type = "penalty"
         else:
-            raise OrderException("Invalid order")
+            raise OrderError("Invalid order")
 
         # Parse order content into possible count and reason
         match = BPDice._content_pattern.fullmatch(self.order_content)
@@ -78,8 +79,8 @@ class BPDice(OrderPlugin):
 
     def calculate(self) -> None:
         # Check count
-        if self.count > self.get_setting("max_count"):
-            raise OrderException(self.get_reply("max_count_exceeded"))
+        if self.count > self.get_plugin_setting(key="max_count"):
+            raise OrderError(self.get_reply(key="max_count_exceeded"))
 
         # Calculate result
         self.dice_result = random.randint(1, 100)

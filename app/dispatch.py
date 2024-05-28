@@ -4,12 +4,12 @@ import pkgutil
 import re
 import copy
 
-from plugins import DiceRobotPlugin, OrderPlugin, EventPlugin
-from ..log import logger
-from ..config import plugin_settings, replies, Config
-from ..exceptions import DiceRobotException
-from .message import MessageChain
-from .event import Event
+from plugin import DiceRobotPlugin, OrderPlugin, EventPlugin
+from .log import logger
+from .config import plugin_settings, replies, Config
+from .exceptions import DiceRobotException
+from .models.message import MessageChain
+from .models.event import Event
 
 
 class Dispatcher:
@@ -22,7 +22,7 @@ class Dispatcher:
         self.events: dict[str, list[str]] = {}
 
     def load_plugins(self) -> None:
-        package = importlib.import_module("plugins")
+        package = importlib.import_module("plugin")
 
         for _, name, _ in pkgutil.walk_packages(package.__path__):
             try:
@@ -46,8 +46,16 @@ class Dispatcher:
 
     @staticmethod
     def load_plugin_settings(plugin: Type[DiceRobotPlugin]) -> None:
-        plugin_settings[plugin.name] = Config({"enabled": True}).update(copy.deepcopy(plugin.default_settings)).update(plugin_settings.get(plugin.name, {}))
-        replies[plugin.name] = Config().update(copy.deepcopy(plugin.default_replies)).update(replies.get(plugin.name, {}))
+        plugin_settings[plugin.name] = Config({"enabled": True}).update(
+            copy.deepcopy(plugin.default_plugin_settings)
+        ).update(
+            plugin_settings.get(plugin.name, {})
+        )
+        replies[plugin.name] = Config().update(
+            copy.deepcopy(plugin.default_replies)
+        ).update(
+            replies.get(plugin.name, {})
+        )
 
     def load_orders_and_events(self) -> None:
         orders = {}
@@ -108,8 +116,11 @@ class Dispatcher:
         try:
             plugin = plugin_class(message_chain, order.lower(), order_content)
 
-            if plugin.check_enabled():
-                plugin()
+            if not plugin.check_enabled():
+                logger.info("Plugin disabled, execution skipped")
+                return
+
+            plugin()
         except DiceRobotException as e:
             plugin_class.reply_to_message_sender(message_chain, e.reply)
         except Exception as e:

@@ -2,12 +2,13 @@ from abc import ABC, abstractmethod
 from typing import Type, Any
 import copy
 
-from app.config import Config, status, plugin_settings, replies, chat_settings
-from app.exceptions import OrderException
-from app.internal.message import Message, Plain, MessageChain, FriendMessage, GroupMessage, TempMessage
-from app.internal.event import Event
-from app.internal.enum import ChatType
-from app.internal.network import (
+from app.config import status, plugin_settings, replies, chat_settings
+from app.exceptions import OrderError
+from app.enum import ChatType
+from app.models.message import Message, Plain, MessageChain, FriendMessage, GroupMessage, TempMessage
+from app.models.event import Event
+from app.models.network.mirai import SendFriendMessageRequest, SendGroupMessageRequest, SendTempMessageRequest
+from app.network.mirai import (
     send_friend_message as mirai_send_friend_message, send_group_message as mirai_send_group_message,
     send_temp_message as mirai_send_temp_message
 )
@@ -19,7 +20,8 @@ class DiceRobotPlugin(ABC):
     description: str
     version: str
 
-    default_settings: dict[str] = {}
+    default_plugin_settings: dict[str] = {}
+
     default_replies: dict[str] = {}
     supported_reply_variables: list[str] = []
 
@@ -28,18 +30,12 @@ class DiceRobotPlugin(ABC):
         pass
 
     @classmethod
-    def get_setting(cls, key: str, group: str = None) -> Any:
-        if group:
-            return plugin_settings[group][key]
-        else:
-            return plugin_settings[cls.name][key]
+    def get_plugin_setting(cls, *, group: str = None, key: str) -> Any:
+        return plugin_settings[group or cls.name][key]
 
     @classmethod
-    def get_reply(cls, key: str, group: str = None) -> str:
-        if group:
-            return replies[group][key]
-        else:
-            return replies[cls.name][key]
+    def get_reply(cls, *, group: str = None, key: str) -> str:
+        return replies[group or cls.name][key]
 
     @abstractmethod
     def __call__(self) -> None:
@@ -47,6 +43,8 @@ class DiceRobotPlugin(ABC):
 
 
 class OrderPlugin(DiceRobotPlugin):
+    default_chat_settings = {}
+
     supported_reply_variables: list[str] = [
         "机器人昵称",
         "机器人QQ",
@@ -58,7 +56,6 @@ class OrderPlugin(DiceRobotPlugin):
         "发送者QQ",
         "发送者QQ号"
     ]
-    default_chat_settings = {}
 
     orders: str | list[str]
     priority: int = 100
@@ -68,7 +65,6 @@ class OrderPlugin(DiceRobotPlugin):
 
         self.chat_type = ChatType.OTHER
         self.chat_id = -1
-        self.chat_settings = Config()
 
         self.message_chain = message_chain
         self.order = order
@@ -76,14 +72,14 @@ class OrderPlugin(DiceRobotPlugin):
 
         self.reply_variables = {}
 
-        self.load_chat_config()
-        self.init_reply_variables()
+        self._load_chat_config()
+        self._init_reply_variables()
 
     @abstractmethod
     def __call__(self) -> None:
         pass
 
-    def load_chat_config(self) -> None:
+    def _load_chat_config(self) -> None:
         if type(self.message_chain) is FriendMessage:
             self.chat_type = ChatType.FRIEND
             self.chat_id = self.message_chain.sender.id
@@ -93,9 +89,6 @@ class OrderPlugin(DiceRobotPlugin):
         elif type(self.message_chain) is TempMessage:
             self.chat_type = ChatType.TEMP
             self.chat_id = self.message_chain.sender.group.id
-            self.chat_settings = copy.deepcopy(self.default_chat_settings)
-
-            return
 
         # Create chat settings if not exists
         if self.chat_id not in chat_settings[self.chat_type]:
@@ -107,21 +100,7 @@ class OrderPlugin(DiceRobotPlugin):
         if self.name not in chat_settings[self.chat_type][self.chat_id]:
             chat_settings[self.chat_type][self.chat_id][self.name] = copy.deepcopy(self.default_chat_settings)
 
-        self.chat_settings = chat_settings[self.chat_type][self.chat_id][self.name]
-
-    def get_chat_setting(self, key: str, group: str = None) -> Any:
-        if group:
-            return chat_settings[self.chat_type][self.chat_id][group][key]
-        else:
-            return self.chat_settings[key]
-
-    def set_chat_setting(self, key: str, value: Any, group: str = None) -> None:
-        if group:
-            chat_settings[self.chat_type][self.chat_id][group][key] = value
-        else:
-            self.chat_settings[key] = value
-
-    def init_reply_variables(self) -> None:
+    def _init_reply_variables(self) -> None:
         bot_id = status["bot"]["id"]
         bot_nickname = chat_settings[self.chat_type][self.chat_id]["dicerobot"].setdefault("nickname", "")
         sender_id = self.message_chain.sender.id,
@@ -140,12 +119,18 @@ class OrderPlugin(DiceRobotPlugin):
             "发送者昵称": sender_nickname
         }
 
+    def get_chat_setting(self, *, group: str = None, key: str) -> Any:
+        return chat_settings[self.chat_type][self.chat_id][group or self.name][key]
+
+    def set_chat_setting(self, *, group: str = None, key: str, value: Any) -> None:
+        chat_settings[self.chat_type][self.chat_id][group or self.name][key] = value
+
     def check_enabled(self) -> bool:
         return chat_settings[self.chat_type][self.chat_id]["dicerobot"].setdefault("enabled", True)
 
     def check_order_content(self) -> None:
         if not self.order_content:
-            raise OrderException(self.get_reply(group="dicerobot", key="order_invalid"))
+            raise OrderError(self.get_reply(group="dicerobot", key="order_invalid"))
 
     def update_reply_variables(self, d: dict[str, Any]) -> None:
         self.reply_variables |= d
@@ -178,31 +163,31 @@ class OrderPlugin(DiceRobotPlugin):
         if isinstance(message, str):
             message = [Plain.model_validate({"type": "Plain", "text": message})]
 
-        mirai_send_friend_message({
-            "target": chat_id,
-            "message_chain": message
-        })
+        mirai_send_friend_message(SendFriendMessageRequest(
+            target=chat_id,
+            message_chain=message
+        ))
 
     @staticmethod
     def send_group_message(chat_id: int, message: str | list[Message]) -> None:
         if isinstance(message, str):
             message = [Plain.model_validate({"type": "Plain", "text": message})]
 
-        mirai_send_group_message({
-            "target": chat_id,
-            "message_chain": message
-        })
+        mirai_send_group_message(SendGroupMessageRequest(
+            target=chat_id,
+            message_chain=message
+        ))
 
     @staticmethod
     def send_temp_message(target_id: int, group_id: int, message: str | list[Message]) -> None:
         if isinstance(message, str):
             message = [Plain.model_validate({"type": "Plain", "text": message})]
 
-        mirai_send_temp_message({
-            "qq": target_id,
-            "group": group_id,
-            "message_chain": message
-        })
+        mirai_send_temp_message(SendTempMessageRequest(
+            qq=target_id,
+            group=group_id,
+            message_chain=message
+        ))
 
     @classmethod
     def send_friend_or_temp_message(cls, target_id: int, group_id: int, messages: str | list[Message]) -> None:

@@ -4,10 +4,10 @@ from fastapi.testclient import TestClient
 
 from app.log import logger
 from app.config import status, settings
-from app.internal import MessageChainOrEvent
-from app.internal.event import BotOnlineEvent
-from app.internal.message import FriendMessage, GroupMessage
-from app.internal.enum import AppStatus
+from app.enum import AppStatus
+from app.models import MessageChainOrEvent
+from app.models.event import BotOnlineEvent
+from app.models.message import FriendMessage, GroupMessage
 
 
 class BaseTest:
@@ -72,7 +72,7 @@ class BaseTest:
                 "id": 88888,
                 "memberName": "Kaworu",
                 "specialTitle": "",
-                "permission": "MEMBER",
+                "permission": "ADMINISTRATOR",
                 "joinTimestamp": 1600000000,
                 "lastSpeakTimestamp": 1650000000,
                 "muteTimeRemaining": 0,

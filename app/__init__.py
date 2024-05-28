@@ -8,8 +8,8 @@ from .database import init_database, clean_database
 from .config import init_config, save_config
 from .exceptions import init_handlers
 from .routers import init_routers
-from .scheduler import init_scheduler, start_scheduler, clean_scheduler
-from .internal import init_internal, clean_internal
+from .schedule import init_scheduler, clean_scheduler
+from .dispatch import init_dispatcher
 
 
 @asynccontextmanager
@@ -21,13 +21,12 @@ async def lifespan(app: FastAPI):
 
     init_database()
     init_config()
-    init_scheduler()
-    init_internal()
 
     init_handlers(app)
     init_routers(app)
 
-    start_scheduler()
+    init_dispatcher()
+    init_scheduler()
 
     logger.success("DiceRobot started")
 
@@ -35,7 +34,6 @@ async def lifespan(app: FastAPI):
 
     logger.info("Stop DiceRobot")
 
-    clean_internal()
     clean_scheduler()
     save_config()
     clean_database()

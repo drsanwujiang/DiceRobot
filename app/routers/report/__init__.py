@@ -6,12 +6,24 @@ from ...log import logger
 from ...config import status
 from ...auth import verify_token
 from ...routers import Response
-from ...internal.enum import AppStatus
-from ...internal.parser import parse_message_chain_or_event
-from ...internal.message import Source, Quote, At, Plain, MessageChain
-from ...internal.event import Event
-from ...internal.dispatcher import dispatcher
+from ...dispatch import dispatcher
+from ...enum import AppStatus
+from ...exceptions import MessageInvalidError
+from ...models import MessageChainOrEvent
+from ...models.message import Source, Quote, At, Plain, MessageChain, FriendMessage, GroupMessage, TempMessage
+from ...models.event import (
+    Event, BotOnlineEvent, BotReloginEvent, BotOfflineEventActive, BotOfflineEventForce, BotOfflineEventDropped,
+    NewFriendRequestEvent, BotInvitedJoinGroupRequestEvent
+)
 
+parsable_message_chains = [
+    "FriendMessage", "GroupMessage", "TempMessage"
+]
+
+parsable_events = [
+    "BotOnlineEvent", "BotReloginEvent", "BotOfflineEventActive", "BotOfflineEventForce", "BotOfflineEventDropped",
+    "NewFriendRequestEvent", "BotInvitedJoinGroupRequestEvent"
+]
 
 router = APIRouter()
 
@@ -22,16 +34,16 @@ async def report(content: dict) -> Response:
     logger.info("Report started")
 
     try:
-        message_chain_or_event = parse_message_chain_or_event(content)
+        message_chain_or_event = _parse_message_chain_or_event(content)
     except ValueError:
         logger.info("Report skipped, message chain or event unparsable")
         return Response(code=1, message="Filtered")
 
     try:
         if isinstance(message_chain_or_event, MessageChain):
-            handle_order(message_chain_or_event)
+            _handle_order(message_chain_or_event)
         elif isinstance(message_chain_or_event, Event):
-            handle_event(message_chain_or_event)
+            _handle_event(message_chain_or_event)
 
         logger.info("Report finished")
     except RuntimeError:
@@ -41,7 +53,21 @@ async def report(content: dict) -> Response:
     return Response()
 
 
-def handle_order(message_chain: MessageChain) -> None:
+def _parse_message_chain_or_event(message_chain_or_event: dict) -> MessageChain | Event:
+    try:
+        _message_chain_or_event = MessageChainOrEvent.model_validate(message_chain_or_event)
+
+        if _message_chain_or_event.type in parsable_message_chains:
+            return globals()[_message_chain_or_event.type].model_validate(message_chain_or_event)
+        elif _message_chain_or_event.type in parsable_events:
+            return globals()[_message_chain_or_event.type].model_validate(message_chain_or_event)
+        else:
+            raise ValueError(f"Unparsable message chain or event type: {_message_chain_or_event.type}")
+    except (KeyError, ValueError):
+        raise MessageInvalidError()
+
+
+def _handle_order(message_chain: MessageChain) -> None:
     # Check app status
     if status["app"] != AppStatus.RUNNING:
         logger.info("Report skipped, DiceRobot not running")
@@ -72,7 +98,7 @@ def handle_order(message_chain: MessageChain) -> None:
     dispatcher.dispatch_order(message_chain, message_content.strip())
 
 
-def handle_event(event: Event) -> None:
+def _handle_event(event: Event) -> None:
     # Check handler status
     if not status["report"]["event"]:
         logger.info("Report skipped, event handler disabled")

@@ -1,9 +1,9 @@
 from pydantic import conlist
 
-from plugins import OrderPlugin
-from app.exceptions import OrderInvalidError, OrderException
-from app.internal import BaseModel
-from app.internal.network import client
+from plugin import OrderPlugin
+from app.exceptions import OrderInvalidError, OrderError
+from app.models import BaseModel
+from app.network import client
 
 
 class Chat(OrderPlugin):
@@ -12,11 +12,12 @@ class Chat(OrderPlugin):
     description = "使用 OpenAI 的 GPT 模型进行聊天对话"
     version = "1.0.0"
 
-    default_settings = {
+    default_plugin_settings = {
         "domain": "api.openai.com",
         "api_key": "",
         "model": "gpt-4o"
     }
+
     default_replies = {
         "unusable": "请先设置神秘代码~",
         "rate_limit_exceeded": "哎呀，思考不过来了呢……请重新再试一次吧~"
@@ -30,12 +31,12 @@ class Chat(OrderPlugin):
     def __call__(self) -> None:
         self.check_order_content()
 
-        if not (api_key := self.get_setting("api_key")):
-            raise OrderException(self.get_reply("unusable"))
+        if not (api_key := self.get_plugin_setting(key="api_key")):
+            raise OrderError(self.get_reply(key="unusable"))
 
         try:
             request = ChatCompletionRequest.model_validate({
-                "model": self.get_setting("model"),
+                "model": self.get_plugin_setting(key="model"),
                 "messages": [{
                     "role": "user",
                     "content": self.order_content
@@ -46,7 +47,7 @@ class Chat(OrderPlugin):
             raise OrderInvalidError()
 
         result = client.post(
-            "https://" + self.get_setting("domain") + "/v1/chat/completions",
+            "https://" + self.get_plugin_setting(key="domain") + "/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {api_key}"
             },
@@ -57,7 +58,7 @@ class Chat(OrderPlugin):
         try:
             response = ChatCompletionResponse.model_validate(result)
         except ValueError:
-            raise OrderException(self.get_reply("rate_limit_exceeded"))
+            raise OrderError(self.get_reply(key="rate_limit_exceeded"))
 
         self.reply_to_sender(response.choices[0].message.content)
 

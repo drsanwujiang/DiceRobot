@@ -2,7 +2,6 @@ from fastapi import APIRouter
 
 from ...config import status, replies, settings, plugin_settings, chat_settings
 from ...routers import Response
-from ...internal import BaseModel
 
 
 router = APIRouter()
@@ -16,15 +15,6 @@ async def get_status() -> Response:
 @router.get("/reply")
 async def get_reply() -> Response:
     return Response(data=replies)
-
-
-class SetReplyRequest(BaseModel):
-    reply: dict[str, dict[str, str]]
-
-
-@router.patch("/reply")
-async def set_reply() -> Response:
-    return Response()
 
 
 @router.get("/settings")

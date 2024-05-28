@@ -1,9 +1,9 @@
 from pydantic import TypeAdapter
 
-from plugins import OrderPlugin
-from plugins.dicerobot.order.chat import ChatCompletion, ChatCompletionRequest, ChatCompletionResponse
-from app.exceptions import OrderInvalidError, OrderException
-from app.internal.network import client
+from plugin import OrderPlugin
+from plugin.dicerobot.order.chat import ChatCompletion, ChatCompletionRequest, ChatCompletionResponse
+from app.exceptions import OrderInvalidError, OrderError
+from app.network import client
 
 
 class Conversation(OrderPlugin):
@@ -12,11 +12,16 @@ class Conversation(OrderPlugin):
     description = "使用 OpenAI 的 GPT 模型进行连续的聊天对话"
     version = "1.0.0"
 
-    default_settings = {
+    default_plugin_settings = {
         "domain": "api.openai.com",
         "api_key": "",
         "model": "gpt-4o"
     }
+    default_chat_settings = {
+        "conversation": [],
+        "tokens": 0
+    }
+
     default_replies = {
         "unusable": "请先设置神秘代码~",
         "new_conversation": "让我们开始吧~",
@@ -31,10 +36,6 @@ class Conversation(OrderPlugin):
         "设定列表",
         "当前使用量"
     ]
-    default_chat_settings = {
-        "conversation": [],
-        "tokens": 0
-    }
 
     orders = [
         "conv", "对话",
@@ -43,8 +44,8 @@ class Conversation(OrderPlugin):
     priority = 100
 
     def __call__(self) -> None:
-        if not self.get_setting("api_key"):
-            raise OrderException(self.get_reply("unusable"))
+        if not self.get_plugin_setting(key="api_key"):
+            raise OrderError(self.get_reply(key="unusable"))
 
         if self.order in ["conv", "对话"]:
             if self.order_content in ["usage", "使用量"]:
@@ -65,7 +66,7 @@ class Conversation(OrderPlugin):
 
             try:
                 request = ChatCompletionRequest.model_validate({
-                    "model": self.get_setting("model"),
+                    "model": self.get_plugin_setting(key="model"),
                     "messages": conversation,
                     "user": f"{self.chat_type.value}-{self.chat_id}"
                 })
@@ -73,9 +74,9 @@ class Conversation(OrderPlugin):
                 raise OrderInvalidError()
 
             result = client.post(
-                "https://" + self.get_setting("domain") + "/v1/chat/completions",
+                "https://" + self.get_plugin_setting(key="domain") + "/v1/chat/completions",
                 headers={
-                    "Authorization": "Bearer " + self.get_setting("api_key")
+                    "Authorization": "Bearer " + self.get_plugin_setting(key="api_key")
                 },
                 json=request.model_dump(exclude_none=True),
                 timeout=60
@@ -84,24 +85,27 @@ class Conversation(OrderPlugin):
             try:
                 response = ChatCompletionResponse.model_validate(result)
             except ValueError:
-                raise OrderException(self.get_reply("rate_limit_exceeded"))
+                raise OrderError(self.get_reply(key="rate_limit_exceeded"))
 
             conversation.append(response.choices[0].message)
 
             # Save conversation and tokens
-            self.set_chat_setting("conversation", [completion.model_dump() for completion in conversation])
-            self.set_chat_setting("tokens", response.usage.total_tokens)
+            self.set_chat_setting(key="conversation", value=[completion.model_dump() for completion in conversation])
+            self.set_chat_setting(key="tokens", value=response.usage.total_tokens)
+
             self.reply_to_sender(response.choices[0].message.content)
         else:
             # Clear conversation
-            self.chat_settings.update(Conversation.default_chat_settings)
-            self.reply_to_sender(self.get_reply("new_conversation"))
+            self.set_chat_setting(key="conversation", value=[])
+            self.set_chat_setting(key="tokens", value=0)
+
+            self.reply_to_sender(self.get_reply(key="new_conversation"))
 
     def query_usage(self) -> None:
         self.update_reply_variables({
-            "当前使用量": self.get_chat_setting("tokens")
+            "当前使用量": self.get_chat_setting(key="tokens")
         })
-        self.reply_to_sender(self.get_reply("query_usage"))
+        self.reply_to_sender(self.get_reply(key="query_usage"))
 
     def set_guidance(self) -> None:
         if not self.order_content:
@@ -114,19 +118,21 @@ class Conversation(OrderPlugin):
         ))
 
         # Save conversation
-        self.set_chat_setting("conversation", [completion.model_dump() for completion in conversation])
-        self.reply_to_sender(self.get_reply("set_guidance"))
+        self.set_chat_setting(key="conversation", value=[completion.model_dump() for completion in conversation])
+        self.reply_to_sender(self.get_reply(key="set_guidance"))
 
     def load_conversation(self) -> list[ChatCompletion]:
         conversation = []
 
-        if self.chat_settings["conversation"]:
+        if self.get_chat_setting(key="conversation"):
             try:
                 # Load saved conversation
-                conversation = TypeAdapter(list[ChatCompletion]).validate_python(self.chat_settings["conversation"])
+                conversation = TypeAdapter(list[ChatCompletion]).validate_python(self.get_chat_setting(key="conversation"))
             except ValueError:
                 # Clear conversation
-                self.chat_settings.update(Conversation.default_chat_settings)
-                raise OrderException(self.get_reply("conversation_invalid"))
+                self.set_chat_setting(key="conversation", value=[])
+                self.set_chat_setting(key="tokens", value=0)
+
+                raise OrderError(self.get_reply(key="conversation_invalid"))
 
         return conversation

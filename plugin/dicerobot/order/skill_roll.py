@@ -1,8 +1,8 @@
 import re
 import random
 
-from app.exceptions import OrderInvalidError, OrderException
-from plugins import OrderPlugin
+from plugin import OrderPlugin
+from app.exceptions import OrderInvalidError, OrderError
 
 
 class SkillRoll(OrderPlugin):
@@ -11,19 +11,6 @@ class SkillRoll(OrderPlugin):
     description = "根据检定规则进行技能检定；加载指定的检定规则"
     version = "1.0.0"
 
-    default_replies = {
-        "result": "{&发送者}进行了检定：D100={&检定值}/{&技能值}，{&检定结果}",
-        "result_with_reason": "由于{&检定原因}，{&发送者}进行了检定：D100={&检定值}/{&技能值}，{&检定结果}",
-        "skill_invalid": "技能或属性值无法识别……",
-        "rule_invalid": "检定规则无法识别……",
-        "no_rule_matched": "没有匹配到检定等级……"
-    }
-    supported_reply_variables = [
-        "检定原因",
-        "检定值",
-        "技能值",
-        "检定结果"
-    ]
     default_chat_settings = {
         "rule": {
             "name": "COC 7 检定规则",
@@ -63,6 +50,20 @@ class SkillRoll(OrderPlugin):
         }
     }
 
+    default_replies = {
+        "result": "{&发送者}进行了检定：D100={&检定值}/{&技能值}，{&检定结果}",
+        "result_with_reason": "由于{&检定原因}，{&发送者}进行了检定：D100={&检定值}/{&技能值}，{&检定结果}",
+        "skill_invalid": "技能或属性值无法识别……",
+        "rule_invalid": "检定规则无法识别……",
+        "no_rule_matched": "没有匹配到检定等级……"
+    }
+    supported_reply_variables = [
+        "检定原因",
+        "检定值",
+        "技能值",
+        "检定结果"
+    ]
+
     orders = [
         "ra", "检定", "技能检定",
         "rule", "检定规则"
@@ -84,35 +85,35 @@ class SkillRoll(OrderPlugin):
         reason = match.group(2)
 
         if skill is None:
-            raise OrderException(self.get_reply("skill_invalid"))
+            raise OrderError(self.get_reply(key="skill_invalid"))
 
         check = random.randint(1, 100) if _n is None else _n
         result = None
 
-        for level in self.get_chat_setting("rule")["levels"]:
+        for level in self.get_chat_setting(key="rule")["levels"]:
             expression = level["condition"].replace("{&技能值}", str(skill)).replace("{&检定值}", str(check))
 
             # Check rule content
             if not SkillRoll._rule_pattern.fullmatch(expression):
-                raise OrderException(self.get_reply("rule_invalid"))
+                raise OrderError(self.get_reply(key="rule_invalid"))
 
             expression = expression.replace("&&", "and").replace("||", "or")
 
             try:
                 eval_result = eval(expression)
             except Exception:
-                raise OrderException(self.get_reply("rule_invalid"))
+                raise OrderError(self.get_reply(key="rule_invalid"))
 
             # Check evaluation result
             if not isinstance(eval_result, bool):
-                raise OrderException(self.get_reply("rule_invalid"))
+                raise OrderError(self.get_reply(key="rule_invalid"))
 
             if eval_result:
                 result = level["level"]
                 break
 
         if result is None:
-            raise OrderException(self.get_reply("no_rule_matched"))
+            raise OrderError(self.get_reply(key="no_rule_matched"))
 
         self.update_reply_variables({
             "检定原因": reason,
@@ -120,15 +121,14 @@ class SkillRoll(OrderPlugin):
             "技能值": skill,
             "检定结果": result
         })
-        self.reply_to_sender(self.get_reply("result_with_reason" if reason else "result"))
+        self.reply_to_sender(self.get_reply(key="result_with_reason" if reason else "result"))
 
     def show_rule(self) -> None:
         if self.order_content:
             raise OrderInvalidError()
 
-        rule = self.get_chat_setting("rule")
+        rule = self.get_chat_setting(key="rule")
         rule_content = f"当前使用的检定规则为：【{rule['name']}】\n{rule['description']}\n\n"
         rule_content += "\n".join([f"{level['level']}：{level['rule']}" for level in rule["levels"]])
 
         self.reply_to_sender(rule_content)
-

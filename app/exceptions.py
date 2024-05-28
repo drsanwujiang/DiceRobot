@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from .log import logger
 from .config import replies
 
 
@@ -35,7 +34,7 @@ class OrderInvalidError(DiceRobotException):
         super().__init__(replies["dicerobot"]["order_invalid"])
 
 
-class OrderException(DiceRobotException):
+class OrderError(DiceRobotException):
     pass
 
 
@@ -78,10 +77,10 @@ class MessageInvalidError(HTTPError):
 
 class ParametersInvalidError(HTTPError):
     def __init__(
-            self,
-            status_code: int = 400,
-            code: int = -4,
-            message: str = "Invalid parameters"
+        self,
+        status_code: int = 400,
+        code: int = -4,
+        message: str = "Invalid parameters"
     ) -> None:
         super().__init__(status_code, code, message)
 

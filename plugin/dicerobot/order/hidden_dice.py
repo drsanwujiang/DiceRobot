@@ -1,7 +1,7 @@
-from plugins import OrderPlugin
-from plugins.dicerobot.order.dice import Dice
-from app.exceptions import OrderException
-from app.internal.enum import ChatType
+from plugin import OrderPlugin
+from plugin.dicerobot.order.dice import Dice
+from app.exceptions import OrderError
+from app.enum import ChatType
 
 
 class HiddenDice(OrderPlugin):
@@ -35,13 +35,13 @@ class HiddenDice(OrderPlugin):
             "掷骰原因": dice.reason,
             "掷骰结果": dice.complete_expression
         })
-        self.reply_to_sender(self.get_reply("reply_with_reason" if dice.reason else "reply"))
+        self.reply_to_sender(self.get_reply(key="reply_with_reason" if dice.reason else "reply"))
         self.send_friend_or_temp_message(
             self.message_chain.sender.id,
             self.message_chain.sender.group.id,
-            self.format_reply(self.get_reply("result_with_reason" if dice.reason else "result"))
+            self.format_reply(self.get_reply(key="result_with_reason" if dice.reason else "result"))
         )
 
     def check_chat_type(self) -> None:
         if self.chat_type != ChatType.GROUP:
-            raise OrderException(self.get_reply("not_in_group"))
+            raise OrderError(self.get_reply(key="not_in_group"))

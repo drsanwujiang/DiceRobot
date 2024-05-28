@@ -1,7 +1,7 @@
-from plugins import EventPlugin
+from plugin import EventPlugin
 from app.log import logger
-from app.internal.event import BotOnlineEvent, BotReloginEvent
-from app.internal.task import check_bot_status
+from app.models.event import BotOnlineEvent, BotReloginEvent
+from app.task import check_bot_status
 
 
 class BotOnlineHandler(EventPlugin):
@@ -16,4 +16,3 @@ class BotOnlineHandler(EventPlugin):
         logger.info(f"Bot online ({self.event.__class__.__name__})")
 
         check_bot_status()
-

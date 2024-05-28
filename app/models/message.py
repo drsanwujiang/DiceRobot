@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import field_validator
 
-from . import CamelizableModel, MessageChainOrEvent
+from . import CamelizableModel, GroupMemberProfile, MessageChainOrEvent
 
 parsable_messages = [
     "Source", "Quote", "At", "Plain", "Image"
@@ -78,24 +78,16 @@ class FriendMessage(MessageChain):
 
 
 class GroupMessage(MessageChain):
-    class Sender(CamelizableModel):
-        class Group(CamelizableModel):
-            id: int
-            name: str
-            permission: str
-
-        id: int
-        member_name: str
-        special_title: str
-        permission: str
-        join_timestamp: int
-        last_speak_timestamp: int
-        mute_time_remaining: int
-        group: Group
+    class Sender(GroupMemberProfile):
+        pass
 
     type: str = "GroupMessage"
     sender: Sender
 
 
-class TempMessage(GroupMessage):
+class TempMessage(MessageChain):
+    class Sender(GroupMemberProfile):
+        pass
+
     type: str = "TempMessage"
+    sender: Sender

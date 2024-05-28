@@ -1,7 +1,7 @@
-from plugins import EventPlugin
+from plugin import EventPlugin
 from app.log import logger
-from app.internal.event import BotOfflineEventActive, BotOfflineEventForce, BotOfflineEventDropped
-from app.internal.task import check_bot_status
+from app.models.event import BotOfflineEventActive, BotOfflineEventForce, BotOfflineEventDropped
+from app.task import check_bot_status
 
 
 class BotOfflineHandler(EventPlugin):

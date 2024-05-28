@@ -6,9 +6,8 @@ from sqlalchemy.dialects.sqlite import insert
 
 from .version import VERSION
 from .log import logger
-from .database import Session
-from .models import Settings, PluginSettings, Replies, ChatSettings
-from .internal.enum import AppStatus, ChatType
+from .database import Session, Settings, PluginSettings, Replies, ChatSettings
+from app.enum import AppStatus, ChatType
 
 
 class Config(dict):
@@ -43,7 +42,7 @@ class Config(dict):
 
 
 status: Config[str] = Config({
-    "app": AppStatus.INITIALIZING,
+    "app": AppStatus.STARTED,
     "version": VERSION,
     "report": {
         "order": True,

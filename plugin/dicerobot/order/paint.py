@@ -3,11 +3,11 @@ import base64
 
 from PIL import Image as PILImage
 
-from app.exceptions import OrderInvalidError, OrderException
-from app.internal import BaseModel
-from app.internal.network import client
-from app.internal.message import Image
-from plugins import OrderPlugin
+from plugin import OrderPlugin
+from app.exceptions import OrderInvalidError, OrderError
+from app.models import BaseModel
+from app.models.message import Image
+from app.network import client
 
 
 class Paint(OrderPlugin):
@@ -16,13 +16,14 @@ class Paint(OrderPlugin):
     description = "使用 OpenAI 的 DALL·E 模型生成图片"
     version = "1.0.0"
 
-    default_settings = {
+    default_plugin_settings = {
         "domain": "api.openai.com",
         "api_key": "",
         "model": "dall-e-3",
         "size": "1024x1024",
         "quality": "hd"
     }
+
     default_replies = {
         "unusable": "请先设置神秘代码~",
         "content_policy_violated": "啊嘞，画出来的图图不见了……请重新再试一次吧~"
@@ -36,24 +37,24 @@ class Paint(OrderPlugin):
     def __call__(self) -> None:
         self.check_order_content()
 
-        if not (api_key := self.get_setting("api_key")):
-            raise OrderException(self.get_reply("unusable"))
+        if not (api_key := self.get_plugin_setting(key="api_key")):
+            raise OrderError(self.get_reply(key="unusable"))
 
         try:
             request = ImageGenerationRequest.model_validate({
-                "model": self.get_setting("model"),
+                "model": self.get_plugin_setting(key="model"),
                 "prompt": self.order_content,
                 "n": 1,
-                "quality": self.get_setting("quality"),
+                "quality": self.get_plugin_setting(key="quality"),
                 "response_format": "b64_json",
-                "size": self.get_setting("size"),
+                "size": self.get_plugin_setting(key="size"),
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
         except ValueError:
             raise OrderInvalidError()
 
         result = client.post(
-            "https://" + self.get_setting("domain") + "/v1/images/generations",
+            "https://" + self.get_plugin_setting(key="domain") + "/v1/images/generations",
             headers={
                 "Authorization": f"Bearer {api_key}"
             },
@@ -64,7 +65,7 @@ class Paint(OrderPlugin):
         try:
             response = ImageGenerationResponse.model_validate(result)
         except (ValueError, ValueError):
-            raise OrderException(self.get_reply("content_policy_violated"))
+            raise OrderError(self.get_reply(key="content_policy_violated"))
 
         # Convert WebP to PNG
         image = PILImage.open(BytesIO(base64.b64decode(response.data[0].b64_json))).convert("RGB")
