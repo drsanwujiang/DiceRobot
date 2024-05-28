@@ -101,7 +101,7 @@ echo "Create service"
 
 cat > /etc/systemd/system/dicerobot.service <<EOF
 [Unit]
-Description=A TRPG game assistant
+Description=A TRPG assistant bot
 After=network.target
 
 [Service]

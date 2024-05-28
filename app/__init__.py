@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
 
 dicerobot = FastAPI(
     title="DiceRobot",
-    description="A TRPG game assistant robot",
+    description="A TRPG assistant bot",
     version=VERSION,
     lifespan=lifespan
 )
