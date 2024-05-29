@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from ..version import VERSION
-from ..log import logger
 
 
 class Response(JSONResponse):
@@ -33,18 +32,10 @@ class Response(JSONResponse):
             content=content
         )
 
-    code: int = 0
-    message: str = "Success"
-    data: dict | list = None
 
+def init_router(app: FastAPI) -> None:
+    from .webhook import router as webhook
+    from .admin import router as admin
 
-def init_routers(app: FastAPI) -> None:
-    logger.info("Initializing routers")
-
-    from .report import router as report
-    from .panel import router as panel
-
-    app.include_router(report)
-    app.include_router(panel)
-
-    logger.info("Routers initialized")
+    app.include_router(webhook)
+    app.include_router(admin)

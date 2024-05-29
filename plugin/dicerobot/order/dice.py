@@ -63,7 +63,7 @@ class Dice(OrderPlugin):
             "掷骰原因": self.reason,
             "掷骰结果": self.complete_expression
         })
-        self.reply_to_sender(self.get_reply(key="result_with_reason" if self.reason else "result"))
+        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
 
     def parse_content(self) -> None:
         # Parse order content into possible expression and reason
@@ -92,18 +92,18 @@ class Dice(OrderPlugin):
             if Dice._dice_expression_pattern.fullmatch(parts[i]):
                 dice_expression = DiceExpression(
                     parts[i],
-                    self.get_chat_setting(key="default_surface"),
-                    self.get_plugin_setting(key="max_count"),
-                    self.get_plugin_setting(key="max_surface")
+                    self.chat_settings["default_surface"],
+                    self.plugin_settings["max_count"],
+                    self.plugin_settings["max_surface"]
                 )
 
                 # Check count, surface and max result count (K number)
                 if dice_expression.count > dice_expression.max_count:
-                    raise OrderError(self.get_reply(key="max_count_exceeded"))
+                    raise OrderError(self.replies["max_count_exceeded"])
                 elif dice_expression.surface > dice_expression.max_surface:
-                    raise OrderError(self.get_reply(key="max_surface_exceeded"))
+                    raise OrderError(self.replies["max_surface_exceeded"])
                 elif dice_expression.max_result_count > dice_expression.count:
-                    raise OrderError(self.get_reply(key="expression_invalid"))
+                    raise OrderError(self.replies["expression_invalid"])
 
                 # Calculate results
                 dice_expression.calculate()
@@ -118,12 +118,12 @@ class Dice(OrderPlugin):
         self.dice_result = "".join(result_parts)
 
         if not Dice._math_expression_pattern.fullmatch(self.dice_result):
-            raise OrderError(self.get_reply(key="expression_invalid"))
+            raise OrderError(self.replies["expression_invalid"])
 
         try:
             self.final_result = str(eval(self.dice_result, {}, {}))
         except (ValueError, SyntaxError):
-            raise OrderError(self.get_reply(key="expression_error"))
+            raise OrderError(self.replies["expression_error"])
 
     def generate_results(self) -> None:
         # Beautify expression and results

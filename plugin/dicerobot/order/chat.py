@@ -31,12 +31,12 @@ class Chat(OrderPlugin):
     def __call__(self) -> None:
         self.check_order_content()
 
-        if not (api_key := self.get_plugin_setting(key="api_key")):
-            raise OrderError(self.get_reply(key="unusable"))
+        if not (api_key := self.plugin_settings["api_key"]):
+            raise OrderError(self.replies["unusable"])
 
         try:
             request = ChatCompletionRequest.model_validate({
-                "model": self.get_plugin_setting(key="model"),
+                "model": self.plugin_settings["model"],
                 "messages": [{
                     "role": "user",
                     "content": self.order_content
@@ -47,7 +47,7 @@ class Chat(OrderPlugin):
             raise OrderInvalidError()
 
         result = client.post(
-            "https://" + self.get_plugin_setting(key="domain") + "/v1/chat/completions",
+            "https://" + self.plugin_settings["domain"] + "/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {api_key}"
             },
@@ -58,7 +58,7 @@ class Chat(OrderPlugin):
         try:
             response = ChatCompletionResponse.model_validate(result)
         except ValueError:
-            raise OrderError(self.get_reply(key="rate_limit_exceeded"))
+            raise OrderError(self.replies["rate_limit_exceeded"])
 
         self.reply_to_sender(response.choices[0].message.content)
 

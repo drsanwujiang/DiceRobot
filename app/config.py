@@ -1,131 +1,61 @@
 import json
-import secrets
 
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 
-from .version import VERSION
 from .log import logger
+from .models.config import (
+    Status as StatusModel, Settings as SettingsModel, PluginSettings as PluginSettingsModel,
+    ChatSettings as ChatSettingsModel, Replies as RepliesModel
+)
 from .database import Session, Settings, PluginSettings, Replies, ChatSettings
-from app.enum import AppStatus, ChatType
+from .enum import ChatType
 
-
-class Config(dict):
-    def __init__(self, d: dict = None):
-        super().__init__()
-
-        d = {} if d is None else d
-
-        for key, value in d.items():
-            self[key] = value
-
-    def __setitem__(self, key, value) -> None:
-        if isinstance(value, dict):
-            value = Config(value)
-
-        super().__setitem__(key, value)
-
-    def __missing__(self, _) -> None:
-        return None
-
-    def update(self, d: dict) -> "Config":
-        for key, value in d.items():
-            if isinstance(value, dict):
-                if key not in self:
-                    self[key] = Config()
-
-                self[key].update(value)
-            else:
-                self[key] = value
-
-        return self
-
-
-status: Config[str] = Config({
-    "app": AppStatus.STARTED,
-    "version": VERSION,
-    "report": {
-        "order": True,
-        "event": True
-    },
-    "bot": {
-        "id": -1,
-        "nickname": ""
-    },
-    "friends": [],
-    "groups": []
-})
-settings: Config[str, Config] = Config({
-    "security": {
-        "webhook": {
-            "token": secrets.token_urlsafe(32)
-        },
-        "jwt": {
-            "secret": secrets.token_urlsafe(32),
-            "algorithm": "HS256"
-        }
-    },
-    "mirai": {
-        "api": {
-            "base_url": "http://127.0.0.1:9000"
-        }
-    }
-})
-plugin_settings: Config[str, Config] = Config()
-replies: Config[str, Config[str, str]] = Config({
-    "dicerobot": ({
-        "network_client_error": "致远星拒绝了我们的请求……请稍后再试",
-        "network_server_error": "糟糕，致远星出错了……请稍后再试",
-        "network_invalid_content": "致远星返回了无法解析的内容……请稍后再试",
-        "network_error": "无法连接到致远星，请检查星际通讯是否正常",
-        "order_invalid": "不太理解这个指令呢……",
-    })
-})
-chat_settings: Config[str, Config[int, Config]] = Config({
-    ChatType.FRIEND.value: {},
-    ChatType.GROUP.value: {}
-})
+status = StatusModel()
+settings = SettingsModel()
+plugin_settings = PluginSettingsModel()
+chat_settings = ChatSettingsModel()
+replies = RepliesModel()
 
 
 def init_config() -> None:
     with Session() as session, session.begin():
+        # Settings
+        _settings = {}
+
         for item in session.execute(select(Settings)).scalars().fetchall():  # type: Settings
-            try:
-                settings.update({
-                    item.group: json.loads(item.json)
-                })
-            except json.JSONDecodeError:
-                logger.error(f"Failed to load settings, group: {item.group}")
-                continue
+            _settings.update({item.group: json.loads(item.json)})
+
+        settings.update(_settings)
+
+        # Plugin settings
+        _plugin_settings = {}
 
         for item in session.execute(select(PluginSettings)).scalars().fetchall():  # type: PluginSettings
-            try:
-                plugin_settings.update({
-                    item.plugin: json.loads(item.json)
-                })
-            except json.JSONDecodeError:
-                logger.error(f"Failed to load plugin settings, plugin: {item.plugin}")
-                continue
+            _plugin_settings.update({item.plugin: json.loads(item.json)})
 
-        for item in session.execute(select(Replies)).scalars().fetchall():  # type: Replies
-            replies.update({
-                item.group: {
-                    item.key: item.value
-                }
-            })
+        for _plugin, _settings in _plugin_settings.items():
+            plugin_settings.set(plugin=_plugin, settings=_settings)
+
+        # Chat settings
+        _chat_settings = {}
 
         for item in session.execute(select(ChatSettings)).scalars().fetchall():  # type: ChatSettings
-            try:
-                chat_settings.update({
-                    item.chat_type: {
-                        item.chat_id: {
-                            item.group: json.loads(item.json)
-                        }
-                    }
-                })
-            except json.JSONDecodeError:
-                logger.error(f"Failed to load chat settings, chat: {item.chat_type.value} {item.chat_id}, group: {item.group})")
-                continue
+            _chat_settings.update({ChatType(item.chat_type): {item.chat_id: {item.group: json.loads(item.json)}}})
+
+        for _chat_type, _chat_type_settings in _chat_settings.items():
+            for _chat_id, _chat_id_settings in _chat_type_settings.items():
+                for _setting_group, _settings in _chat_id_settings.items():
+                    chat_settings.set(chat_type=_chat_type, chat_id=_chat_id, setting_group=_setting_group, settings=_settings)
+
+        # Replies
+        _replies = {}
+
+        for item in session.execute(select(Replies)).scalars().fetchall():  # type: Replies
+            _replies.update({item.group: {item.key: item.value}})
+
+        for _reply_group, _group_replies in _replies.items():
+            replies.set(reply_group=_reply_group, replies=_group_replies)
 
     logger.info("Config initialized")
 
@@ -134,42 +64,34 @@ def save_config() -> None:
     logger.info("Saving config")
 
     with Session() as session, session.begin():
-        for key, value in settings.items():
-            try:
-                serialized = json.dumps(value)
-            except TypeError:
-                logger.error(f"Failed to save settings, group: {key}")
-                continue
-
+        for key, value in settings.model_dump().items():  # type: str, dict
+            serialized = json.dumps(value)
             session.execute(
-                insert(Settings).values(
-                    group=key,
-                    json=serialized
-                ).on_conflict_do_update(
-                    index_elements=["group"],
-                    set_={"json": serialized}
-                )
+                insert(Settings)
+                .values(group=key, json=serialized)
+                .on_conflict_do_update(index_elements=["group"], set_={"json": serialized})
             )
 
-        for key, value in plugin_settings.items():
-            try:
-                serialized = json.dumps(value)
-            except TypeError:
-                logger.error(f"Failed to save plugin settings, plugin: {key}")
-                continue
-
+        for key, value in plugin_settings.dict().items():  # type: str, dict
+            serialized = json.dumps(value)
             session.execute(
-                insert(PluginSettings).values(
-                    plugin=key,
-                    json=serialized
-                ).on_conflict_do_update(
-                    index_elements=["plugin"],
-                    set_={"json": serialized}
-                )
+                insert(PluginSettings)
+                .values(plugin=key, json=serialized)
+                .on_conflict_do_update(index_elements=["plugin"], set_={"json": serialized})
             )
 
-        for group, group_replies in replies.items():
-            for key, value in group_replies.items():
+        for chat_type, _settings in chat_settings.dict().items():  # type: ChatType, dict[int, dict[str, dict]]
+            for chat_id, _chat_settings in _settings.items():  # type: int, dict[str, dict]
+                for key, value in _chat_settings.items():  # type: str, dict
+                    serialized = json.dumps(value)
+                    session.execute(
+                        insert(ChatSettings)
+                        .values(chat_type=chat_type.value, chat_id=chat_id, group=key, json=serialized)
+                        .on_conflict_do_update(index_elements=["chat_type", "chat_id", "group"], set_={"json": serialized})
+                    )
+
+        for group, group_replies in replies.dict().items():  # type: str, dict[str, str]
+            for key, value in group_replies.items():  # type: str, str
                 session.execute(insert(Replies).values(
                     group=group,
                     key=key,
@@ -178,24 +100,3 @@ def save_config() -> None:
                     index_elements=["group", "key"],
                     set_={"value": value})
                 )
-
-        for chat_type, chat_type_settings in chat_settings.items():
-            for chat_id, chat_id_settings in chat_type_settings.items():
-                for key, value in chat_id_settings.items():
-                    try:
-                        serialized = json.dumps(value)
-                    except TypeError:
-                        logger.error(f"Failed to save chat settings, chat: {chat_type.value} {chat_id}, group: {key})")
-                        continue
-
-                    session.execute(
-                        insert(ChatSettings).values(
-                            chat_type=chat_type,
-                            chat_id=chat_id,
-                            group=key,
-                            json=serialized
-                        ).on_conflict_do_update(
-                            index_elements=["chat_type", "chat_id", "group"],
-                            set_={"json": serialized}
-                        )
-                    )

@@ -2,12 +2,12 @@ import json
 
 from fastapi import APIRouter, Depends
 
+
 from ...log import logger
+from ...auth import verify_webhook_token
 from ...config import status
-from ...auth import verify_token
-from ...routers import Response
 from ...dispatch import dispatcher
-from ...enum import AppStatus
+from ...enum import ApplicationStatus
 from ...exceptions import MessageInvalidError
 from ...models import MessageChainOrEvent
 from ...models.message import Source, Quote, At, Plain, MessageChain, FriendMessage, GroupMessage, TempMessage
@@ -15,6 +15,7 @@ from ...models.event import (
     Event, BotOnlineEvent, BotReloginEvent, BotOfflineEventActive, BotOfflineEventForce, BotOfflineEventDropped,
     NewFriendRequestEvent, BotInvitedJoinGroupRequestEvent
 )
+from .. import Response
 
 parsable_message_chains = [
     "FriendMessage", "GroupMessage", "TempMessage"
@@ -28,16 +29,12 @@ parsable_events = [
 router = APIRouter()
 
 
-@router.post("/report", dependencies=[Depends(verify_token, use_cache=False)])
+@router.post("/report", dependencies=[Depends(verify_webhook_token, use_cache=False)])
 async def report(content: dict) -> Response:
     logger.debug("Report received, content: " + json.dumps(content))
     logger.info("Report started")
 
-    try:
-        message_chain_or_event = _parse_message_chain_or_event(content)
-    except ValueError:
-        logger.info("Report skipped, message chain or event unparsable")
-        return Response(code=1, message="Filtered")
+    message_chain_or_event = _parse_message_chain_or_event(content)
 
     try:
         if isinstance(message_chain_or_event, MessageChain):
@@ -62,19 +59,19 @@ def _parse_message_chain_or_event(message_chain_or_event: dict) -> MessageChain 
         elif _message_chain_or_event.type in parsable_events:
             return globals()[_message_chain_or_event.type].model_validate(message_chain_or_event)
         else:
-            raise ValueError(f"Unparsable message chain or event type: {_message_chain_or_event.type}")
+            raise ValueError
     except (KeyError, ValueError):
-        raise MessageInvalidError()
+        raise MessageInvalidError
 
 
 def _handle_order(message_chain: MessageChain) -> None:
     # Check app status
-    if status["app"] != AppStatus.RUNNING:
+    if status.app != ApplicationStatus.RUNNING:
         logger.info("Report skipped, DiceRobot not running")
         return
 
     # Check handler status
-    if not status["report"]["order"]:
+    if not status.plugin.order:
         logger.info("Report skipped, order handler disabled")
         return
 
@@ -84,7 +81,7 @@ def _handle_order(message_chain: MessageChain) -> None:
         if isinstance(message, (Source, Quote)):
             continue
         elif isinstance(message, At):
-            if message.target == status["bot"]["id"]:
+            if message.target == status.bot.id:
                 continue
             else:
                 logger.debug("Message to others detected")
@@ -100,7 +97,7 @@ def _handle_order(message_chain: MessageChain) -> None:
 
 def _handle_event(event: Event) -> None:
     # Check handler status
-    if not status["report"]["event"]:
+    if not status.plugin.event:
         logger.info("Report skipped, event handler disabled")
         return
 

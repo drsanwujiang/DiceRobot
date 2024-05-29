@@ -85,35 +85,35 @@ class SkillRoll(OrderPlugin):
         reason = match.group(2)
 
         if skill is None:
-            raise OrderError(self.get_reply(key="skill_invalid"))
+            raise OrderError(self.replies["skill_invalid"])
 
         check = random.randint(1, 100) if _n is None else _n
         result = None
 
-        for level in self.get_chat_setting(key="rule")["levels"]:
+        for level in self.chat_settings["rule"]["levels"]:
             expression = level["condition"].replace("{&技能值}", str(skill)).replace("{&检定值}", str(check))
 
             # Check rule content
             if not SkillRoll._rule_pattern.fullmatch(expression):
-                raise OrderError(self.get_reply(key="rule_invalid"))
+                raise OrderError(self.replies["rule_invalid"])
 
             expression = expression.replace("&&", "and").replace("||", "or")
 
             try:
                 eval_result = eval(expression)
             except Exception:
-                raise OrderError(self.get_reply(key="rule_invalid"))
+                raise OrderError(self.replies["rule_invalid"])
 
             # Check evaluation result
             if not isinstance(eval_result, bool):
-                raise OrderError(self.get_reply(key="rule_invalid"))
+                raise OrderError(self.replies["rule_invalid"])
 
             if eval_result:
                 result = level["level"]
                 break
 
         if result is None:
-            raise OrderError(self.get_reply(key="no_rule_matched"))
+            raise OrderError(self.replies["no_rule_matched"])
 
         self.update_reply_variables({
             "检定原因": reason,
@@ -121,14 +121,14 @@ class SkillRoll(OrderPlugin):
             "技能值": skill,
             "检定结果": result
         })
-        self.reply_to_sender(self.get_reply(key="result_with_reason" if reason else "result"))
+        self.reply_to_sender(self.replies["result_with_reason" if reason else "result"])
 
     def show_rule(self) -> None:
         if self.order_content:
             raise OrderInvalidError()
 
-        rule = self.get_chat_setting(key="rule")
-        rule_content = f"当前使用的检定规则为：【{rule['name']}】\n{rule['description']}\n\n"
-        rule_content += "\n".join([f"{level['level']}：{level['rule']}" for level in rule["levels"]])
+        rule = self.chat_settings["rule"]
+        rule_content = f"当前使用的检定规则为：【{rule['name']}】\n{rule['description']}\n\n" + \
+                       "\n".join([f"{level['level']}：{level['rule']}" for level in rule["levels"]])
 
         self.reply_to_sender(rule_content)

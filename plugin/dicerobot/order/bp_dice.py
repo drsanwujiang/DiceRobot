@@ -62,7 +62,7 @@ class BPDice(OrderPlugin):
             "掷骰原因": self.reason,
             "掷骰结果": result
         })
-        self.reply_to_sender(self.get_reply(key="result_with_reason" if self.reason else "result"))
+        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
 
     def parse_content(self) -> None:
         if self.order in BPDice._bp_types["bonus"]:
@@ -79,8 +79,8 @@ class BPDice(OrderPlugin):
 
     def calculate(self) -> None:
         # Check count
-        if self.count > self.get_plugin_setting(key="max_count"):
-            raise OrderError(self.get_reply(key="max_count_exceeded"))
+        if self.count > self.plugin_settings["max_count"]:
+            raise OrderError(self.replies["max_count_exceeded"])
 
         # Calculate result
         self.dice_result = random.randint(1, 100)

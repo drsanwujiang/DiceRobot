@@ -290,5 +290,5 @@ def client():
 def openai():
     from app.config import plugin_settings
 
-    plugin_settings["dicerobot.chat"]["api_key"] = os.environ.get("TEST_OPENAI_API_KEY") or ""
-    plugin_settings["dicerobot.conversation"]["api_key"] = os.environ.get("TEST_OPENAI_API_KEY") or ""
+    plugin_settings._plugin_settings["dicerobot.chat"]["api_key"] = os.environ.get("TEST_OPENAI_API_KEY") or ""
+    plugin_settings._plugin_settings["dicerobot.conversation"]["api_key"] = os.environ.get("TEST_OPENAI_API_KEY") or ""

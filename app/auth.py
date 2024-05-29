@@ -1,64 +1,47 @@
-import time
-import jwt
+from datetime import datetime, timedelta
 
 from fastapi import Request
-from fastapi.security import HTTPBearer as _HTTPBearer, HTTPAuthorizationCredentials
+from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
 
 from .config import settings
-from .exceptions import TokenInvalidError, AuthenticationError
+from .exceptions import TokenInvalidError
 
 
-def verify_token(request: Request) -> None:
+def generate_password(password: str) -> str:
+    return generate_password_hash(password)
+
+
+def verify_password(password: str) -> bool:
+    if not settings.security.admin.password:
+        return True
+
+    return check_password_hash(settings.security.admin.password, password)
+
+
+def generate_jwt_token() -> str:
+    return jwt.encode(
+        {"exp": datetime.now() + timedelta(days=7)},
+        settings.security.jwt.secret,
+        settings.security.jwt.algorithm
+    )
+
+
+def verify_jwt_token(request: Request) -> None:
+    authorization = request.headers.get("Authorization", "")
+    scheme, _, token = authorization.partition(" ")
+
+    if not authorization or scheme != "Bearer" or not token:
+        raise TokenInvalidError
+
+    try:
+        jwt.decode(token, settings.security.jwt.secret, settings.security.jwt.algorithm)
+    except jwt.InvalidTokenError:
+        raise TokenInvalidError
+
+
+def verify_webhook_token(request: Request) -> None:
     token: str = request.query_params.get("token")
 
-    if not token:
-        raise TokenInvalidError()
-    elif token != settings["security"]["webhook"]["token"]:
-        raise AuthenticationError()
-
-
-class HTTPBearer(_HTTPBearer):
-    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials:
-        authorization = request.headers.get("Authorization")
-
-        if not authorization:
-            raise TokenInvalidError()
-
-        scheme, _, credentials = authorization.partition(" ")
-
-        if scheme != "Bearer" or not credentials:
-            raise TokenInvalidError()
-
-        return HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
-
-
-class JWTBearer(HTTPBearer):
-    @staticmethod
-    def decode_jwt(token: str) -> dict:
-        try:
-            decoded_token = jwt.decode(token, settings["security"]["jwt"]["secret"], algorithms=settings["security"]["jwt"]["algorithm"])
-
-            return decoded_token if decoded_token["expires"] >= time.time() else None
-        except:
-            return {}
-
-    @staticmethod
-    def verify_jwt(jwt_token: str) -> bool:
-        is_token_valid: bool = False
-
-        try:
-            payload = JWTBearer.decode_jwt(jwt_token)
-        except:
-            payload = None
-        if payload:
-            is_token_valid = True
-
-        return is_token_valid
-
-    async def __call__(self, request: Request) -> str:
-        credentials: HTTPAuthorizationCredentials = await super().__call__(request)
-
-        if not self.verify_jwt(credentials.credentials):
-            raise TokenInvalidError()
-
-        return credentials.credentials
+    if not token or token != settings.security.webhook.token:
+        raise TokenInvalidError

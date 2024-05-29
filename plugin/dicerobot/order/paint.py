@@ -37,24 +37,24 @@ class Paint(OrderPlugin):
     def __call__(self) -> None:
         self.check_order_content()
 
-        if not (api_key := self.get_plugin_setting(key="api_key")):
-            raise OrderError(self.get_reply(key="unusable"))
+        if not (api_key := self.plugin_settings["api_key"]):
+            raise OrderError(self.replies["unusable"])
 
         try:
             request = ImageGenerationRequest.model_validate({
-                "model": self.get_plugin_setting(key="model"),
+                "model": self.plugin_settings["model"],
                 "prompt": self.order_content,
                 "n": 1,
-                "quality": self.get_plugin_setting(key="quality"),
+                "quality": self.plugin_settings["quality"],
                 "response_format": "b64_json",
-                "size": self.get_plugin_setting(key="size"),
+                "size": self.plugin_settings["size"],
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
         except ValueError:
             raise OrderInvalidError()
 
         result = client.post(
-            "https://" + self.get_plugin_setting(key="domain") + "/v1/images/generations",
+            "https://" + self.plugin_settings["domain"] + "/v1/images/generations",
             headers={
                 "Authorization": f"Bearer {api_key}"
             },
@@ -65,7 +65,7 @@ class Paint(OrderPlugin):
         try:
             response = ImageGenerationResponse.model_validate(result)
         except (ValueError, ValueError):
-            raise OrderError(self.get_reply(key="content_policy_violated"))
+            raise OrderError(self.replies["content_policy_violated"])
 
         # Convert WebP to PNG
         image = PILImage.open(BytesIO(base64.b64decode(response.data[0].b64_json))).convert("RGB")

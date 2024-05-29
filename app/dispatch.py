@@ -6,7 +6,7 @@ import copy
 
 from plugin import DiceRobotPlugin, OrderPlugin, EventPlugin
 from .log import logger
-from .config import plugin_settings, replies, Config
+from .config import plugin_settings, replies
 from .exceptions import DiceRobotException
 from .models.message import MessageChain
 from .models.event import Event
@@ -46,16 +46,14 @@ class Dispatcher:
 
     @staticmethod
     def load_plugin_settings(plugin: Type[DiceRobotPlugin]) -> None:
-        plugin_settings[plugin.name] = Config({"enabled": True}).update(
-            copy.deepcopy(plugin.default_plugin_settings)
-        ).update(
-            plugin_settings.get(plugin.name, {})
-        )
-        replies[plugin.name] = Config().update(
-            copy.deepcopy(plugin.default_replies)
-        ).update(
-            replies.get(plugin.name, {})
-        )
+        _plugin_settings = {"enabled": True}
+        _plugin_settings.update(copy.deepcopy(plugin.default_plugin_settings))
+        _plugin_settings.update(plugin_settings.get(plugin=plugin.name))
+        plugin_settings.set(plugin=plugin.name, settings=_plugin_settings)
+
+        _replies = copy.deepcopy(plugin.default_replies)
+        _replies.update(replies.get(reply_group=plugin.name))
+        replies.set(reply_group=plugin.name, replies=_replies)
 
     def load_orders_and_events(self) -> None:
         orders = {}
@@ -96,18 +94,16 @@ class Dispatcher:
         match = Dispatcher.order_pattern.fullmatch(message_content)
 
         if not match:
-            logger.debug("Dispatch missed")
             raise RuntimeError("Dispatch missed")
 
         order_and_content = match.group(1)
         plugin_name, order, order_content = self.match_plugin(order_and_content)
 
         if not plugin_name:
-            logger.debug("Plugin match missed")
             raise RuntimeError("Plugin match missed")
-        elif not plugin_settings[plugin_name]["enabled"]:
-            logger.debug("Plugin disabled")
-            raise RuntimeError("Plugin disabled")
+        elif not plugin_settings.get(plugin=plugin_name)["enabled"]:
+            logger.info("Plugin disabled, execution skipped")
+            return
 
         logger.info(f"Dispatch to plugin {plugin_name}")
 
@@ -117,7 +113,7 @@ class Dispatcher:
             plugin = plugin_class(message_chain, order.lower(), order_content)
 
             if not plugin.check_enabled():
-                logger.info("Plugin disabled, execution skipped")
+                logger.info("Chat disabled, execution skipped")
                 return
 
             plugin()

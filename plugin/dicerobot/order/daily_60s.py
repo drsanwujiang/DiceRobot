@@ -2,7 +2,7 @@ import datetime
 
 from plugin import OrderPlugin
 from app.schedule import scheduler
-from app.exceptions import OrderError
+from app.exceptions import OrderInvalidError, OrderError
 from app.enum import ChatType
 from app.network import client
 from app.models.message import Image
@@ -44,7 +44,7 @@ class DailySixtySeconds(OrderPlugin):
                 "url": result["imageUrl"]
             })]
         else:
-            message = cls.get_reply(key="api_error")
+            message = cls.get_reply(reply_key="api_error")
 
         for chat_id in cls.get_plugin_setting(key="subscribers"):
             cls.send_group_message(chat_id, message)
@@ -53,15 +53,15 @@ class DailySixtySeconds(OrderPlugin):
         self.check_order_content()
 
         if self.chat_type != ChatType.GROUP:
-            raise OrderError(self.get_reply(key="unsubscribable"))
+            raise OrderError(self.replies["unsubscribable"])
 
-        if self.chat_id not in self.get_plugin_setting(key="subscribers"):
-            self.get_plugin_setting(key="subscribers").append(self.chat_id)
-            self.reply_to_sender(self.get_reply(key="subscribe"))
+        if self.chat_id not in self.plugin_settings["subscribers"]:
+            self.plugin_settings["subscribers"].append(self.chat_id)
+            self.reply_to_sender(self.replies["subscribe"])
         else:
-            self.get_plugin_setting(key="subscribers").remove(self.chat_id)
-            self.reply_to_sender(self.get_reply(key="unsubscribe"))
+            self.plugin_settings["subscribers"].remove(self.chat_id)
+            self.reply_to_sender(self.replies["unsubscribe"])
 
     def check_order_content(self) -> None:
         if self.order_content:
-            raise OrderError(self.get_reply(group="dicerobot", key="order_invalid"))
+            raise OrderInvalidError

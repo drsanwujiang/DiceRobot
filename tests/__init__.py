@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.log import logger
 from app.config import status, settings
-from app.enum import AppStatus
+from app.enum import ApplicationStatus
 from app.models import MessageChainOrEvent
 from app.models.event import BotOnlineEvent
 from app.models.message import FriendMessage, GroupMessage
@@ -12,7 +12,7 @@ from app.models.message import FriendMessage, GroupMessage
 
 class BaseTest:
     def wait_for_online(self, client: TestClient) -> None:
-        settings["security"]["webhook"]["token"] = "test"
+        settings.security.webhook.token = "test"
 
         logger.debug("Waiting for bot online")
 
@@ -24,11 +24,11 @@ class BaseTest:
 
         time.sleep(1)
 
-        assert status["app"] == AppStatus.RUNNING
+        assert status.app == ApplicationStatus.RUNNING
 
     @staticmethod
     def post_message(client: TestClient, message_chain: MessageChainOrEvent) -> dict:
-        settings["security"]["webhook"]["token"] = "test"
+        settings.security.webhook.token = "test"
 
         return client.post(
             "/report",

@@ -1,3 +1,4 @@
+import sys
 import os
 
 from loguru import logger as _logger
@@ -15,13 +16,16 @@ logger.remove()
 
 
 def init_logger() -> None:
-    log_level = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
-    logger.add(
-        "logs/dicerobot-{time:YYYY-MM-DD}.log",
-        level=log_level,
-        rotation="1 day",
-        retention="6 months",
-        compression="tar.gz"
-    )
+    if os.environ.get("DICEROBOT_DEBUG"):
+        logger.add(sys.stdout, level="DEBUG")
+    else:
+        log_level = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
+        logger.add(
+            "logs/dicerobot-{time:YYYY-MM-DD}.log",
+            level=log_level,
+            rotation="1 day",
+            retention="6 months",
+            compression="tar.gz"
+        )
 
     logger.debug("Logger initialized")

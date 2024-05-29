@@ -20,7 +20,7 @@ class GroupInvitationHandler(EventPlugin):
     def __call__(self) -> None:
         logger.success(f"Group invitation from {self.event.group_id} received")
 
-        if self.get_plugin_setting(key="auto_accept"):
+        if self.plugin_settings["auto_accept"]:
             respond_bot_invited_join_group_request_event(RespondBotInvitedJoinGroupRequestEventRequest(
                 event_id=self.event.event_id,
                 from_id=self.event.from_id,
