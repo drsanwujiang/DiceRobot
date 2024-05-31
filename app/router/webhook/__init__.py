@@ -30,24 +30,27 @@ router = APIRouter()
 
 
 @router.post("/report", dependencies=[Depends(verify_webhook_token, use_cache=False)])
-async def report(content: dict) -> Response:
-    logger.debug("Report received, content: " + json.dumps(content))
-    logger.info("Report started")
+async def message_report(content: dict) -> Response:
+    logger.info("Webhook request received: message report")
+    logger.debug("Webhook request content: " + json.dumps(content))
 
     message_chain_or_event = _parse_message_chain_or_event(content)
 
     try:
+        logger.info("Message report started")
+
         if isinstance(message_chain_or_event, MessageChain):
             _handle_order(message_chain_or_event)
         elif isinstance(message_chain_or_event, Event):
             _handle_event(message_chain_or_event)
 
-        logger.info("Report finished")
-    except RuntimeError:
-        logger.info("Report filtered")
-        return Response(code=1, message="Filtered")
+        logger.info("Message report finished")
 
-    return Response()
+        return Response()
+    except RuntimeError:
+        logger.info("Message report finished, message filtered")
+
+        return Response(code=1, message="Message filtered")
 
 
 def _parse_message_chain_or_event(message_chain_or_event: dict) -> MessageChain | Event:
@@ -67,12 +70,12 @@ def _parse_message_chain_or_event(message_chain_or_event: dict) -> MessageChain 
 def _handle_order(message_chain: MessageChain) -> None:
     # Check app status
     if status.app != ApplicationStatus.RUNNING:
-        logger.info("Report skipped, DiceRobot not running")
+        logger.info("Message report skipped, DiceRobot not running")
         return
 
-    # Check handler status
-    if not status.plugin.order:
-        logger.info("Report skipped, order handler disabled")
+    # Check module status
+    if not status.module.order:
+        logger.info("Message report skipped, order module disabled")
         return
 
     message_content = ""
@@ -96,9 +99,9 @@ def _handle_order(message_chain: MessageChain) -> None:
 
 
 def _handle_event(event: Event) -> None:
-    # Check handler status
-    if not status.plugin.event:
-        logger.info("Report skipped, event handler disabled")
+    # Check module status
+    if not status.module.event:
+        logger.info("Message report skipped, event module disabled")
         return
 
     dispatcher.dispatch_event(event)

@@ -2,11 +2,10 @@ from typing import Type
 import importlib
 import pkgutil
 import re
-import copy
 
 from plugin import DiceRobotPlugin, OrderPlugin, EventPlugin
 from .log import logger
-from .config import plugin_settings, replies
+from .config import status, plugin_settings
 from .exceptions import DiceRobotException
 from .models.message import MessageChain
 from .models.event import Event
@@ -33,27 +32,21 @@ class Dispatcher:
         for plugin in OrderPlugin.__subclasses__():
             if hasattr(plugin, "name") and isinstance(plugin.name, str):
                 self.order_plugins[plugin.name] = plugin
-                self.load_plugin_settings(plugin)
-                plugin.init_plugin()
 
         for plugin in EventPlugin.__subclasses__():
             if hasattr(plugin, "name") and isinstance(plugin.name, str):
                 self.event_plugins[plugin.name] = plugin
-                self.load_plugin_settings(plugin)
-                plugin.init_plugin()
+
+        for plugin in list(self.order_plugins.values()) + list(self.event_plugins.values()):
+            status.plugins[plugin.name] = status.Plugin(
+                display_name=plugin.display_name,
+                description=plugin.description,
+                version=plugin.version
+            )
+            plugin.load()
+            plugin.initialize()
 
         logger.info(f"{len(self.order_plugins)} order plugins and {len(self.event_plugins)} event plugins loaded")
-
-    @staticmethod
-    def load_plugin_settings(plugin: Type[DiceRobotPlugin]) -> None:
-        _plugin_settings = {"enabled": True}
-        _plugin_settings.update(copy.deepcopy(plugin.default_plugin_settings))
-        _plugin_settings.update(plugin_settings.get(plugin=plugin.name))
-        plugin_settings.set(plugin=plugin.name, settings=_plugin_settings)
-
-        _replies = copy.deepcopy(plugin.default_replies)
-        _replies.update(replies.get(reply_group=plugin.name))
-        replies.set(reply_group=plugin.name, replies=_replies)
 
     def load_orders_and_events(self) -> None:
         orders = {}
@@ -89,6 +82,9 @@ class Dispatcher:
         self.events = events
 
         logger.info(f"{sum(len(orders) for orders in self.orders.values())} orders and {len(self.events)} events loaded")
+
+    def find_plugin(self, plugin_name: str) -> Type[DiceRobotPlugin] | None:
+        return self.order_plugins.get(plugin_name) or self.event_plugins.get(plugin_name)
 
     def dispatch_order(self, message_chain: MessageChain, message_content: str) -> None:
         match = Dispatcher.order_pattern.fullmatch(message_content)

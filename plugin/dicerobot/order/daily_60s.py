@@ -32,8 +32,8 @@ class DailySixtySeconds(OrderPlugin):
     priority = 100
 
     @classmethod
-    def init_plugin(cls) -> None:
-        scheduler.add_job(cls.send_daily_60s, trigger="cron", hour=10)
+    def initialize(cls) -> None:
+        scheduler.add_job(cls.send_daily_60s, id=f"{cls.name}.send", trigger="cron", hour=10)
 
     @classmethod
     def send_daily_60s(cls) -> None:

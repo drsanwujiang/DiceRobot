@@ -43,8 +43,8 @@ def check_bot_status() -> None:
         # Clear status
         status.bot.id = -1
         status.bot.nickname = ""
-        status.friends = []
-        status.groups = []
+        status.bot.friends = []
+        status.bot.groups = []
 
         if status.app != ApplicationStatus.HOLDING:
             status.app = ApplicationStatus.HOLDING
@@ -61,9 +61,9 @@ def refresh_friend_list() -> None:
 
     try:
         friend_list = get_friend_list().data
-        status.friends = [friend.id for friend in friend_list]
+        status.bot.friends = [friend.id for friend in friend_list]
     except (DiceRobotException, ValueError):
-        status.friends = []
+        status.bot.friends = []
 
         logger.error("Failed to refresh friend list")
 
@@ -73,8 +73,8 @@ def refresh_group_list() -> None:
 
     try:
         group_list = get_group_list().data
-        status.groups = [group.id for group in group_list]
+        status.bot.groups = [group.id for group in group_list]
     except (DiceRobotException, ValueError):
-        status.groups = []
+        status.bot.groups = []
 
         logger.error("Failed to refresh group list")

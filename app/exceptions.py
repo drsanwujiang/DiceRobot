@@ -70,3 +70,13 @@ class ParametersInvalidError(DiceRobotHTTPException):
         message: str = "Invalid parameters"
     ) -> None:
         super().__init__(status_code, code, message)
+
+
+class ResourceNotFoundError(DiceRobotHTTPException):
+    def __init__(
+        self,
+        status_code: int = 404,
+        code: int = -4,
+        message: str = "Resource not found"
+    ) -> None:
+        super().__init__(status_code, code, message)
