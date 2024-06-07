@@ -71,7 +71,7 @@ class Conversation(OrderPlugin):
                     "user": f"{self.chat_type.value}-{self.chat_id}"
                 })
             except ValueError:
-                raise OrderInvalidError()
+                raise OrderInvalidError
 
             result = client.post(
                 "https://" + self.plugin_settings["domain"] + "/v1/chat/completions",
@@ -109,7 +109,7 @@ class Conversation(OrderPlugin):
 
     def set_guidance(self) -> None:
         if not self.order_content:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
         conversation = self.load_conversation()
         conversation.append(ChatCompletion(

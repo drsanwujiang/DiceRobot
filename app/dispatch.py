@@ -117,10 +117,16 @@ class Dispatcher:
             plugin()
         except DiceRobotException as e:
             plugin_class.reply_to_message_sender(message_chain, e.reply)
+
+            # Raise exception in debug mode
+            if status.debug:
+                raise
         except Exception as e:
-            logger.exception(
-                f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {message_chain.__class__.__name__}"
-            )
+            logger.exception(f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {message_chain.__class__.__name__}")
+
+            # Raise exception in debug mode
+            if status.debug:
+                raise
 
     def match_plugin(self, order_and_content: str) -> tuple[str | None, str | None, str | None]:
         for priority, orders in self.orders.items():
@@ -139,11 +145,17 @@ class Dispatcher:
             try:
                 self.event_plugins[plugin_name](event)()
             except DiceRobotException as e:
-                logger.error(
-                    f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {event.__class__.__name__}"
-                )
+                logger.error(f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {event.__class__.__name__}")
+
+                # Raise exception in debug mode
+                if status.debug:
+                    raise
             except Exception as e:
                 logger.exception(f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle {event.__class__.__name__}")
+
+                # Raise exception in debug mode
+                if status.debug:
+                    raise
 
 
 dispatcher = Dispatcher()

@@ -1,3 +1,6 @@
+import pytest
+
+from app.exceptions import OrderError
 from . import BaseTest
 
 
@@ -35,7 +38,11 @@ class TestDice(BaseTest):
 
         # Invalid expressions
         message_chain = self.build_group_message(".r10d100kk2+5")
-        self.post_message(client, message_chain)
+
+        with pytest.raises(OrderError):
+            self.post_message(client, message_chain)
 
         message_chain = self.build_group_message(".r(10d100k2+5")
-        self.post_message(client, message_chain)
+
+        with pytest.raises(OrderError):
+            self.post_message(client, message_chain)

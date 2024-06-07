@@ -22,7 +22,7 @@ class Client(httpx.Client):
                 result = response.json()
             except json.JSONDecodeError:
                 logger.error(f"Failed to request {response.request.url}, invalid content returned")
-                raise NetworkInvalidContentError()
+                raise NetworkInvalidContentError
 
             logger.debug(f"Response: {response.request.method} {response.request.url}, content: {result}")
 
@@ -36,10 +36,10 @@ class Client(httpx.Client):
         # Check HTTP status code
         if response.status_code >= 500:
             logger.error(f"Failed to request {response.request.url}, HTTP status code {response.status_code} returned")
-            raise NetworkServerError()
+            raise NetworkServerError
         elif response.status_code >= 400:
             logger.error(f"Failed to request {response.request.url}, HTTP status code {response.status_code} returned")
-            raise NetworkClientError()
+            raise NetworkClientError
 
     _defaults = {
         "headers": {
@@ -63,7 +63,7 @@ class Client(httpx.Client):
             return super().request(*args, **kwargs)
         except httpx.HTTPError as e:
             logger.error(f"Failed to request {e.request.url}, {e.__class__.__name__} occurred")
-            raise NetworkError()
+            raise NetworkError
 
 
 client = Client()

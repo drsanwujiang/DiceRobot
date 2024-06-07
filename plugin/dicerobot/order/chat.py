@@ -44,7 +44,7 @@ class Chat(OrderPlugin):
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
         except ValueError:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
         result = client.post(
             "https://" + self.plugin_settings["domain"] + "/v1/chat/completions",

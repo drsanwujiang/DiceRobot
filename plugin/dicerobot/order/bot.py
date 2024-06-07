@@ -69,11 +69,11 @@ class Bot(OrderPlugin):
         elif self.suborder == "nickname":
             self.nickname()
         else:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
     def about(self) -> None:
         if self.suborder_content:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
         self.update_reply_variables({
             "版本": status.version,
@@ -87,7 +87,7 @@ class Bot(OrderPlugin):
             return
 
         if self.suborder_content:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
         if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
             raise OrderError(self.replies["enable_denied"])
@@ -101,7 +101,7 @@ class Bot(OrderPlugin):
             return
 
         if self.suborder_content:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
         if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
             raise OrderError(self.replies["disable_denied"])

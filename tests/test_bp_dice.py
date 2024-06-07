@@ -1,3 +1,6 @@
+import pytest
+
+from app.exceptions import OrderSuspiciousError, OrderError
 from . import BaseTest
 
 
@@ -22,8 +25,16 @@ class TestBPDice(BaseTest):
         self.post_message(client, message_chain)
 
         # Invalid expressions
-        message_chain = self.build_group_message(".rb101")
-        self.post_message(client, message_chain)
+        message_chain = self.build_group_message(".rb999")
+
+        with pytest.raises(OrderError):
+            self.post_message(client, message_chain)
+
+        # Suspicious expressions
+        message_chain = self.build_group_message(".rb99999")
+
+        with pytest.raises(OrderSuspiciousError):
+            self.post_message(client, message_chain)
 
     def test_penalty_dice(self, client):
         self.wait_for_online(client)
@@ -45,5 +56,13 @@ class TestBPDice(BaseTest):
         self.post_message(client, message_chain)
 
         # Invalid expressions
-        message_chain = self.build_group_message(".rp101")
-        self.post_message(client, message_chain)
+        message_chain = self.build_group_message(".rp999")
+
+        with pytest.raises(OrderError):
+            self.post_message(client, message_chain)
+
+        # Suspicious expressions
+        message_chain = self.build_group_message(".rp99999")
+
+        with pytest.raises(OrderSuspiciousError):
+            self.post_message(client, message_chain)

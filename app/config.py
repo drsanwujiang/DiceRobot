@@ -1,3 +1,4 @@
+import os
 import json
 
 from sqlalchemy import select
@@ -11,7 +12,7 @@ from .models.config import (
 from .database import Session, Settings, PluginSettings, Replies, ChatSettings
 from .enum import ChatType
 
-status = StatusModel()
+status = StatusModel(debug=os.environ.get("DICEROBOT_DEBUG") is not None)
 settings = SettingsModel()
 plugin_settings = PluginSettingsModel()
 chat_settings = ChatSettingsModel()

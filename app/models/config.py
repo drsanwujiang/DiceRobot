@@ -22,6 +22,7 @@ class Status(BaseModel):
     """DiceRobot status.
 
     Attributes:
+        debug: Whether debug mode is enabled.
         version: Version of DiceRobot.
         app: Application status.
         module: Module status.
@@ -68,6 +69,7 @@ class Status(BaseModel):
         friends: list[int] = []
         groups: list[int] = []
 
+    debug: bool = Field(False, exclude=True)
     version: str = VERSION
     app: ApplicationStatus = ApplicationStatus.STARTED
     module: Module = Module()
@@ -330,7 +332,8 @@ class Replies:
             "network_server_error": "糟糕，致远星出错了……请稍后再试",
             "network_invalid_content": "致远星返回了无法解析的内容……请稍后再试",
             "network_error": "无法连接到致远星，请检查星际通讯是否正常",
-            "order_invalid": "不太理解这个指令呢……"
+            "order_invalid": "不太理解这个指令呢……",
+            "order_suspicious": "唔……这个指令有点问题……"
         }
     }
 

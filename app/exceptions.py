@@ -31,6 +31,11 @@ class OrderInvalidError(DiceRobotException):
         super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_invalid"))
 
 
+class OrderSuspiciousError(DiceRobotException):
+    def __init__(self) -> None:
+        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_suspicious"))
+
+
 class OrderError(DiceRobotException):
     pass
 

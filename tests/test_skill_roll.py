@@ -1,3 +1,6 @@
+import pytest
+
+from app.exceptions import OrderSuspiciousError
 from . import BaseTest
 
 
@@ -5,9 +8,16 @@ class TestSkillRoll(BaseTest):
     def test_skill_roll(self, client):
         self.wait_for_online(client)
 
+        # Valid expressions
         message_chain = self.build_group_message(".ra50")
 
         for n in range(50):
+            self.post_message(client, message_chain)
+
+        # Suspicious expressions
+        message_chain = self.build_group_message(".ra999999999")
+
+        with pytest.raises(OrderSuspiciousError):
             self.post_message(client, message_chain)
 
     def test_show_rule(self, client):

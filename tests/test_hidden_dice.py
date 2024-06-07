@@ -1,3 +1,6 @@
+import pytest
+
+from app.exceptions import OrderError
 from . import BaseTest
 
 
@@ -9,9 +12,11 @@ class TestHiddenDice(BaseTest):
         message_chain = self.build_group_message(".rh")
         self.post_message(client, message_chain)
 
-        message_chain.sender.id = 99999
+        message_chain.sender.id = 99999  # Not a friend
         self.post_message(client, message_chain)
 
         # Not in group
         message_chain = self.build_friend_message(".rh")
-        self.post_message(client, message_chain)
+
+        with pytest.raises(OrderError):
+            self.post_message(client, message_chain)
