@@ -1,5 +1,9 @@
 #!/bin/bash
 
+function success() {
+  printf "\033[32m%s\033[0m\n" "$1"
+}
+
 function warning() {
   printf "\033[33m%s\033[0m\n" "$1"
 }
@@ -61,7 +65,7 @@ fi
 # Check venv
 if ! (python3 -m venv -h > /dev/null 2>&1); then
   warning "Python module venv not found"
-  echo "Try to install venv"
+  echo "Install venv"
 
   apt -qq update > /dev/null 2>&1
 
@@ -70,23 +74,31 @@ if ! (python3 -m venv -h > /dev/null 2>&1); then
   fi
 fi
 
-# Install pipx and poetry
-echo "Install pipx and poetry"
+# Install pipx
+echo "Install pipx"
 
-if ! (pip3 install --user pipx > /dev/null 2>&1); then
-  apt -qq update > /dev/null 2>&1
+if ! (pipx --version > /dev/null 2>&1); then
+  if ! (pip3 install --user --index-url https://pypi.tuna.tsinghua.edu.cn/simple pipx > /dev/null 2>&1); then
+    apt -qq update > /dev/null 2>&1
 
-  if ! (apt -y -qq install pipx > /dev/null 2>&1); then
-    error "Failed to install pipx"
+    if ! (apt -y -qq install pipx > /dev/null 2>&1); then
+      error "Failed to install pipx"
+    fi
   fi
+
+  python3 -m pipx ensurepath > /dev/null 2>&1
+  source "$HOME"/.bashrc
 fi
 
-python3 -m pipx ensurepath > /dev/null 2>&1
-source "$HOME"/.bashrc
-
 # Install poetry
-if ! (pipx install poetry > /dev/null 2>&1); then
-  error "Failed to install poetry"
+echo "Install poetry"
+
+if ! (poetry --version > /dev/null 2>&1); then
+  if ! (pipx install --index-url https://pypi.tuna.tsinghua.edu.cn/simple poetry > /dev/null 2>&1); then
+    error "Failed to install poetry"
+  fi
+
+  source "$HOME"/.bashrc
 fi
 
 # Install dependencies
@@ -115,4 +127,4 @@ EOF
 
 systemctl daemon-reload > /dev/null 2>&1
 
-echo "Success"
+success "Success"
