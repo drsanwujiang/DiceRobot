@@ -36,6 +36,8 @@ class Response(JSONResponse):
 def init_router(app: FastAPI) -> None:
     from .webhook import router as webhook
     from .admin import router as admin
+    from .mirai import router as mirai
 
     app.include_router(webhook)
     app.include_router(admin)
+    app.include_router(mirai)

@@ -80,3 +80,13 @@ class ResourceNotFoundError(DiceRobotHTTPException):
         message: str = "Resource not found"
     ) -> None:
         super().__init__(status_code, code, message)
+
+
+class BadRequestError(DiceRobotHTTPException):
+    def __init__(
+        self,
+        status_code: int = 400,
+        code: int = -5,
+        message: str = "Bad request"
+    ) -> None:
+        super().__init__(status_code, code, message)

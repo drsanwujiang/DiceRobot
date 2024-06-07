@@ -1,3 +1,5 @@
+import signal
+
 from fastapi import APIRouter, Depends
 
 from ...log import logger
@@ -5,10 +7,8 @@ from ...auth import verify_password, generate_jwt_token, verify_jwt_token
 from ...config import status, replies, settings, plugin_settings, chat_settings
 from ...dispatch import dispatcher
 from ...exceptions import ParametersInvalidError, ResourceNotFoundError
-from ...models.admin import (
-    AuthRequest, SetModuleStatusRequest, UpdateSettingsRequest
-)
 from ...enum import ChatType
+from ...models.request.admin import AuthRequest, SetModuleStatusRequest, UpdateSettingsRequest
 from .. import Response
 
 
@@ -25,7 +25,9 @@ async def auth(data: AuthRequest) -> Response:
 
     logger.success("Authentication succeeded")
 
-    return Response(data={"token": generate_jwt_token()})
+    return Response(data={
+        "token": generate_jwt_token()
+    })
 
 
 @router.get("/status", dependencies=[Depends(verify_jwt_token, use_cache=False)])
@@ -129,3 +131,12 @@ async def get_chat_settings(chat_type: ChatType, chat_id: int, group: str) -> Re
     logger.info(f"Admin request received: get chat settings, chat type: {chat_type.value}, chat ID: {chat_id}, setting group: {group}")
 
     return Response(data=chat_settings.get(chat_type=chat_type, chat_id=chat_id, setting_group=group))
+
+
+@router.post("/stop", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def stop() -> Response:
+    logger.info("Admin request received: stop")
+
+    signal.raise_signal(signal.SIGTERM)
+
+    return Response()

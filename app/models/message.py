@@ -1,26 +1,36 @@
-from typing import Any
+from typing import Any, Literal, Self
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 
+from ..enum import MessageType, MessageChainType
 from . import CamelizableModel, GroupMemberProfile, MessageChainOrEvent
 
-parsable_messages = [
-    "Source", "Quote", "At", "Plain", "Image"
+__all__ = [
+    "Message",
+    "Source",
+    "Quote",
+    "At",
+    "Plain",
+    "Image",
+    "MessageChain",
+    "FriendMessage",
+    "GroupMessage",
+    "TempMessage"
 ]
 
 
 class Message(CamelizableModel):
-    type: str
+    type: MessageType
 
 
 class Source(Message):
-    type: str = "Source"
+    type: Literal[MessageType.SOURCE] = MessageType.SOURCE
     id: int
     time: int
 
 
 class Quote(Message):
-    type: str = "Quote"
+    type: Literal[MessageType.QUOTE] = MessageType.QUOTE
     group_id: int
     sender_id: int
     target_id: int
@@ -28,41 +38,44 @@ class Quote(Message):
 
 
 class At(Message):
-    type: str = "At"
+    type: Literal[MessageType.AT] = MessageType.AT
     target: int
     display: str
 
 
 class Plain(Message):
-    type: str = "Plain"
+    type: Literal[MessageType.PLAIN] = MessageType.PLAIN
     text: str
 
 
 class Image(Message):
-    type: str = "Image"
+    type: Literal[MessageType.IMAGE] = MessageType.IMAGE
     image_id: str | None = None
     url: str | None = None
     path: str | None = None
     base64: str | None = None
 
+    @model_validator(mode="after")
+    def check_image(self) -> Self:
+        if not any([self.image_id, self.url, self.path, self.base64]):
+            raise ValueError("No image data provided")
+
+        return self
+
 
 class MessageChain(MessageChainOrEvent):
-    type: str
+    type: MessageChainType
     sender: Any
     message_chain: list[Message]
 
+    @classmethod
     @field_validator("message_chain", mode="before")
     def validate_message_chain(cls, messages: list[dict]) -> list[Message]:
         parsed_messages: list[Message] = []
 
         for message in messages:
-            try:
-                if message["type"] in parsable_messages:
-                    parsed_messages.append(globals()[message["type"]].model_validate(message))
-                else:
-                    raise ValueError("Unparsable message type: " + message["type"])
-            except KeyError:
-                raise ValueError("Message type not found")
+            _message = Message.model_validate(message)
+            parsed_messages.append(globals()[_message.type.value].model_validate(message))
 
         return parsed_messages
 
@@ -73,7 +86,7 @@ class FriendMessage(MessageChain):
         nickname: str
         remark: str
 
-    type: str = "FriendMessage"
+    type: Literal[MessageChainType.FRIEND] = MessageChainType.FRIEND
     sender: Sender
 
 
@@ -81,7 +94,7 @@ class GroupMessage(MessageChain):
     class Sender(GroupMemberProfile):
         pass
 
-    type: str = "GroupMessage"
+    type: Literal[MessageChainType.GROUP] = MessageChainType.GROUP
     sender: Sender
 
 
@@ -89,5 +102,5 @@ class TempMessage(MessageChain):
     class Sender(GroupMemberProfile):
         pass
 
-    type: str = "TempMessage"
+    type: Literal[MessageChainType.TEMP] = MessageChainType.TEMP
     sender: Sender

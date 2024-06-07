@@ -2,29 +2,16 @@ import json
 
 from fastapi import APIRouter, Depends
 
-
 from ...log import logger
 from ...auth import verify_webhook_token
 from ...config import status
 from ...dispatch import dispatcher
-from ...enum import ApplicationStatus
+from ...enum import ApplicationStatus, MessageChainType, EventType
 from ...exceptions import MessageInvalidError
 from ...models import MessageChainOrEvent
-from ...models.message import Source, Quote, At, Plain, MessageChain, FriendMessage, GroupMessage, TempMessage
-from ...models.event import (
-    Event, BotOnlineEvent, BotReloginEvent, BotOfflineEventActive, BotOfflineEventForce, BotOfflineEventDropped,
-    NewFriendRequestEvent, BotInvitedJoinGroupRequestEvent
-)
+from ...models.message import *
+from ...models.event import *
 from .. import Response
-
-parsable_message_chains = [
-    "FriendMessage", "GroupMessage", "TempMessage"
-]
-
-parsable_events = [
-    "BotOnlineEvent", "BotReloginEvent", "BotOfflineEventActive", "BotOfflineEventForce", "BotOfflineEventDropped",
-    "NewFriendRequestEvent", "BotInvitedJoinGroupRequestEvent"
-]
 
 router = APIRouter()
 
@@ -57,12 +44,10 @@ def _parse_message_chain_or_event(message_chain_or_event: dict) -> MessageChain 
     try:
         _message_chain_or_event = MessageChainOrEvent.model_validate(message_chain_or_event)
 
-        if _message_chain_or_event.type in parsable_message_chains:
-            return globals()[_message_chain_or_event.type].model_validate(message_chain_or_event)
-        elif _message_chain_or_event.type in parsable_events:
-            return globals()[_message_chain_or_event.type].model_validate(message_chain_or_event)
-        else:
+        if _message_chain_or_event.type not in MessageChainType and _message_chain_or_event.type not in EventType:
             raise ValueError
+
+        return globals()[_message_chain_or_event.type].model_validate(message_chain_or_event)
     except (KeyError, ValueError):
         raise MessageInvalidError
 

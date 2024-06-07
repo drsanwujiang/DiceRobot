@@ -3,6 +3,53 @@ from pydantic import field_serializer
 from .. import CamelizableModel, UserProfile, GroupMemberProfile
 from ..message import Message, MessageChain
 
+__all__ = [
+    "GetPluginInfoResponse",
+    "GetBotListResponse",
+    "GetFriendListResponse",
+    "GetGroupListResponse",
+    "GetGroupMemberListResponse",
+    "GetBotProfileResponse",
+    "GetFriendProfileResponse",
+    "GetGroupMemberProfileResponse",
+    "GetUserProfileResponse",
+    "SendFriendMessageRequest",
+    "SendFriendMessageResponse",
+    "SendGroupMessageRequest",
+    "SendGroupMessageResponse",
+    "SendTempMessageRequest",
+    "SendTempMessageResponse",
+    "SendNudgeMessageRequest",
+    "SendNudgeMessageResponse",
+    "RecallMessageRequest",
+    "RecallMessageResponse",
+    "GetRoamingMessagesRequest",
+    "GetRoamingMessagesResponse",
+    "DeleteFriendRequest",
+    "DeleteFriendResponse",
+    "MuteGroupMemberRequest",
+    "MuteGroupMemberResponse",
+    "UnmuteGroupMemberRequest",
+    "UnmuteGroupMemberResponse",
+    "KickGroupMemberRequest",
+    "KickGroupMemberResponse",
+    "QuitGroupRequest",
+    "QuitGroupResponse",
+    "MuteAllRequest",
+    "MuteAllResponse",
+    "UnmuteAllRequest",
+    "UnmuteAllResponse",
+    "GetGroupMemberInfoResponse",
+    "SetGroupMemberInfoRequest",
+    "SetGroupMemberInfoResponse",
+    "RespondNewFriendRequestEventRequest",
+    "RespondNewFriendRequestEventResponse",
+    "RespondMemberJoinRequestEventRequest",
+    "RespondMemberJoinRequestEventResponse",
+    "RespondBotInvitedJoinGroupRequestEventRequest",
+    "RespondBotInvitedJoinGroupRequestEventResponse"
+]
+
 
 class MiraiAPIRequest(CamelizableModel):
     pass

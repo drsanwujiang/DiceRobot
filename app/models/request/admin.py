@@ -1,4 +1,10 @@
-from . import BaseModel
+from ...models import BaseModel
+
+__all__ = [
+    "AuthRequest",
+    "SetModuleStatusRequest",
+    "UpdateSettingsRequest"
+]
 
 
 class AuthRequest(BaseModel):

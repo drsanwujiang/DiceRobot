@@ -9,6 +9,14 @@ from ..version import VERSION
 from ..enum import ApplicationStatus, ChatType
 from . import BaseModel
 
+__all__ = [
+    "Status",
+    "Settings",
+    "PluginSettings",
+    "ChatSettings",
+    "Replies"
+]
+
 
 class Status(BaseModel):
     """DiceRobot status.
@@ -136,25 +144,77 @@ class Settings:
             jwt: JWT = JWT()
             admin: Admin = Admin()
 
+        class Application(BaseModel):
+            """Application settings.
+
+            Attributes:
+                start_mirai_at_startup: Whether to start Mirai at startup.
+                check_bot_status_at_startup: Whether to check bot status at startup.
+            """
+
+            start_mirai_at_startup: bool = False
+            check_bot_status_at_startup: bool = False
+
         class Mirai(BaseModel):
             """Mirai settings.
 
             Attributes:
+                dir: Mirai directory settings.
+                file: Mirai file settings.
                 api: Mirai API HTTP settings.
             """
 
-            class API(BaseModel):
-                """Mirai API HTTP settings.
+            class Directory(BaseModel):
+                """Mirai directory settings.
 
                 Attributes:
-                    base_url: Mirai API HTTP base URL.
+                    base: Base directory of Mirai.
+                    logs: Mirai logs directory path.
+                    config: Mirai configuration directory path.
+                    config_console: Mirai Console configuration directory path.
+                    config_api: Mirai API HTTP configuration directory path.
                 """
 
+                base: str = "mirai"
+                logs: str = "mirai/logs"
+                config: str = "mirai/config"
+                config_console: str = "mirai/config/Console"
+                config_api: str = "mirai/config/net.mamoe.mirai-api-http"
+
+            class File(BaseModel):
+                """Mirai file settings.
+
+                Attributes:
+                    mcl: Mirai Console Loader JAR file name.
+                    mcl_config: Mirai Console Loader configuration file name.
+                    config_autologin: Mirai Console autoLogin configuration file name.
+                    config_api: Mirai API HTTP configuration file name.
+                """
+
+                mcl: str = "mcl.jar"
+                mcl_config: str = "config.json"
+                config_autologin: str = "AutoLogin.yml"
+                config_api: str = "setting.yml"
+
+            class API(BaseModel):
+                """Mirai API HTTP plugin settings.
+
+                Attributes:
+                    host: Host (for Mirai Manager).
+                    port: Port (for Mirai Manager).
+                    base_url: Base URL (for DiceRobot requests).
+                """
+
+                host: str = "127.0.0.1"
+                port: int = 9000
                 base_url: str = "http://127.0.0.1:9000"
 
+            dir: Directory = Directory()
+            file: File = File()
             api: API = API()
 
         security: Security = Security()
+        app: Application = Application()
         mirai: Mirai = Mirai()
 
     _settings: _Settings = _Settings()
