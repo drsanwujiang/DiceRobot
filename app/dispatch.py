@@ -90,13 +90,15 @@ class Dispatcher:
         match = Dispatcher.order_pattern.fullmatch(message_content)
 
         if not match:
-            raise RuntimeError("Dispatch missed")
+            logger.debug("Dispatch missed")
+            raise RuntimeError
 
         order_and_content = match.group(1)
         plugin_name, order, order_content = self.match_plugin(order_and_content)
 
         if not plugin_name:
-            raise RuntimeError("Plugin match missed")
+            logger.debug("Plugin match missed")
+            raise RuntimeError
         elif not plugin_settings.get(plugin=plugin_name)["enabled"]:
             logger.info("Plugin disabled, execution skipped")
             return
@@ -131,7 +133,7 @@ class Dispatcher:
     def dispatch_event(self, event: Event) -> None:
         if event.__class__.__name__ not in self.events:
             logger.debug("Dispatch missed")
-            raise RuntimeError("Dispatch missed")
+            raise RuntimeError
 
         for plugin_name in self.events[event.__class__.__name__]:
             try:

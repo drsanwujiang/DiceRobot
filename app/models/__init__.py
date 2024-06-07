@@ -3,6 +3,8 @@ from typing import Any
 from pydantic import BaseModel as _BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+from ..enum import MessageChainType, EventType
+
 
 class BaseModel(_BaseModel):
     def model_dump(self, **kwargs) -> dict[str, Any]:
@@ -46,4 +48,4 @@ class GroupMemberProfile(CamelizableModel):
 
 
 class MessageChainOrEvent(CamelizableModel):
-    type: str
+    type: MessageChainType | EventType

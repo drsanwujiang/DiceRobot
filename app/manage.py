@@ -119,6 +119,10 @@ class MiraiManager:
         if not self.is_installed() or self.is_running():
             return
 
+        logger.info("Initialize Mirai API config")
+
+        self.init_api_config()
+
         logger.info("Start Mirai")
 
         self.process = await asyncio.create_subprocess_exec(
@@ -158,8 +162,6 @@ mirai_manager = MiraiManager()
 
 
 def init_manager() -> None:
-    mirai_manager.init_api_config()
-
     logger.info("Manager initialized")
 
 

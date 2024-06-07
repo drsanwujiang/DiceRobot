@@ -68,7 +68,6 @@ class MessageChain(MessageChainOrEvent):
     sender: Any
     message_chain: list[Message]
 
-    @classmethod
     @field_validator("message_chain", mode="before")
     def validate_message_chain(cls, messages: list[dict]) -> list[Message]:
         parsed_messages: list[Message] = []
