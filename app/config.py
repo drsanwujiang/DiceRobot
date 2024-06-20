@@ -65,7 +65,7 @@ def save_config() -> None:
     logger.info("Saving config")
 
     with Session() as session, session.begin():
-        for key, value in settings.model_dump().items():  # type: str, dict
+        for key, value in settings.model_dump(safe_dump=False).items():  # type: str, dict
             serialized = json.dumps(value)
             session.execute(
                 insert(Settings)

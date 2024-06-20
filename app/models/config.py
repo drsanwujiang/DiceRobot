@@ -2,7 +2,7 @@ from typing import Any
 import secrets
 from copy import deepcopy
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from werkzeug.security import generate_password_hash
 
 from ..version import VERSION
@@ -124,23 +124,10 @@ class Settings:
                 """Administration settings.
 
                 Attributes:
-                    password: Administrator password. For security, this field will be excluded when serialization.
+                    password_hash: Administrator password hash.
                 """
 
-                password: str = Field("", exclude=True)
-
-                @field_validator("password", mode="after")
-                def process_password(cls, value: str) -> str:
-                    """Process password field.
-
-                    Args:
-                        value: Raw password.
-
-                    Returns:
-                        Password hash.
-                    """
-
-                    return generate_password_hash(value)
+                password_hash: str = None
 
             webhook: Webhook = Webhook()
             jwt: JWT = JWT()
@@ -230,6 +217,54 @@ class Settings:
         """
 
         cls._settings = cls._Settings.model_validate(settings)
+
+    @classmethod
+    def update_security(cls, settings: dict) -> None:
+        """Update security settings.
+
+        Args:
+            settings: New security settings.
+        """
+
+        old_settings = cls._settings.security.model_dump()
+
+        if "webhook" in settings:
+            old_settings["webhook"] = settings["webhook"]
+        if "jwt" in settings:
+            old_settings["jwt"] = settings["jwt"]
+        if "admin" in settings:
+            old_settings["admin"]["password_hash"] = generate_password_hash(settings["admin"]["password"])
+
+        cls._settings.security = cls._Settings.Security.model_validate(old_settings)
+
+    @classmethod
+    def update_application(cls, settings: dict) -> None:
+        """Update application settings.
+
+        Args:
+            settings: New application settings.
+        """
+
+        cls._settings.app = cls._Settings.Application.model_validate(settings)
+
+    @classmethod
+    def update_mirai(cls, settings: dict) -> None:
+        """Update Mirai settings.
+
+        Args:
+            settings: New Mirai settings.
+        """
+
+        cls._settings.mirai = cls._Settings.Mirai.model_validate(settings)
+
+    @classmethod
+    def model_dump(cls, safe_dump: bool = True, **kwargs) -> dict:
+        data = cls._settings.model_dump(**kwargs)
+
+        if safe_dump:
+            del data["security"]  # For security, sensitive data should be excluded
+
+        return data
 
     def __getattr__(self, item) -> Any:
         """Get attribute from inner actual settings class."""

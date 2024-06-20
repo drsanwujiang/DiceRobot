@@ -3,7 +3,9 @@ from ...models import BaseModel
 __all__ = [
     "AuthRequest",
     "SetModuleStatusRequest",
-    "UpdateSettingsRequest"
+    "UpdateSecuritySettingsRequest",
+    "UpdateApplicationSettingsRequest",
+    "UpdateMiraiSettingsRequest"
 ]
 
 
@@ -16,27 +18,46 @@ class SetModuleStatusRequest(BaseModel):
     event: bool
 
 
-class UpdateSettingsRequest(BaseModel):
-    class Security(BaseModel):
-        class Webhook(BaseModel):
-            token: str
+class UpdateSecuritySettingsRequest(BaseModel):
+    class Webhook(BaseModel):
+        token: str
 
-        class JWT(BaseModel):
-            secret: str
-            algorithm: str
+    class JWT(BaseModel):
+        secret: str
+        algorithm: str
 
-        class Admin(BaseModel):
-            password: str
+    class Admin(BaseModel):
+        password: str
 
-        webhook: Webhook
-        jwt: JWT
-        admin: Admin
+    webhook: Webhook = None
+    jwt: JWT = None
+    admin: Admin = None
 
-    class Mirai(BaseModel):
-        class API(BaseModel):
-            base_url: str
 
-        api: API
+class UpdateApplicationSettingsRequest(BaseModel):
+    start_mirai_at_startup: bool
+    check_bot_status_at_startup: bool
 
-    security: Security
-    mirai: Mirai
+
+class UpdateMiraiSettingsRequest(BaseModel):
+    class Directory(BaseModel):
+        base: str
+        logs: str
+        config: str
+        config_console: str
+        config_api: str
+
+    class File(BaseModel):
+        mcl: str
+        mcl_config: str
+        config_autologin: str
+        config_api: str
+
+    class API(BaseModel):
+        host: str
+        port: int
+        base_url: str
+
+    dir: Directory
+    file: File
+    api: API

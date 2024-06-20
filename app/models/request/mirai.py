@@ -7,6 +7,7 @@ __all__ = [
     "CommandRequest"
 ]
 
+
 class UpdateAutologinConfigRequest(CamelizableModel):
     class Account(CamelizableModel):
         class Password(CamelizableModel):

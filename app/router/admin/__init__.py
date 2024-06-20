@@ -8,7 +8,10 @@ from ...config import status, replies, settings, plugin_settings, chat_settings
 from ...dispatch import dispatcher
 from ...exceptions import ParametersInvalidError, ResourceNotFoundError
 from ...enum import ChatType
-from ...models.request.admin import AuthRequest, SetModuleStatusRequest, UpdateSettingsRequest
+from ...models.request.admin import (
+    AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest,
+    UpdateMiraiSettingsRequest
+)
 from .. import Response
 
 
@@ -54,11 +57,29 @@ async def get_settings() -> Response:
     return Response(data=settings.model_dump())
 
 
-@router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def update_settings(data: UpdateSettingsRequest) -> Response:
-    logger.info("Admin request received: update settings")
+@router.patch("/settings/security", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def update_security_settings(data: UpdateSecuritySettingsRequest) -> Response:
+    logger.info("Admin request received: update security settings")
 
-    settings.update(data.model_dump())
+    settings.update_security(data.model_dump(exclude_none=True))
+
+    return Response()
+
+
+@router.patch("/settings/app", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def update_application_settings(data: UpdateApplicationSettingsRequest) -> Response:
+    logger.info("Admin request received: update application settings")
+
+    settings.update_application(data.model_dump(exclude_none=True))
+
+    return Response()
+
+
+@router.patch("/settings/mirai", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def update_mirai_settings(data: UpdateMiraiSettingsRequest) -> Response:
+    logger.info("Admin request received: update mirai settings")
+
+    settings.update_mirai(data.model_dump(exclude_none=True))
 
     return Response()
 

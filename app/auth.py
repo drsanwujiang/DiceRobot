@@ -13,10 +13,10 @@ def generate_password(password: str) -> str:
 
 
 def verify_password(password: str) -> bool:
-    if not settings.security.admin.password:
+    if not settings.security.admin.password_hash:
         return True
 
-    return check_password_hash(settings.security.admin.password, password)
+    return check_password_hash(settings.security.admin.password_hash, password)
 
 
 def generate_jwt_token() -> str:
