@@ -4,11 +4,15 @@ from datetime import date
 import zipfile
 import shutil
 
-import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 
 from .log import logger
 from .config import settings
 from .network.dicerobot import download_mirai
+
+yaml = YAML(typ="safe")
+yaml.indent(mapping=2, sequence=4, offset=2)
 
 
 class MiraiManager:
@@ -31,12 +35,12 @@ class MiraiManager:
                     "host": settings.mirai.api.host,
                     "port": settings.mirai.api.port,
                     "cors": [
-                        "*"
+                        DoubleQuotedScalarString("*")
                     ]
                 },
                 "webhook": {
                     "destinations": [
-                        f"http://127.0.0.1:9500/report?token={settings.security.webhook.token}"
+                        DoubleQuotedScalarString(f"http://127.0.0.1:9500/report?token={settings.security.webhook.token}")
                     ]
                 }
             }
@@ -92,7 +96,7 @@ class MiraiManager:
     @staticmethod
     def get_autologin_config() -> dict:
         with open(os.path.join(settings.mirai.dir.config_console, settings.mirai.file.config_autologin), "r", encoding="utf-8") as f:
-            return yaml.safe_load(f)
+            return yaml.load(f)
 
     @staticmethod
     def set_autologin_config(config: dict) -> None:
