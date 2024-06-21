@@ -11,7 +11,7 @@ from .log import logger
 from .config import settings
 from .network.dicerobot import download_mirai
 
-yaml = YAML(typ="safe")
+yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
 
 
