@@ -18,18 +18,18 @@ class QQManager:
         self.install_process: subprocess.Popen | None = None
 
     def is_downloaded(self) -> bool:
-        return self.deb_file is not None and os.path.exists(self.deb_file)
+        return self.deb_file is not None and os.path.isfile(self.deb_file)
 
     def is_installing(self) -> bool:
         return self.install_process is not None and self.install_process.poll() is None
 
     @classmethod
     def is_installed(cls) -> bool:
-        return os.path.exists(cls.qq_path)
+        return os.path.isfile(cls.qq_path)
 
     @classmethod
     def get_version(cls) -> str | None:
-        if not os.path.exists(cls.app_package_path):
+        if not os.path.isfile(cls.app_package_path):
             return None
 
         with open(cls.app_package_path, "r", encoding="utf-8") as f:
@@ -123,7 +123,7 @@ class NapCatManager:
 
     @classmethod
     def is_installed(cls) -> bool:
-        return os.path.exists(cls.napcat_path)
+        return os.path.isfile(cls.napcat_path)
 
     @staticmethod
     def is_configured() -> bool:
