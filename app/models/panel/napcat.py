@@ -1,3 +1,7 @@
+from ipaddress import IPv4Address
+
+from pydantic import Field
+
 from ...models import BaseModel
 
 __all__ = [
@@ -7,9 +11,8 @@ __all__ = [
 
 class UpdateNapCatSettingsRequest(BaseModel):
     class API(BaseModel):
-        host: str = None
-        port: int = None
-        base_url: str = None
+        host: IPv4Address = None
+        port: int = Field(None, gt=0)
 
     api: API = None
-    account: int = None
+    account: int = Field(None, gt=10000)

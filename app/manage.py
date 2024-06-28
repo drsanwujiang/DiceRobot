@@ -93,7 +93,7 @@ class NapCatManager:
     onebot_config = {
         "http": {
             "enable": True,
-            "host": settings.napcat.api.host,
+            "host": str(settings.napcat.api.host),
             "port": settings.napcat.api.port,
             "secret": settings.security.webhook.secret,
             "enableHeart": False,

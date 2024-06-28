@@ -1,8 +1,9 @@
 from typing import Any
 import secrets
+from ipaddress import IPv4Address
 from copy import deepcopy
 
-from pydantic import Field
+from pydantic import Field, field_serializer
 from werkzeug.security import generate_password_hash
 
 from ..version import VERSION
@@ -160,8 +161,12 @@ class Settings:
                     port: OneBot HTTP port.
                 """
 
-                host: str = "127.0.0.1"
-                port: int = 13579
+                host: IPv4Address = IPv4Address("127.0.0.1")
+                port: int = Field(13579, gt=0)
+
+                @field_serializer("host")
+                def serialize_host(self, host: IPv4Address, _) -> str:
+                    return str(host)
 
                 @property
                 def base_url(self) -> str:
