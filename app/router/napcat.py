@@ -79,7 +79,7 @@ async def stop() -> JSONResponse:
 
 
 @router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_status() -> JSONResponse:
+async def get_logs() -> JSONResponse:
     logger.info("NapCat manage request received: get logs")
 
     if not napcat_manager.is_running():
