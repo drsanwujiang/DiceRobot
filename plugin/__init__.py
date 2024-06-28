@@ -4,14 +4,14 @@ from copy import deepcopy
 
 from app.config import status, plugin_settings, chat_settings, replies
 from app.exceptions import OrderInvalidError
-from app.enum import ChatType
+from app.enum import ChatType, PrivateMessageSubType, GroupMessageSubType
 from app.utils import deep_update
-from app.models.message import Message, Plain, MessageChain, FriendMessage, GroupMessage, TempMessage
-from app.models.event import Event
-from app.models.network.mirai import SendFriendMessageRequest, SendGroupMessageRequest, SendTempMessageRequest
-from app.network.mirai import (
-    send_friend_message as mirai_send_friend_message, send_group_message as mirai_send_group_message,
-    send_temp_message as mirai_send_temp_message
+from app.models.report.message import Message, PrivateMessage, GroupMessage
+from app.models.report.notice import Notice
+from app.models.report.request import Request
+from app.models.report.segment import Segment, Text
+from app.network.napcat import (
+    send_private_message as napcat_send_private_message, send_group_message as napcat_send_group_message
 )
 
 
@@ -43,10 +43,12 @@ class DiceRobotPlugin(ABC):
         """Load plugin settings and replies."""
 
         plugin_settings.set(plugin=cls.name, settings=deep_update(
-            {"enabled": True}, deepcopy(cls.default_plugin_settings), plugin_settings.get(plugin=cls.name)
+            {"enabled": True},
+            deepcopy(cls.default_plugin_settings), plugin_settings.get(plugin=cls.name)
         ))
         replies.set(reply_group=cls.name, replies=deep_update(
-            deepcopy(cls.default_replies), replies.get(reply_group=cls.name)
+            deepcopy(cls.default_replies),
+            replies.get(reply_group=cls.name)
         ))
 
     @classmethod
@@ -137,11 +139,11 @@ class OrderPlugin(DiceRobotPlugin):
     orders: str | list[str]
     priority: int = 100
 
-    def __init__(self, message_chain: MessageChain, order: str, order_content: str) -> None:
+    def __init__(self, message: Message, order: str, order_content: str) -> None:
         """Initialize order plugin.
 
         Args:
-            message_chain: Message chain that triggered the plugin.
+            message: Message that triggered the plugin.
             order: Order that triggered the plugin.
             order_content: Order content.
         """
@@ -151,7 +153,7 @@ class OrderPlugin(DiceRobotPlugin):
         self.chat_type: ChatType
         self.chat_id = -1
 
-        self.message_chain = message_chain
+        self.message = message
         self.order = order
         self.order_content = order_content
 
@@ -167,15 +169,14 @@ class OrderPlugin(DiceRobotPlugin):
     def _load_chat(self) -> None:
         """Load chat information and settings."""
 
-        if type(self.message_chain) is FriendMessage:
+        if isinstance(self.message, PrivateMessage) and self.message.sub_type == PrivateMessageSubType.FRIEND:
             self.chat_type = ChatType.FRIEND
-            self.chat_id = self.message_chain.sender.id
-        elif type(self.message_chain) is GroupMessage:
+            self.chat_id = self.message.user_id
+        elif isinstance(self.message, GroupMessage) and self.message.sub_type == GroupMessageSubType.NORMAL:
             self.chat_type = ChatType.GROUP
-            self.chat_id = self.message_chain.sender.group.id
-        elif type(self.message_chain) is TempMessage:
-            self.chat_type = ChatType.TEMP
-            self.chat_id = self.message_chain.sender.group.id
+            self.chat_id = self.message.group_id
+        else:
+            raise ValueError
 
         # Settings used by the plugin in this chat
         self.chat_settings = chat_settings.get(chat_type=self.chat_type, chat_id=self.chat_id, setting_group=self.name)
@@ -191,20 +192,16 @@ class OrderPlugin(DiceRobotPlugin):
 
         bot_id = status.bot.id
         bot_nickname = self.dicerobot_chat_settings.setdefault("nickname", "")
-        sender_id = self.message_chain.sender.id,
-        sender_nickname = self.message_chain.sender.member_name if isinstance(self.message_chain, GroupMessage) else self.message_chain.sender.nickname
 
         self.reply_variables = {
             "机器人QQ": bot_id,
             "机器人QQ号": bot_id,
             "机器人": bot_nickname if bot_nickname else status.bot.nickname,
             "机器人昵称": bot_nickname if bot_nickname else status.bot.nickname,
-            "群号": self.message_chain.sender.group.id if isinstance(self.message_chain, GroupMessage) else "",
-            "群名": self.message_chain.sender.group.name if isinstance(self.message_chain, GroupMessage) else "",
-            "发送者QQ": sender_id,
-            "发送者QQ号": sender_id,
-            "发送者": sender_nickname,
-            "发送者昵称": sender_nickname
+            "发送者QQ": self.message.user_id,
+            "发送者QQ号": self.message.user_id,
+            "发送者": self.message.sender.nickname,
+            "发送者昵称": self.message.sender.nickname
         }
 
     def check_enabled(self) -> bool:
@@ -254,115 +251,73 @@ class OrderPlugin(DiceRobotPlugin):
 
         return reply
 
-    def reply_to_sender(self, reply: str | list[Message]) -> None:
-        """Send reply to the sender of the message chain that triggered the plugin.
+    def reply_to_sender(self, reply: str | list[Segment]) -> None:
+        """Send reply to the sender.
 
         Args:
-            reply: Reply string or messages. Reply string will be formatted and converted to a plain message.
+            reply: Reply string or message. Reply string will be formatted and converted to a text message.
         """
 
         if isinstance(reply, str):
-            reply = [Plain.model_validate({"type": "Plain", "text": self.format_reply(reply)})]
+            reply = [Text(data=Text.Data(text=self.format_reply(reply)))]
 
-        self.reply_to_message_sender(self.message_chain, reply)
+        self.reply_to_message_sender(self.message, reply)
 
     @classmethod
-    def reply_to_message_sender(cls, message_chain: MessageChain, reply: str | list[Message]) -> None:
-        """Send reply to the sender of the message chain.
+    def reply_to_message_sender(cls, message: Message, reply: str | list[Segment]) -> None:
+        """Send reply to the sender of specific message.
 
         Args:
-            message_chain: Message chain.
-            reply: Reply string or messages.
+            message: Message.
+            reply: Reply string or message.
         """
 
-        if type(message_chain) is FriendMessage:
-            cls.send_friend_message(message_chain.sender.id, reply)
-        elif type(message_chain) is GroupMessage:
-            cls.send_group_message(message_chain.sender.group.id, reply)
-        elif type(message_chain) is TempMessage:
-            cls.send_temp_message(message_chain.sender.id, message_chain.sender.group.id, reply)
+        if isinstance(message, PrivateMessage) and message.sub_type == PrivateMessageSubType.FRIEND:
+            cls.send_friend_message(message.user_id, reply)
+        elif isinstance(message, GroupMessage) and message.sub_type == GroupMessageSubType.NORMAL:
+            cls.send_group_message(message.group_id, reply)
         else:
-            raise RuntimeError("Invalid message chain type")
+            raise RuntimeError("Invalid message type or sub type")
 
     @staticmethod
-    def send_friend_message(chat_id: int, message: str | list[Message]) -> None:
+    def send_friend_message(user_id: int, message: str | list[Segment]) -> None:
         """Send message to friend.
 
         Args:
-            chat_id: Friend ID.
-            message: Message string or message list. Message string will be converted to a plain message.
+            user_id: Friend ID.
+            message: String or segments. String will be converted to a text message.
         """
 
         if isinstance(message, str):
-            message = [Plain.model_validate({"type": "Plain", "text": message})]
+            message = [Text(data=Text.Data(text=message))]
 
-        mirai_send_friend_message(SendFriendMessageRequest(
-            target=chat_id,
-            message_chain=message
-        ))
+        napcat_send_private_message(user_id, message)
 
     @staticmethod
-    def send_group_message(chat_id: int, message: str | list[Message]) -> None:
+    def send_group_message(group_id: int, message: str | list[Message]) -> None:
         """Send message to group.
 
         Args:
-            chat_id: Group ID.
-            message: Message string or message list. Message string will be converted to a plain message.
-        """
-
-        if isinstance(message, str):
-            message = [Plain.model_validate({"type": "Plain", "text": message})]
-
-        mirai_send_group_message(SendGroupMessageRequest(
-            target=chat_id,
-            message_chain=message
-        ))
-
-    @staticmethod
-    def send_temp_message(target_id: int, group_id: int, message: str | list[Message]) -> None:
-        """Send message to temporary chat.
-
-        Args:
-            target_id: Target chat ID.
             group_id: Group ID.
-            message: Message string or message list. Message string will be converted to a plain message.
+            message: String or segments. String will be converted to a text message.
         """
 
         if isinstance(message, str):
-            message = [Plain.model_validate({"type": "Plain", "text": message})]
+            message = [Text(data=Text.Data(text=message))]
 
-        mirai_send_temp_message(SendTempMessageRequest(
-            qq=target_id,
-            group=group_id,
-            message_chain=message
-        ))
-
-    @classmethod
-    def send_friend_or_temp_message(cls, target_id: int, group_id: int, messages: str | list[Message]) -> None:
-        """Send message to friend or temporary chat.
-
-        Args:
-            target_id: Friend or temporary chat ID.
-            group_id: Group ID if the target is a temporary chat.
-            messages: Message string or message list. Message string will be converted to a plain message.
-        """
-
-        if target_id in status.bot.friends:
-            cls.send_friend_message(target_id, messages)
-        else:
-            cls.send_temp_message(target_id, group_id, messages)
+        napcat_send_group_message(group_id, message)
 
 
 class EventPlugin(DiceRobotPlugin):
     """DiceRobot event plugin.
 
     Attributes:
-        events: (class attribute) Event or events that trigger the plugin.
+        events: (class attribute) Events that can trigger the plugin.
     """
 
-    events = Type[Event] | list[Type[Event]]
+    events: list[Type[Notice | Request]] = []
 
-    def __init__(self, event: Event) -> None:
+    def __init__(self, event: Notice | Request) -> None:
         """Initialize event plugin.
 
         Args:

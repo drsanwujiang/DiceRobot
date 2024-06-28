@@ -34,246 +34,295 @@ def _mock_dicerobot(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def _mock_mirai(monkeypatch):
-    from app.models.network.mirai import (
-        GetPluginInfoResponse, GetBotListResponse, GetFriendListResponse, GetGroupListResponse,
-        GetGroupMemberListResponse, GetBotProfileResponse, GetFriendProfileResponse, GetGroupMemberProfileResponse,
-        GetUserProfileResponse, SendFriendMessageRequest, SendFriendMessageResponse, SendGroupMessageRequest,
-        SendGroupMessageResponse, SendTempMessageRequest, SendTempMessageResponse, SendNudgeMessageRequest,
-        SendNudgeMessageResponse, RecallMessageRequest, RecallMessageResponse, DeleteFriendRequest,
-        DeleteFriendResponse, GetGroupMemberInfoResponse, SetGroupMemberInfoRequest, SetGroupMemberInfoResponse
+def _mock_napcat(monkeypatch):
+    from app.models.network.napcat import (
+        GetLoginInfoResponse, GetFriendListResponse, GetGroupInfoResponse, GetGroupListResponse,
+        GetGroupMemberInfoResponse, GetGroupMemberListResponse, SendPrivateMessageResponse, SendGroupMessageResponse,
+        SetGroupCardResponse, SetGroupLeaveResponse, SetFriendAddRequestResponse, SetGroupAddRequestResponse
     )
+    from app.models.report.segment import Segment
+    from app.enum import GroupAddRequestSubType
 
-    def _get_plugin_info() -> GetPluginInfoResponse:
-        logger.debug("Mocking get_plugin_info")
+    def _get_login_info() -> GetLoginInfoResponse:
+        logger.debug("Mocking get_login_info")
 
-        return GetPluginInfoResponse(
-            code=0,
-            msg="Success",
-            data=GetPluginInfoResponse.Data(
-                version="2.10.0"
-            )
-        )
-
-    def _get_bot_list() -> GetBotListResponse:
-        logger.debug("Mocking get_bot_list")
-
-        return GetBotListResponse(
-            code=0,
-            msg="Success",
-            data=[10000]
-        )
+        return GetLoginInfoResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "user_id": 99999,
+                "nickname": "Shinji"
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
     def _get_friend_list() -> GetFriendListResponse:
         logger.debug("Mocking get_friend_list")
 
-        return GetFriendListResponse(
-            code=0,
-            msg="Success",
-            data=[
-                GetFriendListResponse.Friend(
-                    id=88888,
-                    nickname="Kaworu",
-                    remark="Kaworu"
-                )
-            ]
-        )
+        return GetFriendListResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": [
+                {
+                    "user_id": 88888,
+                    "nickname": "Kaworu",
+                    "remark": "",
+                    "sex": "male",
+                    "level": 0
+                },
+                {
+                    "user_id": 99999,
+                    "nickname": "Shinji",
+                    "remark": "",
+                    "sex": "male",
+                    "level": 0
+                }
+            ],
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    def _get_group_info(group_id: int, no_cache: bool = False) -> GetGroupInfoResponse:
+        logger.debug("Mocking get_group_info")
+
+        return GetGroupInfoResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "group_id": 12345,
+                "group_name": "Nerv",
+                "member_count": 2,
+                "max_member_count": 200
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
     def _get_group_list() -> GetGroupListResponse:
         logger.debug("Mocking get_group_list")
 
-        return GetGroupListResponse(
-            code=0,
-            msg="Success",
-            data=[
-                GetGroupListResponse.Group(
-                    id=12345,
-                    name="Nerv",
-                    permission="MEMBER"
-                )
-            ]
-        )
+        return GetGroupListResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": [
+                {
+                    "group_id": 12345,
+                    "group_name": "Nerv",
+                    "member_count": 2,
+                    "max_member_count": 200
+                }
+            ],
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _get_group_member_list(_target: int) -> GetGroupMemberListResponse:
-        logger.debug(f"Mocking get_group_member_list, target: {_target}")
+    def _get_group_member_info(group_id: int, user_id: int, no_cache: bool = False) -> GetGroupMemberInfoResponse:
+        logger.debug("Mocking get_group_member_info")
 
-        return GetGroupMemberListResponse(
-            code=0,
-            msg="Success",
-            data=[
-                GetGroupMemberListResponse.GroupMember(
-                    id=88888,
-                    member_name="Kaworu",
-                    permission="ADMINISTRATOR",
-                    special_title="",
-                    join_timestamp=1600000000,
-                    last_speak_timestamp=1650000000,
-                    mute_time_remaining=0,
-                    group=GetGroupMemberListResponse.GroupMember.Group(
-                        id=12345,
-                        name="Nerv",
-                        permission="MEMBER"
-                    )
-                )
-            ]
-        )
+        return GetGroupMemberInfoResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "group_id": 12345,
+                "user_id": 88888,
+                "nickname": "Kaworu",
+                "card": "",
+                "sex": "male",
+                "age": 0,
+                "area": "",
+                "level": "0",
+                "qq_level": 0,
+                "join_time": 0,
+                "last_sent_time": 0,
+                "title_expire_time": 0,
+                "unfriendly": False,
+                "card_changeable": True,
+                "is_robot": False,
+                "shut_up_timestamp": 0,
+                "role": "owner",
+                "title": ""
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _get_bot_profile() -> GetBotProfileResponse:
-        logger.debug("Mocking get_bot_profile")
+    def _get_group_member_list(group_id: int) -> GetGroupMemberListResponse:
+        logger.debug("Mocking get_group_member_list")
 
-        return GetBotProfileResponse(
-            nickname="Lilith",
-            email="lilith@nerv.jp",
-            age=1,
-            level=1,
-            sign="I'm Lilith",
-            sex="UNKNOWN"
-        )
+        return GetGroupMemberListResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": [
+                {
+                    "group_id": 12345,
+                    "user_id": 88888,
+                    "nickname": "Kaworu",
+                    "card": "",
+                    "sex": "male",
+                    "age": 0,
+                    "area": "",
+                    "level": "0",
+                    "qq_level": 0,
+                    "join_time": 0,
+                    "last_sent_time": 0,
+                    "title_expire_time": 0,
+                    "unfriendly": False,
+                    "card_changeable": True,
+                    "is_robot": False,
+                    "shut_up_timestamp": 0,
+                    "role": "owner",
+                    "title": ""
+                },
+                {
+                    "group_id": 12345,
+                    "user_id": 99999,
+                    "nickname": "Shinji",
+                    "card": "",
+                    "sex": "male",
+                    "age": 0,
+                    "area": "",
+                    "level": "0",
+                    "qq_level": 0,
+                    "join_time": 0,
+                    "last_sent_time": 0,
+                    "title_expire_time": 0,
+                    "unfriendly": False,
+                    "card_changeable": True,
+                    "is_robot": False,
+                    "shut_up_timestamp": 0,
+                    "role": "admin",
+                    "title": ""
+                }
+            ],
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _get_friend_profile(_target: int) -> GetFriendProfileResponse:
-        logger.debug(f"Mocking get_friend_profile, target: {_target}")
+    def _send_private_message(
+        user_id: int,
+        message: list[Segment],
+        auto_escape: bool = False
+    ) -> SendPrivateMessageResponse:
+        logger.debug("Mocking send_private_message")
 
-        return GetFriendProfileResponse(
-            nickname="Kaworu",
-            email="kaworu@nerv.jp",
-            age=1,
-            level=1,
-            sign="僕は君に会う為に生まれてきたんだね",
-            sex="Male"
-        )
+        return SendPrivateMessageResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "message_id": -1234567890
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _get_group_member_profile(_target: int, _member_id: int) -> GetGroupMemberProfileResponse:
-        logger.debug(f"Mocking get_group_member_profile, target: {_target}, member ID: {_member_id}")
+    def _send_group_message(
+        group_id: int,
+        message: list[Segment],
+        auto_escape: bool = False
+    ) -> SendGroupMessageResponse:
+        logger.debug("Mocking send_group_message")
 
-        return GetGroupMemberProfileResponse(
-            nickname="Kaworu",
-            email="kaworu@nerv.jp",
-            age=1,
-            level=1,
-            sign="僕は君に会う為に生まれてきたんだね",
-            sex="Male"
-        )
+        return SendGroupMessageResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "message_id": -1234567890
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _get_user_profile(_target: int) -> GetUserProfileResponse:
-        logger.debug(f"Mocking get_user_profile, target: {_target}")
+    def _set_group_card(
+        group_id: int,
+        user_id: int,
+        card: str = ""
+    ) -> SetGroupCardResponse:
+        logger.debug("Mocking set_group_card")
 
-        return GetUserProfileResponse(
-            nickname="Kaworu",
-            email="kaworu@nerv.jp",
-            age=1,
-            level=1,
-            sign="僕は君に会う為に生まれてきたんだね",
-            sex="Male"
-        )
+        return SetGroupCardResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": None,
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _send_friend_message(_request: SendFriendMessageRequest) -> SendFriendMessageResponse:
-        logger.debug(f"Mocking send_friend_message, request: {_request.model_dump()}")
+    def _set_group_leave(
+        group_id: int,
+        is_dismiss: bool = False
+    ) -> SetGroupLeaveResponse:
+        logger.debug("Mocking set_group_leave")
 
-        return SendFriendMessageResponse(
-            code=0,
-            msg="Success",
-            message_id=1
-        )
+        return SetGroupLeaveResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": None,
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _send_group_message(_request: SendGroupMessageRequest) -> SendGroupMessageResponse:
-        logger.debug(f"Mocking send_group_message, request: {_request.model_dump()}")
+    def _set_friend_add_request(
+        flag: str,
+        approve: bool,
+        remark: str = ""
+    ) -> SetFriendAddRequestResponse:
+        logger.debug("Mocking set_friend_add_request")
 
-        return SendGroupMessageResponse(
-            code=0,
-            msg="Success",
-            message_id=1
-        )
+        return SetFriendAddRequestResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": None,
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _send_temp_message(_request: SendTempMessageRequest) -> SendTempMessageResponse:
-        logger.debug(f"Mocking send_temp_message, request: {_request.model_dump()}")
+    def _set_group_add_request(
+        flag: str,
+        sub_type: GroupAddRequestSubType,
+        approve: bool,
+        reason: str = ""
+    ) -> SetGroupAddRequestResponse:
+        logger.debug("Mocking set_group_add_request")
 
-        return SendTempMessageResponse(
-            code=0,
-            msg="Success",
-            message_id=1
-        )
+        return SetGroupAddRequestResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": None,
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
 
-    def _send_nudge_message(_request: SendNudgeMessageRequest) -> SendNudgeMessageResponse:
-        logger.debug(f"Mocking send_nudge_message, request: {_request.model_dump()}")
-
-        return SendNudgeMessageResponse(
-            code=0,
-            msg="Success",
-            message_id=1
-        )
-
-    def _recall_message(_request: RecallMessageRequest) -> RecallMessageResponse:
-        logger.debug(f"Mocking recall_message, request: {_request.model_dump()}")
-
-        return RecallMessageResponse(
-            code=0,
-            msg="Success"
-        )
-
-    def _delete_friend(_request: DeleteFriendRequest) -> DeleteFriendResponse:
-        logger.debug(f"Mocking delete_friend, request: {_request.model_dump()}")
-
-        return DeleteFriendResponse(
-            code=0,
-            msg="Success"
-        )
-
-    def _get_group_member_info(_target: int, _member_id: int) -> GetGroupMemberInfoResponse:
-        logger.debug(f"Mocking get_group_member_info, target: {_target}, member ID: {_member_id}")
-
-        return GetGroupMemberInfoResponse(
-            id=88888,
-            member_name="Kaworu",
-            permission="ADMINISTRATOR",
-            special_title="",
-            join_timestamp=1600000000,
-            last_speak_timestamp=1650000000,
-            mute_time_remaining=0,
-            active=GetGroupMemberInfoResponse.Active(
-                rank=1,
-                point=100,
-                honors=["群聊之火"],
-                temperature=100
-            ),
-            group=GetGroupMemberInfoResponse.Group(
-                id=12345,
-                name="Nerv",
-                permission="MEMBER"
-            )
-        )
-
-    def _set_group_member_info(_request: SetGroupMemberInfoRequest) -> SetGroupMemberInfoResponse:
-        logger.debug(f"Mocking set_group_member_info, request: {_request.model_dump()}")
-
-        return SetGroupMemberInfoResponse(
-            code=0,
-            msg="Success"
-        )
-
-    _MIRAI_MOCKS = {
-        "app.network.mirai.get_plugin_info": _get_plugin_info,
-        "app.network.mirai.get_bot_list": _get_bot_list,
-        "app.network.mirai.get_friend_list": _get_friend_list,
-        "app.network.mirai.get_group_list": _get_group_list,
-        "app.network.mirai.get_group_member_list": _get_group_member_list,
-        "app.network.mirai.get_bot_profile": _get_bot_profile,
-        "app.network.mirai.get_friend_profile": _get_friend_profile,
-        "app.network.mirai.get_group_member_profile": _get_group_member_profile,
-        "app.network.mirai.get_user_profile": _get_user_profile,
-        "app.network.mirai.send_friend_message": _send_friend_message,
-        "app.network.mirai.send_group_message": _send_group_message,
-        "app.network.mirai.send_temp_message": _send_temp_message,
-        "app.network.mirai.send_nudge_message": _send_nudge_message,
-        "app.network.mirai.recall_message": _recall_message,
-        "app.network.mirai.delete_friend": _delete_friend,
-        "app.network.mirai.get_group_member_info": _get_group_member_info,
-        "app.network.mirai.set_group_member_info": _set_group_member_info,
-        "plugin.mirai_send_friend_message": _send_friend_message,
-        "plugin.mirai_send_group_message": _send_group_message,
-        "plugin.mirai_send_temp_message": _send_temp_message,
+    _NAPCAT_MOCKS = {
+        "app.network.napcat.get_login_info": _get_login_info,
+        "app.network.napcat.get_friend_list": _get_friend_list,
+        "app.network.napcat.get_group_info": _get_group_info,
+        "app.network.napcat.get_group_list": _get_group_list,
+        "app.network.napcat.get_group_member_info": _get_group_member_info,
+        "app.network.napcat.get_group_member_list": _get_group_member_list,
+        "app.network.napcat.send_private_message": _send_private_message,
+        "app.network.napcat.send_group_message": _send_group_message,
+        "app.network.napcat.set_group_card": _set_group_card,
+        "app.network.napcat.set_group_leave": _set_group_leave,
+        "app.network.napcat.set_friend_add_request": _set_friend_add_request,
+        "app.network.napcat.set_group_add_request": _set_group_add_request,
+        "plugin.napcat_send_private_message": _send_private_message,
+        "plugin.napcat_send_group_message": _send_group_message,
     }
 
-    for target, replacement in _MIRAI_MOCKS.items():
+    for target, replacement in _NAPCAT_MOCKS.items():
         monkeypatch.setattr(target, replacement)
 
 

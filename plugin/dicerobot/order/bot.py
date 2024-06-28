@@ -3,16 +3,15 @@ from datetime import date
 from plugin import OrderPlugin
 from app.config import status
 from app.exceptions import OrderInvalidError, OrderError
-from app.enum import ChatType
-from app.models.network.mirai import SetGroupMemberInfoRequest
-from app.network.mirai import set_group_member_info
+from app.enum import ChatType, Role
+from app.network.napcat import set_group_card
 
 
 class Bot(OrderPlugin):
     name = "dicerobot.bot"
     display_name = "Bot 控制"
     description = "与 Bot 有关的各种指令"
-    version = "1.0.0"
+    version = "1.1.0"
 
     default_replies = {
         "about": "DiceRobot {&版本}\nMIT License\n© 2019-{&当前年份} Drsanwujiang",
@@ -89,7 +88,7 @@ class Bot(OrderPlugin):
         if self.suborder_content:
             raise OrderInvalidError
 
-        if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
+        if self.message.sender.role == Role.MEMBER:
             raise OrderError(self.replies["enable_denied"])
 
         self.dicerobot_chat_settings["enabled"] = True
@@ -103,7 +102,7 @@ class Bot(OrderPlugin):
         if self.suborder_content:
             raise OrderInvalidError
 
-        if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
+        if self.message.sender.role == Role.MEMBER:
             raise OrderError(self.replies["disable_denied"])
 
         self.dicerobot_chat_settings["enabled"] = False
@@ -114,19 +113,13 @@ class Bot(OrderPlugin):
         if self.chat_type != ChatType.GROUP:
             return
 
-        if self.message_chain.sender.permission not in ["OWNER", "ADMINISTRATOR"]:
+        if self.message.sender.role == Role.MEMBER:
             raise OrderError(self.replies["nickname_denied"])
 
         if self.suborder_content:
             # Set nickname
             self.dicerobot_chat_settings["nickname"] = self.suborder_content
-            set_group_member_info(SetGroupMemberInfoRequest(
-                target=self.chat_id,
-                member_id=status.bot.id,
-                info=SetGroupMemberInfoRequest.Info(
-                    name=self.suborder_content
-                )
-            ))
+            set_group_card(self.chat_id, status.bot.id, self.suborder_content)
             self.update_reply_variables({
                 "机器人": self.suborder_content,
                 "机器人昵称": self.suborder_content
@@ -135,13 +128,7 @@ class Bot(OrderPlugin):
         else:
             # Unset nickname
             self.dicerobot_chat_settings["nickname"] = ""
-            set_group_member_info(SetGroupMemberInfoRequest(
-                target=self.chat_id,
-                member_id=status.bot.id,
-                info=SetGroupMemberInfoRequest.Info(
-                    name=""
-                )
-            ))
+            set_group_card(self.chat_id, status.bot.id, "")
             self.update_reply_variables({
                 "机器人": status.bot.nickname,
                 "机器人昵称": status.bot.nickname

@@ -3,94 +3,86 @@ import time
 from fastapi.testclient import TestClient
 
 from app.log import logger
-from app.config import status, settings
+from app.config import status
 from app.enum import ApplicationStatus
-from app.models import MessageChainOrEvent
-from app.models.event import BotOnlineEvent
-from app.models.message import FriendMessage, GroupMessage
+from app.models.report.message import Message, PrivateMessage, GroupMessage
 
 
 class BaseTest:
-    def wait_for_online(self, client: TestClient) -> None:
-        settings.security.webhook.token = "test"
+    @staticmethod
+    def wait_for_running() -> None:
+        logger.debug("Waiting for DiceRobot running")
 
-        logger.debug("Waiting for bot online")
-
-        client.post(
-            "/report",
-            params={"token": "test"},
-            json=self.build_bot_online_event().model_dump(by_alias=True)
-        )
-
-        time.sleep(1)
+        time.sleep(2)
 
         assert status.app == ApplicationStatus.RUNNING
 
     @staticmethod
-    def post_message(client: TestClient, message_chain: MessageChainOrEvent) -> dict:
-        settings.security.webhook.token = "test"
+    def post_message(client: TestClient, message: Message) -> dict:
+        response = client.post(
+            "/report", headers={"X-Signature": "sha1=" + "00" * 20}, json=message.model_dump(exclude_none=True)
+        )
 
-        return client.post(
-            "/report",
-            params={"token": "test"},
-            json=message_chain.model_dump(by_alias=True)
-        ).json()
+        return response.json() if response.status_code == 200 else {}
 
     @staticmethod
-    def build_bot_online_event() -> BotOnlineEvent:
-        return BotOnlineEvent.model_validate({
-            "type": "BotOnlineEvent",
-            "qq": 10000
-        })
-
-    @staticmethod
-    def build_friend_message(text: str) -> FriendMessage:
-        return FriendMessage.model_validate({
-            "type": "FriendMessage",
+    def build_private_message(text: str) -> PrivateMessage:
+        return PrivateMessage.model_validate({
+            "self_id": 99999,
+            "user_id": 88888,
+            "time": 1700000000,
+            "message_id": -1234567890,
+            "message_seq": -1234567890,
+            "real_id": -1234567890,
+            "message_type": "private",
             "sender": {
-                "id": 88888,
+                "user_id": 88888,
                 "nickname": "Kaworu",
-                "remark": "Kaworu"
+                "card": ""
             },
-            "messageChain": [
+            "raw_message": text,
+            "font": 14,
+            "sub_type": "friend",
+            "message": [
                 {
-                    "type": "Source",
-                    "id": 1,
-                    "time": 1700000000
-                },
-                {
-                    "type": "Plain",
-                    "text": text
+                    "data": {
+                        "text": text
+                    },
+                    "type": "text"
                 }
-            ]
+            ],
+            "message_format": "array",
+            "post_type": "message"
         })
 
     @staticmethod
     def build_group_message(text: str) -> GroupMessage:
         return GroupMessage.model_validate({
+            "self_id": 99999,
+            "user_id": 88888,
+            "time": 1700000000,
+            "message_id": -1234567890,
+            "message_seq": -1234567890,
+            "real_id": -1234567890,
+            "message_type": "group",
             "sender": {
-                "id": 88888,
-                "memberName": "Kaworu",
-                "specialTitle": "",
-                "permission": "ADMINISTRATOR",
-                "joinTimestamp": 1600000000,
-                "lastSpeakTimestamp": 1650000000,
-                "muteTimeRemaining": 0,
-                "group": {
-                    "id": 12345,
-                    "name": "Nerv",
-                    "permission": "MEMBER"
-                }
+                "user_id": 88888,
+                "nickname": "Kaworu",
+                "card": "",
+                "role": "owner"
             },
-            "messageChain": [
+            "raw_message": text,
+            "font": 14,
+            "sub_type": "normal",
+            "message": [
                 {
-                    "type": "Source",
-                    "id": 1,
-                    "time": 1700000000
-                },
-                {
-                    "type": "Plain",
-                    "text": text
+                    "data": {
+                        "text": text
+                    },
+                    "type": "text"
                 }
-            ]
+            ],
+            "message_format": "array",
+            "post_type": "message",
+            "group_id": 12345
         })

@@ -7,6 +7,7 @@ from werkzeug.security import generate_password_hash
 
 from ..version import VERSION
 from ..enum import ApplicationStatus, ChatType
+from ..utils import deep_update
 from . import BaseModel
 
 __all__ = [
@@ -73,14 +74,14 @@ class Status(BaseModel):
     version: str = VERSION
     app: ApplicationStatus = ApplicationStatus.STARTED
     module: Module = Module()
-    plugins: dict[str, Plugin] = {}
+    plugins: dict[str, Plugin] = Field({}, exclude=True)
     bot: Bot = Bot()
 
 
 class Settings:
     """DiceRobot settings.
 
-    This class uses a inner class to store actual settings, so that the settings can be updated by `update` method.
+    This class uses an inner class to store actual settings, so that the settings can be updated by `update` method.
     """
 
     class _Settings(BaseModel):
@@ -88,7 +89,8 @@ class Settings:
 
         Attributes:
             security: Security settings.
-            mirai: Mirai settings.
+            app: Application settings.
+            napcat: NapCat settings.
         """
 
         class Security(BaseModel):
@@ -104,10 +106,10 @@ class Settings:
                 """Webhook settings.
 
                 Attributes:
-                    token: Webhook token.
+                    secret: Webhook secret.
                 """
 
-                token: str = secrets.token_urlsafe(32)
+                secret: str = secrets.token_urlsafe(32)
 
             class JWT(BaseModel):
                 """JWT settings.
@@ -137,74 +139,40 @@ class Settings:
             """Application settings.
 
             Attributes:
-                start_mirai_at_startup: Whether to start Mirai at startup.
-                check_bot_status_at_startup: Whether to check bot status at startup.
+                start_napcat_at_startup: Whether to start NapCat at startup.
             """
 
-            start_mirai_at_startup: bool = False
-            check_bot_status_at_startup: bool = False
+            start_napcat_at_startup: bool = False
 
-        class Mirai(BaseModel):
-            """Mirai settings.
+        class NapCat(BaseModel):
+            """NapCat settings.
 
             Attributes:
-                dir: Mirai directory settings.
-                file: Mirai file settings.
-                api: Mirai API HTTP settings.
+                api: NapCat API settings.
+                account: QQ account.
             """
 
-            class Directory(BaseModel):
-                """Mirai directory settings.
-
-                Attributes:
-                    base: Base directory of Mirai.
-                    logs: Mirai logs directory path.
-                    config: Mirai configuration directory path.
-                    config_console: Mirai Console configuration directory path.
-                    config_api: Mirai API HTTP configuration directory path.
-                """
-
-                base: str = "mirai"
-                logs: str = "mirai/logs"
-                config: str = "mirai/config"
-                config_console: str = "mirai/config/Console"
-                config_api: str = "mirai/config/net.mamoe.mirai-api-http"
-
-            class File(BaseModel):
-                """Mirai file settings.
-
-                Attributes:
-                    mcl: Mirai Console Loader JAR file name.
-                    mcl_config: Mirai Console Loader configuration file name.
-                    config_autologin: Mirai Console autoLogin configuration file name.
-                    config_api: Mirai API HTTP configuration file name.
-                """
-
-                mcl: str = "mcl.jar"
-                mcl_config: str = "config.json"
-                config_autologin: str = "AutoLogin.yml"
-                config_api: str = "setting.yml"
-
             class API(BaseModel):
-                """Mirai API HTTP plugin settings.
+                """NapCat API settings.
 
                 Attributes:
-                    host: Host (for Mirai Manager).
-                    port: Port (for Mirai Manager).
-                    base_url: Base URL (for DiceRobot requests).
+                    host: OneBot HTTP host.
+                    port: OneBot HTTP port.
                 """
 
                 host: str = "127.0.0.1"
-                port: int = 9000
-                base_url: str = "http://127.0.0.1:9000"
+                port: int = 13579
 
-            dir: Directory = Directory()
-            file: File = File()
+                @property
+                def base_url(self) -> str:
+                    return f"http://{self.host}:{self.port}"
+
             api: API = API()
+            account: int = -1
 
         security: Security = Security()
         app: Application = Application()
-        mirai: Mirai = Mirai()
+        napcat: NapCat = NapCat()
 
     _settings: _Settings = _Settings()
 
@@ -229,9 +197,9 @@ class Settings:
         old_settings = cls._settings.security.model_dump()
 
         if "webhook" in settings:
-            old_settings["webhook"] = settings["webhook"]
+            old_settings["webhook"] = deep_update(old_settings["webhook"], settings["webhook"])
         if "jwt" in settings:
-            old_settings["jwt"] = settings["jwt"]
+            old_settings["jwt"] = deep_update(old_settings["jwt"], settings["jwt"])
         if "admin" in settings:
             old_settings["admin"]["password_hash"] = generate_password_hash(settings["admin"]["password"])
 
@@ -245,17 +213,21 @@ class Settings:
             settings: New application settings.
         """
 
-        cls._settings.app = cls._Settings.Application.model_validate(settings)
+        cls._settings.app = cls._Settings.Application.model_validate(
+            deep_update(cls._settings.app.model_dump(), settings)
+        )
 
     @classmethod
-    def update_mirai(cls, settings: dict) -> None:
-        """Update Mirai settings.
+    def update_napcat(cls, settings: dict) -> None:
+        """Update NapCat settings.
 
         Args:
-            settings: New Mirai settings.
+            settings: New NapCat settings.
         """
 
-        cls._settings.mirai = cls._Settings.Mirai.model_validate(settings)
+        cls._settings.napcat = cls._Settings.NapCat.model_validate(
+            deep_update(cls._settings.napcat.model_dump(), settings)
+        )
 
     @classmethod
     def model_dump(cls, safe_dump: bool = True, **kwargs) -> dict:

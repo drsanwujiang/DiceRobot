@@ -1,61 +1,62 @@
 import pytest
 
+from app.enum import Role
 from app.exceptions import OrderError
 from . import BaseTest
 
 
 class TestBot(BaseTest):
     def test_bot(self, client):
-        self.wait_for_online(client)
+        self.wait_for_running()
 
         # Bot info
-        message_chain = self.build_group_message(".bot")
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".bot")
+        result = self.post_message(client, message)
 
-        message_chain = self.build_group_message(".bot about")
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".bot about")
+        self.post_message(client, message)
 
         # Bot off
-        message_chain = self.build_group_message(".bot off")
-        message_chain.sender.permission = "MEMBER"
+        message = self.build_group_message(".bot off")
+        message.sender.role = Role.MEMBER
 
         with pytest.raises(OrderError):
-            self.post_message(client, message_chain)
+            self.post_message(client, message)
 
-        message_chain.sender.permission = "ADMINISTRATOR"
-        self.post_message(client, message_chain)
+        message.sender.role = Role.ADMIN
+        self.post_message(client, message)
 
-        message_chain = self.build_group_message(".bot")  # Bot should not reply
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".bot")  # Bot should not reply
+        self.post_message(client, message)
 
         # Bot on
-        message_chain = self.build_group_message(".bot on")
-        message_chain.sender.permission = "MEMBER"
+        message = self.build_group_message(".bot on")
+        message.sender.role = Role.MEMBER
 
         with pytest.raises(OrderError):
-            self.post_message(client, message_chain)
+            self.post_message(client, message)
 
-        message_chain.sender.permission = "ADMINISTRATOR"
-        self.post_message(client, message_chain)
+        message.sender.role = Role.ADMIN
+        self.post_message(client, message)
 
-        message_chain = self.build_group_message(".bot")  # Bot should reply
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".bot")  # Bot should reply
+        self.post_message(client, message)
 
         # Bot nickname
-        message_chain = self.build_group_message(".bot name Adam")
-        message_chain.sender.permission = "MEMBER"
+        message = self.build_group_message(".bot name Adam")
+        message.sender.role = Role.MEMBER
 
         with pytest.raises(OrderError):
-            self.post_message(client, message_chain)
+            self.post_message(client, message)
 
-        message_chain.sender.permission = "ADMINISTRATOR"
-        self.post_message(client, message_chain)
+        message.sender.role = Role.ADMIN
+        self.post_message(client, message)
 
-        message_chain = self.build_group_message(".bot name")
-        message_chain.sender.permission = "MEMBER"
+        message = self.build_group_message(".bot name")
+        message.sender.role = Role.MEMBER
 
         with pytest.raises(OrderError):
-            self.post_message(client, message_chain)
+            self.post_message(client, message)
 
-        message_chain.sender.permission = "ADMINISTRATOR"
-        self.post_message(client, message_chain)
+        message.sender.role = Role.ADMIN
+        self.post_message(client, message)

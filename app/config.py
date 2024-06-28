@@ -62,7 +62,7 @@ def init_config() -> None:
 
 
 def save_config() -> None:
-    logger.info("Saving config")
+    logger.info("Save config")
 
     with Session() as session, session.begin():
         for key, value in settings.model_dump(safe_dump=False).items():  # type: str, dict

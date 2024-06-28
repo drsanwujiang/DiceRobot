@@ -25,7 +25,6 @@ async def lifespan(_: FastAPI):
 
     init_dispatcher()
     init_scheduler()
-
     init_manager()
 
     logger.success("DiceRobot started")
@@ -34,8 +33,7 @@ async def lifespan(_: FastAPI):
 
     logger.info("Stop DiceRobot")
 
-    await clean_manager()
-
+    clean_manager()
     clean_scheduler()
     save_config()
     clean_database()

@@ -1,20 +1,15 @@
-from io import BytesIO
-import base64
-
-from PIL import Image as PILImage
-
 from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
-from app.models.message import Image
-from app.network import client
+from app.models.report.segment import Image
+from app.network import Client
 
 
 class Paint(OrderPlugin):
     name = "dicerobot.paint"
     display_name = "画图（DALL·E）"
     description = "使用 OpenAI 的 DALL·E 模型生成图片"
-    version = "1.0.0"
+    version = "1.1.0"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -46,14 +41,13 @@ class Paint(OrderPlugin):
                 "prompt": self.order_content,
                 "n": 1,
                 "quality": self.plugin_settings["quality"],
-                "response_format": "b64_json",
                 "size": self.plugin_settings["size"],
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
         except ValueError:
             raise OrderInvalidError
 
-        result = client.post(
+        result = Client().post(
             "https://" + self.plugin_settings["domain"] + "/v1/images/generations",
             headers={
                 "Authorization": f"Bearer {api_key}"
@@ -67,15 +61,7 @@ class Paint(OrderPlugin):
         except (ValueError, ValueError):
             raise OrderError(self.replies["content_policy_violated"])
 
-        # Convert WebP to PNG
-        image = PILImage.open(BytesIO(base64.b64decode(response.data[0].b64_json))).convert("RGB")
-        buffer = BytesIO()
-        image.save(buffer, format="png")
-        image_base64 = base64.b64encode(buffer.getvalue()).decode()
-
-        self.reply_to_sender([Image.model_validate({
-            "base64": image_base64
-        })])
+        self.reply_to_sender([Image(data=Image.Data(file=response.data[0].url))])
 
 
 class ImageGenerationRequest(BaseModel):
@@ -91,7 +77,7 @@ class ImageGenerationRequest(BaseModel):
 
 class ImageGenerationResponse(BaseModel):
     class Image(BaseModel):
-        b64_json: str
+        url: str
         revised_prompt: str
 
     created: int

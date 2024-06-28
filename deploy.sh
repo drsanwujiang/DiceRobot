@@ -55,9 +55,9 @@ if ! (pip3 -V > /dev/null 2>&1); then
   warning "Python module pip not found"
   echo "Try to install pip"
 
-  apt -qq update > /dev/null 2>&1
+  apt-get -qq update > /dev/null 2>&1
 
-  if ! (apt -y -qq install python3-pip > /dev/null 2>&1); then
+  if ! (apt-get -y -qq install python3-pip > /dev/null 2>&1); then
     error "Failed to install pip"
   fi
 fi
@@ -67,9 +67,9 @@ if ! (python3 -m venv -h > /dev/null 2>&1); then
   warning "Python module venv not found"
   echo "Install venv"
 
-  apt -qq update > /dev/null 2>&1
+  apt-get -qq update > /dev/null 2>&1
 
-  if ! (apt -y -qq install python3-venv > /dev/null 2>&1); then
+  if ! (apt-get -y -qq install python3-venv > /dev/null 2>&1); then
     error "Failed to install venv"
   fi
 fi
@@ -79,9 +79,9 @@ echo "Install pipx"
 
 if ! (pipx --version > /dev/null 2>&1); then
   if ! (pip3 install --user --index-url https://pypi.tuna.tsinghua.edu.cn/simple pipx > /dev/null 2>&1); then
-    apt -qq update > /dev/null 2>&1
+    apt-get -qq update > /dev/null 2>&1
 
-    if ! (apt -y -qq install pipx > /dev/null 2>&1); then
+    if ! (apt-get -y -qq install pipx > /dev/null 2>&1); then
       error "Failed to install pipx"
     fi
   fi
@@ -103,6 +103,10 @@ fi
 
 # Install dependencies
 echo "Install dependencies"
+
+if ! (apt-get -y -qq install libgbm1 libasound2 > /dev/null 2>&1); then
+  error "Failed to install dependencies"
+fi
 
 if ! (poetry install > /dev/null 2>&1); then
   error "Failed to install dependencies"
@@ -126,5 +130,7 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload > /dev/null 2>&1
+systemctl enable dicerobot
+systemctl start dicerobot
 
 success "Success"

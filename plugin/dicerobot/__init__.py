@@ -1,6 +1,6 @@
 from .order import Bot, Dice, HiddenDice, BPDice, SkillRoll, Chat, Conversation, Paint, DailySixtySeconds
 
-from .event import BotOnlineHandler, BotOfflineHandler, FriendRequestHandler, GroupInvitationHandler
+from .event import FriendRequestHandler, GroupInvitationHandler
 
 
 __all__ = [
@@ -16,8 +16,6 @@ __all__ = [
     "DailySixtySeconds",
 
     # Events
-    "BotOnlineHandler",
-    "BotOfflineHandler",
     "FriendRequestHandler",
     "GroupInvitationHandler"
 ]

@@ -57,6 +57,16 @@ class TokenInvalidError(DiceRobotHTTPException):
         super().__init__(status_code, code, message)
 
 
+class SignatureInvalidError(DiceRobotHTTPException):
+    def __init__(
+        self,
+        status_code: int = 401,
+        code: int = -1,
+        message: str = "Invalid signature"
+    ) -> None:
+        super().__init__(status_code, code, message)
+
+
 class MessageInvalidError(DiceRobotHTTPException):
     def __init__(
         self,

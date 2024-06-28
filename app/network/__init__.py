@@ -26,7 +26,8 @@ class Client(httpx.Client):
 
             logger.debug(f"Response: {response.request.method} {response.request.url}, content: {result}")
 
-            if "code" in result and result["code"] != 0 and result["code"] != 200:
+            if ("code" in result and result["code"] != 0 and result["code"] != 200) or \
+                    ("retcode" in result and result["retcode"] != 0):
                 error_code = result["code"]
                 error_message = result["msg"] if "msg" in result else result["message"] if "message" in result else None
 

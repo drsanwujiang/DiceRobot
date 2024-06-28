@@ -1,10 +1,15 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import Response as _Response, JSONResponse as _JSONResponse
 
 from ..version import VERSION
 
 
-class Response(JSONResponse):
+class EmptyResponse(_Response):
+    def __init__(self, status_code: int = 204):
+        super().__init__(status_code=status_code)
+
+
+class JSONResponse(_JSONResponse):
     headers = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
@@ -27,17 +32,16 @@ class Response(JSONResponse):
         if data is not None:
             content["data"] = data
 
-        super().__init__(
-            status_code=status_code,
-            content=content
-        )
+        super().__init__(status_code=status_code, content=content)
 
 
 def init_router(app: FastAPI) -> None:
     from .webhook import router as webhook
     from .admin import router as admin
-    from .mirai import router as mirai
+    from .qq import router as qq
+    from .napcat import router as napcat
 
     app.include_router(webhook)
     app.include_router(admin)
-    app.include_router(mirai)
+    app.include_router(qq)
+    app.include_router(napcat)
