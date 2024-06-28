@@ -1,12 +1,13 @@
+import datetime
 import signal
 
 from fastapi import APIRouter, Depends
 
-from ..log import logger
+from ..log import logger, load_logs
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
 from ..dispatch import dispatcher
-from ..exceptions import ParametersInvalidError, ResourceNotFoundError
+from ..exceptions import ParametersInvalidError, ResourceNotFoundError, BadRequestError
 from ..enum import ChatType
 from ..models.panel.admin import (
     AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest
@@ -29,6 +30,18 @@ async def auth(data: AuthRequest) -> JSONResponse:
     return JSONResponse(data={
         "token": generate_jwt_token()
     })
+
+
+@router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def get_logs(date: datetime.date) -> JSONResponse:
+    logger.info(f"Admin request received: get logs, date: {date}")
+
+    if (logs := load_logs(date)) is None:
+        raise ResourceNotFoundError(message="Logs not found")
+    elif logs is False:
+        raise BadRequestError(message="Log file too large")
+
+    return JSONResponse(data=logs)
 
 
 @router.get("/status", dependencies=[Depends(verify_jwt_token, use_cache=False)])
