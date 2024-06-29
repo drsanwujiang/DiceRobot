@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from .log import logger
+from .config import status
 from .exceptions import DiceRobotHTTPException
 
 
@@ -50,4 +51,6 @@ def init_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore
     app.add_exception_handler(RequestValidationError, request_validation_error_handler)  # type: ignore
     app.add_exception_handler(DiceRobotHTTPException, dicerobot_http_exception_handler)  # type: ignore
-    app.add_exception_handler(Exception, exception_handler)
+
+    if not status.debug:
+        app.add_exception_handler(Exception, exception_handler)

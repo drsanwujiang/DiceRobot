@@ -2,7 +2,7 @@ import re
 import random
 
 from plugin import OrderPlugin
-from app.exceptions import OrderError
+from app.exceptions import OrderSuspiciousError, OrderError
 
 
 class BPDice(OrderPlugin):
@@ -52,7 +52,6 @@ class BPDice(OrderPlugin):
 
     def __call__(self) -> None:
         self.parse_content()
-        self.calculate()
         self.bonus_or_penalty()
 
         bp_type = "奖励骰" if self.bp_type == "bonus" else "惩罚骰" if self.bp_type == "penalty" else ""
@@ -74,19 +73,24 @@ class BPDice(OrderPlugin):
 
         # Parse order content into possible count and reason
         match = BPDice._content_pattern.fullmatch(self.order_content)
+
+        # Check count length
+        if len(match.group(1) or "") > 3:
+            raise OrderSuspiciousError
+
         self.count = int(match.group(1)) if match.group(1) else self.count
         self.reason = match.group(2)
 
-    def calculate(self) -> None:
         # Check count
         if self.count > self.plugin_settings["max_count"]:
             raise OrderError(self.replies["max_count_exceeded"])
 
+    def bonus_or_penalty(self) -> None:
         # Calculate result
         self.dice_result = random.randint(1, 100)
         self.bp_results = [random.randint(1, 10) for _ in range(self.count)]
 
-    def bonus_or_penalty(self) -> None:
+        # Calculate final result
         ones = self.dice_result % 10
         tens = self.dice_result // 10
 

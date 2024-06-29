@@ -4,4 +4,5 @@
 poetry.lock
 
 /logs
+/napcat
 database.db

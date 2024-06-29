@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
+import hmac
 
-from fastapi import Request
+from fastapi import Request, Header
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 
-from .config import settings
-from .exceptions import TokenInvalidError
+from .config import status, settings
+from .exceptions import TokenInvalidError, SignatureInvalidError
 
 
 def generate_password(password: str) -> str:
@@ -13,10 +14,10 @@ def generate_password(password: str) -> str:
 
 
 def verify_password(password: str) -> bool:
-    if not settings.security.admin.password:
+    if not settings.security.admin.password_hash:
         return True
 
-    return check_password_hash(settings.security.admin.password, password)
+    return check_password_hash(settings.security.admin.password_hash, password)
 
 
 def generate_jwt_token() -> str:
@@ -27,8 +28,7 @@ def generate_jwt_token() -> str:
     )
 
 
-def verify_jwt_token(request: Request) -> None:
-    authorization = request.headers.get("Authorization", "")
+def verify_jwt_token(authorization: str = Header()) -> None:
     scheme, _, token = authorization.partition(" ")
 
     if not authorization or scheme != "Bearer" or not token:
@@ -40,8 +40,19 @@ def verify_jwt_token(request: Request) -> None:
         raise TokenInvalidError
 
 
-def verify_webhook_token(request: Request) -> None:
-    token: str = request.query_params.get("token")
+async def verify_signature(
+    request: Request,
+    signature: str = Header(alias="X-Signature", min_length=45, max_length=45)
+) -> None:
+    if status.debug:
+        return
 
-    if not token or token != settings.security.webhook.token:
-        raise TokenInvalidError
+    signature = signature[5:]
+    digest = hmac.digest(
+        settings.security.webhook.secret.encode(),
+        await request.body(),
+        "sha1"
+    ).hex()
+
+    if signature != digest:
+        raise SignatureInvalidError

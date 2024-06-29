@@ -3,14 +3,14 @@ from pydantic import TypeAdapter
 from plugin import OrderPlugin
 from plugin.dicerobot.order.chat import ChatCompletion, ChatCompletionRequest, ChatCompletionResponse
 from app.exceptions import OrderInvalidError, OrderError
-from app.network import client
+from app.network import Client
 
 
 class Conversation(OrderPlugin):
     name = "dicerobot.conversation"
     display_name = "对话（GPT）"
     description = "使用 OpenAI 的 GPT 模型进行连续的聊天对话"
-    version = "1.0.0"
+    version = "1.1.0"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -71,9 +71,9 @@ class Conversation(OrderPlugin):
                     "user": f"{self.chat_type.value}-{self.chat_id}"
                 })
             except ValueError:
-                raise OrderInvalidError()
+                raise OrderInvalidError
 
-            result = client.post(
+            result = Client().post(
                 "https://" + self.plugin_settings["domain"] + "/v1/chat/completions",
                 headers={
                     "Authorization": "Bearer " + self.plugin_settings["api_key"]
@@ -109,7 +109,7 @@ class Conversation(OrderPlugin):
 
     def set_guidance(self) -> None:
         if not self.order_content:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
         conversation = self.load_conversation()
         conversation.append(ChatCompletion(

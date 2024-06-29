@@ -3,14 +3,14 @@ from pydantic import conlist
 from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
-from app.network import client
+from app.network import Client
 
 
 class Chat(OrderPlugin):
     name = "dicerobot.chat"
     display_name = "聊天（GPT）"
     description = "使用 OpenAI 的 GPT 模型进行聊天对话"
-    version = "1.0.0"
+    version = "1.1.0"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -44,9 +44,9 @@ class Chat(OrderPlugin):
                 "user": f"{self.chat_type.value}-{self.chat_id}"
             })
         except ValueError:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
-        result = client.post(
+        result = Client().post(
             "https://" + self.plugin_settings["domain"] + "/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {api_key}"

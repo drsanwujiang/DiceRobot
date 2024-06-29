@@ -31,6 +31,11 @@ class OrderInvalidError(DiceRobotException):
         super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_invalid"))
 
 
+class OrderSuspiciousError(DiceRobotException):
+    def __init__(self) -> None:
+        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_suspicious"))
+
+
 class OrderError(DiceRobotException):
     pass
 
@@ -52,6 +57,16 @@ class TokenInvalidError(DiceRobotHTTPException):
         super().__init__(status_code, code, message)
 
 
+class SignatureInvalidError(DiceRobotHTTPException):
+    def __init__(
+        self,
+        status_code: int = 401,
+        code: int = -1,
+        message: str = "Invalid signature"
+    ) -> None:
+        super().__init__(status_code, code, message)
+
+
 class MessageInvalidError(DiceRobotHTTPException):
     def __init__(
         self,
@@ -68,5 +83,25 @@ class ParametersInvalidError(DiceRobotHTTPException):
         status_code: int = 400,
         code: int = -3,
         message: str = "Invalid parameters"
+    ) -> None:
+        super().__init__(status_code, code, message)
+
+
+class ResourceNotFoundError(DiceRobotHTTPException):
+    def __init__(
+        self,
+        status_code: int = 404,
+        code: int = -4,
+        message: str = "Resource not found"
+    ) -> None:
+        super().__init__(status_code, code, message)
+
+
+class BadRequestError(DiceRobotHTTPException):
+    def __init__(
+        self,
+        status_code: int = 400,
+        code: int = -5,
+        message: str = "Bad request"
     ) -> None:
         super().__init__(status_code, code, message)

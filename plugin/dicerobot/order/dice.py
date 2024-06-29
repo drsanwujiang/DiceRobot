@@ -2,7 +2,7 @@ import re
 import random
 
 from plugin import OrderPlugin
-from app.exceptions import OrderError
+from app.exceptions import OrderSuspiciousError, OrderError
 
 
 class Dice(OrderPlugin):
@@ -67,7 +67,12 @@ class Dice(OrderPlugin):
 
     def parse_content(self) -> None:
         # Parse order content into possible expression and reason
-        match = Dice._content_pattern.fullmatch(self.order_content)
+        match = self._content_pattern.fullmatch(self.order_content)
+
+        # Check expression length
+        if len(match.group(1) or "") > 100:
+            raise OrderSuspiciousError
+
         self.expression = match.group(1) if match.group(1) else self.expression
         self.reason = match.group(2)
 
@@ -77,19 +82,19 @@ class Dice(OrderPlugin):
             .replace("（", "(").replace("）", ")")
 
         # Check continuously repeated symbols like "dd"
-        if Dice._repeated_symbol_pattern.fullmatch(self.expression):
+        if self._repeated_symbol_pattern.fullmatch(self.expression):
             self.expression = "d"
             self.reason = self.order_content
             return self.calculate_expression()
 
         # Search possible dice expressions
-        parts = Dice._dice_expression_split_pattern.split(self.expression)
+        parts = self._dice_expression_split_pattern.split(self.expression)
         detailed_parts = parts.copy()
         result_parts = parts.copy()
 
         for i in range(len(parts)):
             # Check if the part is dice expression like "D100", "2D50" or "5D10K2"
-            if Dice._dice_expression_pattern.fullmatch(parts[i]):
+            if self._dice_expression_pattern.fullmatch(parts[i]):
                 dice_expression = DiceExpression(
                     parts[i],
                     self.chat_settings["default_surface"],
@@ -117,7 +122,7 @@ class Dice(OrderPlugin):
         self.detailed_dice_result = "".join(detailed_parts)
         self.dice_result = "".join(result_parts)
 
-        if not Dice._math_expression_pattern.fullmatch(self.dice_result):
+        if not self._math_expression_pattern.fullmatch(self.dice_result):
             raise OrderError(self.replies["expression_invalid"])
 
         try:
@@ -161,7 +166,7 @@ class DiceExpression:
         self.parse()
 
     def parse(self) -> None:
-        match = DiceExpression.expression_pattern.fullmatch(self.expression)
+        match = self.expression_pattern.fullmatch(self.expression)
         self.count = int(match.group(1)) if match.group(1) else 1
         self.surface = int(match.group(2)) if match.group(2) else self.default_surface
         self.max_result_count = int(match.group(3)) if match.group(3) else 0

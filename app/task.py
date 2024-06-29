@@ -3,10 +3,9 @@ from .schedule import scheduler
 from .config import status
 from .exceptions import DiceRobotException
 from .enum import ApplicationStatus
-from .network.mirai import get_bot_list, get_bot_profile, get_friend_list, get_group_list
+from .network.napcat import get_login_info, get_friend_list, get_group_list
 
 state_tasks = [
-    "dicerobot.check_bot_status",
     "dicerobot.refresh_friend_list",
     "dicerobot.refresh_group_list"
 ]
@@ -16,14 +15,11 @@ def check_bot_status() -> None:
     logger.info("Check bot status")
 
     try:
-        bot_list = get_bot_list().data
-
-        if len(bot_list) != 1:
-            raise RuntimeError("No bot or too many bots online")
+        data = get_login_info().data
 
         # Update status
-        status.bot.id = bot_list[0]
-        status.bot.nickname = get_bot_profile().nickname
+        status.bot.id = data.user_id
+        status.bot.nickname = data.nickname
 
         if status.app != ApplicationStatus.RUNNING:
             status.app = ApplicationStatus.RUNNING
@@ -43,8 +39,8 @@ def check_bot_status() -> None:
         # Clear status
         status.bot.id = -1
         status.bot.nickname = ""
-        status.friends = []
-        status.groups = []
+        status.bot.friends = []
+        status.bot.groups = []
 
         if status.app != ApplicationStatus.HOLDING:
             status.app = ApplicationStatus.HOLDING
@@ -60,10 +56,10 @@ def refresh_friend_list() -> None:
     logger.info("Refresh friend list")
 
     try:
-        friend_list = get_friend_list().data
-        status.friends = [friend.id for friend in friend_list]
+        friends = get_friend_list().data
+        status.bot.friends = [friend.user_id for friend in friends]
     except (DiceRobotException, ValueError):
-        status.friends = []
+        status.bot.friends = []
 
         logger.error("Failed to refresh friend list")
 
@@ -72,9 +68,9 @@ def refresh_group_list() -> None:
     logger.info("Refresh group list")
 
     try:
-        group_list = get_group_list().data
-        status.groups = [group.id for group in group_list]
+        groups = get_group_list().data
+        status.bot.groups = [group.group_id for group in groups]
     except (DiceRobotException, ValueError):
-        status.groups = []
+        status.bot.groups = []
 
         logger.error("Failed to refresh group list")

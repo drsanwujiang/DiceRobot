@@ -4,15 +4,15 @@ from plugin import OrderPlugin
 from app.schedule import scheduler
 from app.exceptions import OrderInvalidError, OrderError
 from app.enum import ChatType
-from app.network import client
-from app.models.message import Image
+from app.models.report.segment import Image
+from app.network import Client
 
 
 class DailySixtySeconds(OrderPlugin):
     name = "dicerobot.daily_60s"
     display_name = "每天60秒读懂世界"
     description = "每天60秒读懂世界，15条简报+1条微语，让你瞬间了解世界正在发生的大事"
-    version = "1.0.0"
+    version = "1.1.0"
 
     default_plugin_settings = {
         "api": "https://api.2xb.cn/zaob",
@@ -32,17 +32,15 @@ class DailySixtySeconds(OrderPlugin):
     priority = 100
 
     @classmethod
-    def init_plugin(cls) -> None:
-        scheduler.add_job(cls.send_daily_60s, trigger="cron", hour=10)
+    def initialize(cls) -> None:
+        scheduler.add_job(cls.send_daily_60s, id=f"{cls.name}.send", trigger="cron", hour=10)
 
     @classmethod
     def send_daily_60s(cls) -> None:
-        result = client.get(cls.get_plugin_setting(key="api")).json()
+        result = Client().get(cls.get_plugin_setting(key="api")).json()
 
         if result["datatime"] == str(datetime.date.today()):
-            message = [Image.model_validate({
-                "url": result["imageUrl"]
-            })]
+            message = [Image(data=Image.Data(file=result["imageUrl"]))]
         else:
             message = cls.get_reply(reply_key="api_error")
 

@@ -2,7 +2,7 @@ import re
 import random
 
 from plugin import OrderPlugin
-from app.exceptions import OrderInvalidError, OrderError
+from app.exceptions import OrderInvalidError, OrderSuspiciousError, OrderError
 
 
 class SkillRoll(OrderPlugin):
@@ -73,28 +73,42 @@ class SkillRoll(OrderPlugin):
     _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
     _rule_pattern = re.compile(r"^[\d()><=+-/&| ]+$", re.I)
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.skill = -1
+        self.reason = ""
+
+        self.check = random.randint(1, 100)
+
     def __call__(self) -> None:
         if self.order in ["ra", "检定", "技能检定"]:
+            self.parse_content()
             self.skill_roll()
         elif self.order in ["rule", "检定规则"]:
             self.show_rule()
 
-    def skill_roll(self, _n: int = None) -> None:
-        match = SkillRoll._content_pattern.fullmatch(self.order_content)
-        skill = int(match.group(1)) if match.group(1) else None
-        reason = match.group(2)
+    def parse_content(self) -> None:
+        match = self._content_pattern.fullmatch(self.order_content)
 
-        if skill is None:
+        # Check skill length
+        if len(match.group(1) or "") > 5:
+            raise OrderSuspiciousError
+
+        self.skill = int(match.group(1)) if match.group(1) else self.skill
+        self.reason = match.group(2)
+
+        if self.skill < 0:
             raise OrderError(self.replies["skill_invalid"])
 
-        check = random.randint(1, 100) if _n is None else _n
+    def skill_roll(self) -> None:
         result = None
 
         for level in self.chat_settings["rule"]["levels"]:
-            expression = level["condition"].replace("{&技能值}", str(skill)).replace("{&检定值}", str(check))
+            expression = level["condition"].replace("{&技能值}", str(self.skill)).replace("{&检定值}", str(self.check))
 
             # Check rule content
-            if not SkillRoll._rule_pattern.fullmatch(expression):
+            if not self._rule_pattern.fullmatch(expression):
                 raise OrderError(self.replies["rule_invalid"])
 
             expression = expression.replace("&&", "and").replace("||", "or")
@@ -116,16 +130,16 @@ class SkillRoll(OrderPlugin):
             raise OrderError(self.replies["no_rule_matched"])
 
         self.update_reply_variables({
-            "检定原因": reason,
-            "检定值": check,
-            "技能值": skill,
+            "检定原因": self.reason,
+            "检定值": self.check,
+            "技能值": self.skill,
             "检定结果": result
         })
-        self.reply_to_sender(self.replies["result_with_reason" if reason else "result"])
+        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
 
     def show_rule(self) -> None:
         if self.order_content:
-            raise OrderInvalidError()
+            raise OrderInvalidError
 
         rule = self.chat_settings["rule"]
         rule_content = f"当前使用的检定规则为：【{rule['name']}】\n{rule['description']}\n\n" + \

@@ -1,3 +1,4 @@
+import os
 import json
 
 from sqlalchemy import select
@@ -11,7 +12,7 @@ from .models.config import (
 from .database import Session, Settings, PluginSettings, Replies, ChatSettings
 from .enum import ChatType
 
-status = StatusModel()
+status = StatusModel(debug=os.environ.get("DICEROBOT_DEBUG") is not None)
 settings = SettingsModel()
 plugin_settings = PluginSettingsModel()
 chat_settings = ChatSettingsModel()
@@ -24,7 +25,7 @@ def init_config() -> None:
         _settings = {}
 
         for item in session.execute(select(Settings)).scalars().fetchall():  # type: Settings
-            _settings.update({item.group: json.loads(item.json)})
+            _settings[item.group] = json.loads(item.json)
 
         settings.update(_settings)
 
@@ -32,7 +33,7 @@ def init_config() -> None:
         _plugin_settings = {}
 
         for item in session.execute(select(PluginSettings)).scalars().fetchall():  # type: PluginSettings
-            _plugin_settings.update({item.plugin: json.loads(item.json)})
+            _plugin_settings[item.plugin] = json.loads(item.json)
 
         for _plugin, _settings in _plugin_settings.items():
             plugin_settings.set(plugin=_plugin, settings=_settings)
@@ -41,7 +42,7 @@ def init_config() -> None:
         _chat_settings = {}
 
         for item in session.execute(select(ChatSettings)).scalars().fetchall():  # type: ChatSettings
-            _chat_settings.update({ChatType(item.chat_type): {item.chat_id: {item.group: json.loads(item.json)}}})
+            _chat_settings.setdefault(ChatType(item.chat_type), {}).setdefault(item.chat_id, {})[item.group] = json.loads(item.json)
 
         for _chat_type, _chat_type_settings in _chat_settings.items():
             for _chat_id, _chat_id_settings in _chat_type_settings.items():
@@ -52,7 +53,7 @@ def init_config() -> None:
         _replies = {}
 
         for item in session.execute(select(Replies)).scalars().fetchall():  # type: Replies
-            _replies.update({item.group: {item.key: item.value}})
+            _replies.setdefault(item.group, {})[item.key] = item.value
 
         for _reply_group, _group_replies in _replies.items():
             replies.set(reply_group=_reply_group, replies=_group_replies)
@@ -61,10 +62,10 @@ def init_config() -> None:
 
 
 def save_config() -> None:
-    logger.info("Saving config")
+    logger.info("Save config")
 
     with Session() as session, session.begin():
-        for key, value in settings.model_dump().items():  # type: str, dict
+        for key, value in settings.model_dump(safe_dump=False).items():  # type: str, dict
             serialized = json.dumps(value)
             session.execute(
                 insert(Settings)

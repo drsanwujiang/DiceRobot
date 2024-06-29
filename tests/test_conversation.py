@@ -3,25 +3,25 @@ from . import BaseTest
 
 class TestConversation(BaseTest):
     def test_conversation(self, client, openai):
-        self.wait_for_online(client)
+        self.wait_for_running()
 
-        message_chain = self.build_group_message(".conv")
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".conv")
+        self.post_message(client, message)
 
-        message_chain = self.build_group_message(".conv 你是一只猫娘，从现在开始你说的每句话结尾都必须加上喵")
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".conv 你是一只猫娘，从现在开始你说的每句话结尾都必须加上喵")
+        self.post_message(client, message)
 
-        message_chain = self.build_group_message(".conv usage")
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".conv usage")
+        self.post_message(client, message)
 
-        message_chain = self.build_group_message(".conv 你是谁？")
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".conv 你是谁？")
+        self.post_message(client, message)
 
-        message_chain = self.build_group_message(".conv usage")
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".conv usage")
+        self.post_message(client, message)
 
     def test_guidance(self, client):
-        self.wait_for_online(client)
+        self.wait_for_running()
 
         message_chain = self.build_group_message(".conv")
         self.post_message(client, message_chain)

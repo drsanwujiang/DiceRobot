@@ -1,17 +1,26 @@
+import pytest
+
+from app.exceptions import OrderError
 from . import BaseTest
 
 
 class TestHiddenDice(BaseTest):
     def test_hidden_dice(self, client):
-        self.wait_for_online(client)
+        self.wait_for_running()
 
         # In group
-        message_chain = self.build_group_message(".rh")
-        self.post_message(client, message_chain)
+        message = self.build_group_message(".rh")
+        self.post_message(client, message)
 
-        message_chain.sender.id = 99999
-        self.post_message(client, message_chain)
+        # Not friend
+        message.user_id = 114514
+        message.sender.user_id = 114514
+
+        with pytest.raises(OrderError):
+            self.post_message(client, message)
 
         # Not in group
-        message_chain = self.build_friend_message(".rh")
-        self.post_message(client, message_chain)
+        message = self.build_private_message(".rh")
+
+        with pytest.raises(OrderError):
+            self.post_message(client, message)
