@@ -90,12 +90,12 @@ if ! (pipx --version > /dev/null 2>&1); then
   source "$HOME"/.bashrc
 fi
 
-# Install poetry
-echo "Install poetry"
+# Install Poetry
+echo "Install Poetry"
 
 if ! (poetry --version > /dev/null 2>&1); then
   if ! (pipx install --index-url https://pypi.tuna.tsinghua.edu.cn/simple poetry > /dev/null 2>&1); then
-    error "Failed to install poetry"
+    error "Failed to install Poetry"
   fi
 
   source "$HOME"/.bashrc
