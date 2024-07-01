@@ -11,7 +11,7 @@ from .network.dicerobot import download_qq, download_napcat
 
 class QQManager:
     qq_path = "/opt/QQ/qq"
-    app_package_path = "/opt/QQ/resources/app/package.json"
+    package_json_path = "/opt/QQ/resources/app/package.json"
 
     def __init__(self):
         self.deb_file: str | None = None
@@ -29,10 +29,10 @@ class QQManager:
 
     @classmethod
     def get_version(cls) -> str | None:
-        if not os.path.isfile(cls.app_package_path):
+        if not os.path.isfile(cls.package_json_path):
             return None
 
-        with open(cls.app_package_path, "r", encoding="utf-8") as f:
+        with open(cls.package_json_path, "r", encoding="utf-8") as f:
             try:
                 data = json.load(f)
                 return data.get("version")
@@ -83,6 +83,8 @@ class NapCatManager:
     napcat_path = os.path.join(napcat_dir, napcat_file)
     env_file = "env"
     env_path = os.path.join(napcat_dir, env_file)
+    package_json_file = "package.json"
+    package_json_path = os.path.join(napcat_dir, package_json_file)
 
     napcat_config = {
         "fileLog": True,
@@ -132,6 +134,18 @@ class NapCatManager:
     @staticmethod
     def is_running() -> bool:
         return subprocess.run("systemctl is-active --quiet napcat", shell=True).returncode == 0
+
+    @classmethod
+    def get_version(cls) -> str | None:
+        if not os.path.isfile(cls.package_json_path):
+            return None
+
+        with open(cls.package_json_path, "r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+                return data.get("version")
+            except ValueError:
+                return None
 
     @classmethod
     def install(cls) -> None:
