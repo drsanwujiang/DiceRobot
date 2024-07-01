@@ -22,7 +22,7 @@ async def get_status() -> JSONResponse:
 
 
 @router.post("/download", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def install() -> JSONResponse:
+async def download() -> JSONResponse:
     logger.info("QQ manage request received: download")
 
     if qq_manager.is_downloaded():

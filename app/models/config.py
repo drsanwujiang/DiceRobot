@@ -130,7 +130,7 @@ class Settings:
                     password_hash: Administrator password hash.
                 """
 
-                password_hash: str = None
+                password_hash: str = ""
 
             webhook: Webhook = Webhook()
             jwt: JWT = JWT()
