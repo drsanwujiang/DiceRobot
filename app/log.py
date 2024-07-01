@@ -29,8 +29,8 @@ def init_logger() -> None:
         logger.add(
             os.path.join(LOG_DIR, "dicerobot-{time:YYYY-MM-DD}.log"),
             level=log_level,
-            rotation="1 day",
-            retention="6 months",
+            rotation="00:00",
+            retention="365 days",
             compression="tar.gz"
         )
 
@@ -45,19 +45,20 @@ def load_logs(date: datetime.date) -> Union[list[str], None, False]:
     temp_log_file = os.path.join(TEMP_LOG_DIR, file)
 
     if os.path.isfile(log_file):
-        if os.stat(log_file).st_size > MAX_FILE_SIZE:
-            return False
-
-        with open(log_file, "r", encoding="utf-8") as f:
-            return f.readlines()
+        return load_log_file(log_file)
     elif os.path.isfile(compressed_file):
         with tarfile.open(compressed_file, "r:gz") as tar:
             tar.extract(file, TEMP_LOG_DIR)
 
-        if os.stat(temp_log_file).st_size > MAX_FILE_SIZE:
-            return False
-
-        with open(temp_log_file, "r", encoding="utf-8") as file:
-            return file.readlines()
+        return load_log_file(temp_log_file)
     else:
         return None
+
+
+def load_log_file(file: str) -> Union[list[str], False]:
+    # For performance reasons, large log file will not be loaded
+    if os.stat(file).st_size > MAX_FILE_SIZE:
+        return False
+
+    with open(file, "r", encoding="utf-8") as f:
+        return f.readlines()
