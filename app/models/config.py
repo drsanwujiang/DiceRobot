@@ -199,16 +199,16 @@ class Settings:
             settings: New security settings.
         """
 
-        old_settings = cls._settings.security.model_dump()
+        security_settings = cls._settings.security.model_dump()
 
         if "webhook" in settings:
-            old_settings["webhook"] = deep_update(old_settings["webhook"], settings["webhook"])
+            security_settings["webhook"] = deep_update(security_settings["webhook"], settings["webhook"])
         if "jwt" in settings:
-            old_settings["jwt"] = deep_update(old_settings["jwt"], settings["jwt"])
+            security_settings["jwt"] = deep_update(security_settings["jwt"], settings["jwt"])
         if "admin" in settings:
-            old_settings["admin"]["password_hash"] = generate_password_hash(settings["admin"]["password"])
+            security_settings["admin"]["password_hash"] = generate_password_hash(settings["admin"]["password"])
 
-        cls._settings.security = cls._Settings.Security.model_validate(old_settings)
+        cls._settings.security = cls._Settings.Security.model_validate(security_settings)
 
     @classmethod
     def update_application(cls, settings: dict) -> None:

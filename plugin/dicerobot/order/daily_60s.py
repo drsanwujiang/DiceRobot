@@ -1,6 +1,7 @@
 import datetime
 
 from plugin import OrderPlugin
+from app.config import plugin_settings
 from app.schedule import scheduler
 from app.exceptions import OrderInvalidError, OrderError
 from app.enum import ChatType
@@ -12,7 +13,7 @@ class DailySixtySeconds(OrderPlugin):
     name = "dicerobot.daily_60s"
     display_name = "每天60秒读懂世界"
     description = "每天60秒读懂世界，15条简报+1条微语，让你瞬间了解世界正在发生的大事"
-    version = "1.1.0"
+    version = "1.1.1"
 
     default_plugin_settings = {
         "api": "https://api.2xb.cn/zaob",
@@ -55,9 +56,11 @@ class DailySixtySeconds(OrderPlugin):
 
         if self.chat_id not in self.plugin_settings["subscribers"]:
             self.plugin_settings["subscribers"].append(self.chat_id)
+            self.save_plugin_settings()
             self.reply_to_sender(self.replies["subscribe"])
         else:
             self.plugin_settings["subscribers"].remove(self.chat_id)
+            self.save_plugin_settings()
             self.reply_to_sender(self.replies["unsubscribe"])
 
     def check_order_content(self) -> None:
