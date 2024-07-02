@@ -37,8 +37,6 @@ async def message_report(content: dict) -> EmptyResponse:
                         handle_message(PrivateMessage.model_validate(content))
                     case MessageType.GROUP:
                         handle_message(GroupMessage.model_validate(content))
-                    case _:
-                        raise MessageInvalidError
             case ReportType.META_EVENT:
                 pass
             case ReportType.NOTICE:
@@ -71,13 +69,10 @@ async def message_report(content: dict) -> EmptyResponse:
                         handle_event(FriendAddRequest.model_validate(content))
                     case RequestType.GROUP:
                         handle_event(GroupAddRequest.model_validate(content))
-                    case _:
-                        raise MessageInvalidError
-            case _:
-                raise MessageInvalidError
 
         logger.info("Report completed")
     except ValueError:
+        logger.warning("Report finished, message invalid")
         raise MessageInvalidError
     except RuntimeError:
         logger.info("Report filtered")
