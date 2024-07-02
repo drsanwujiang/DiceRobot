@@ -111,6 +111,14 @@ class DiceRobotPlugin(ABC):
 
         pass
 
+    def save_plugin_settings(self) -> None:
+        """Save plugin settings.
+
+        Plugin settings must be saved explicitly to avoid inappropriate modification.
+        """
+
+        plugin_settings.set(plugin=self.name, settings=self.plugin_settings)
+
 
 class OrderPlugin(DiceRobotPlugin):
     """DiceRobot order plugin.
