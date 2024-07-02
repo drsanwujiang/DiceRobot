@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dicerobot"
-version = "4.1.1"
+version = "4.1.2"
 description = "A TRPG assistant bot"
 authors = ["Drsanwujiang <drsanwujiang@gmail.com>"]
 license = "MIT"
