@@ -214,6 +214,10 @@ WantedBy=multi-user.target""")
         with open(os.path.join(cls.config_dir, f"napcat_{settings.napcat.account}.json"), "w") as f:
             json.dump(cls.napcat_config, f)
 
+        cls.onebot_config["http"]["host"] = str(settings.napcat.api.host)
+        cls.onebot_config["http"]["port"] = settings.napcat.api.port
+        cls.onebot_config["http"]["secret"] = settings.security.webhook.secret
+
         with open(os.path.join(cls.config_dir, "onebot11.json"), "w") as f:
             json.dump(cls.onebot_config, f)
 
