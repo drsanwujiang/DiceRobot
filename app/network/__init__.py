@@ -10,7 +10,9 @@ from ..exceptions import NetworkServerError, NetworkClientError, NetworkInvalidC
 class Client(httpx.Client):
     @staticmethod
     def log_request(request: httpx.Request):
-        logger.debug(f"Request: {request.method} {request.url} {request.content.decode()}")
+        request.read()
+
+        logger.debug(f"Request: {request.method} {request.url}, content: {request.content.decode()}")
 
     @staticmethod
     def log_response(response: httpx.Response):
@@ -44,7 +46,6 @@ class Client(httpx.Client):
 
     _defaults = {
         "headers": {
-            "Content-Type": "application/json",
             "Accept": "application/json",
             "User-Agent": f"DiceRobot/{VERSION}"
         },
