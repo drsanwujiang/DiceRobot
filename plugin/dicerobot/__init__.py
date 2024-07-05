@@ -1,4 +1,6 @@
-from .order import Bot, Dice, HiddenDice, BPDice, SkillRoll, Chat, Conversation, Paint, DailySixtySeconds
+from .order import (
+    Bot, Dice, HiddenDice, BPDice, SkillRoll, Chat, Conversation, Paint, StableDiffusion, DailySixtySeconds
+)
 
 from .event import FriendRequestHandler, GroupInvitationHandler
 
@@ -13,6 +15,7 @@ __all__ = [
     "Chat",
     "Conversation",
     "Paint",
+    "StableDiffusion",
     "DailySixtySeconds",
 
     # Events
