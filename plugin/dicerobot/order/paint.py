@@ -61,7 +61,7 @@ class Paint(OrderPlugin):
         except (ValueError, ValueError):
             raise OrderError(self.replies["content_policy_violated"])
 
-        self.reply_to_sender([Image(data=Image.Data(file=response.data[0].b64_json))])
+        self.reply_to_sender([Image(data=Image.Data(file=f"base64://{response.data[0].b64_json}"))])
 
 
 class ImageGenerationRequest(BaseModel):
