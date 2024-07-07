@@ -10,7 +10,7 @@ class Conversation(OrderPlugin):
     name = "dicerobot.conversation"
     display_name = "对话（GPT）"
     description = "使用 OpenAI 的 GPT 模型进行连续的聊天对话"
-    version = "1.1.0"
+    version = "1.1.1"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -67,8 +67,7 @@ class Conversation(OrderPlugin):
             try:
                 request = ChatCompletionRequest.model_validate({
                     "model": self.plugin_settings["model"],
-                    "messages": conversation,
-                    "user": f"{self.chat_type.value}-{self.chat_id}"
+                    "messages": conversation
                 })
             except ValueError:
                 raise OrderInvalidError

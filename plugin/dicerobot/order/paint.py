@@ -9,7 +9,7 @@ class Paint(OrderPlugin):
     name = "dicerobot.paint"
     display_name = "画图（DALL·E）"
     description = "使用 OpenAI 的 DALL·E 模型生成图片"
-    version = "1.1.0"
+    version = "1.2.0"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -42,7 +42,7 @@ class Paint(OrderPlugin):
                 "n": 1,
                 "quality": self.plugin_settings["quality"],
                 "size": self.plugin_settings["size"],
-                "user": f"{self.chat_type.value}-{self.chat_id}"
+                "response_format": "b64_json"
             })
         except ValueError:
             raise OrderInvalidError
@@ -61,7 +61,7 @@ class Paint(OrderPlugin):
         except (ValueError, ValueError):
             raise OrderError(self.replies["content_policy_violated"])
 
-        self.reply_to_sender([Image(data=Image.Data(file=response.data[0].url))])
+        self.reply_to_sender([Image(data=Image.Data(file=f"base64://{response.data[0].b64_json}"))])
 
 
 class ImageGenerationRequest(BaseModel):
@@ -77,7 +77,7 @@ class ImageGenerationRequest(BaseModel):
 
 class ImageGenerationResponse(BaseModel):
     class Image(BaseModel):
-        url: str
+        b64_json: str
         revised_prompt: str
 
     created: int

@@ -97,10 +97,23 @@ async def get_plugin_list() -> JSONResponse:
 async def get_plugin_list(plugin: str) -> JSONResponse:
     logger.info(f"Admin request received: get plugin, plugin: {plugin}")
 
-    if plugin not in status.plugins:
-        raise ResourceNotFoundError(message="Plugin not found")
+    if plugin in dispatcher.order_plugins:
+        plugin_class = dispatcher.order_plugins[plugin]
 
-    return JSONResponse(data=status.plugins[plugin].model_dump())
+        return JSONResponse(data={
+            **status.plugins[plugin].model_dump(),
+            "orders": plugin_class.orders,
+            "priority": plugin_class.priority
+        })
+    elif plugin in dispatcher.event_plugins:
+        plugin_class = dispatcher.event_plugins[plugin]
+
+        return JSONResponse(data={
+            **status.plugins[plugin].model_dump(),
+            "events": [event.__name__ for event in plugin_class.events]
+        })
+    else:
+        raise ResourceNotFoundError(message="Plugin not found")
 
 
 @router.get("/plugin/{plugin}/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])

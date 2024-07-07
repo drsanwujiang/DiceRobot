@@ -1,7 +1,7 @@
 from ..models.network.napcat import (
     GetLoginInfoResponse, GetFriendListResponse, GetGroupInfoResponse, GetGroupListResponse, GetGroupMemberInfoResponse,
-    GetGroupMemberListResponse, SendPrivateMessageResponse, SendGroupMessageResponse, SetGroupCardResponse,
-    SetGroupLeaveResponse, SetFriendAddRequestResponse, SetGroupAddRequestResponse
+    GetGroupMemberListResponse, GetImageResponse, SendPrivateMessageResponse, SendGroupMessageResponse,
+    SetGroupCardResponse, SetGroupLeaveResponse, SetFriendAddRequestResponse, SetGroupAddRequestResponse
 )
 from ..config import settings
 from ..enum import GroupAddRequestSubType
@@ -15,6 +15,7 @@ __all__ = [
     "get_group_list",
     "get_group_member_info",
     "get_group_member_list",
+    "get_image",
     "send_private_message",
     "send_group_message",
     "set_group_card",
@@ -68,6 +69,15 @@ def get_group_member_list(group_id: int) -> GetGroupMemberListResponse:
         settings.napcat.api.base_url + "/get_group_member_list",
         params={
             "group_id": group_id
+        }
+    ).json())
+
+
+def get_image(file: str) -> GetImageResponse:
+    return GetImageResponse.model_validate(client.get(
+        settings.napcat.api.base_url + "/get_image",
+        params={
+            "file": file
         }
     ).json())
 

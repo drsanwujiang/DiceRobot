@@ -9,7 +9,7 @@ class StableDiffusion(OrderPlugin):
     name = "dicerobot.stable_diffusion"
     display_name = "Stable Diffusion"
     description = "使用 Stability AI 的 Stable Diffusion 模型生成图片"
-    version = "1.0.0"
+    version = "1.0.1"
 
     default_plugin_settings = {
         "domain": "api.stability.ai",
@@ -57,7 +57,7 @@ class StableDiffusion(OrderPlugin):
         except (ValueError, ValueError):
             raise OrderError(self.replies["content_policy_violated"])
 
-        self.reply_to_sender([Image(data=Image.Data(file="base64://" + response.image))])
+        self.reply_to_sender([Image(data=Image.Data(file=f"base64://{response.image}"))])
 
 
 class ImageGenerationRequest(BaseModel):
