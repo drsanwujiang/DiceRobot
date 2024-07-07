@@ -1,16 +1,22 @@
+from typing import Literal
+import base64
+import mimetypes
+
 from pydantic import conlist
 
 from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
+from app.models.report.segment import Text, Image
 from app.network import Client
+from app.network.napcat import get_image
 
 
 class Chat(OrderPlugin):
     name = "dicerobot.chat"
     display_name = "聊天（GPT）"
     description = "使用 OpenAI 的 GPT 模型进行聊天对话"
-    version = "1.1.0"
+    version = "1.2.0"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -35,13 +41,34 @@ class Chat(OrderPlugin):
             raise OrderError(self.replies["unusable"])
 
         try:
+            content = []
+
+            for segment in self.message.message:
+                if isinstance(segment, Text):
+                    content.append(ChatCompletionTextContent.model_validate({
+                        "type": "text",
+                        "text": segment.data.text
+                    }))
+                elif isinstance(segment, Image):
+                    file = get_image(segment.data.file).data.file
+                    mime_type, _ = mimetypes.guess_type(file)
+
+                    with open(file, "rb") as f:
+                        image_content = base64.b64encode(f.read())
+
+                    content.append(ChatCompletionImageUrlContent.model_validate({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{image_content}"
+                        }
+                    }))
+
             request = ChatCompletionRequest.model_validate({
                 "model": self.plugin_settings["model"],
                 "messages": [{
                     "role": "user",
                     "content": self.order_content
-                }],
-                "user": f"{self.chat_type.value}-{self.chat_id}"
+                }]
             })
         except ValueError:
             raise OrderInvalidError
@@ -63,9 +90,26 @@ class Chat(OrderPlugin):
         self.reply_to_sender(response.choices[0].message.content)
 
 
+class ChatCompletionContent(BaseModel):
+    type: str
+
+
+class ChatCompletionTextContent(ChatCompletionContent):
+    type: Literal["text"] = "text"
+    text: str
+
+
+class ChatCompletionImageUrlContent(ChatCompletionContent):
+    class ImageUrl(BaseModel):
+        url: str
+
+    type: Literal["image_url"] = "image_url"
+    image_url: ImageUrl
+
+
 class ChatCompletion(BaseModel):
     role: str
-    content: str
+    content: str | ChatCompletionContent
 
 
 class ChatCompletionRequest(BaseModel):
