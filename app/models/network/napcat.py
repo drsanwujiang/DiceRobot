@@ -10,6 +10,7 @@ __all__ = [
     "GetGroupListResponse",
     "GetGroupMemberInfoResponse",
     "GetGroupMemberListResponse",
+    "GetImageResponse",
     "SendPrivateMessageResponse",
     "SendGroupMessageResponse",
     "SetGroupCardResponse",
@@ -94,6 +95,13 @@ class GetGroupMemberInfoResponse(NapCatResponse):
 
 class GetGroupMemberListResponse(NapCatResponse):
     data: list[GroupMemberInfo]
+
+
+class GetImageResponse(NapCatResponse):
+    class Data(BaseModel):
+        file: str
+
+    data: Data
 
 
 class SendPrivateMessageResponse(NapCatResponse):
