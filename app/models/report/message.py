@@ -72,7 +72,7 @@ class GroupMessage(Message):
         age: int = None
         area: str = None
         level: str = None
-        role: Role
+        role: Role = None  # In rare cases, the sender of a group message may not have role field
         title: str = None
 
     message_type: Literal[MessageType.GROUP] = MessageType.GROUP
