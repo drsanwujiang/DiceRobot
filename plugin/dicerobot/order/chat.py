@@ -54,7 +54,7 @@ class Chat(OrderPlugin):
                     mime_type, _ = mimetypes.guess_type(file)
 
                     with open(file, "rb") as f:
-                        image_content = base64.b64encode(f.read())
+                        image_content = base64.b64encode(f.read()).decode()
 
                     content.append(ChatCompletionImageUrlContent.model_validate({
                         "type": "image_url",
@@ -67,7 +67,7 @@ class Chat(OrderPlugin):
                 "model": self.plugin_settings["model"],
                 "messages": [{
                     "role": "user",
-                    "content": self.order_content
+                    "content": content
                 }]
             })
         except ValueError:
@@ -91,7 +91,7 @@ class Chat(OrderPlugin):
 
 
 class ChatCompletionContent(BaseModel):
-    type: str
+    type: Literal["text", "image_url"]
 
 
 class ChatCompletionTextContent(ChatCompletionContent):
@@ -109,7 +109,7 @@ class ChatCompletionImageUrlContent(ChatCompletionContent):
 
 class ChatCompletion(BaseModel):
     role: str
-    content: str | ChatCompletionContent
+    content: str | list[ChatCompletionContent]
 
 
 class ChatCompletionRequest(BaseModel):
