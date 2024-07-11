@@ -23,21 +23,21 @@ port="9500"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
-	case "$1" in
-		--host)
-			host="$2"
-			shift
-			;;
-		--port)
-			port="$2"
-			shift
-			;;
-		--*)
-			error "Illegal option $1"
-			;;
-	esac
+  case "$1" in
+    --host)
+      host="$2"
+      shift
+      ;;
+    --port)
+      port="$2"
+      shift
+      ;;
+    --*)
+      error "Illegal option $1"
+      ;;
+  esac
 
-	shift $(( $# > 0 ? 1 : 0 ))
+  shift $(( $# > 0 ? 1 : 0 ))
 done
 
 # Check Python
