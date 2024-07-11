@@ -49,7 +49,7 @@ class StableDiffusion(OrderPlugin):
                 "Authorization": f"Bearer {api_key}"
             },
             files={key: (None, value) for key, value in request.model_dump(exclude_none=True).items()},
-            timeout=30
+            timeout=60
         ).json()
 
         try:
