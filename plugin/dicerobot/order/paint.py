@@ -53,7 +53,7 @@ class Paint(OrderPlugin):
                 "Authorization": f"Bearer {api_key}"
             },
             json=request.model_dump(exclude_none=True),
-            timeout=30
+            timeout=60
         ).json()
 
         try:
