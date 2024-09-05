@@ -27,7 +27,9 @@ async def get_status() -> JSONResponse:
 async def install() -> JSONResponse:
     logger.info("NapCat manage request received: install")
 
-    if napcat_manager.is_installed():
+    if not qq_manager.is_installed():
+        raise BadRequestError(message="QQ not installed")
+    elif napcat_manager.is_installed():
         raise BadRequestError(message="NapCat already installed")
 
     napcat_manager.install()
