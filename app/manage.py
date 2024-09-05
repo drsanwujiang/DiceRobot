@@ -103,7 +103,7 @@ class NapCatManager:
     napcat_config = {
         "fileLog": True,
         "consoleLog": False,
-        "fileLogLevel": "warn",
+        "fileLogLevel": "debug" if os.environ.get("DICEROBOT_DEBUG") else "warn",
         "consoleLogLevel": "error"
     }
     onebot_config = {
