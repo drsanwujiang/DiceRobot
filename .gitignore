@@ -1,8 +1,12 @@
+# IDE files
 .idea
+
+# Environment file
 .env.test
 
+# Poetry file
 poetry.lock
 
+# Debug files
 /logs
-/napcat
 database.db
