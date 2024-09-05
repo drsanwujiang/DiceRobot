@@ -16,11 +16,27 @@ async def get_status() -> JSONResponse:
     logger.info("NapCat manage request received: get status")
 
     return JSONResponse(data={
+        "downloading": napcat_manager.is_downloading(),
+        "downloaded": napcat_manager.is_downloaded(),
         "installed": napcat_manager.is_installed(),
         "configured": napcat_manager.is_configured(),
         "running": napcat_manager.is_running(),
         "version": napcat_manager.get_version()
     })
+
+
+@router.post("/download", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def download() -> JSONResponse:
+    logger.info("NapCat manage request received: download")
+
+    if qq_manager.is_downloading():
+        raise BadRequestError(message="NapCat ZIP file is downloading")
+    elif qq_manager.is_downloaded():
+        raise BadRequestError(message="NapCat ZIP file already downloaded")
+
+    napcat_manager.download()
+
+    return JSONResponse()
 
 
 @router.post("/install", dependencies=[Depends(verify_jwt_token, use_cache=False)])
@@ -29,6 +45,8 @@ async def install() -> JSONResponse:
 
     if not qq_manager.is_installed():
         raise BadRequestError(message="QQ not installed")
+    elif not napcat_manager.is_downloaded():
+        raise BadRequestError(message="NapCat ZIP file not downloaded")
     elif napcat_manager.is_installed():
         raise BadRequestError(message="NapCat already installed")
 

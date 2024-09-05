@@ -3,10 +3,10 @@ import subprocess
 import zipfile
 import shutil
 import json
+import uuid
 
 from .log import logger
 from .config import settings
-from .network.dicerobot import download_qq, download_napcat
 
 
 class QQManager:
@@ -17,7 +17,11 @@ class QQManager:
 
     def __init__(self):
         self.deb_file: str | None = None
+        self.download_process: subprocess.Popen | None = None
         self.install_process: subprocess.Popen | None = None
+
+    def is_downloading(self) -> bool:
+        return self.download_process is not None and self.download_process.poll() is None
 
     def is_downloaded(self) -> bool:
         return self.deb_file is not None and os.path.isfile(self.deb_file)
@@ -25,16 +29,14 @@ class QQManager:
     def is_installing(self) -> bool:
         return self.install_process is not None and self.install_process.poll() is None
 
-    @classmethod
-    def is_installed(cls) -> bool:
-        return os.path.isfile(cls.qq_path)
+    def is_installed(self) -> bool:
+        return os.path.isfile(self.qq_path)
 
-    @classmethod
-    def get_version(cls) -> str | None:
-        if not os.path.isfile(cls.package_json_path):
+    def get_version(self) -> str | None:
+        if not os.path.isfile(self.package_json_path):
             return None
 
-        with open(cls.package_json_path, "r", encoding="utf-8") as f:
+        with open(self.package_json_path, "r", encoding="utf-8") as f:
             try:
                 data = json.load(f)
                 return data.get("version")
@@ -42,13 +44,18 @@ class QQManager:
                 return None
 
     def download(self) -> None:
-        if self.is_downloaded():
+        if self.is_downloading() or self.is_downloaded():
             return
 
         logger.info("Download QQ")
 
-        self.deb_file = None
-        self.deb_file = download_qq()
+        self.deb_file = f"/tmp/qq-{uuid.uuid4().hex}.deb"
+        self.download_process = subprocess.Popen(
+            f"curl -s -o {self.deb_file} https://dl.drsanwujiang.com/dicerobot/qq.deb",
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            shell=True
+        )
 
         logger.info("QQ downloaded")
 
@@ -66,6 +73,13 @@ class QQManager:
         )
 
     def stop(self) -> None:
+        if self.is_downloading():
+            try:
+                self.download_process.terminate()
+                self.download_process.wait(5)
+            except subprocess.TimeoutExpired:
+                self.download_process.kill()
+
         if self.is_installing():
             try:
                 self.install_process.terminate()
@@ -121,11 +135,17 @@ class NapCatManager:
     }
 
     def __init__(self):
-        self.process: subprocess.Popen | None = None
+        self.zip_file: str | None = None
+        self.download_process: subprocess.Popen | None = None
 
-    @classmethod
-    def is_installed(cls) -> bool:
-        return os.path.isfile(cls.package_json_path)
+    def is_downloading(self) -> bool:
+        return self.download_process is not None and self.download_process.poll() is None
+
+    def is_downloaded(self) -> bool:
+        return self.zip_file is not None and os.path.isfile(self.zip_file)
+
+    def is_installed(self) -> bool:
+        return os.path.isfile(self.package_json_path)
 
     @staticmethod
     def is_configured() -> bool:
@@ -135,35 +155,45 @@ class NapCatManager:
     def is_running() -> bool:
         return subprocess.run("systemctl is-active --quiet napcat", shell=True).returncode == 0
 
-    @classmethod
-    def get_version(cls) -> str | None:
-        if not cls.is_installed():
+    def get_version(self) -> str | None:
+        if not self.is_installed():
             return None
 
-        with open(cls.package_json_path, "r", encoding="utf-8") as f:
+        with open(self.package_json_path, "r", encoding="utf-8") as f:
             try:
                 data = json.load(f)
                 return data.get("version")
             except ValueError:
                 return None
 
-    @classmethod
-    def install(cls) -> None:
-        if cls.is_installed():
+    def download(self) -> None:
+        if self.is_downloading() or self.is_downloaded():
+            return
+
+        logger.info("Download NapCat")
+
+        self.zip_file = f"/tmp/napcat-{uuid.uuid4().hex}.zip"
+        self.download_process = subprocess.Popen(
+            f"curl -s -o {self.zip_file} https://dl.drsanwujiang.com/dicerobot/napcat.zip",
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            shell=True
+        )
+
+        logger.info("NapCat downloaded")
+
+    def install(self) -> None:
+        if self.is_installed() or not self.is_downloaded():
             return
 
         logger.info("Install NapCat")
 
-        file = download_napcat()
-
         # Uncompress NapCat
-        with zipfile.ZipFile(file, "r") as z:
-            z.extractall(cls.napcat_dir)
+        with zipfile.ZipFile(self.zip_file, "r") as z:
+            z.extractall(self.napcat_dir)
 
-        os.remove(file)
-
-        # Config systemd
-        with open(cls.service_path, "w") as f:
+        # Configure systemd
+        with open(self.service_path, "w") as f:
             f.write(f"""[Unit]
 Description=NapCat service created by DiceRobot
 After=network.target
@@ -171,7 +201,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-EnvironmentFile={cls.env_path}
+EnvironmentFile={self.env_path}
 ExecStart=/usr/bin/xvfb-run -a {QQManager.qq_path} --no-sandbox -q $QQ_ACCOUNT
 
 [Install]
@@ -195,49 +225,47 @@ if (hasNapcatParam) {
 
         logger.info("NapCat installed")
 
-    @classmethod
-    def remove(cls) -> None:
-        if not cls.is_installed() or cls.is_running():
+    def remove(self) -> None:
+        if not self.is_installed() or self.is_running():
             return
 
         logger.info("Remove NapCat")
 
-        if os.path.isfile(cls.service_path):
-            os.remove(cls.service_path)
+        if os.path.isfile(self.service_path):
+            os.remove(self.service_path)
             subprocess.run("systemctl daemon-reload", shell=True)
 
-        shutil.rmtree(cls.napcat_dir)
+        shutil.rmtree(self.napcat_dir)
 
         logger.info("NapCat removed")
 
-    @classmethod
-    def start(cls) -> None:
-        if not cls.is_installed() or not cls.is_configured() or cls.is_running():
+    def start(self) -> None:
+        if not self.is_installed() or not self.is_configured() or self.is_running():
             return
 
         logger.info("Start NapCat")
 
-        if os.path.isdir(cls.log_dir):
-            shutil.rmtree(cls.log_dir)
+        if os.path.isdir(self.log_dir):
+            shutil.rmtree(self.log_dir)
 
-        with open(cls.env_path, "w") as f:
+        with open(self.env_path, "w") as f:
             f.write(f"QQ_ACCOUNT={settings.napcat.account}")
 
-        with open(os.path.join(cls.config_dir, "napcat.json"), "w") as f:
-            json.dump(cls.napcat_config, f)
+        with open(os.path.join(self.config_dir, "napcat.json"), "w") as f:
+            json.dump(self.napcat_config, f)
 
-        with open(os.path.join(cls.config_dir, f"napcat_{settings.napcat.account}.json"), "w") as f:
-            json.dump(cls.napcat_config, f)
+        with open(os.path.join(self.config_dir, f"napcat_{settings.napcat.account}.json"), "w") as f:
+            json.dump(self.napcat_config, f)
 
-        cls.onebot_config["http"]["host"] = str(settings.napcat.api.host)
-        cls.onebot_config["http"]["port"] = settings.napcat.api.port
-        cls.onebot_config["http"]["secret"] = settings.security.webhook.secret
+        self.onebot_config["http"]["host"] = str(settings.napcat.api.host)
+        self.onebot_config["http"]["port"] = settings.napcat.api.port
+        self.onebot_config["http"]["secret"] = settings.security.webhook.secret
 
-        with open(os.path.join(cls.config_dir, "onebot11.json"), "w") as f:
-            json.dump(cls.onebot_config, f)
+        with open(os.path.join(self.config_dir, "onebot11.json"), "w") as f:
+            json.dump(self.onebot_config, f)
 
-        with open(os.path.join(cls.config_dir, f"onebot11_{settings.napcat.account}.json"), "w") as f:
-            json.dump(cls.onebot_config, f)
+        with open(os.path.join(self.config_dir, f"onebot11_{settings.napcat.account}.json"), "w") as f:
+            json.dump(self.onebot_config, f)
 
         subprocess.run("systemctl start napcat", shell=True)
 
