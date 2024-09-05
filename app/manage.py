@@ -10,8 +10,10 @@ from .network.dicerobot import download_qq, download_napcat
 
 
 class QQManager:
-    qq_path = "/opt/QQ/qq"
-    package_json_path = "/opt/QQ/resources/app/package.json"
+    qq_dir = "/opt/QQ"
+    qq_path = os.path.join(qq_dir, "qq")
+    package_json_path = os.path.join(qq_dir, "resources/app/package.json")
+    index_path = os.path.join(qq_dir, "resources/app/app_launcher/index.js")
 
     def __init__(self):
         self.deb_file: str | None = None
@@ -76,11 +78,9 @@ class QQManager:
 
 class NapCatManager:
     service_path = "/etc/systemd/system/napcat.service"
-    napcat_dir = os.path.join(os.getcwd(), "napcat")
+    napcat_dir = os.path.join(QQManager.qq_dir, "resources/app/app_launcher/napcat")
     log_dir = os.path.join(napcat_dir, "logs")
     config_dir = os.path.join(napcat_dir, "config")
-    napcat_file = "napcat.sh"
-    napcat_path = os.path.join(napcat_dir, napcat_file)
     env_file = "env"
     env_path = os.path.join(napcat_dir, env_file)
     package_json_file = "package.json"
@@ -125,7 +125,7 @@ class NapCatManager:
 
     @classmethod
     def is_installed(cls) -> bool:
-        return os.path.isfile(cls.napcat_path)
+        return os.path.isfile(cls.package_json_path)
 
     @staticmethod
     def is_configured() -> bool:
@@ -137,7 +137,7 @@ class NapCatManager:
 
     @classmethod
     def get_version(cls) -> str | None:
-        if not os.path.isfile(cls.package_json_path):
+        if not cls.is_installed():
             return None
 
         with open(cls.package_json_path, "r", encoding="utf-8") as f:
@@ -156,11 +156,13 @@ class NapCatManager:
 
         file = download_napcat()
 
+        # Uncompress NapCat
         with zipfile.ZipFile(file, "r") as z:
             z.extractall(cls.napcat_dir)
 
         os.remove(file)
 
+        # Config systemd
         with open(cls.service_path, "w") as f:
             f.write(f"""[Unit]
 Description=NapCat service created by DiceRobot
@@ -170,13 +172,26 @@ After=network.target
 Type=simple
 User=root
 EnvironmentFile={cls.env_path}
-WorkingDirectory={cls.napcat_dir}
-ExecStart=/bin/bash {cls.napcat_file} -q $QQ_ACCOUNT
+ExecStart=/usr/bin/xvfb-run -a {QQManager.qq_path} --no-sandbox -q $QQ_ACCOUNT
 
 [Install]
 WantedBy=multi-user.target""")
 
         subprocess.run("systemctl daemon-reload", shell=True)
+
+        # Patch QQ
+        with open(QQManager.index_path, "w") as f:
+            f.write("""const path = require('path');
+const CurrentPath = path.dirname(__filename)
+const hasNapcatParam = process.argv.includes('--no-sandbox');
+
+if (hasNapcatParam) {
+    (async () => {
+        await import("file://" + path.join(CurrentPath, './napcat/napcat.mjs'));
+    })();
+} else {
+    require('./launcher.node').load('external_index', module);
+}""")
 
         logger.info("NapCat installed")
 
