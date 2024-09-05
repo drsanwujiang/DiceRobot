@@ -29,9 +29,9 @@ async def get_status() -> JSONResponse:
 async def download() -> JSONResponse:
     logger.info("NapCat manage request received: download")
 
-    if qq_manager.is_downloading():
+    if napcat_manager.is_downloading():
         raise BadRequestError(message="NapCat ZIP file is downloading")
-    elif qq_manager.is_downloaded():
+    elif napcat_manager.is_downloaded():
         raise BadRequestError(message="NapCat ZIP file already downloaded")
 
     napcat_manager.download()
