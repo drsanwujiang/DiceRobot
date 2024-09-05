@@ -104,7 +104,7 @@ fi
 # Install dependencies
 echo "Install dependencies"
 
-if ! (apt-get -y -qq install libgbm1 libasound2 > /dev/null 2>&1); then
+if ! (apt-get -y -qq install libnss3 libgbm1 libasound2 > /dev/null 2>&1); then
   error "Failed to install dependencies"
 fi
 
