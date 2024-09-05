@@ -16,6 +16,8 @@ async def get_status() -> JSONResponse:
     logger.info("NapCat manage request received: get status")
 
     return JSONResponse(data={
+        "downloading": napcat_manager.is_downloading(),
+        "downloaded": napcat_manager.is_downloaded(),
         "installed": napcat_manager.is_installed(),
         "configured": napcat_manager.is_configured(),
         "running": napcat_manager.is_running(),
