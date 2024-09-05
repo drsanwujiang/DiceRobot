@@ -1,7 +1,6 @@
 import datetime
 
 from plugin import OrderPlugin
-from app.config import plugin_settings
 from app.schedule import scheduler
 from app.exceptions import OrderInvalidError, OrderError
 from app.enum import ChatType
@@ -13,7 +12,7 @@ class DailySixtySeconds(OrderPlugin):
     name = "dicerobot.daily_60s"
     display_name = "每天60秒读懂世界"
     description = "每天60秒读懂世界，15条简报+1条微语，让你瞬间了解世界正在发生的大事"
-    version = "1.1.1"
+    version = "1.1.2"
 
     default_plugin_settings = {
         "api": "https://api.2xb.cn/zaob",
