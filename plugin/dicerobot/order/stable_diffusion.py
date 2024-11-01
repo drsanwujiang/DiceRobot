@@ -9,7 +9,7 @@ class StableDiffusion(OrderPlugin):
     name = "dicerobot.stable_diffusion"
     display_name = "Stable Diffusion"
     description = "使用 Stability AI 的 Stable Diffusion 模型生成图片"
-    version = "1.0.1"
+    version = "1.0.2"
 
     default_plugin_settings = {
         "domain": "api.stability.ai",
@@ -30,6 +30,7 @@ class StableDiffusion(OrderPlugin):
 
     def __call__(self) -> None:
         self.check_order_content()
+        self.check_repetition()
 
         if not (api_key := self.plugin_settings["api_key"]):
             raise OrderError(self.replies["unusable"])

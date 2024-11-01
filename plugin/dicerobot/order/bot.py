@@ -11,7 +11,7 @@ class Bot(OrderPlugin):
     name = "dicerobot.bot"
     display_name = "Bot 控制"
     description = "与 Bot 有关的各种指令"
-    version = "1.1.0"
+    version = "1.1.1"
 
     default_replies = {
         "about": "DiceRobot {&版本}\nMIT License\n© 2019-{&当前年份} Drsanwujiang",
@@ -59,6 +59,8 @@ class Bot(OrderPlugin):
         return super().check_enabled()
 
     def __call__(self) -> None:
+        self.check_repetition()
+
         if self.suborder == "" or self.suborder == "about":
             self.about()
         elif self.suborder == "enable":

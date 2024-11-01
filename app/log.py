@@ -24,15 +24,15 @@ logger.remove()
 def init_logger() -> None:
     if os.environ.get("DICEROBOT_DEBUG"):
         logger.add(sys.stdout, level="DEBUG")
-    else:
-        log_level = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
-        logger.add(
-            os.path.join(LOG_DIR, "dicerobot-{time:YYYY-MM-DD}.log"),
-            level=log_level,
-            rotation="00:00",
-            retention="365 days",
-            compression="tar.gz"
-        )
+
+    log_level = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
+    logger.add(
+        os.path.join(LOG_DIR, "dicerobot-{time:YYYY-MM-DD}.log"),
+        level=log_level,
+        rotation="00:00",
+        retention="365 days",
+        compression="tar.gz"
+    )
 
     logger.debug("Logger initialized")
 

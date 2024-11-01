@@ -3,7 +3,7 @@ from typing import Type, Any
 from copy import deepcopy
 
 from app.config import status, plugin_settings, chat_settings, replies
-from app.exceptions import OrderInvalidError
+from app.exceptions import OrderInvalidError, OrderRepetitionExceededError
 from app.enum import ChatType, PrivateMessageSubType, GroupMessageSubType
 from app.utils import deep_update
 from app.models.report.message import Message, PrivateMessage, GroupMessage
@@ -146,14 +146,16 @@ class OrderPlugin(DiceRobotPlugin):
 
     orders: str | list[str]
     priority: int = 100
+    max_repetition: int = 1
 
-    def __init__(self, message: Message, order: str, order_content: str) -> None:
+    def __init__(self, message: Message, order: str, order_content: str, repetition: int = 1) -> None:
         """Initialize order plugin.
 
         Args:
             message: Message that triggered the plugin.
             order: Order that triggered the plugin.
             order_content: Order content.
+            repetition: Repetitions.
         """
 
         super().__init__()
@@ -164,6 +166,7 @@ class OrderPlugin(DiceRobotPlugin):
         self.message = message
         self.order = order
         self.order_content = order_content
+        self.repetition = repetition
 
         self.reply_variables = {}
 
@@ -237,6 +240,22 @@ class OrderPlugin(DiceRobotPlugin):
 
         if not self.order_content:
             raise OrderInvalidError
+
+    def check_repetition(self) -> None:
+        """Check whether the repetition is valid.
+
+        This method should not return anything. If the repetition is invalid, it should raise an
+        `OrderRepetitionExceededError` exception.
+
+        By default, it will check whether the repetition exceeds the maximum. The plugin can modify the `max_repetition`
+        attribute to control the maximum of repetitions, or override this method as needed.
+
+        Raises:
+            OrderRepetitionExceededError: Repetition exceeds the maximum.
+        """
+
+        if self.repetition > self.max_repetition:
+            raise OrderRepetitionExceededError
 
     def update_reply_variables(self, d: dict[str, Any]) -> None:
         """Update reply variables used in replies.

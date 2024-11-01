@@ -345,7 +345,8 @@ class Replies:
             "network_invalid_content": "致远星返回了无法解析的内容……请稍后再试",
             "network_error": "无法连接到致远星，请检查星际通讯是否正常",
             "order_invalid": "不太理解这个指令呢……",
-            "order_suspicious": "唔……这个指令有点问题……"
+            "order_suspicious": "唔……这个指令有点问题……",
+            "order_repetition_exceeded": "这条指令不可以执行这么多次哦~",
         }
     }
 

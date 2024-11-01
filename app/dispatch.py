@@ -13,7 +13,7 @@ from .models.report.request import Request
 
 
 class Dispatcher:
-    order_pattern = re.compile(r"^\s*[.\u3002]\s*([\S\s]+)$")
+    order_pattern = re.compile(r"^\s*[.\u3002]\s*([\S\s]+?)\s*(?:#([1-9][0-9]*))?$")
 
     def __init__(self):
         self.order_plugins: dict[str, Type[OrderPlugin]] = {}
@@ -92,13 +92,14 @@ class Dispatcher:
         return self.order_plugins.get(plugin_name) or self.event_plugins.get(plugin_name)
 
     def dispatch_order(self, message: Message, message_content: str) -> None:
-        match = Dispatcher.order_pattern.fullmatch(message_content)
+        match = self.order_pattern.fullmatch(message_content)
 
         if not match:
             logger.debug("Dispatch missed")
             raise RuntimeError
 
         order_and_content = match.group(1)
+        repetition = int(match.group(2)) if match.group(2) else 1
         plugin_name, order, order_content = self.match_plugin(order_and_content)
 
         if not plugin_name:
@@ -113,12 +114,13 @@ class Dispatcher:
         plugin_class = self.order_plugins[plugin_name]
 
         try:
-            plugin = plugin_class(message, order.lower(), order_content)
+            plugin = plugin_class(message, order.lower(), order_content, repetition)
 
             if not plugin.check_enabled():
                 logger.info("Chat disabled, execution skipped")
                 return
 
+            # Execute plugin
             plugin()
         except DiceRobotException as e:
             plugin_class.reply_to_message_sender(message, e.reply)

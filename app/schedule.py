@@ -10,8 +10,9 @@ scheduler = BackgroundScheduler()
 
 
 def init_scheduler() -> None:
-    from app.task import check_bot_status, refresh_friend_list, refresh_group_list
+    from app.task import restart, check_bot_status, refresh_friend_list, refresh_group_list
 
+    scheduler.add_job(restart, id="dicerobot.restart", trigger="cron", year=9999).pause()
     scheduler.add_job(save_config, id="dicerobot.save_config", trigger="interval", minutes=5)
     scheduler.add_job(check_bot_status, id="dicerobot.check_bot_status", trigger="interval", minutes=1)
     scheduler.add_job(refresh_friend_list, id="dicerobot.refresh_friend_list", trigger="interval", minutes=5).pause()

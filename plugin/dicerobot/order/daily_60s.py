@@ -12,7 +12,7 @@ class DailySixtySeconds(OrderPlugin):
     name = "dicerobot.daily_60s"
     display_name = "每天60秒读懂世界"
     description = "每天60秒读懂世界，15条简报+1条微语，让你瞬间了解世界正在发生的大事"
-    version = "1.1.2"
+    version = "1.1.3"
 
     default_plugin_settings = {
         "api": "https://api.2xb.cn/zaob",
@@ -49,6 +49,7 @@ class DailySixtySeconds(OrderPlugin):
 
     def __call__(self) -> None:
         self.check_order_content()
+        self.check_repetition()
 
         if self.chat_type != ChatType.GROUP:
             raise OrderError(self.replies["unsubscribable"])

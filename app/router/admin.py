@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, datetime, timedelta
 import signal
 
 from fastapi import APIRouter, Depends
@@ -7,6 +7,7 @@ from ..log import logger, load_logs
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
 from ..dispatch import dispatcher
+from ..schedule import scheduler
 from ..exceptions import ParametersInvalidError, ResourceNotFoundError, BadRequestError
 from ..enum import ChatType
 from ..models.panel.admin import (
@@ -33,10 +34,10 @@ async def auth(data: AuthRequest) -> JSONResponse:
 
 
 @router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_logs(date: datetime.date) -> JSONResponse:
-    logger.info(f"Admin request received: get logs, date: {date}")
+async def get_logs(date_: date) -> JSONResponse:
+    logger.info(f"Admin request received: get logs, date: {date_}")
 
-    if (logs := load_logs(date)) is None:
+    if (logs := load_logs(date_)) is None:
         raise ResourceNotFoundError(message="Logs not found")
     elif logs is False:
         raise BadRequestError(message="Log file too large")
@@ -139,6 +140,19 @@ async def update_plugin_settings(plugin: str, data: dict) -> JSONResponse:
     return JSONResponse()
 
 
+@router.post("/plugin/{plugin}/settings/reset", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def reset_plugin_settings(plugin: str) -> JSONResponse:
+    logger.info(f"Admin request received: reset plugin settings, plugin: {plugin}")
+
+    if plugin not in status.plugins:
+        raise ResourceNotFoundError(message="Plugin not found")
+
+    plugin_settings.set(plugin=plugin, settings={})
+    dispatcher.find_plugin(plugin).load()
+
+    return JSONResponse()
+
+
 @router.get("/plugin/{plugin}/replies", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_plugin_replies(plugin: str) -> JSONResponse:
     logger.info(f"Admin request received: get plugin replies, plugin: {plugin}")
@@ -162,11 +176,33 @@ async def update_plugin_replies(plugin: str, data: dict[str, str]) -> JSONRespon
     return JSONResponse()
 
 
+@router.post("/plugin/{plugin}/replies/reset", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def reset_plugin_replies(plugin: str) -> JSONResponse:
+    logger.info(f"Admin request received: reset plugin replies, plugin: {plugin}")
+
+    if plugin not in status.plugins:
+        raise ResourceNotFoundError(message="Plugin not found")
+
+    replies.set(reply_group=plugin, replies={})
+    dispatcher.find_plugin(plugin).load()
+
+    return JSONResponse()
+
+
 @router.get("/chat/{chat_type}/{chat_id}/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_chat_settings(chat_type: ChatType, chat_id: int, group: str) -> JSONResponse:
     logger.info(f"Admin request received: get chat settings, chat type: {chat_type.value}, chat ID: {chat_id}, setting group: {group}")
 
     return JSONResponse(data=chat_settings.get(chat_type=chat_type, chat_id=chat_id, setting_group=group))
+
+
+@router.post("/restart", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def restart() -> JSONResponse:
+    logger.info("Admin request received: restart")
+
+    scheduler.modify_job("dicerobot.restart", next_run_time=datetime.now() + timedelta(seconds=1))
+
+    return JSONResponse()
 
 
 @router.post("/stop", dependencies=[Depends(verify_jwt_token, use_cache=False)])

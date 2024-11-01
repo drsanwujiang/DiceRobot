@@ -16,7 +16,7 @@ class Chat(OrderPlugin):
     name = "dicerobot.chat"
     display_name = "聊天（GPT）"
     description = "使用 OpenAI 的 GPT 模型进行聊天对话"
-    version = "1.2.0"
+    version = "1.2.1"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -36,6 +36,7 @@ class Chat(OrderPlugin):
 
     def __call__(self) -> None:
         self.check_order_content()
+        self.check_repetition()
 
         if not (api_key := self.plugin_settings["api_key"]):
             raise OrderError(self.replies["unusable"])

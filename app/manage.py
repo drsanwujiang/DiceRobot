@@ -13,7 +13,7 @@ class QQManager:
     qq_dir = "/opt/QQ"
     qq_path = os.path.join(qq_dir, "qq")
     package_json_path = os.path.join(qq_dir, "resources/app/package.json")
-    index_path = os.path.join(qq_dir, "resources/app/app_launcher/index.js")
+    qq_config_dir = "/root/.config/QQ"
 
     def __init__(self):
         self.deb_file: str | None = None
@@ -72,27 +72,39 @@ class QQManager:
             shell=True
         )
 
+    def remove(self) -> None:
+        if not self.is_installed():
+            return
+
+        logger.info("Remove QQ")
+
+        subprocess.run("apt-get remove -y -qq linuxqq", shell=True)
+        shutil.rmtree(self.qq_dir, ignore_errors=True)
+        shutil.rmtree(self.qq_config_dir, ignore_errors=True)
+
     def stop(self) -> None:
         if self.is_downloading():
             try:
                 self.download_process.terminate()
-                self.download_process.wait(5)
+                self.download_process.wait(3)
             except subprocess.TimeoutExpired:
                 self.download_process.kill()
 
         if self.is_installing():
             try:
                 self.install_process.terminate()
-                self.install_process.wait(5)
+                self.install_process.wait(3)
             except subprocess.TimeoutExpired:
                 self.install_process.kill()
 
+        self.download_process = None
         self.install_process = None
 
 
 class NapCatManager:
     service_path = "/etc/systemd/system/napcat.service"
-    napcat_dir = os.path.join(QQManager.qq_dir, "resources/app/app_launcher/napcat")
+    loader_path = os.path.join(QQManager.qq_dir, "resources/app/loadNapCat.js")
+    napcat_dir = os.path.join(QQManager.qq_dir, "resources/app/napcat")
     log_dir = os.path.join(napcat_dir, "logs")
     config_dir = os.path.join(napcat_dir, "config")
     env_file = "env"
@@ -103,7 +115,7 @@ class NapCatManager:
     napcat_config = {
         "fileLog": True,
         "consoleLog": False,
-        "fileLogLevel": "warn",
+        "fileLogLevel": "debug" if os.environ.get("DICEROBOT_DEBUG") else "warn",
         "consoleLogLevel": "error"
     }
     onebot_config = {
@@ -202,7 +214,7 @@ After=network.target
 Type=simple
 User=root
 EnvironmentFile={self.env_path}
-ExecStart=/usr/bin/xvfb-run -a {QQManager.qq_path} --no-sandbox -q $QQ_ACCOUNT
+ExecStart=/usr/bin/xvfb-run -a qq --no-sandbox -q $QQ_ACCOUNT
 
 [Install]
 WantedBy=multi-user.target""")
@@ -210,18 +222,29 @@ WantedBy=multi-user.target""")
         subprocess.run("systemctl daemon-reload", shell=True)
 
         # Patch QQ
-        with open(QQManager.index_path, "w") as f:
-            f.write("""const path = require('path');
-const CurrentPath = path.dirname(__filename)
-const hasNapcatParam = process.argv.includes('--no-sandbox');
-
+        with open(self.loader_path, "w") as f:
+            f.write("""const fs = require("fs");
+const path = require("path");
+const CurrentPath = path.dirname(__filename);
+const hasNapcatParam = process.argv.includes("--no-sandbox");
 if (hasNapcatParam) {
     (async () => {
-        await import("file://" + path.join(CurrentPath, './napcat/napcat.mjs'));
+        await import("file://" + path.join(CurrentPath, "./napcat/napcat.mjs"));
     })();
 } else {
-    require('./launcher.node').load('external_index', module);
+    require("./application/app_launcher/index.js");
+    setTimeout(() => {
+        global.launcher.installPathPkgJson.main = "./application/app_launcher/index.js";
+    }, 0);
 }""")
+
+        with open(QQManager.package_json_path, "r+") as f:
+            content = f.read().replace(
+                '"main": "./application/app_launcher/index.js"', '"main": "./loadNapCat.js"'
+            )
+            f.seek(0)
+            f.write(content)
+            f.truncate()
 
         logger.info("NapCat installed")
 
@@ -235,7 +258,7 @@ if (hasNapcatParam) {
             os.remove(self.service_path)
             subprocess.run("systemctl daemon-reload", shell=True)
 
-        shutil.rmtree(self.napcat_dir)
+        shutil.rmtree(self.napcat_dir, ignore_errors=True)
 
         logger.info("NapCat removed")
 

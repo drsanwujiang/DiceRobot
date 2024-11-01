@@ -36,6 +36,11 @@ class OrderSuspiciousError(DiceRobotException):
         super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_suspicious"))
 
 
+class OrderRepetitionExceededError(DiceRobotException):
+    def __init__(self) -> None:
+        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_repetition_exceeded"))
+
+
 class OrderError(DiceRobotException):
     pass
 

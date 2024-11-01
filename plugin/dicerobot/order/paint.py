@@ -9,7 +9,7 @@ class Paint(OrderPlugin):
     name = "dicerobot.paint"
     display_name = "画图（DALL·E）"
     description = "使用 OpenAI 的 DALL·E 模型生成图片"
-    version = "1.2.0"
+    version = "1.2.1"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -31,6 +31,7 @@ class Paint(OrderPlugin):
 
     def __call__(self) -> None:
         self.check_order_content()
+        self.check_repetition()
 
         if not (api_key := self.plugin_settings["api_key"]):
             raise OrderError(self.replies["unusable"])

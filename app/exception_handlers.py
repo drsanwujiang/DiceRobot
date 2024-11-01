@@ -23,7 +23,7 @@ def request_validation_error_handler(_: Request, __: RequestValidationError) -> 
         status_code=400,
         content={
             "code": -3,
-            "message": "Invalid parameters"
+            "message": "Invalid request"
         }
     )
 
