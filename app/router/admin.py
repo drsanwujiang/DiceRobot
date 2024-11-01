@@ -140,6 +140,19 @@ async def update_plugin_settings(plugin: str, data: dict) -> JSONResponse:
     return JSONResponse()
 
 
+@router.post("/plugin/{plugin}/settings/reset", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def reset_plugin_settings(plugin: str) -> JSONResponse:
+    logger.info(f"Admin request received: reset plugin settings, plugin: {plugin}")
+
+    if plugin not in status.plugins:
+        raise ResourceNotFoundError(message="Plugin not found")
+
+    plugin_settings.set(plugin=plugin, settings={})
+    dispatcher.find_plugin(plugin).load()
+
+    return JSONResponse()
+
+
 @router.get("/plugin/{plugin}/replies", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_plugin_replies(plugin: str) -> JSONResponse:
     logger.info(f"Admin request received: get plugin replies, plugin: {plugin}")
@@ -158,6 +171,19 @@ async def update_plugin_replies(plugin: str, data: dict[str, str]) -> JSONRespon
         raise ResourceNotFoundError(message="Plugin not found")
 
     replies.set(reply_group=plugin, replies=data)
+    dispatcher.find_plugin(plugin).load()
+
+    return JSONResponse()
+
+
+@router.post("/plugin/{plugin}/replies/reset", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def reset_plugin_replies(plugin: str) -> JSONResponse:
+    logger.info(f"Admin request received: reset plugin replies, plugin: {plugin}")
+
+    if plugin not in status.plugins:
+        raise ResourceNotFoundError(message="Plugin not found")
+
+    replies.set(reply_group=plugin, replies={})
     dispatcher.find_plugin(plugin).load()
 
     return JSONResponse()
