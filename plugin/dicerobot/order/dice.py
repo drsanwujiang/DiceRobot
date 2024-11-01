@@ -9,7 +9,7 @@ class Dice(OrderPlugin):
     name = "dicerobot.dice"
     display_name = "掷骰"
     description = "掷一个或一堆骰子"
-    version = "1.0.0"
+    version = "1.1.0"
 
     default_plugin_settings = {
         "max_count": 100,
@@ -36,6 +36,7 @@ class Dice(OrderPlugin):
         "r", "掷骰"
     ]
     priority = 1
+    max_repetition = 30
 
     _content_pattern = re.compile(r"^([\ddk+\-x*()（）]+)?\s*([\S\s]*)$", re.I)
     _repeated_symbol_pattern = re.compile(r"([dk+\-*])\1+", re.I)
@@ -49,21 +50,33 @@ class Dice(OrderPlugin):
         self.expression = "d"
         self.reason = ""
 
-        self.detailed_dice_result = ""
-        self.dice_result = ""
+        self.detailed_result = ""
+        self.brief_result = ""
         self.final_result = ""
-        self.complete_expression = ""
+        self.full_result = ""
 
     def __call__(self) -> None:
-        self.parse_content()
-        self.calculate_expression()
-        self.generate_results()
+        self.check_repetition()
+        self.roll()
+        result = self.full_result
+
+        if self.repetition > 1:
+            result = f"\n{result}"
+
+            for _ in range(self.repetition - 1):
+                self.roll()
+                result += f"\n{self.full_result}"
 
         self.update_reply_variables({
             "掷骰原因": self.reason,
-            "掷骰结果": self.complete_expression
+            "掷骰结果": result
         })
         self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
+
+    def roll(self) -> None:
+        self.parse_content()
+        self.calculate_expression()
+        self.generate_results()
 
     def parse_content(self) -> None:
         # Parse order content into possible expression and reason
@@ -78,7 +91,8 @@ class Dice(OrderPlugin):
 
     def calculate_expression(self) -> None:
         # Standardize symbols
-        self.expression = self.expression.replace("x", "*").replace("X", "*") \
+        self.expression = self.expression \
+            .replace("x", "*").replace("X", "*").replace("×", "*") \
             .replace("（", "(").replace("）", ")")
 
         # Check continuously repeated symbols like "dd"
@@ -119,27 +133,26 @@ class Dice(OrderPlugin):
 
         # Reassemble expression and results
         self.expression = "".join(parts)
-        self.detailed_dice_result = "".join(detailed_parts)
-        self.dice_result = "".join(result_parts)
+        self.detailed_result = "".join(detailed_parts)
+        self.brief_result = "".join(result_parts)
 
-        if not self._math_expression_pattern.fullmatch(self.dice_result):
+        if not self._math_expression_pattern.fullmatch(self.brief_result):
             raise OrderError(self.replies["expression_invalid"])
 
         try:
-            self.final_result = str(eval(self.dice_result, {}, {}))
+            self.final_result = str(eval(self.brief_result, {}, {}))
         except (ValueError, SyntaxError):
             raise OrderError(self.replies["expression_error"])
 
     def generate_results(self) -> None:
         # Beautify expression and results
         self.expression = self.expression.replace("*", "×")
-        self.detailed_dice_result = self.detailed_dice_result.replace("*", "×")
-        self.dice_result = self.dice_result.replace("*", "×")
+        self.detailed_result = self.detailed_result.replace("*", "×")
+        self.brief_result = self.brief_result.replace("*", "×")
 
         # Omit duplicate results
-        self.complete_expression = f"{self.expression}={self.detailed_dice_result}"
-        self.complete_expression += "" if self.detailed_dice_result == self.dice_result else f"={self.dice_result}"
-        self.complete_expression += "" if self.dice_result == self.final_result else f"={self.final_result}"
+        result = "=".join(list(dict.fromkeys([self.detailed_result, self.brief_result, self.final_result])))
+        self.full_result = f"{self.expression}={result}"
 
 
 class DiceExpression:

@@ -9,7 +9,7 @@ class BPDice(OrderPlugin):
     name = "dicerobot.bp_dice"
     display_name = "奖励骰/惩罚骰"
     description = "掷一个骰子，以及一个或多个奖励骰/惩罚骰"
-    version = "1.0.0"
+    version = "1.1.0"
 
     default_plugin_settings = {
         "max_count": 100
@@ -30,6 +30,7 @@ class BPDice(OrderPlugin):
         r"r\s*p", "惩罚骰"
     ]
     priority = 10
+    max_repetition = 30
 
     _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
     _bp_types = {
@@ -49,13 +50,20 @@ class BPDice(OrderPlugin):
         self.dice_result = -1
         self.bp_results: list[int] = []
         self.final_result = -1
+        self.full_result = ""
 
     def __call__(self) -> None:
+        self.check_repetition()
         self.parse_content()
         self.bonus_or_penalty()
+        result = self.full_result
 
-        bp_type = "奖励骰" if self.bp_type == "bonus" else "惩罚骰" if self.bp_type == "penalty" else ""
-        result = f"B{self.count}={self.dice_result}[{bp_type}:{' '.join(map(str, self.bp_results))}]={self.final_result}"
+        if self.repetition > 1:
+            result = f"\n{result}"
+
+            for _ in range(self.repetition - 1):
+                self.bonus_or_penalty()
+                result += f"\n{self.full_result}"
 
         self.update_reply_variables({
             "掷骰原因": self.reason,
@@ -64,15 +72,15 @@ class BPDice(OrderPlugin):
         self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
 
     def parse_content(self) -> None:
-        if self.order in BPDice._bp_types["bonus"]:
+        if self.order in self._bp_types["bonus"]:
             self.bp_type = "bonus"
-        elif self.order in BPDice._bp_types["penalty"]:
+        elif self.order in self._bp_types["penalty"]:
             self.bp_type = "penalty"
         else:
             raise OrderError("Invalid order")
 
         # Parse order content into possible count and reason
-        match = BPDice._content_pattern.fullmatch(self.order_content)
+        match = self._content_pattern.fullmatch(self.order_content)
 
         # Check count length
         if len(match.group(1) or "") > 3:
@@ -86,6 +94,8 @@ class BPDice(OrderPlugin):
             raise OrderError(self.replies["max_count_exceeded"])
 
     def bonus_or_penalty(self) -> None:
+        bp_type_name = None
+
         # Calculate result
         self.dice_result = random.randint(1, 100)
         self.bp_results = [random.randint(1, 10) for _ in range(self.count)]
@@ -95,11 +105,16 @@ class BPDice(OrderPlugin):
         tens = self.dice_result // 10
 
         if self.bp_type == "bonus":
+            bp_type_name = "奖励骰"
             min_result = min(self.bp_results)
             tens = min_result if tens > min_result else tens
         elif self.bp_type == "penalty":
+            bp_type_name = "惩罚骰"
             max_result = max(self.bp_results)
             tens = max_result if tens < max_result else tens
 
         self.final_result = tens * 10 + ones
         self.final_result = 100 if self.final_result > 100 else self.final_result
+
+        detailed_bp_result = " ".join(map(str, self.bp_results))
+        self.full_result = f"B{self.count}={self.dice_result}[{bp_type_name}:{detailed_bp_result}]={self.final_result}"

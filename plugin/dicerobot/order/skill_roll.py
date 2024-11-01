@@ -9,7 +9,7 @@ class SkillRoll(OrderPlugin):
     name = "dicerobot.skill_roll"
     display_name = "技能检定"
     description = "根据检定规则进行技能检定；加载指定的检定规则"
-    version = "1.0.0"
+    version = "1.1.0"
 
     default_chat_settings = {
         "rule": {
@@ -51,8 +51,8 @@ class SkillRoll(OrderPlugin):
     }
 
     default_replies = {
-        "result": "{&发送者}进行了检定：D100={&检定值}/{&技能值}，{&检定结果}",
-        "result_with_reason": "由于{&检定原因}，{&发送者}进行了检定：D100={&检定值}/{&技能值}，{&检定结果}",
+        "result": "{&发送者}进行了检定：{&检定结果}",
+        "result_with_reason": "由于{&检定原因}，{&发送者}进行了检定：{&检定结果}",
         "skill_invalid": "技能或属性值无法识别……",
         "rule_invalid": "检定规则无法识别……",
         "no_rule_matched": "没有匹配到检定等级……"
@@ -69,6 +69,7 @@ class SkillRoll(OrderPlugin):
         "rule", "检定规则"
     ]
     priority = 10
+    max_repetition = 30
 
     _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
     _rule_pattern = re.compile(r"^[\d()><=+-/&| ]+$", re.I)
@@ -76,16 +77,35 @@ class SkillRoll(OrderPlugin):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.skill = -1
+        self.skill_value = -1
         self.reason = ""
 
-        self.check = random.randint(1, 100)
+        self.roll_result = -1
+        self.difficulty_level = ""
+        self.full_result = ""
 
     def __call__(self) -> None:
         if self.order in ["ra", "检定", "技能检定"]:
+            self.check_repetition()
             self.parse_content()
             self.skill_roll()
+            result = self.full_result
+
+            if self.repetition > 1:
+                result = f"\n{result}"
+
+                for _ in range(self.repetition - 1):
+                    self.skill_roll()
+                    result += f"\n{self.full_result}"
+
+            self.update_reply_variables({
+                "检定原因": self.reason,
+                "检定结果": result
+            })
+            self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
         elif self.order in ["rule", "检定规则"]:
+            self.max_repetition = 1
+            self.check_repetition()
             self.show_rule()
 
     def parse_content(self) -> None:
@@ -95,17 +115,20 @@ class SkillRoll(OrderPlugin):
         if len(match.group(1) or "") > 5:
             raise OrderSuspiciousError
 
-        self.skill = int(match.group(1)) if match.group(1) else self.skill
+        self.skill_value = int(match.group(1)) if match.group(1) else self.skill_value
         self.reason = match.group(2)
 
-        if self.skill < 0:
+        if self.skill_value < 0:
             raise OrderError(self.replies["skill_invalid"])
 
     def skill_roll(self) -> None:
-        result = None
+        self.roll_result = random.randint(1, 100)
+        difficulty_level = None
 
         for level in self.chat_settings["rule"]["levels"]:
-            expression = level["condition"].replace("{&技能值}", str(self.skill)).replace("{&检定值}", str(self.check))
+            expression = level["condition"] \
+                .replace("{&技能值}", str(self.skill_value)) \
+                .replace("{&检定值}", str(self.roll_result))
 
             # Check rule content
             if not self._rule_pattern.fullmatch(expression):
@@ -123,19 +146,14 @@ class SkillRoll(OrderPlugin):
                 raise OrderError(self.replies["rule_invalid"])
 
             if eval_result:
-                result = level["level"]
+                difficulty_level = level["level"]
                 break
 
-        if result is None:
+        if difficulty_level is None:
             raise OrderError(self.replies["no_rule_matched"])
 
-        self.update_reply_variables({
-            "检定原因": self.reason,
-            "检定值": self.check,
-            "技能值": self.skill,
-            "检定结果": result
-        })
-        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
+        self.difficulty_level = difficulty_level
+        self.full_result = f"D100={self.roll_result}/{self.skill_value}，{self.difficulty_level}"
 
     def show_rule(self) -> None:
         if self.order_content:

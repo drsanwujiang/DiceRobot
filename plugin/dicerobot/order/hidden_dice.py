@@ -10,7 +10,7 @@ class HiddenDice(OrderPlugin):
     name = "dicerobot.hidden_dice"
     display_name = "暗骰"
     description = "掷一个或一堆骰子，并通过私聊发送结果"
-    version = "1.1.0"
+    version = "1.2.0"
 
     default_replies = {
         "reply": "{&发送者}悄悄地进行了掷骰……",
@@ -25,20 +25,28 @@ class HiddenDice(OrderPlugin):
         r"r\s*h", "暗骰"
     ]
     priority = 10
+    max_repetition = 30
 
     def __call__(self) -> None:
         self.check_chat_type()
-        assert isinstance(self.message, GroupMessage)
         self.check_friend()
+        self.check_repetition()
 
         dice = Dice(self.message, ".r", self.order_content)
-        dice.parse_content()
-        dice.calculate_expression()
-        dice.generate_results()
+        dice.roll()
+        result = dice.full_result
 
+        if self.repetition > 1:
+            result = f"\n{result}"
+
+            for _ in range(self.repetition - 1):
+                dice.roll()
+                result += f"\n{dice.full_result}"
+
+        assert isinstance(self.message, GroupMessage)
         self.update_reply_variables({
             "掷骰原因": dice.reason,
-            "掷骰结果": dice.complete_expression,
+            "掷骰结果": result,
             "群号": self.message.group_id,
             "群名": get_group_info(self.message.group_id).data.group_name
         })
