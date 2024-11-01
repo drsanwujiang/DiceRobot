@@ -59,8 +59,6 @@ class SkillRoll(OrderPlugin):
     }
     supported_reply_variables = [
         "检定原因",
-        "检定值",
-        "技能值",
         "检定结果"
     ]
 
