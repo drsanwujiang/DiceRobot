@@ -1,3 +1,5 @@
+import subprocess
+
 from .log import logger
 from .schedule import scheduler
 from .config import status
@@ -9,6 +11,12 @@ state_tasks = [
     "dicerobot.refresh_friend_list",
     "dicerobot.refresh_group_list"
 ]
+
+
+def restart() -> None:
+    logger.info("Restart application")
+
+    subprocess.run("systemctl restart dicerobot", shell=True)
 
 
 def check_bot_status() -> None:

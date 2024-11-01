@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, datetime, timedelta
 import signal
 
 from fastapi import APIRouter, Depends
@@ -7,6 +7,7 @@ from ..log import logger, load_logs
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
 from ..dispatch import dispatcher
+from ..schedule import scheduler
 from ..exceptions import ParametersInvalidError, ResourceNotFoundError, BadRequestError
 from ..enum import ChatType
 from ..models.panel.admin import (
@@ -33,10 +34,10 @@ async def auth(data: AuthRequest) -> JSONResponse:
 
 
 @router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_logs(date: datetime.date) -> JSONResponse:
-    logger.info(f"Admin request received: get logs, date: {date}")
+async def get_logs(date_: date) -> JSONResponse:
+    logger.info(f"Admin request received: get logs, date: {date_}")
 
-    if (logs := load_logs(date)) is None:
+    if (logs := load_logs(date_)) is None:
         raise ResourceNotFoundError(message="Logs not found")
     elif logs is False:
         raise BadRequestError(message="Log file too large")
@@ -167,6 +168,15 @@ async def get_chat_settings(chat_type: ChatType, chat_id: int, group: str) -> JS
     logger.info(f"Admin request received: get chat settings, chat type: {chat_type.value}, chat ID: {chat_id}, setting group: {group}")
 
     return JSONResponse(data=chat_settings.get(chat_type=chat_type, chat_id=chat_id, setting_group=group))
+
+
+@router.post("/restart", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def restart() -> JSONResponse:
+    logger.info("Admin request received: restart")
+
+    scheduler.modify_job("dicerobot.restart", next_run_time=datetime.now() + timedelta(seconds=1))
+
+    return JSONResponse()
 
 
 @router.post("/stop", dependencies=[Depends(verify_jwt_token, use_cache=False)])
