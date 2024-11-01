@@ -1,6 +1,6 @@
 import pytest
 
-from app.exceptions import OrderSuspiciousError
+from app.exceptions import OrderSuspiciousError, OrderRepetitionExceededError
 from . import BaseTest
 
 
@@ -10,8 +10,15 @@ class TestSkillRoll(BaseTest):
 
         # Valid expressions
         message = self.build_group_message(".ra50")
+        self.post_message(client, message)
 
-        for n in range(50):
+        message = self.build_group_message(".ra75#3")
+        self.post_message(client, message)
+
+        # Invalid order
+        message = self.build_group_message(".ra#100")
+
+        with pytest.raises(OrderRepetitionExceededError):
             self.post_message(client, message)
 
         # Suspicious expressions
