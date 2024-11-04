@@ -12,7 +12,7 @@ class DailySixtySeconds(OrderPlugin):
     name = "dicerobot.daily_60s"
     display_name = "每天60秒读懂世界"
     description = "每天60秒读懂世界，15条简报+1条微语，让你瞬间了解世界正在发生的大事"
-    version = "1.1.3"
+    version = "1.1.4"
 
     default_plugin_settings = {
         "api": "https://api.2xb.cn/zaob",
@@ -42,7 +42,7 @@ class DailySixtySeconds(OrderPlugin):
         if result["datatime"] == str(datetime.date.today()):
             message = [Image(data=Image.Data(file=result["imageUrl"]))]
         else:
-            message = cls.get_reply(reply_key="api_error")
+            message = cls.get_reply(key="api_error")
 
         for chat_id in cls.get_plugin_setting(key="subscribers"):
             cls.send_group_message(chat_id, message)

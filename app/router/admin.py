@@ -1,7 +1,8 @@
+from typing import Annotated
 from datetime import date, datetime, timedelta
 import signal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from ..log import logger, load_logs
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
@@ -34,7 +35,7 @@ async def auth(data: AuthRequest) -> JSONResponse:
 
 
 @router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_logs(date_: date) -> JSONResponse:
+async def get_logs(date_: Annotated[date, Query(alias="date")]) -> JSONResponse:
     logger.info(f"Admin request received: get logs, date: {date_}")
 
     if (logs := load_logs(date_)) is None:
@@ -160,7 +161,7 @@ async def get_plugin_replies(plugin: str) -> JSONResponse:
     if plugin not in status.plugins:
         raise ResourceNotFoundError(message="Plugin not found")
 
-    return JSONResponse(data=replies.get(reply_group=plugin))
+    return JSONResponse(data=replies.get_replies(group=plugin))
 
 
 @router.patch("/plugin/{plugin}/replies", dependencies=[Depends(verify_jwt_token, use_cache=False)])
@@ -170,7 +171,7 @@ async def update_plugin_replies(plugin: str, data: dict[str, str]) -> JSONRespon
     if plugin not in status.plugins:
         raise ResourceNotFoundError(message="Plugin not found")
 
-    replies.set(reply_group=plugin, replies=data)
+    replies.set_replies(group=plugin, replies=data)
     dispatcher.find_plugin(plugin).load()
 
     return JSONResponse()
@@ -183,7 +184,7 @@ async def reset_plugin_replies(plugin: str) -> JSONResponse:
     if plugin not in status.plugins:
         raise ResourceNotFoundError(message="Plugin not found")
 
-    replies.set(reply_group=plugin, replies={})
+    replies.set_replies(group=plugin, replies={})
     dispatcher.find_plugin(plugin).load()
 
     return JSONResponse()

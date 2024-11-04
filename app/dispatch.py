@@ -63,8 +63,9 @@ class Dispatcher:
 
                 for order in plugin_orders:
                     if isinstance(order, str) and order:
+                        # Orders should be case-insensitive
                         orders[plugin.priority].append({
-                            "pattern": re.compile(fr"^({order})\s*([\S\s]*)$"),
+                            "pattern": re.compile(fr"^({order})\s*([\S\s]*)$", re.I),
                             "name": plugin_name
                         })
 
@@ -114,6 +115,7 @@ class Dispatcher:
         plugin_class = self.order_plugins[plugin_name]
 
         try:
+            # Always pass the order converted to lowercase to the plugin
             plugin = plugin_class(message, order.lower(), order_content, repetition)
 
             if not plugin.check_enabled():

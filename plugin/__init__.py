@@ -46,9 +46,9 @@ class DiceRobotPlugin(ABC):
             {"enabled": True},
             deepcopy(cls.default_plugin_settings), plugin_settings.get(plugin=cls.name)
         ))
-        replies.set(reply_group=cls.name, replies=deep_update(
+        replies.set_replies(group=cls.name, replies=deep_update(
             deepcopy(cls.default_replies),
-            replies.get(reply_group=cls.name)
+            replies.get_replies(group=cls.name)
         ))
 
     @classmethod
@@ -79,27 +79,27 @@ class DiceRobotPlugin(ABC):
         return plugin_settings.get(plugin=plugin or cls.name)[key]
 
     @classmethod
-    def get_reply(cls, *, reply_group: str = None, reply_key: str) -> str:
+    def get_reply(cls, *, group: str = None, key: str) -> str:
         """Get plugin reply.
 
         This method should only be used to dynamically get plugin reply within a class method. For normal execution,
         use ``self.replies`` instead.
 
         Args:
-            reply_group: Reply group.
-            reply_key: Reply key.
+            group: Reply group.
+            key: Reply key.
 
         Returns:
             Reply.
         """
 
-        return replies.get_reply(reply_group=reply_group or cls.name, reply_key=reply_key)
+        return replies.get_reply(group=group or cls.name, key=key)
 
     def __init__(self) -> None:
         """Initialize DiceRobot plugin."""
 
         self.plugin_settings = plugin_settings.get(plugin=self.name)
-        self.replies = replies.get(reply_group=self.name)
+        self.replies = replies.get_replies(group=self.name)
 
     @abstractmethod
     def __call__(self) -> None:
