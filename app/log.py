@@ -46,6 +46,8 @@ def load_logs(date_: date) -> Union[list[str], None, False]:
 
     if os.path.isfile(log_file):
         return load_log_file(log_file)
+    elif os.path.isfile(temp_log_file):
+        return load_log_file(temp_log_file)
     elif os.path.isfile(compressed_file):
         with tarfile.open(compressed_file, "r:gz") as tar:
             tar.extract(file, TEMP_LOG_DIR)
