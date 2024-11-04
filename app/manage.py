@@ -72,7 +72,7 @@ class QQManager:
             shell=True
         )
 
-    def remove(self) -> None:
+    def remove(self, purge: bool = False) -> None:
         if not self.is_installed():
             return
 
@@ -80,7 +80,9 @@ class QQManager:
 
         subprocess.run("apt-get remove -y -qq linuxqq", shell=True)
         shutil.rmtree(self.qq_dir, ignore_errors=True)
-        shutil.rmtree(self.qq_config_dir, ignore_errors=True)
+
+        if purge:
+            shutil.rmtree(self.qq_config_dir, ignore_errors=True)
 
     def stop(self) -> None:
         if self.is_downloading():
