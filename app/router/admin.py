@@ -1,7 +1,8 @@
+from typing import Annotated
 from datetime import date, datetime, timedelta
 import signal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from ..log import logger, load_logs
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
@@ -34,7 +35,7 @@ async def auth(data: AuthRequest) -> JSONResponse:
 
 
 @router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_logs(date_: date) -> JSONResponse:
+async def get_logs(date_: Annotated[date, Query(alias="date")]) -> JSONResponse:
     logger.info(f"Admin request received: get logs, date: {date_}")
 
     if (logs := load_logs(date_)) is None:

@@ -1,13 +1,13 @@
 from typing import Union
 import sys
 import os
-import datetime
+from datetime import date
 import tarfile
 
 from loguru import logger as _logger
 
 LOG_DIR = os.path.join(os.getcwd(), "logs")
-TEMP_LOG_DIR = "/temp/dicerobot-logs"
+TEMP_LOG_DIR = "/tmp/dicerobot-logs"
 MAX_LENGTH = 1000
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
@@ -37,9 +37,9 @@ def init_logger() -> None:
     logger.debug("Logger initialized")
 
 
-def load_logs(date: datetime.date) -> Union[list[str], None, False]:
-    date = date.strftime("%Y-%m-%d")
-    file = f"dicerobot-{date}.log"
+def load_logs(date_: date) -> Union[list[str], None, False]:
+    date_ = date_.strftime("%Y-%m-%d")
+    file = f"dicerobot-{date_}.log"
     log_file = os.path.join(LOG_DIR, file)
     compressed_file = os.path.join(LOG_DIR, f"{file}.tar.gz")
     temp_log_file = os.path.join(TEMP_LOG_DIR, file)
