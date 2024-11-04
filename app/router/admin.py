@@ -160,7 +160,7 @@ async def get_plugin_replies(plugin: str) -> JSONResponse:
     if plugin not in status.plugins:
         raise ResourceNotFoundError(message="Plugin not found")
 
-    return JSONResponse(data=replies.get(reply_group=plugin))
+    return JSONResponse(data=replies.get_replies(group=plugin))
 
 
 @router.patch("/plugin/{plugin}/replies", dependencies=[Depends(verify_jwt_token, use_cache=False)])
@@ -170,7 +170,7 @@ async def update_plugin_replies(plugin: str, data: dict[str, str]) -> JSONRespon
     if plugin not in status.plugins:
         raise ResourceNotFoundError(message="Plugin not found")
 
-    replies.set(reply_group=plugin, replies=data)
+    replies.set_replies(group=plugin, replies=data)
     dispatcher.find_plugin(plugin).load()
 
     return JSONResponse()
@@ -183,7 +183,7 @@ async def reset_plugin_replies(plugin: str) -> JSONResponse:
     if plugin not in status.plugins:
         raise ResourceNotFoundError(message="Plugin not found")
 
-    replies.set(reply_group=plugin, replies={})
+    replies.set_replies(group=plugin, replies={})
     dispatcher.find_plugin(plugin).load()
 
     return JSONResponse()

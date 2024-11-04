@@ -8,37 +8,37 @@ class DiceRobotException(Exception):
 
 class NetworkClientError(DiceRobotException):
     def __init__(self) -> None:
-        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="network_client_error"))
+        super().__init__(replies.get_reply(group="dicerobot", key="network_client_error"))
 
 
 class NetworkServerError(DiceRobotException):
     def __init__(self) -> None:
-        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="network_server_error"))
+        super().__init__(replies.get_reply(group="dicerobot", key="network_server_error"))
 
 
 class NetworkInvalidContentError(DiceRobotException):
     def __init__(self) -> None:
-        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="network_invalid_content"))
+        super().__init__(replies.get_reply(group="dicerobot", key="network_invalid_content"))
 
 
 class NetworkError(DiceRobotException):
     def __init__(self) -> None:
-        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="network_error"))
+        super().__init__(replies.get_reply(group="dicerobot", key="network_error"))
 
 
 class OrderInvalidError(DiceRobotException):
     def __init__(self) -> None:
-        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_invalid"))
+        super().__init__(replies.get_reply(group="dicerobot", key="order_invalid"))
 
 
 class OrderSuspiciousError(DiceRobotException):
     def __init__(self) -> None:
-        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_suspicious"))
+        super().__init__(replies.get_reply(group="dicerobot", key="order_suspicious"))
 
 
 class OrderRepetitionExceededError(DiceRobotException):
     def __init__(self) -> None:
-        super().__init__(replies.get_reply(reply_group="dicerobot", reply_key="order_repetition_exceeded"))
+        super().__init__(replies.get_reply(group="dicerobot", key="order_repetition_exceeded"))
 
 
 class OrderError(DiceRobotException):

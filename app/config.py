@@ -55,8 +55,8 @@ def init_config() -> None:
         for item in session.execute(select(Replies)).scalars().fetchall():  # type: Replies
             _replies.setdefault(item.group, {})[item.key] = item.value
 
-        for _reply_group, _group_replies in _replies.items():
-            replies.set(reply_group=_reply_group, replies=_group_replies)
+        for _group, _group_replies in _replies.items():
+            replies.set_replies(group=_group, replies=_group_replies)
 
     logger.info("Config initialized")
 

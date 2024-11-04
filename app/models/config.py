@@ -276,7 +276,10 @@ class PluginSettings:
             settings: Settings to be set.
         """
 
-        cls._plugin_settings[plugin] = deepcopy(settings)
+        if plugin in cls._plugin_settings:
+            cls._plugin_settings[plugin] |= deepcopy(settings)
+        else:
+            cls._plugin_settings[plugin] = deepcopy(settings)
 
     @classmethod
     def dict(cls) -> dict:
@@ -323,7 +326,11 @@ class ChatSettings:
             setting_group: Setting group.
             settings: Settings to be set.
         """
-        cls._chat_settings[chat_type].setdefault(chat_id, {})[setting_group] = deepcopy(settings)
+
+        if setting_group in cls._chat_settings[chat_type].setdefault(chat_id, {}):
+            cls._chat_settings[chat_type][chat_id][setting_group] |= deepcopy(settings)
+        else:
+            cls._chat_settings[chat_type][chat_id][setting_group] = deepcopy(settings)
 
     @classmethod
     def dict(cls) -> dict:
@@ -332,6 +339,7 @@ class ChatSettings:
         Returns:
             A deep copy of all chat settings.
         """
+
         return deepcopy(cls._chat_settings)
 
 
@@ -351,41 +359,45 @@ class Replies:
     }
 
     @classmethod
-    def get(cls, *, reply_group: str) -> dict:
-        """Get replies of a plugin.
+    def get_replies(cls, *, group: str) -> dict:
+        """Get replies of a group.
 
         Args:
-            reply_group: Reply group, usually the name of the plugin.
+            group: Reply group, usually the name of the plugin.
 
         Returns:
             A deep copy of the replies of the reply group, for preventing modification.
         """
 
-        return deepcopy(cls._replies.setdefault(reply_group, {}))
+        return deepcopy(cls._replies.setdefault(group, {}))
 
     @classmethod
-    def get_reply(cls, *, reply_group: str, reply_key: str) -> str:
-        """Get a reply of a plugin.
+    def get_reply(cls, *, group: str, key: str) -> str:
+        """Get a reply of a group.
 
         Args:
-            reply_group: Reply group, usually the name of the plugin.
-            reply_key: Reply key.
+            group: Reply group, usually the name of the plugin.
+            key: Reply key.
 
         Returns:
             The reply.
         """
-        return cls._replies[reply_group][reply_key]
+
+        return cls._replies[group][key]
 
     @classmethod
-    def set(cls, *, reply_group: str, replies: dict) -> None:
-        """Set replies of a plugin.
+    def set_replies(cls, *, group: str, replies: dict) -> None:
+        """Set replies of a group.
 
         Args:
-            reply_group: Reply group, usually the name of the plugin.
+            group: Reply group, usually the name of the plugin.
             replies: Replies to be set.
         """
 
-        cls._replies[reply_group] = deepcopy(replies)
+        if group in cls._replies:
+            cls._replies[group] |= deepcopy(replies)
+        else:
+            cls._replies[group] = deepcopy(replies)
 
     @classmethod
     def dict(cls) -> dict:
