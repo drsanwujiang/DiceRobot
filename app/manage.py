@@ -106,7 +106,7 @@ class QQManager:
 class NapCatManager:
     service_path = "/etc/systemd/system/napcat.service"
     loader_path = os.path.join(QQManager.qq_dir, "resources/app/loadNapCat.js")
-    napcat_dir = os.path.join(QQManager.qq_dir, "resources/app/napcat")
+    napcat_dir = os.path.join(QQManager.qq_dir, "resources/app/app_launcher/napcat")
     log_dir = os.path.join(napcat_dir, "logs")
     config_dir = os.path.join(napcat_dir, "config")
     env_file = "env"
@@ -225,27 +225,13 @@ WantedBy=multi-user.target""")
 
         # Patch QQ
         with open(self.loader_path, "w") as f:
-            f.write("""const fs = require("fs");
-const path = require("path");
-const CurrentPath = path.dirname(__filename);
-const hasNapcatParam = process.argv.includes("--no-sandbox");
-if (hasNapcatParam) {
-    (async () => {
-        await import("file://" + path.join(CurrentPath, "./napcat/napcat.mjs"));
-    })();
-} else {
-    require("./application/app_launcher/index.js");
-    setTimeout(() => {
-        global.launcher.installPathPkgJson.main = "./application/app_launcher/index.js";
-    }, 0);
-}""")
+            f.write(f"(async () => {{await import(\"file:///{self.napcat_dir}/napcat.mjs\");}})();")
 
         with open(QQManager.package_json_path, "r+") as f:
-            content = f.read().replace(
-                '"main": "./application/app_launcher/index.js"', '"main": "./loadNapCat.js"'
-            )
+            data = json.load(f)
+            data["main"] = "./loadNapCat.js"
             f.seek(0)
-            f.write(content)
+            json.dump(data, f, indent=2)
             f.truncate()
 
         logger.info("NapCat installed")
