@@ -9,7 +9,7 @@ class Dice(OrderPlugin):
     name = "dicerobot.dice"
     display_name = "掷骰"
     description = "掷一个或一堆骰子"
-    version = "1.1.0"
+    version = "1.1.1"
 
     default_plugin_settings = {
         "max_count": 100,
@@ -38,7 +38,7 @@ class Dice(OrderPlugin):
     priority = 1
     max_repetition = 30
 
-    _content_pattern = re.compile(r"^([\ddk+\-x*()（）]+)?\s*([\S\s]*)$", re.I)
+    _content_pattern = re.compile(r"^([\ddk+\-*x×()（）]+)?\s*([\S\s]*)$", re.I)
     _repeated_symbol_pattern = re.compile(r"([dk+\-*])\1+", re.I)
     _dice_expression_split_pattern = re.compile(r"((?:[1-9]\d*)?d(?:[1-9]\d*)?(?:k(?:[1-9]\d*)?)?)", re.I)
     _dice_expression_pattern = re.compile(r"^([1-9]\d*)?d([1-9]\d*)?(k([1-9]\d*)?)?$", re.I)
