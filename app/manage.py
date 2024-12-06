@@ -118,34 +118,42 @@ class NapCatManager:
         "fileLog": True,
         "consoleLog": False,
         "fileLogLevel": "debug" if os.environ.get("DICEROBOT_DEBUG") else "warn",
-        "consoleLogLevel": "error"
+        "consoleLogLevel": "error",
+        "packetBackend": "auto",
+        "packetServer": ""
     }
     onebot_config = {
-        "http": {
-            "enable": True,
-            "host": str(settings.napcat.api.host),
-            "port": settings.napcat.api.port,
-            "secret": settings.security.webhook.secret,
-            "enableHeart": False,
-            "enablePost": True,
-            "postUrls": [
-                "http://127.0.0.1:9500/report"
-            ]
+        "network": {
+            "httpServers": [
+                {
+                    "name": "httpServer",
+                    "enable": True,
+                    "host": str(settings.napcat.api.host),
+                    "port": settings.napcat.api.port,
+                    "enableCors": True,
+                    "enableWebsocket": True,
+                    "messagePostFormat": "array",
+                    "token": "",
+                    "debug": False
+                }
+            ],
+            "httpClients": [
+                {
+                    "name": "httpClient",
+                    "enable": True,
+                    "url": "http://127.0.0.1:9500/report",
+                    "messagePostFormat": "array",
+                    "reportSelfMessage": False,
+                    "token": settings.security.webhook.secret,
+                    "debug": False
+                }
+            ],
+            "websocketServers": [],
+            "websocketClients": []
         },
-        "ws": {
-            "enable": False
-        },
-        "reverseWs": {
-            "enable": False
-        },
-        "GroupLocalTime": {
-            "Record": False,
-            "RecordList": []
-        },
-        "debug": False,
-        "messagePostFormat": "array",
-        "enableLocalFile2Url": True,
-        "reportSelfMessage": False
+        "musicSignUrl": "",
+        "enableLocalFile2Url": False,
+        "parseMultMsg": False
     }
 
     def __init__(self):
@@ -268,12 +276,9 @@ WantedBy=multi-user.target""")
         with open(os.path.join(self.config_dir, f"napcat_{settings.napcat.account}.json"), "w") as f:
             json.dump(self.napcat_config, f)
 
-        self.onebot_config["http"]["host"] = str(settings.napcat.api.host)
-        self.onebot_config["http"]["port"] = settings.napcat.api.port
-        self.onebot_config["http"]["secret"] = settings.security.webhook.secret
-
-        with open(os.path.join(self.config_dir, "onebot11.json"), "w") as f:
-            json.dump(self.onebot_config, f)
+        self.onebot_config["network"]["httpServers"][0]["host"] = str(settings.napcat.api.host)
+        self.onebot_config["network"]["httpServers"][0]["port"] = settings.napcat.api.port
+        self.onebot_config["network"]["httpClients"][0]["token"] = settings.security.webhook.secret
 
         with open(os.path.join(self.config_dir, f"onebot11_{settings.napcat.account}.json"), "w") as f:
             json.dump(self.onebot_config, f)
