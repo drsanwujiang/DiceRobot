@@ -4,6 +4,7 @@ from ..log import logger
 from ..auth import verify_jwt_token
 from ..exceptions import BadRequestError
 from ..manage import qq_manager, napcat_manager
+from ..models.panel.qq import RemoveQQRequest
 from . import JSONResponse
 
 router = APIRouter(prefix="/qq")
@@ -53,7 +54,7 @@ async def install() -> JSONResponse:
 
 
 @router.post("/remove", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def remove() -> JSONResponse:
+async def remove(data: RemoveQQRequest) -> JSONResponse:
     logger.info("NapCat manage request received: remove")
 
     if not qq_manager.is_installed():
@@ -61,6 +62,6 @@ async def remove() -> JSONResponse:
     elif napcat_manager.is_installed():
         raise BadRequestError(message="NapCat not removed")
 
-    qq_manager.remove()
+    qq_manager.remove(**data.model_dump())
 
     return JSONResponse()
