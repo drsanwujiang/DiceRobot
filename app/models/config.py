@@ -145,6 +145,33 @@ class Settings:
 
             start_napcat_at_startup: bool = False
 
+        class Cloud(BaseModel):
+            """DiceRobot cloud settings.
+
+            Attributes:
+                api: DiceRobot cloud API settings.
+                download: DiceRobot cloud download settings.
+            """
+
+            class API(BaseModel):
+                """DiceRobot cloud API settings.
+
+                Attributes:
+                    base_url: DiceRobot cloud API base URL.
+                """
+                base_url: str = "https://api.dicerobot.tech"
+
+            class Download(BaseModel):
+                """DiceRobot cloud download settings.
+
+                Attributes:
+                    base_url: DiceRobot cloud download base URL.
+                """
+                base_url: str = "https://download.dicerobot.tech"
+
+            api: API = API()
+            download: Download = Download()
+
         class NapCat(BaseModel):
             """NapCat settings.
 
@@ -177,6 +204,7 @@ class Settings:
 
         security: Security = Security()
         app: Application = Application()
+        cloud: Cloud = Cloud()
         napcat: NapCat = NapCat()
 
     _settings: _Settings = _Settings()

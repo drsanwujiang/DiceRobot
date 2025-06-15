@@ -3,10 +3,10 @@ import subprocess
 import zipfile
 import shutil
 import json
-import uuid
 
 from .log import logger
 from .config import settings
+from .network.cloud import get_versions
 
 
 class QQManager:
@@ -24,13 +24,13 @@ class QQManager:
         return self.download_process is not None and self.download_process.poll() is None
 
     def is_downloaded(self) -> bool:
-        return self.deb_file is not None and os.path.isfile(self.deb_file)
+        return not self.is_downloading() and self.deb_file is not None and os.path.isfile(self.deb_file)
 
     def is_installing(self) -> bool:
         return self.install_process is not None and self.install_process.poll() is None
 
     def is_installed(self) -> bool:
-        return os.path.isfile(self.qq_path)
+        return not self.is_installing() and os.path.isfile(self.qq_path)
 
     def get_version(self) -> str | None:
         if not os.path.isfile(self.package_json_path):
@@ -47,11 +47,15 @@ class QQManager:
         if self.is_downloading() or self.is_downloaded():
             return
 
-        logger.info("Download QQ")
+        logger.info("Check latest version")
 
-        self.deb_file = f"/tmp/qq-{uuid.uuid4().hex}.deb"
+        versions = get_versions()
+
+        logger.info(f"Download QQ, version: {versions.qq}")
+
+        self.deb_file = f"/tmp/linuxqq-{versions.qq}.deb"
         self.download_process = subprocess.Popen(
-            f"curl -s -o {self.deb_file} https://dl.drsanwujiang.com/dicerobot/qq.deb",
+            f"curl -s -o {self.deb_file} {settings.cloud.download.base_url}/qq/linuxqq-{versions.qq}.deb",
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             shell=True
@@ -164,7 +168,7 @@ class NapCatManager:
         return self.download_process is not None and self.download_process.poll() is None
 
     def is_downloaded(self) -> bool:
-        return self.zip_file is not None and os.path.isfile(self.zip_file)
+        return not self.is_downloading() and self.zip_file is not None and os.path.isfile(self.zip_file)
 
     def is_installed(self) -> bool:
         return os.path.isfile(self.package_json_path)
@@ -192,11 +196,15 @@ class NapCatManager:
         if self.is_downloading() or self.is_downloaded():
             return
 
-        logger.info("Download NapCat")
+        logger.info("Check latest version")
 
-        self.zip_file = f"/tmp/napcat-{uuid.uuid4().hex}.zip"
+        versions = get_versions()
+
+        logger.info(f"Download NapCat, version: {versions.napcat}")
+
+        self.zip_file = f"/tmp/napcat-{versions.napcat}.zip"
         self.download_process = subprocess.Popen(
-            f"curl -s -o {self.zip_file} https://dl.drsanwujiang.com/dicerobot/napcat.zip",
+            f"curl -s -o {self.zip_file} {settings.cloud.download.base_url}/napcat/napcat-{versions.napcat}.zip",
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             shell=True
