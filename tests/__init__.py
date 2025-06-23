@@ -11,6 +11,9 @@ from app.models.report.message import Message, PrivateMessage, GroupMessage
 class BaseTest:
     @staticmethod
     def wait_for_running() -> None:
+        if status.app == ApplicationStatus.RUNNING:
+            return
+
         logger.debug("Waiting for DiceRobot running")
 
         time.sleep(2)

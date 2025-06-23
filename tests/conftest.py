@@ -1,5 +1,5 @@
+from typing import Any, Generator
 import sys
-import os
 
 import pytest
 from loguru import logger
@@ -9,8 +9,14 @@ logger.remove()
 logger.add(sys.stdout, level="DEBUG")
 
 
-@pytest.fixture(autouse=True)
-def _mock_dicerobot(monkeypatch) -> None:
+@pytest.fixture(scope="session")
+def monkeypatch():
+    with pytest.MonkeyPatch.context() as mp:
+        yield mp
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_dicerobot(monkeypatch) -> None:
     def _init_logger() -> None:
         logger.debug("Mocking init_logger")
 
@@ -42,8 +48,8 @@ def _mock_dicerobot(monkeypatch) -> None:
     monkeypatch.setattr("app.clean_manager", _clean_manager)
 
 
-@pytest.fixture(autouse=True)
-def _mock_napcat(monkeypatch) -> None:
+@pytest.fixture(scope="session", autouse=True)
+def mock_napcat(monkeypatch) -> None:
     from app.models.network.napcat import (
         GetLoginInfoResponse, GetFriendListResponse, GetGroupInfoResponse, GetGroupListResponse,
         GetGroupMemberInfoResponse, GetGroupMemberListResponse, SendPrivateMessageResponse, SendGroupMessageResponse,
@@ -52,7 +58,7 @@ def _mock_napcat(monkeypatch) -> None:
     from app.models.report.segment import Segment
     from app.enum import GroupAddRequestSubType
 
-    def _get_login_info() -> GetLoginInfoResponse:
+    async def _get_login_info() -> GetLoginInfoResponse:
         logger.debug("Mocking get_login_info")
 
         return GetLoginInfoResponse.model_validate({
@@ -67,7 +73,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_friend_list() -> GetFriendListResponse:
+    async def _get_friend_list() -> GetFriendListResponse:
         logger.debug("Mocking get_friend_list")
 
         return GetFriendListResponse.model_validate({
@@ -94,7 +100,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_group_info(_: int, __: bool = False) -> GetGroupInfoResponse:
+    async def _get_group_info(_: int, __: bool = False) -> GetGroupInfoResponse:
         logger.debug("Mocking get_group_info")
 
         return GetGroupInfoResponse.model_validate({
@@ -111,7 +117,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_group_list() -> GetGroupListResponse:
+    async def _get_group_list() -> GetGroupListResponse:
         logger.debug("Mocking get_group_list")
 
         return GetGroupListResponse.model_validate({
@@ -130,7 +136,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_group_member_info(_: int, __: int, ___: bool = False) -> GetGroupMemberInfoResponse:
+    async def _get_group_member_info(_: int, __: int, ___: bool = False) -> GetGroupMemberInfoResponse:
         logger.debug("Mocking get_group_member_info")
 
         return GetGroupMemberInfoResponse.model_validate({
@@ -161,7 +167,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_group_member_list(_: int) -> GetGroupMemberListResponse:
+    async def _get_group_member_list(_: int) -> GetGroupMemberListResponse:
         logger.debug("Mocking get_group_member_list")
 
         return GetGroupMemberListResponse.model_validate({
@@ -214,7 +220,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _send_private_message(_: int, message: list[Segment], __: bool = False) -> SendPrivateMessageResponse:
+    async def _send_private_message(_: int, message: list[Segment], __: bool = False) -> SendPrivateMessageResponse:
         logger.debug("Mocking send_private_message")
         logger.debug(f"Message: {[segment.model_dump() for segment in message]}")
 
@@ -229,7 +235,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _send_group_message(_: int, message: list[Segment], __: bool = False) -> SendGroupMessageResponse:
+    async def _send_group_message(_: int, message: list[Segment], __: bool = False) -> SendGroupMessageResponse:
         logger.debug("Mocking send_group_message")
         logger.debug(f"Message: {[segment.model_dump() for segment in message]}")
 
@@ -244,7 +250,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _set_group_card(_: int, __: int, ___: str = "") -> SetGroupCardResponse:
+    async def _set_group_card(_: int, __: int, ___: str = "") -> SetGroupCardResponse:
         logger.debug("Mocking set_group_card")
 
         return SetGroupCardResponse.model_validate({
@@ -256,7 +262,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _set_group_leave(_: int, __: bool = False) -> SetGroupLeaveResponse:
+    async def _set_group_leave(_: int, __: bool = False) -> SetGroupLeaveResponse:
         logger.debug("Mocking set_group_leave")
 
         return SetGroupLeaveResponse.model_validate({
@@ -268,7 +274,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _set_friend_add_request(_: str, __: bool, ___: str = "") -> SetFriendAddRequestResponse:
+    async def _set_friend_add_request(_: str, __: bool, ___: str = "") -> SetFriendAddRequestResponse:
         logger.debug("Mocking set_friend_add_request")
 
         return SetFriendAddRequestResponse.model_validate({
@@ -280,7 +286,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _set_group_add_request(
+    async def _set_group_add_request(
         _: str, __: GroupAddRequestSubType, ___: bool, ____: str = ""
     ) -> SetGroupAddRequestResponse:
         logger.debug("Mocking set_group_add_request")
@@ -315,17 +321,9 @@ def _mock_napcat(monkeypatch) -> None:
         monkeypatch.setattr(target, replacement)
 
 
-@pytest.fixture()
-def client() -> TestClient:
+@pytest.fixture(scope="session")
+def client() -> Generator[TestClient, Any, None]:
     from app import dicerobot
 
-    with TestClient(dicerobot) as client:
+    with TestClient(app=dicerobot) as client:
         yield client
-
-
-@pytest.fixture()
-def openai() -> None:
-    from app.config import plugin_settings
-
-    plugin_settings._plugin_settings["dicerobot.chat"]["api_key"] = os.environ.get("TEST_OPENAI_API_KEY") or ""
-    plugin_settings._plugin_settings["dicerobot.conversation"]["api_key"] = os.environ.get("TEST_OPENAI_API_KEY") or ""
