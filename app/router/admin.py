@@ -1,5 +1,5 @@
 from typing import Annotated
-from datetime import date, datetime, timedelta
+from datetime import date
 import signal
 
 from fastapi import APIRouter, Depends, Query
@@ -8,7 +8,7 @@ from ..log import logger, load_logs
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
 from ..dispatch import dispatcher
-from ..schedule import scheduler
+from ..schedule import run_task
 from ..exceptions import ParametersInvalidError, ResourceNotFoundError, BadRequestError
 from ..enum import ChatType
 from ..models.panel.admin import (
@@ -201,7 +201,7 @@ async def get_chat_settings(chat_type: ChatType, chat_id: int, group: str) -> JS
 async def restart() -> JSONResponse:
     logger.info("Admin request received: restart")
 
-    scheduler.modify_job("dicerobot.restart", next_run_time=datetime.now() + timedelta(seconds=1))
+    await run_task("dicerobot.restart", 1)
 
     return JSONResponse()
 

@@ -21,7 +21,7 @@ class Dispatcher:
         self.orders: dict[int, list[dict[str, re.Pattern | str]]] = {}
         self.events: dict[str, list[str]] = {}
 
-    def load_plugins(self) -> None:
+    async def load_plugins(self) -> None:
         package = importlib.import_module("plugin")
 
         for _, name, _ in pkgutil.walk_packages(package.__path__):
@@ -45,7 +45,7 @@ class Dispatcher:
                 version=plugin.version
             )
             plugin.load()
-            plugin.initialize()
+            await plugin.initialize()
 
         logger.info(
             f"{len(self.order_plugins)} order plugins and {len(self.event_plugins)} event plugins loaded"
@@ -92,7 +92,7 @@ class Dispatcher:
     def find_plugin(self, plugin_name: str) -> Type[DiceRobotPlugin] | None:
         return self.order_plugins.get(plugin_name) or self.event_plugins.get(plugin_name)
 
-    def dispatch_order(self, message: Message, message_content: str) -> None:
+    async def dispatch_order(self, message: Message, message_content: str) -> None:
         match = self.order_pattern.fullmatch(message_content)
 
         if not match:
@@ -123,9 +123,9 @@ class Dispatcher:
                 return
 
             # Execute plugin
-            plugin()
+            await plugin()
         except DiceRobotException as e:
-            plugin_class.reply_to_message_sender(message, e.reply)
+            await plugin_class.reply_to_message_sender(message, e.reply)
 
             # Raise exception in debug mode
             if status.debug:
@@ -148,14 +148,14 @@ class Dispatcher:
 
         return None, None, None
 
-    def dispatch_event(self, event: Notice | Request) -> None:
+    async def dispatch_event(self, event: Notice | Request) -> None:
         if event.__class__.__name__ not in self.events:
             logger.debug("Dispatch missed")
             raise RuntimeError
 
         for plugin_name in self.events[event.__class__.__name__]:
             try:
-                self.event_plugins[plugin_name](event)()
+                await self.event_plugins[plugin_name](event)()
             except DiceRobotException as e:
                 logger.error(
                     f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle "
@@ -179,8 +179,8 @@ class Dispatcher:
 dispatcher = Dispatcher()
 
 
-def init_dispatcher() -> None:
-    dispatcher.load_plugins()
+async def init_dispatcher() -> None:
+    await dispatcher.load_plugins()
     dispatcher.load_orders_and_events()
 
     logger.info("Dispatcher initialized")

@@ -1,11 +1,10 @@
-import subprocess
-
 from .log import logger
 from .schedule import scheduler
-from .config import status
+from .config import status, save_config as save_config_
 from .exceptions import DiceRobotException
 from .enum import ApplicationStatus
 from .network.napcat import get_login_info, get_friend_list, get_group_list
+from .utils import run_command
 
 state_tasks = [
     "dicerobot.refresh_friend_list",
@@ -13,17 +12,21 @@ state_tasks = [
 ]
 
 
-def restart() -> None:
+async def restart() -> None:
     logger.info("Restart application")
 
-    subprocess.run("systemctl restart dicerobot", shell=True)
+    await run_command("systemctl restart dicerobot")
 
 
-def check_bot_status() -> None:
+async def save_config() -> None:
+    save_config_()
+
+
+async def check_bot_status() -> None:
     logger.info("Check bot status")
 
     try:
-        data = get_login_info().data
+        data = (await get_login_info()).data
 
         # Update status
         status.bot.id = data.user_id
@@ -34,15 +37,13 @@ def check_bot_status() -> None:
 
             logger.success("Status changed: Running")
 
-            refresh_friend_list()
-            refresh_group_list()
+            await refresh_friend_list()
+            await refresh_group_list()
 
             # Resume state jobs
-            for _job in state_tasks:
-                job = scheduler.get_job(_job)
-
-                if job.next_run_time is None:
-                    job.resume()
+            for schedule in state_tasks:
+                if (await scheduler.get_schedule(schedule)).paused:
+                    await scheduler.unpause_schedule(schedule, resume_from="now")
     except (DiceRobotException, ValueError, RuntimeError):
         # Clear status
         status.bot.id = -1
@@ -56,15 +57,15 @@ def check_bot_status() -> None:
             logger.warning("Status changed: Holding")
 
             # Pause state jobs
-            for job in state_tasks:
-                scheduler.pause_job(job)
+            for schedule in state_tasks:
+                await scheduler.pause_schedule(schedule)
 
 
-def refresh_friend_list() -> None:
+async def refresh_friend_list() -> None:
     logger.info("Refresh friend list")
 
     try:
-        friends = get_friend_list().data
+        friends = (await get_friend_list()).data
         status.bot.friends = [friend.user_id for friend in friends]
     except (DiceRobotException, ValueError):
         status.bot.friends = []
@@ -72,11 +73,11 @@ def refresh_friend_list() -> None:
         logger.error("Failed to refresh friend list")
 
 
-def refresh_group_list() -> None:
+async def refresh_group_list() -> None:
     logger.info("Refresh group list")
 
     try:
-        groups = get_group_list().data
+        groups = (await get_group_list()).data
         status.bot.groups = [group.group_id for group in groups]
     except (DiceRobotException, ValueError):
         status.bot.groups = []

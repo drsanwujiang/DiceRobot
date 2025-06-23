@@ -1,12 +1,17 @@
 import os
-import subprocess
+import asyncio
 import zipfile
 import shutil
 import json
 
+from semver.version import Version
+
 from .log import logger
-from .config import settings
+from .config import status, settings
+from .schedule import run_task
+from .network import client
 from .network.cloud import get_versions
+from .utils import run_command
 
 
 class QQManager:
@@ -17,17 +22,17 @@ class QQManager:
 
     def __init__(self):
         self.deb_file: str | None = None
-        self.download_process: subprocess.Popen | None = None
-        self.install_process: subprocess.Popen | None = None
+        self.download_process: asyncio.subprocess.Process | None = None
+        self.install_process: asyncio.subprocess.Process | None = None
 
     def is_downloading(self) -> bool:
-        return self.download_process is not None and self.download_process.poll() is None
+        return self.download_process is not None and self.download_process.returncode is None
 
     def is_downloaded(self) -> bool:
         return not self.is_downloading() and self.deb_file is not None and os.path.isfile(self.deb_file)
 
     def is_installing(self) -> bool:
-        return self.install_process is not None and self.install_process.poll() is None
+        return self.install_process is not None and self.install_process.returncode is None
 
     def is_installed(self) -> bool:
         return not self.is_installing() and os.path.isfile(self.qq_path)
@@ -43,64 +48,64 @@ class QQManager:
             except ValueError:
                 return None
 
-    def download(self) -> None:
+    async def download(self) -> None:
         if self.is_downloading() or self.is_downloaded():
             return
 
-        logger.info("Check latest version")
+        logger.info("Check latest version of QQ")
 
-        versions = get_versions()
+        current_version = self.get_version()
+        latest_version = Version.parse((await get_versions()).qq)
 
-        logger.info(f"Download QQ, version: {versions.qq}")
+        if current_version and current_version >= latest_version:
+            logger.info("No updates available")
+            return
 
-        self.deb_file = f"/tmp/linuxqq-{versions.qq}.deb"
-        self.download_process = subprocess.Popen(
-            f"curl -s -o {self.deb_file} {settings.cloud.download.base_url}/qq/linuxqq-{versions.qq}.deb",
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            shell=True
-        )
+        logger.info(f"Download QQ, version: {latest_version}")
+
+        url = f"{settings.cloud.download.base_url}/qq/linuxqq-{latest_version}.deb"
+        self.deb_file = f"/tmp/linuxqq-{latest_version}.deb"
+
+        async with client.stream("GET", url) as response:
+            with open(self.deb_file, "wb") as f:
+                async for chunk in response.aiter_bytes(chunk_size=8192):
+                    f.write(chunk)
 
         logger.info("QQ downloaded")
 
-    def install(self) -> None:
+    async def install(self) -> None:
         if self.is_installed() or self.is_installing() or not self.is_downloaded():
             return
 
         logger.info("Install QQ")
 
-        self.install_process = subprocess.Popen(
-            f"apt-get install -y -qq {self.deb_file}",
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            shell=True
-        )
+        self.install_process = await run_command(f"apt-get install -y -qq {self.deb_file}")
 
-    def remove(self, purge: bool = False) -> None:
+    async def remove(self, purge: bool = False) -> None:
         if not self.is_installed():
             return
 
         logger.info("Remove QQ")
 
-        subprocess.run("apt-get remove -y -qq linuxqq", shell=True)
+        await (await run_command("apt-get remove -y -qq linuxqq")).wait()
         shutil.rmtree(self.qq_dir, ignore_errors=True)
 
         if purge:
             shutil.rmtree(self.qq_config_dir, ignore_errors=True)
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         if self.is_downloading():
             try:
                 self.download_process.terminate()
-                self.download_process.wait(3)
-            except subprocess.TimeoutExpired:
+                await asyncio.wait_for(self.download_process.wait(), timeout=3)
+            except TimeoutError:
                 self.download_process.kill()
 
         if self.is_installing():
             try:
                 self.install_process.terminate()
-                self.install_process.wait(3)
-            except subprocess.TimeoutExpired:
+                await asyncio.wait_for(self.install_process.wait(), timeout=3)
+            except TimeoutError:
                 self.install_process.kill()
 
         self.download_process = None
@@ -162,10 +167,10 @@ class NapCatManager:
 
     def __init__(self):
         self.zip_file: str | None = None
-        self.download_process: subprocess.Popen | None = None
+        self.download_process: asyncio.subprocess.Process | None = None
 
     def is_downloading(self) -> bool:
-        return self.download_process is not None and self.download_process.poll() is None
+        return self.download_process is not None and self.download_process.returncode is None
 
     def is_downloaded(self) -> bool:
         return not self.is_downloading() and self.zip_file is not None and os.path.isfile(self.zip_file)
@@ -178,8 +183,8 @@ class NapCatManager:
         return settings.napcat.account >= 10000
 
     @staticmethod
-    def is_running() -> bool:
-        return subprocess.run("systemctl is-active --quiet napcat", shell=True).returncode == 0
+    async def is_running() -> bool:
+        return (await (await run_command("systemctl is-active --quiet napcat")).wait()) == 0
 
     def get_version(self) -> str | None:
         if not self.is_installed():
@@ -192,27 +197,32 @@ class NapCatManager:
             except ValueError:
                 return None
 
-    def download(self) -> None:
+    async def download(self) -> None:
         if self.is_downloading() or self.is_downloaded():
             return
 
-        logger.info("Check latest version")
+        logger.info("Check latest version of NapCat")
 
-        versions = get_versions()
+        current_version = self.get_version()
+        latest_version = Version.parse((await get_versions()).napcat)
 
-        logger.info(f"Download NapCat, version: {versions.napcat}")
+        if current_version and current_version >= latest_version:
+            logger.info("No updates available")
+            return
 
-        self.zip_file = f"/tmp/napcat-{versions.napcat}.zip"
-        self.download_process = subprocess.Popen(
-            f"curl -s -o {self.zip_file} {settings.cloud.download.base_url}/napcat/napcat-{versions.napcat}.zip",
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            shell=True
-        )
+        logger.info(f"Download NapCat, version: {latest_version}")
+
+        url = f"{settings.cloud.download.base_url}/napcat/napcat-{latest_version}.zip"
+        self.zip_file = f"/tmp/napcat-{latest_version}.zip"
+
+        async with client.stream("GET", url) as response:
+            with open(self.zip_file, "wb") as f:
+                async for chunk in response.aiter_bytes(chunk_size=8192):
+                    f.write(chunk)
 
         logger.info("NapCat downloaded")
 
-    def install(self) -> None:
+    async def install(self) -> None:
         if self.is_installed() or not self.is_downloaded():
             return
 
@@ -237,7 +247,7 @@ ExecStart=/usr/bin/xvfb-run -a qq --no-sandbox -q $QQ_ACCOUNT
 [Install]
 WantedBy=multi-user.target""")
 
-        subprocess.run("systemctl daemon-reload", shell=True)
+        await (await run_command("systemctl daemon-reload")).wait()
 
         # Patch QQ
         with open(self.loader_path, "w") as f:
@@ -252,7 +262,7 @@ WantedBy=multi-user.target""")
 
         logger.info("NapCat installed")
 
-    def remove(self) -> None:
+    async def remove(self) -> None:
         if not self.is_installed() or self.is_running():
             return
 
@@ -260,13 +270,13 @@ WantedBy=multi-user.target""")
 
         if os.path.isfile(self.service_path):
             os.remove(self.service_path)
-            subprocess.run("systemctl daemon-reload", shell=True)
+            await (await run_command("systemctl daemon-reload")).wait()
 
         shutil.rmtree(self.napcat_dir, ignore_errors=True)
 
         logger.info("NapCat removed")
 
-    def start(self) -> None:
+    async def start(self) -> None:
         if not self.is_installed() or not self.is_configured() or self.is_running():
             return
 
@@ -291,18 +301,18 @@ WantedBy=multi-user.target""")
         with open(os.path.join(self.config_dir, f"onebot11_{settings.napcat.account}.json"), "w") as f:
             json.dump(self.onebot_config, f)
 
-        subprocess.run("systemctl start napcat", shell=True)
+        await (await run_command("systemctl start napcat")).wait()
 
         logger.info("NapCat started")
 
     @classmethod
-    def stop(cls) -> None:
+    async def stop(cls) -> None:
         if not cls.is_running():
             return
 
         logger.info("Stop NapCat")
 
-        subprocess.run("systemctl stop napcat", shell=True)
+        await (await run_command("systemctl stop napcat")).wait()
 
         logger.info("NapCat stopped")
 
@@ -328,22 +338,22 @@ qq_manager = QQManager()
 napcat_manager = NapCatManager()
 
 
-def init_manager() -> None:
+async def init_manager() -> None:
     if all([
         settings.app.start_napcat_at_startup,
         qq_manager.is_installed(),
         napcat_manager.is_installed(),
         napcat_manager.is_configured(),
-        not napcat_manager.is_running()
+        not await napcat_manager.is_running()
     ]):
         logger.info("Automatically start NapCat")
 
-        napcat_manager.start()
+        await napcat_manager.start()
 
     logger.info("Manager initialized")
 
 
-def clean_manager() -> None:
+async def clean_manager() -> None:
     logger.info("Clean manager")
 
-    qq_manager.stop()
+    await qq_manager.stop()

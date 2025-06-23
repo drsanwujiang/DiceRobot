@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 
-def get_versions() -> GetVersionsResponse:
-    return GetVersionsResponse.model_validate(client.get(
+async def get_versions() -> GetVersionsResponse:
+    return GetVersionsResponse.model_validate(await client.get(
         settings.cloud.api.base_url + "/version"
     ).json())

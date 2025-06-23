@@ -1,24 +1,24 @@
 import json
 
-import httpx
+from httpx import AsyncClient, Request, Response, HTTPError
 
 from ..version import VERSION
 from ..log import logger
 from ..exceptions import NetworkServerError, NetworkClientError, NetworkInvalidContentError, NetworkError
 
 
-class Client(httpx.Client):
+class Client(AsyncClient):
     @staticmethod
-    def log_request(request: httpx.Request):
-        request.read()
+    async def log_request(request: Request) -> None:
+        await request.aread()
 
         logger.debug(f"Request: {request.method} {request.url}, content: {request.content.decode()}")
 
     @staticmethod
-    def log_response(response: httpx.Response):
+    async def log_response(response: Response) -> None:
         # Check JSON content
         if "application/json" in response.headers.get("content-type", ""):
-            response.read()
+            await response.aread()
 
             try:
                 result = response.json()
@@ -60,10 +60,10 @@ class Client(httpx.Client):
         kwargs = Client._defaults | kwargs
         super().__init__(*args, **kwargs)
 
-    def request(self, *args, **kwargs) -> httpx.Response:
+    async def request(self, *args, **kwargs) -> Response:
         try:
-            return super().request(*args, **kwargs)
-        except httpx.HTTPError as e:
+            return await super().request(*args, **kwargs)
+        except HTTPError as e:
             logger.error(f"Failed to request {e.request.url}, {e.__class__.__name__} occurred")
             raise NetworkError
 

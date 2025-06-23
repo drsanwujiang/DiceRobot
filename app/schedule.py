@@ -1,36 +1,70 @@
 from datetime import datetime, timedelta
+from typing import Callable
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler import AsyncScheduler
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.date import DateTrigger
 
 from .log import logger
-from .config import settings, save_config
+from .config import settings
+
+tasks: dict[str, Callable] = {}
+scheduler: AsyncScheduler | None = None
 
 
-scheduler = BackgroundScheduler()
+async def run_task(task_id: str, delay: int = 0) -> None:
+    if task_id not in tasks:
+        raise ValueError(f"Task ID '{task_id}' not exists")
+
+    await scheduler.add_schedule(task_id, DateTrigger(datetime.now() + timedelta(seconds=delay)))
 
 
-def init_scheduler() -> None:
-    from app.task import restart, check_bot_status, refresh_friend_list, refresh_group_list
+async def init_scheduler(scheduler_: AsyncScheduler) -> None:
+    from .task import restart, save_config, check_bot_status, refresh_friend_list, refresh_group_list
 
-    scheduler.add_job(restart, id="dicerobot.restart", trigger="cron", year=9999).pause()
-    scheduler.add_job(save_config, id="dicerobot.save_config", trigger="interval", minutes=5)
-    scheduler.add_job(check_bot_status, id="dicerobot.check_bot_status", trigger="interval", minutes=1)
-    scheduler.add_job(refresh_friend_list, id="dicerobot.refresh_friend_list", trigger="interval", minutes=5).pause()
-    scheduler.add_job(refresh_group_list, id="dicerobot.refresh_group_list", trigger="interval", minutes=5).pause()
+    global scheduler, tasks
+    tasks = {
+        "dicerobot.restart": restart,
+        "dicerobot.save_config": save_config,
+        "dicerobot.check_bot_status": check_bot_status,
+        "dicerobot.refresh_friend_list": refresh_friend_list,
+        "dicerobot.refresh_group_list": refresh_group_list
+    }
+    scheduler = scheduler_
+
+    for task, func in tasks.items():
+        await scheduler.configure_task(task, func=func)
+
+    await scheduler.add_schedule(
+        "dicerobot.restart", CronTrigger(year=9999), id="dicerobot.restart", paused=True
+    )
+    await scheduler.add_schedule(
+        "dicerobot.save_config", IntervalTrigger(minutes=5), id="dicerobot.save_config"
+    )
+    await scheduler.add_schedule(
+        "dicerobot.check_bot_status", IntervalTrigger(minutes=1), id="dicerobot.check_bot_status"
+    )
+    await scheduler.add_schedule(
+        "dicerobot.refresh_friend_list", IntervalTrigger(minutes=5), id="dicerobot.refresh_friend_list", paused=True
+    )
+    await scheduler.add_schedule(
+        "dicerobot.refresh_group_list", IntervalTrigger(minutes=5), id="dicerobot.refresh_group_list", paused=True
+    )
 
     if settings.app.start_napcat_at_startup:
         # Give NapCat some time to start
-        scheduler.modify_job("dicerobot.check_bot_status", next_run_time=datetime.now() + timedelta(seconds=5))
+        await run_task("dicerobot.check_bot_status", 5)
     else:
         # Wait for initialization
-        scheduler.modify_job("dicerobot.check_bot_status", next_run_time=datetime.now() + timedelta(seconds=1))
+        await run_task("dicerobot.check_bot_status", 1)
 
-    scheduler.start()
+    await scheduler.start_in_background()
 
     logger.info("Scheduler initialized")
 
 
-def clean_scheduler() -> None:
+async def clean_scheduler() -> None:
     logger.info("Clean scheduler")
 
-    scheduler.shutdown()
+    await scheduler.stop()

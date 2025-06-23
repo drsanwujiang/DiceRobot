@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from apscheduler import AsyncScheduler
 
 from .version import VERSION
 from .log import logger, init_logger
@@ -23,18 +24,20 @@ async def lifespan(_: FastAPI):
     init_database()
     init_config()
 
-    init_dispatcher()
-    init_scheduler()
-    init_manager()
+    async with AsyncScheduler() as scheduler:
+        await init_scheduler(scheduler)
+        init_manager()
+        await init_dispatcher()
 
-    logger.success("DiceRobot started")
+        logger.success("DiceRobot started")
 
-    yield
+        yield
 
-    logger.info("Stop DiceRobot")
+        logger.info("Stop DiceRobot")
 
-    clean_manager()
-    clean_scheduler()
+        clean_manager()
+        await clean_scheduler()
+
     save_config()
     clean_database()
 
