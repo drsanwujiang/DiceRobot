@@ -9,7 +9,7 @@ class SkillRoll(OrderPlugin):
     name = "dicerobot.skill_roll"
     display_name = "技能检定"
     description = "根据检定规则进行技能检定；加载指定的检定规则"
-    version = "1.1.0"
+    version = "1.2.0"
 
     default_chat_settings = {
         "rule": {
@@ -82,7 +82,7 @@ class SkillRoll(OrderPlugin):
         self.difficulty_level = ""
         self.full_result = ""
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         if self.order in ["ra", "检定", "技能检定"]:
             self.check_repetition()
             self.parse_content()
@@ -100,11 +100,11 @@ class SkillRoll(OrderPlugin):
                 "检定原因": self.reason,
                 "检定结果": result
             })
-            self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
+            await self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
         elif self.order in ["rule", "检定规则"]:
             self.max_repetition = 1
             self.check_repetition()
-            self.show_rule()
+            await self.show_rule()
 
     def parse_content(self) -> None:
         match = self._content_pattern.fullmatch(self.order_content)
@@ -153,7 +153,7 @@ class SkillRoll(OrderPlugin):
         self.difficulty_level = difficulty_level
         self.full_result = f"D100={self.roll_result}/{self.skill_value}，{self.difficulty_level}"
 
-    def show_rule(self) -> None:
+    async def show_rule(self) -> None:
         if self.order_content:
             raise OrderInvalidError
 
@@ -161,4 +161,4 @@ class SkillRoll(OrderPlugin):
         rule_content = f"当前使用的检定规则为：【{rule['name']}】\n{rule['description']}\n\n" + \
                        "\n".join([f"{level['level']}：{level['rule']}" for level in rule["levels"]])
 
-        self.reply_to_sender(rule_content)
+        await self.reply_to_sender(rule_content)

@@ -14,14 +14,14 @@ from app.network.napcat import get_image
 
 class Chat(OrderPlugin):
     name = "dicerobot.chat"
-    display_name = "聊天（GPT）"
-    description = "使用 OpenAI 的 GPT 模型进行聊天对话"
-    version = "1.2.1"
+    display_name = "AI 聊天"
+    description = "使用大语言模型进行聊天对话"
+    version = "2.0.0"
 
     default_plugin_settings = {
-        "domain": "api.openai.com",
+        "base_url": "https://api.openai.com",
         "api_key": "",
-        "model": "gpt-4o"
+        "model": "gpt-4.1-mini"
     }
 
     default_replies = {
@@ -34,7 +34,7 @@ class Chat(OrderPlugin):
     ]
     priority = 100
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         self.check_order_content()
         self.check_repetition()
 
@@ -51,7 +51,7 @@ class Chat(OrderPlugin):
                         "text": segment.data.text
                     }))
                 elif isinstance(segment, Image):
-                    file = get_image(segment.data.file).data.file
+                    file = (await get_image(segment.data.file)).data.file
                     mime_type, _ = mimetypes.guess_type(file)
 
                     with open(file, "rb") as f:
@@ -69,26 +69,40 @@ class Chat(OrderPlugin):
                 "messages": [{
                     "role": "user",
                     "content": content
-                }]
+                }],
+                "stream": True
             })
         except ValueError:
             raise OrderInvalidError
 
-        result = Client().post(
-            "https://" + self.plugin_settings["domain"] + "/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}"
-            },
-            json=request.model_dump(exclude_none=True),
-            timeout=30
-        ).json()
+        completion_content = ""
 
-        try:
-            response = ChatCompletionResponse.model_validate(result)
-        except ValueError:
-            raise OrderError(self.replies["rate_limit_exceeded"])
+        async with Client() as client:
+            async with client.stream(
+                "POST",
+                self.plugin_settings["base_url"].rstrip("/") + "/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}"
+                },
+                json=request.model_dump(exclude_none=True)
+            ) as response:
+                async for chunk in response.aiter_bytes():
+                    for line in chunk.decode().strip().split("\n\n"):
+                        if not line.startswith("data:"):
+                            continue
 
-        self.reply_to_sender(response.choices[0].message.content)
+                        if (data := line[5:].strip()) == "[DONE]":
+                            break
+
+                        try:
+                            completion_chunk = ChatCompletionChunk.model_validate_json(data)
+                        except ValueError:
+                            raise OrderError(self.replies["rate_limit_exceeded"])
+
+                        if content := completion_chunk.choices[0].delta.content:
+                            completion_content += content
+
+        await self.reply_to_sender(completion_content)
 
 
 class ChatCompletionContent(BaseModel):
@@ -116,27 +130,19 @@ class ChatCompletion(BaseModel):
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: list[ChatCompletion]
-    frequency_penalty: float = None
-    logit_bias: dict[str, float] = None
-    max_tokens: int = None
-    n: int = None
-    presence_penalty: float = None
-    response_format: dict[str, str] = None
-    seed: int = None
-    stop: str | list[str] = None
     stream: bool = None
-    temperature: float = None
-    top_p: float = None
-    tools: list[dict[str, dict[str, str | dict]]] = None
-    tool_choice: str | dict[str, dict[str, str]] = None
-    user: str = None
 
 
-class ChatCompletionResponse(BaseModel):
+class ChatCompletionChunk(BaseModel):
     class ChatCompletionChoice(BaseModel):
+        class ChatCompletionDelta(BaseModel):
+            role: str = None
+            content: str = None
+
         index: int
-        message: ChatCompletion
-        finish_reason: str
+        delta: ChatCompletionDelta
+        logprobs: dict | None
+        finish_reason: str | None
 
     class ChatCompletionUsage(BaseModel):
         prompt_tokens: int
@@ -147,6 +153,6 @@ class ChatCompletionResponse(BaseModel):
     object: str
     created: int
     model: str
-    system_fingerprint: str = None
+    system_fingerprint: str | None = None
     choices: conlist(ChatCompletionChoice, min_length=1)
-    usage: ChatCompletionUsage
+    usage: ChatCompletionUsage | None = None

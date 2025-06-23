@@ -4,8 +4,7 @@ from .hidden_dice import HiddenDice
 from .bp_dice import BPDice
 from .skill_roll import SkillRoll
 from .chat import Chat
-from .conversation import Conversation
-from .paint import Paint
+from .dall_e import DallE
 from .stable_diffusion import StableDiffusion
 from .daily_60s import DailySixtySeconds
 
@@ -17,8 +16,7 @@ __all__ = [
     "BPDice",
     "SkillRoll",
     "Chat",
-    "Conversation",
-    "Paint",
+    "DallE",
     "StableDiffusion",
     "DailySixtySeconds"
 ]

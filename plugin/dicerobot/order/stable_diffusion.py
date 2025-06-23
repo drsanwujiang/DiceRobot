@@ -9,7 +9,7 @@ class StableDiffusion(OrderPlugin):
     name = "dicerobot.stable_diffusion"
     display_name = "Stable Diffusion"
     description = "使用 Stability AI 的 Stable Diffusion 模型生成图片"
-    version = "1.0.2"
+    version = "1.1.0"
 
     default_plugin_settings = {
         "domain": "api.stability.ai",
@@ -28,7 +28,7 @@ class StableDiffusion(OrderPlugin):
     ]
     priority = 100
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         self.check_order_content()
         self.check_repetition()
 
@@ -44,21 +44,21 @@ class StableDiffusion(OrderPlugin):
         except ValueError:
             raise OrderInvalidError
 
-        result = Client().post(
+        result = (await Client().post(
             "https://" + self.plugin_settings["domain"] + "/v2beta/stable-image/generate/" + self.plugin_settings["service"],
             headers={
                 "Authorization": f"Bearer {api_key}"
             },
             files={key: (None, value) for key, value in request.model_dump(exclude_none=True).items()},
             timeout=60
-        ).json()
+        )).json()
 
         try:
             response = ImageGenerationResponse.model_validate(result)
         except (ValueError, ValueError):
             raise OrderError(self.replies["content_policy_violated"])
 
-        self.reply_to_sender([Image(data=Image.Data(file=f"base64://{response.image}"))])
+        await self.reply_to_sender([Image(data=Image.Data(file=f"base64://{response.image}"))])
 
 
 class ImageGenerationRequest(BaseModel):
