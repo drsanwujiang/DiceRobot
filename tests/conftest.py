@@ -1,4 +1,4 @@
-from typing import Generator
+from collections.abc import Generator
 import sys
 
 import pytest
@@ -32,11 +32,8 @@ def mock_dicerobot(monkeypatch) -> None:
     def _save_config() -> None:
         logger.debug("Mocking save_config")
 
-    def _init_manager() -> None:
+    async def _init_manager() -> None:
         logger.debug("Mocking init_manager")
-
-    def _clean_manager() -> None:
-        logger.debug("Mocking clean_manager")
 
     monkeypatch.setattr("app.logger", logger)
     monkeypatch.setattr("app.init_logger", _init_logger)
@@ -45,7 +42,6 @@ def mock_dicerobot(monkeypatch) -> None:
     monkeypatch.setattr("app.init_config", _init_config)
     monkeypatch.setattr("app.save_config", _save_config)
     monkeypatch.setattr("app.init_manager", _init_manager)
-    monkeypatch.setattr("app.clean_manager", _clean_manager)
 
 
 @pytest.fixture(scope="session", autouse=True)

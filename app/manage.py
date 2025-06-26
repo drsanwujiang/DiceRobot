@@ -1,5 +1,4 @@
 import os
-import asyncio
 import zipfile
 import shutil
 import json
@@ -351,6 +350,8 @@ WantedBy=multi-user.target""")
             if os.path.isfile(path):
                 with open(path, "r", encoding="utf-8") as f:
                     return f.readlines()[-100:]
+
+        return None
 
 
 dicerobot_manager = DiceRobotManager()

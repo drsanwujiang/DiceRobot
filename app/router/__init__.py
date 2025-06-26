@@ -1,4 +1,5 @@
-from typing import AsyncGenerator
+from typing import Any
+from collections.abc import AsyncGenerator
 import json
 
 from fastapi import FastAPI
@@ -31,7 +32,7 @@ class JSONResponse(JSONResponse_):
         status_code: int = 200,
         code: int = 0,
         message: str = "Success",
-        data: dict | list = None
+        data: Any = None
     ) -> None:
         content = {
             "code": code,

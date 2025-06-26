@@ -21,9 +21,12 @@ async def run_task(task_id: str, delay: int = 0) -> None:
 
 
 async def init_scheduler(scheduler_: AsyncScheduler) -> None:
+    global scheduler
+    scheduler = scheduler_
+
     from .task import restart, save_config, check_bot_status, refresh_friend_list, refresh_group_list
 
-    global scheduler, tasks
+    global tasks
     tasks = {
         "dicerobot.restart": restart,
         "dicerobot.save_config": save_config,
@@ -31,7 +34,6 @@ async def init_scheduler(scheduler_: AsyncScheduler) -> None:
         "dicerobot.refresh_friend_list": refresh_friend_list,
         "dicerobot.refresh_group_list": refresh_group_list
     }
-    scheduler = scheduler_
 
     for task, func in tasks.items():
         await scheduler.configure_task(task, func=func)

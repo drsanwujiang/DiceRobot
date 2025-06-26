@@ -91,6 +91,7 @@ class Settings:
         Attributes:
             security: Security settings.
             app: Application settings.
+            cloud: DiceRobot cloud settings.
             napcat: NapCat settings.
         """
 
@@ -290,7 +291,7 @@ class PluginSettings:
             plugin: Plugin name.
 
         Returns:
-            A deep copy of the settings of the plugin, for preventing modification.
+            A deep copy of the settings for preventing modification.
         """
 
         return deepcopy(cls._plugin_settings.setdefault(plugin, {}))
@@ -394,7 +395,7 @@ class Replies:
             group: Reply group, usually the name of the plugin.
 
         Returns:
-            A deep copy of the replies of the reply group, for preventing modification.
+            A deep copy of the replies for preventing modification.
         """
 
         return deepcopy(cls._replies.setdefault(group, {}))

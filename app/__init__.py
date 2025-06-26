@@ -11,7 +11,7 @@ from .database import init_database, clean_database
 from .config import init_config, save_config
 from .schedule import init_scheduler, clean_scheduler
 from .dispatch import init_dispatcher
-from .manage import init_manager, clean_manager
+from .manage import init_manager
 
 
 @asynccontextmanager
@@ -25,7 +25,8 @@ async def lifespan(_: FastAPI):
 
     async with AsyncScheduler() as scheduler:
         await init_scheduler(scheduler)
-        init_manager()
+        # noinspection PyAsyncCall
+        await init_manager()
         await init_dispatcher()
 
         logger.success("DiceRobot started")

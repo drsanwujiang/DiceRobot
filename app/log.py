@@ -58,7 +58,7 @@ def load_logs(date_: date) -> Union[list[str], None, False]:
 
 
 def load_log_file(file: str) -> Union[list[str], False]:
-    # For performance reasons, large log file will not be loaded
+    # For performance reasons, a large log file will not be loaded
     if os.stat(file).st_size > MAX_FILE_SIZE:
         return False
 
