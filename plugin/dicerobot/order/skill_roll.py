@@ -136,7 +136,7 @@ class SkillRoll(OrderPlugin):
 
             try:
                 eval_result = eval(expression)
-            except Exception:
+            except:
                 raise OrderError(self.replies["rule_invalid"])
 
             # Check evaluation result

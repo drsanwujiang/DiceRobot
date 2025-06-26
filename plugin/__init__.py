@@ -33,9 +33,9 @@ class DiceRobotPlugin(ABC):
     description: str
     version: str
 
-    default_plugin_settings: dict[str] = {}
+    default_plugin_settings: dict = {}
 
-    default_replies: dict[str] = {}
+    default_replies: dict = {}
     supported_reply_variables: list[str] = []
 
     @classmethod

@@ -1,7 +1,7 @@
 from .log import logger
 from .schedule import scheduler
 from .config import status, save_config as save_config_
-from .exceptions import DiceRobotException
+from .exceptions import DiceRobotRuntimeException
 from .enum import ApplicationStatus
 from .network.napcat import get_login_info, get_friend_list, get_group_list
 from .utils import run_command
@@ -44,7 +44,7 @@ async def check_bot_status() -> None:
             for schedule in state_tasks:
                 if (await scheduler.get_schedule(schedule)).paused:
                     await scheduler.unpause_schedule(schedule, resume_from="now")
-    except (DiceRobotException, ValueError, RuntimeError):
+    except (DiceRobotRuntimeException, ValueError, RuntimeError):
         # Clear status
         status.bot.id = -1
         status.bot.nickname = ""
@@ -67,7 +67,7 @@ async def refresh_friend_list() -> None:
     try:
         friends = (await get_friend_list()).data
         status.bot.friends = [friend.user_id for friend in friends]
-    except (DiceRobotException, ValueError):
+    except (DiceRobotRuntimeException, ValueError):
         status.bot.friends = []
 
         logger.error("Failed to refresh friend list")
@@ -79,7 +79,7 @@ async def refresh_group_list() -> None:
     try:
         groups = (await get_group_list()).data
         status.bot.groups = [group.group_id for group in groups]
-    except (DiceRobotException, ValueError):
+    except (DiceRobotRuntimeException, ValueError):
         status.bot.groups = []
 
         logger.error("Failed to refresh group list")

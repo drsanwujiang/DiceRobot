@@ -1,4 +1,4 @@
-from typing import Any, Generator
+from typing import Generator
 import sys
 
 import pytest
@@ -322,7 +322,7 @@ def mock_napcat(monkeypatch) -> None:
 
 
 @pytest.fixture(scope="session")
-def client() -> Generator[TestClient, Any, None]:
+def client() -> Generator[TestClient]:
     from app import dicerobot
 
     with TestClient(app=dicerobot) as client:

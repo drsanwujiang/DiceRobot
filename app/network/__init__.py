@@ -64,7 +64,7 @@ class Client(AsyncClient):
         try:
             return await super().request(*args, **kwargs)
         except HTTPError as e:
-            logger.error(f"Failed to request {e.request.url}, {e.__class__.__name__} occurred")
+            logger.error(f"Failed to request {e.request.url}, \"{e.__class__.__name__}\" occurred")
             raise NetworkError
 
 

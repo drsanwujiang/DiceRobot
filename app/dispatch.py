@@ -6,7 +6,7 @@ import re
 from plugin import DiceRobotPlugin, OrderPlugin, EventPlugin
 from .log import logger
 from .config import status, plugin_settings
-from .exceptions import DiceRobotException
+from .exceptions import DiceRobotRuntimeException
 from .models.report.message import Message
 from .models.report.notice import Notice
 from .models.report.request import Request
@@ -124,16 +124,15 @@ class Dispatcher:
 
             # Execute plugin
             await plugin()
-        except DiceRobotException as e:
+        except DiceRobotRuntimeException as e:
             await plugin_class.reply_to_message_sender(message, e.reply)
 
             # Raise exception in debug mode
             if status.debug:
                 raise
-        except Exception as e:
+        except:
             logger.exception(
-                f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle "
-                f"{message.__class__.__name__}"
+                f"Exception occurred while dispatching plugin \"{plugin_name}\" to handle order"
             )
 
             # Raise exception in debug mode
@@ -156,19 +155,19 @@ class Dispatcher:
         for plugin_name in self.events[event.__class__.__name__]:
             try:
                 await self.event_plugins[plugin_name](event)()
-            except DiceRobotException as e:
+            except DiceRobotRuntimeException as e:
                 logger.error(
-                    f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle "
-                    f"{event.__class__.__name__}"
+                    f"DiceRobot runtime exception \"{e.__class__.__name__}\" occurred while dispatching plugin"
+                    f"\"{plugin_name}\" to handle event \"{event.__class__.__name__}\""
                 )
 
                 # Raise exception in debug mode
                 if status.debug:
                     raise
-            except Exception as e:
+            except:
                 logger.exception(
-                    f"{e.__class__.__name__} occurred while dispatching plugin {plugin_name} to handle "
-                    f"{event.__class__.__name__}"
+                    f"Exception occurred while dispatching plugin \"{plugin_name}\" to handle event "
+                    f"\"{event.__class__.__name__}\""
                 )
 
                 # Raise exception in debug mode
