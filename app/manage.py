@@ -3,42 +3,96 @@ import asyncio
 import zipfile
 import shutil
 import json
+import signal
 
 from semver.version import Version
 
 from .log import logger
 from .config import status, settings
+from .enum import UpdateStatus
 from .schedule import run_task
 from .network import client
 from .network.cloud import get_versions
 from .utils import run_command
 
 
+class DiceRobotManager:
+    def __init__(self):
+        self.update_status = UpdateStatus.NONE
+
+    async def update(self) -> None:
+        logger.info("Check latest version of Dicerobot")
+
+        self.update_status = UpdateStatus.CHECKING
+        latest_version = Version.parse((await get_versions()).dicerobot)
+
+        if status.version >= latest_version:
+            logger.info("No updates available")
+            self.update_status = UpdateStatus.COMPLETED
+            return
+
+        logger.info(f"Download DiceRobot, version: {latest_version}")
+
+        self.update_status = UpdateStatus.DOWNLOADING
+        url = f"{settings.cloud.download.base_url}/dicerobot/dicerobot-{latest_version}.zip"
+        zip_file = f"/tmp/dicerobot-{latest_version}.zip"
+
+        try:
+            async with client.stream("GET", url) as response:
+                with open(zip_file, "wb") as f:
+                    async for chunk in response.aiter_bytes(chunk_size=8192):
+                        f.write(chunk)
+        except:
+            logger.error("Failed to download")
+            self.update_status = UpdateStatus.FAILED
+            return
+
+        logger.info(f"Extract files")
+
+        self.update_status = UpdateStatus.INSTALLING
+
+        with zipfile.ZipFile(zip_file, "r") as z:
+            z.extractall()
+
+        os.remove(zip_file)
+
+        logger.info("Update dependencies")
+
+        if (await (await run_command("poetry lock")).wait()) != 0 or \
+           (await (await run_command("poetry update")).wait()) != 0:
+            logger.error("Failed to update dependencies")
+            self.update_status = UpdateStatus.FAILED
+
+        logger.success(f"Update completed")
+
+        self.update_status = UpdateStatus.COMPLETED
+
+    @staticmethod
+    async def restart() -> None:
+        logger.warning(f"Restart application")
+
+        await run_task("dicerobot.restart", 1)
+
+    @staticmethod
+    def stop() -> None:
+        logger.warning(f"Stop application")
+
+        signal.raise_signal(signal.SIGTERM)
+
+
 class QQManager:
-    qq_dir = "/opt/QQ"
-    qq_path = os.path.join(qq_dir, "qq")
-    package_json_path = os.path.join(qq_dir, "resources/app/package.json")
-    qq_config_dir = "/root/.config/QQ"
+    root_dir = "/opt/QQ"
+    package_json_path = os.path.join(root_dir, "resources/app/package.json")
+    config_dir = "/root/.config/QQ"
 
     def __init__(self):
-        self.deb_file: str | None = None
-        self.download_process: asyncio.subprocess.Process | None = None
-        self.install_process: asyncio.subprocess.Process | None = None
+        self.update_status = UpdateStatus.NONE
 
-    def is_downloading(self) -> bool:
-        return self.download_process is not None and self.download_process.returncode is None
-
-    def is_downloaded(self) -> bool:
-        return not self.is_downloading() and self.deb_file is not None and os.path.isfile(self.deb_file)
-
-    def is_installing(self) -> bool:
-        return self.install_process is not None and self.install_process.returncode is None
-
-    def is_installed(self) -> bool:
-        return not self.is_installing() and os.path.isfile(self.qq_path)
+    def installed(self) -> bool:
+        return os.path.isfile(self.package_json_path)
 
     def get_version(self) -> str | None:
-        if not os.path.isfile(self.package_json_path):
+        if not self.installed():
             return None
 
         with open(self.package_json_path, "r", encoding="utf-8") as f:
@@ -48,80 +102,63 @@ class QQManager:
             except ValueError:
                 return None
 
-    async def download(self) -> None:
-        if self.is_downloading() or self.is_downloaded():
-            return
-
+    async def update(self) -> None:
         logger.info("Check latest version of QQ")
 
-        current_version = self.get_version()
-        latest_version = Version.parse((await get_versions()).qq)
-
-        if current_version and current_version >= latest_version:
-            logger.info("No updates available")
-            return
+        self.update_status = UpdateStatus.CHECKING
+        latest_version = (await get_versions()).qq
 
         logger.info(f"Download QQ, version: {latest_version}")
 
+        self.update_status = UpdateStatus.DOWNLOADING
         url = f"{settings.cloud.download.base_url}/qq/linuxqq-{latest_version}.deb"
-        self.deb_file = f"/tmp/linuxqq-{latest_version}.deb"
+        deb_file = f"/tmp/linuxqq-{latest_version}.deb"
 
-        async with client.stream("GET", url) as response:
-            with open(self.deb_file, "wb") as f:
-                async for chunk in response.aiter_bytes(chunk_size=8192):
-                    f.write(chunk)
-
-        logger.info("QQ downloaded")
-
-    async def install(self) -> None:
-        if self.is_installed() or self.is_installing() or not self.is_downloaded():
+        try:
+            async with client.stream("GET", url) as response:
+                with open(deb_file, "wb") as f:
+                    async for chunk in response.aiter_bytes(chunk_size=8192):
+                        f.write(chunk)
+        except:
+            logger.error("Failed to download")
+            self.update_status = UpdateStatus.FAILED
             return
 
-        logger.info("Install QQ")
+        logger.info("Install Debian package")
 
-        self.install_process = await run_command(f"apt-get install -y -qq {self.deb_file}")
+        self.update_status = UpdateStatus.INSTALLING
+
+        if (await (await run_command(f"apt-get install -y -qq {deb_file}")).wait()) != 0:
+            logger.error("Failed to install Debian package")
+            self.update_status = UpdateStatus.FAILED
+            return
+
+        os.remove(deb_file)
+
+        logger.success("Update completed")
+
+        self.update_status = UpdateStatus.COMPLETED
 
     async def remove(self, purge: bool = False) -> None:
-        if not self.is_installed():
-            return
-
         logger.info("Remove QQ")
 
         await (await run_command("apt-get remove -y -qq linuxqq")).wait()
-        shutil.rmtree(self.qq_dir, ignore_errors=True)
+        shutil.rmtree(self.root_dir, ignore_errors=True)
 
         if purge:
-            shutil.rmtree(self.qq_config_dir, ignore_errors=True)
-
-    async def stop(self) -> None:
-        if self.is_downloading():
-            try:
-                self.download_process.terminate()
-                await asyncio.wait_for(self.download_process.wait(), timeout=3)
-            except TimeoutError:
-                self.download_process.kill()
-
-        if self.is_installing():
-            try:
-                self.install_process.terminate()
-                await asyncio.wait_for(self.install_process.wait(), timeout=3)
-            except TimeoutError:
-                self.install_process.kill()
-
-        self.download_process = None
-        self.install_process = None
+            shutil.rmtree(self.config_dir, ignore_errors=True)
 
 
 class NapCatManager:
     service_path = "/etc/systemd/system/napcat.service"
-    loader_path = os.path.join(QQManager.qq_dir, "resources/app/loadNapCat.js")
-    napcat_dir = os.path.join(QQManager.qq_dir, "resources/app/app_launcher/napcat")
-    log_dir = os.path.join(napcat_dir, "logs")
-    config_dir = os.path.join(napcat_dir, "config")
+    loader_path = os.path.join(QQManager.root_dir, "resources/app/loadNapCat.js")
+    root_dir = os.path.join(QQManager.root_dir, "resources/app/app_launcher/napcat")
+    log_dir = os.path.join(root_dir, "logs")
+    config_dir = os.path.join(root_dir, "config")
     env_file = "env"
-    env_path = os.path.join(napcat_dir, env_file)
+    env_path = os.path.join(root_dir, env_file)
     package_json_file = "package.json"
-    package_json_path = os.path.join(napcat_dir, package_json_file)
+    package_json_path = os.path.join(root_dir, package_json_file)
 
     napcat_config = {
         "fileLog": True,
@@ -166,28 +203,21 @@ class NapCatManager:
     }
 
     def __init__(self):
-        self.zip_file: str | None = None
-        self.download_process: asyncio.subprocess.Process | None = None
+        self.update_status = UpdateStatus.NONE
 
-    def is_downloading(self) -> bool:
-        return self.download_process is not None and self.download_process.returncode is None
-
-    def is_downloaded(self) -> bool:
-        return not self.is_downloading() and self.zip_file is not None and os.path.isfile(self.zip_file)
-
-    def is_installed(self) -> bool:
+    def installed(self) -> bool:
         return os.path.isfile(self.package_json_path)
 
     @staticmethod
-    def is_configured() -> bool:
+    def configured() -> bool:
         return settings.napcat.account >= 10000
 
     @staticmethod
-    async def is_running() -> bool:
+    async def running() -> bool:
         return (await (await run_command("systemctl is-active --quiet napcat")).wait()) == 0
 
     def get_version(self) -> str | None:
-        if not self.is_installed():
+        if not self.installed():
             return None
 
         with open(self.package_json_path, "r", encoding="utf-8") as f:
@@ -197,40 +227,36 @@ class NapCatManager:
             except ValueError:
                 return None
 
-    async def download(self) -> None:
-        if self.is_downloading() or self.is_downloaded():
-            return
-
+    async def update(self) -> None:
         logger.info("Check latest version of NapCat")
 
-        current_version = self.get_version()
-        latest_version = Version.parse((await get_versions()).napcat)
-
-        if current_version and current_version >= latest_version:
-            logger.info("No updates available")
-            return
+        self.update_status = UpdateStatus.CHECKING
+        latest_version = (await get_versions()).napcat
 
         logger.info(f"Download NapCat, version: {latest_version}")
 
+        self.update_status = UpdateStatus.DOWNLOADING
         url = f"{settings.cloud.download.base_url}/napcat/napcat-{latest_version}.zip"
-        self.zip_file = f"/tmp/napcat-{latest_version}.zip"
+        zip_file = f"/tmp/napcat-{latest_version}.zip"
 
-        async with client.stream("GET", url) as response:
-            with open(self.zip_file, "wb") as f:
-                async for chunk in response.aiter_bytes(chunk_size=8192):
-                    f.write(chunk)
-
-        logger.info("NapCat downloaded")
-
-    async def install(self) -> None:
-        if self.is_installed() or not self.is_downloaded():
+        try:
+            async with client.stream("GET", url) as response:
+                with open(zip_file, "wb") as f:
+                    async for chunk in response.aiter_bytes(chunk_size=8192):
+                        f.write(chunk)
+        except:
+            logger.error("Failed to download")
+            self.update_status = UpdateStatus.FAILED
             return
 
-        logger.info("Install NapCat")
+        logger.info(f"Extract files")
 
-        # Uncompress NapCat
-        with zipfile.ZipFile(self.zip_file, "r") as z:
-            z.extractall(self.napcat_dir)
+        self.update_status = UpdateStatus.INSTALLING
+
+        with zipfile.ZipFile(zip_file, "r") as z:
+            z.extractall(self.root_dir)
+
+        os.remove(zip_file)
 
         # Configure systemd
         with open(self.service_path, "w") as f:
@@ -251,7 +277,7 @@ WantedBy=multi-user.target""")
 
         # Patch QQ
         with open(self.loader_path, "w") as f:
-            f.write(f"(async () => {{await import(\"file:///{self.napcat_dir}/napcat.mjs\");}})();")
+            f.write(f"(async () => {{await import(\"file:///{self.root_dir}/napcat.mjs\");}})();")
 
         with open(QQManager.package_json_path, "r+") as f:
             data = json.load(f)
@@ -260,26 +286,22 @@ WantedBy=multi-user.target""")
             json.dump(data, f, indent=2)
             f.truncate()
 
-        logger.info("NapCat installed")
+        logger.success("Update completed")
+
+        self.update_status = UpdateStatus.COMPLETED
 
     async def remove(self) -> None:
-        if not self.is_installed() or self.is_running():
-            return
-
         logger.info("Remove NapCat")
 
         if os.path.isfile(self.service_path):
             os.remove(self.service_path)
             await (await run_command("systemctl daemon-reload")).wait()
 
-        shutil.rmtree(self.napcat_dir, ignore_errors=True)
+        shutil.rmtree(self.root_dir, ignore_errors=True)
 
         logger.info("NapCat removed")
 
     async def start(self) -> None:
-        if not self.is_installed() or not self.is_configured() or self.is_running():
-            return
-
         logger.info("Start NapCat")
 
         if os.path.isdir(self.log_dir):
@@ -307,9 +329,6 @@ WantedBy=multi-user.target""")
 
     @classmethod
     async def stop(cls) -> None:
-        if not cls.is_running():
-            return
-
         logger.info("Stop NapCat")
 
         await (await run_command("systemctl stop napcat")).wait()
@@ -334,6 +353,7 @@ WantedBy=multi-user.target""")
                     return f.readlines()[-100:]
 
 
+dicerobot_manager = DiceRobotManager()
 qq_manager = QQManager()
 napcat_manager = NapCatManager()
 
@@ -341,19 +361,13 @@ napcat_manager = NapCatManager()
 async def init_manager() -> None:
     if all([
         settings.app.start_napcat_at_startup,
-        qq_manager.is_installed(),
-        napcat_manager.is_installed(),
-        napcat_manager.is_configured(),
-        not await napcat_manager.is_running()
+        qq_manager.installed(),
+        napcat_manager.installed(),
+        napcat_manager.configured(),
+        not await napcat_manager.running()
     ]):
         logger.info("Automatically start NapCat")
 
         await napcat_manager.start()
 
     logger.info("Manager initialized")
-
-
-async def clean_manager() -> None:
-    logger.info("Clean manager")
-
-    await qq_manager.stop()

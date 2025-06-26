@@ -1,20 +1,29 @@
+from typing import AsyncGenerator
+import json
+
 from fastapi import FastAPI
-from fastapi.responses import Response as _Response, JSONResponse as _JSONResponse
+from fastapi.responses import (
+    Response as Response_, JSONResponse as JSONResponse_, StreamingResponse as StreamingResponse_
+)
 
 from ..version import VERSION
 
+default_headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Server": f"DiceRobot/{VERSION}"
+}
 
-class EmptyResponse(_Response):
+
+class EmptyResponse(Response_):
     def __init__(self, status_code: int = 204):
-        super().__init__(status_code=status_code)
+        super().__init__(headers=default_headers, status_code=status_code)
 
 
-class JSONResponse(_JSONResponse):
-    headers = {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Server": f"DiceRobot/{VERSION}"
+class JSONResponse(JSONResponse_):
+    headers = default_headers | {
+        "Content-Type": "application/json; charset=utf-8"
     }
 
     def __init__(
@@ -32,7 +41,20 @@ class JSONResponse(_JSONResponse):
         if data is not None:
             content["data"] = data
 
-        super().__init__(status_code=status_code, content=content)
+        super().__init__(headers=self.headers, status_code=status_code, content=content)
+
+
+class StreamingResponse(StreamingResponse_):
+    headers = default_headers | {
+        "Content-Type": "text/event-stream; charset=utf-8"
+    }
+
+    def __init__(self, content_generator: AsyncGenerator[dict]):
+        async def streaming_generator() -> AsyncGenerator[str]:
+            async for chunk in content_generator:
+                yield f"data: {json.dumps(chunk)}\n\n"
+
+        super().__init__(headers=self.headers, content=streaming_generator())
 
 
 def init_router(app: FastAPI) -> None:

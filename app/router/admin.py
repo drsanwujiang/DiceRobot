@@ -1,20 +1,20 @@
 from typing import Annotated
 from datetime import date
-import signal
+import asyncio
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from ..log import logger, load_logs
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
 from ..dispatch import dispatcher
-from ..schedule import run_task
 from ..exceptions import ParametersInvalidError, ResourceNotFoundError, BadRequestError
-from ..enum import ChatType
+from ..manage import dicerobot_manager
+from ..enum import ChatType, UpdateStatus
 from ..models.panel.admin import (
     AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest
 )
-from . import JSONResponse
+from . import JSONResponse, StreamingResponse
 
 router = APIRouter()
 
@@ -197,11 +197,33 @@ async def get_chat_settings(chat_type: ChatType, chat_id: int, group: str) -> JS
     return JSONResponse(data=chat_settings.get(chat_type=chat_type, chat_id=chat_id, setting_group=group))
 
 
+@router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def update(request: Request) -> StreamingResponse:
+    logger.info("Admin request received: update")
+
+    task = asyncio.create_task(dicerobot_manager.update())
+
+    async def content_generator():
+        while await request.is_disconnected():
+            yield {"status": str(dicerobot_manager.update_status)}
+
+            if dicerobot_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
+                dicerobot_manager.update_status = UpdateStatus.NONE
+                break
+            elif task.done() and dicerobot_manager.update_status != UpdateStatus.COMPLETED:
+                dicerobot_manager.update_status = UpdateStatus.FAILED
+                continue
+
+            await asyncio.sleep(1)
+
+    return StreamingResponse(content_generator())
+
+
 @router.post("/restart", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def restart() -> JSONResponse:
     logger.info("Admin request received: restart")
 
-    await run_task("dicerobot.restart", 1)
+    await dicerobot_manager.restart()
 
     return JSONResponse()
 
@@ -210,6 +232,6 @@ async def restart() -> JSONResponse:
 async def stop() -> JSONResponse:
     logger.info("Admin request received: stop")
 
-    signal.raise_signal(signal.SIGTERM)
+    await dicerobot_manager.stop()
 
     return JSONResponse()

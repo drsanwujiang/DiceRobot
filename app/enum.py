@@ -7,6 +7,15 @@ class ApplicationStatus(int, Enum):
     STARTED = 1
 
 
+class UpdateStatus(str, Enum):
+    NONE = "None"
+    CHECKING = "Checking"
+    DOWNLOADING = "Downloading"
+    INSTALLING = "Installing"
+    COMPLETED = "Completed"
+    FAILED = "Failed"
+
+
 class ChatType(str, Enum):
     FRIEND = "friend"
     GROUP = "group"
