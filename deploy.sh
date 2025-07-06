@@ -123,7 +123,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$(pwd)
-ExecStart=/root/.local/bin/poetry run uvicorn app:dicerobot --host ${host} --port ${port} --log-level warning
+ExecStart=${HOME}/.local/bin/poetry run uvicorn app:dicerobot --host ${host} --port ${port} --log-level warning
 
 [Install]
 WantedBy=multi-user.target

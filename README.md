@@ -35,6 +35,9 @@ bash deploy.sh
 自动安装脚本在以下操作系统中经过了测试：
 
 - Debian 12（默认 Python 版本为 3.11）
+
+以下操作系统虽然未经过测试，但理论上也可以自动安装：
+
 - Ubuntu 24.04（默认 Python 版本为 3.12）
 - Ubuntu 22.04（默认 Python 版本为 3.10）
 
@@ -49,8 +52,9 @@ bash deploy.sh
 
 此外还需要安装 NTQQ 相关依赖环境：
 
-- `apt install curl xvfb libnss3 libgbm1 libasound2`
-- `yum install curl xorg-x11-server-Xvfb libgbm alsa-lib-devel nss dbus-libs at-spi2-atk gtk3 cups-libs`
+```shell
+apt install curl xvfb libnss3 libgbm1 libasound2
+```
 
 ## 管理
 

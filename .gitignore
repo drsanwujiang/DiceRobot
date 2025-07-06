@@ -8,5 +8,5 @@
 poetry.lock
 
 # Debug files
-/logs
+logs
 database.db
