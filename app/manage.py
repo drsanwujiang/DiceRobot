@@ -1,9 +1,14 @@
 import os
+import asyncio
+import tarfile
 import zipfile
 import shutil
 import json
 import signal
+from collections.abc import AsyncGenerator
 
+from watchfiles import Change, awatch
+import aiofiles
 from semver.version import Version
 
 from .log import logger
@@ -15,8 +20,100 @@ from .network.cloud import get_versions
 from .utils import run_command
 
 
+class FileWatcher:
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+        self.queues: list[asyncio.Queue] = []
+        self.task: asyncio.Task | None = None
+
+    async def watch_loop(self):
+        try:
+            async with aiofiles.open(self.filepath, mode="r") as f:
+                await f.seek(0, os.SEEK_END)
+
+                async for changes in awatch(self.filepath):
+                    for change, path in changes:
+                        if change == Change.modified:
+                            lines = await f.readlines()
+
+                            if lines:
+                                for queue in self.queues:
+                                    await queue.put(lines)
+        except asyncio.CancelledError:
+            pass
+
+    def start(self):
+        self.task = asyncio.create_task(self.watch_loop())
+
+    def stop(self):
+        if self.task:
+            self.task.cancel()
+
+    async def subscribe(self) -> asyncio.Queue:
+        queue = asyncio.Queue()
+        self.queues.append(queue)
+
+        return queue
+
+    def unsubscribe(self, queue: asyncio.Queue):
+        if queue in self.queues:
+            self.queues.remove(queue)
+
+
+class LogManager:
+    def __init__(self, logs_dir: str):
+        self.logs_dir = logs_dir
+        self.watchers: dict[str, FileWatcher] = {}
+        self.lock = asyncio.Lock()
+
+    def check(self, filename: str) -> bool:
+        if os.path.isfile(os.path.join(self.logs_dir, filename)):
+            return True
+        elif os.path.isfile(compressed_file := os.path.join(self.logs_dir, f"{filename}.tar.gz")):
+            with tarfile.open(compressed_file, "r:gz") as tar:
+                tar.extract(filename, self.logs_dir)
+
+            return True
+
+        return False
+
+    async def load(self, filename: str) -> AsyncGenerator[list[str]]:
+        with open(os.path.join(self.logs_dir, filename), "r", encoding="utf-8") as f:
+            batch = []
+
+            for line in f:
+                batch.append(line)
+
+                if len(batch) >= 100:
+                    yield batch
+                    batch = []
+                    await asyncio.sleep(0.01)
+
+            if batch:
+                yield batch
+
+    async def subscribe(self, filename: str) -> asyncio.Queue:
+        async with self.lock:
+            if filename not in self.watchers:
+                self.watchers[filename] = FileWatcher(filename)
+                self.watchers[filename].start()
+
+            return await self.watchers[filename].subscribe()
+
+    async def unsubscribe(self, filename: str, queue: asyncio.Queue) -> None:
+        async with self.lock:
+            if filename in self.watchers:
+                watcher = self.watchers[filename]
+                watcher.unsubscribe(queue)
+
+                if len(watcher.queues) == 0:
+                    watcher.stop()
+                    del self.watchers[filename]
+
+
 class DiceRobotManager:
     def __init__(self):
+        self.log = LogManager(settings.app.dir.logs)
         self.update_status = UpdateStatus.NONE
 
     async def update(self) -> None:
@@ -34,7 +131,7 @@ class DiceRobotManager:
 
         self.update_status = UpdateStatus.DOWNLOADING
         url = f"{settings.cloud.download.base_url}/dicerobot/dicerobot-{latest_version}.zip"
-        zip_file = f"/tmp/dicerobot-{latest_version}.zip"
+        zip_file = f"{settings.app.dir.temp}/dicerobot-{latest_version}.zip"
 
         try:
             async with client.stream("GET", url) as response:
@@ -51,7 +148,7 @@ class DiceRobotManager:
         self.update_status = UpdateStatus.INSTALLING
 
         with zipfile.ZipFile(zip_file, "r") as z:
-            z.extractall()
+            z.extractall(settings.app.dir.base)
 
         os.remove(zip_file)
 
@@ -80,9 +177,7 @@ class DiceRobotManager:
 
 
 class QQManager:
-    root_dir = "/opt/QQ"
-    package_json_path = os.path.join(root_dir, "resources/app/package.json")
-    config_dir = "/root/.config/QQ"
+    package_json_path = os.path.join(settings.qq.dir.base, "resources/app/package.json")
 
     def __init__(self):
         self.update_status = UpdateStatus.NONE
@@ -111,7 +206,7 @@ class QQManager:
 
         self.update_status = UpdateStatus.DOWNLOADING
         url = f"{settings.cloud.download.base_url}/qq/linuxqq-{latest_version}.deb"
-        deb_file = f"/tmp/linuxqq-{latest_version}.deb"
+        deb_file = f"{settings.app.dir.temp}/linuxqq-{latest_version}.deb"
 
         try:
             async with client.stream("GET", url) as response:
@@ -138,26 +233,22 @@ class QQManager:
 
         self.update_status = UpdateStatus.COMPLETED
 
-    async def remove(self, purge: bool = False) -> None:
+    @staticmethod
+    async def remove(purge: bool = False) -> None:
         logger.info("Remove QQ")
 
         await (await run_command("apt-get remove -y -qq linuxqq")).wait()
-        shutil.rmtree(self.root_dir, ignore_errors=True)
+        shutil.rmtree(settings.qq.dir.base, ignore_errors=True)
 
         if purge:
-            shutil.rmtree(self.config_dir, ignore_errors=True)
+            shutil.rmtree(settings.qq.dir.config, ignore_errors=True)
 
 
 class NapCatManager:
     service_path = "/etc/systemd/system/napcat.service"
-    loader_path = os.path.join(QQManager.root_dir, "resources/app/loadNapCat.js")
-    root_dir = os.path.join(QQManager.root_dir, "resources/app/app_launcher/napcat")
-    log_dir = os.path.join(root_dir, "logs")
-    config_dir = os.path.join(root_dir, "config")
-    env_file = "env"
-    env_path = os.path.join(root_dir, env_file)
-    package_json_file = "package.json"
-    package_json_path = os.path.join(root_dir, package_json_file)
+    loader_path = os.path.join(settings.qq.dir.base, "resources/app/loadNapCat.js")
+    env_path = os.path.join(settings.napcat.dir.base, "env")
+    package_json_path = os.path.join(settings.napcat.dir.base, "package.json")
 
     napcat_config = {
         "fileLog": True,
@@ -202,6 +293,7 @@ class NapCatManager:
     }
 
     def __init__(self):
+        self.log = LogManager(settings.napcat.dir.logs)
         self.update_status = UpdateStatus.NONE
 
     def installed(self) -> bool:
@@ -226,6 +318,17 @@ class NapCatManager:
             except ValueError:
                 return None
 
+    @staticmethod
+    def get_log_file() -> str | None:
+        if not os.path.isdir(settings.napcat.dir.logs) or not (files := os.listdir(settings.napcat.dir.logs)):
+            return None
+
+        for file in files:
+            if os.path.isfile(os.path.join(settings.napcat.dir.logs, file)):
+                return file
+
+        return None
+
     async def update(self) -> None:
         logger.info("Check latest version of NapCat")
 
@@ -236,7 +339,7 @@ class NapCatManager:
 
         self.update_status = UpdateStatus.DOWNLOADING
         url = f"{settings.cloud.download.base_url}/napcat/napcat-{latest_version}.zip"
-        zip_file = f"/tmp/napcat-{latest_version}.zip"
+        zip_file = f"{settings.app.dir.temp}/napcat-{latest_version}.zip"
 
         try:
             async with client.stream("GET", url) as response:
@@ -253,7 +356,7 @@ class NapCatManager:
         self.update_status = UpdateStatus.INSTALLING
 
         with zipfile.ZipFile(zip_file, "r") as z:
-            z.extractall(self.root_dir)
+            z.extractall(settings.napcat.dir.base)
 
         os.remove(zip_file)
 
@@ -276,7 +379,7 @@ WantedBy=multi-user.target""")
 
         # Patch QQ
         with open(self.loader_path, "w") as f:
-            f.write(f"(async () => {{await import(\"file:///{self.root_dir}/napcat.mjs\");}})();")
+            f.write(f"(async () => {{await import(\"file:///{settings.napcat.dir.base}/napcat.mjs\");}})();")
 
         with open(QQManager.package_json_path, "r+") as f:
             data = json.load(f)
@@ -296,62 +399,43 @@ WantedBy=multi-user.target""")
             os.remove(self.service_path)
             await (await run_command("systemctl daemon-reload")).wait()
 
-        shutil.rmtree(self.root_dir, ignore_errors=True)
+        shutil.rmtree(settings.napcat.dir.base, ignore_errors=True)
 
         logger.info("NapCat removed")
 
     async def start(self) -> None:
         logger.info("Start NapCat")
 
-        if os.path.isdir(self.log_dir):
-            shutil.rmtree(self.log_dir)
+        if os.path.isdir(settings.napcat.dir.logs):
+            shutil.rmtree(settings.napcat.dir.logs)
 
         with open(self.env_path, "w") as f:
             f.write(f"QQ_ACCOUNT={settings.napcat.account}")
 
-        with open(os.path.join(self.config_dir, "napcat.json"), "w") as f:
+        with open(os.path.join(settings.napcat.dir.config, "napcat.json"), "w") as f:
             json.dump(self.napcat_config, f)
 
-        with open(os.path.join(self.config_dir, f"napcat_{settings.napcat.account}.json"), "w") as f:
+        with open(os.path.join(settings.napcat.dir.config, f"napcat_{settings.napcat.account}.json"), "w") as f:
             json.dump(self.napcat_config, f)
 
         self.onebot_config["network"]["httpServers"][0]["host"] = str(settings.napcat.api.host)
         self.onebot_config["network"]["httpServers"][0]["port"] = settings.napcat.api.port
         self.onebot_config["network"]["httpClients"][0]["token"] = settings.security.webhook.secret
 
-        with open(os.path.join(self.config_dir, f"onebot11_{settings.napcat.account}.json"), "w") as f:
+        with open(os.path.join(settings.napcat.dir.config, f"onebot11_{settings.napcat.account}.json"), "w") as f:
             json.dump(self.onebot_config, f)
 
         await (await run_command("systemctl start napcat")).wait()
 
         logger.info("NapCat started")
 
-    @classmethod
-    async def stop(cls) -> None:
+    @staticmethod
+    async def stop() -> None:
         logger.info("Stop NapCat")
 
         await (await run_command("systemctl stop napcat")).wait()
 
         logger.info("NapCat stopped")
-
-    @classmethod
-    def get_logs(cls) -> list[str] | None:
-        if not os.path.isdir(cls.log_dir):
-            return None
-
-        files = os.listdir(cls.log_dir)
-
-        if not files:
-            return None
-
-        for file in files:
-            path = os.path.join(cls.log_dir, file)
-
-            if os.path.isfile(path):
-                with open(path, "r", encoding="utf-8") as f:
-                    return f.readlines()[-100:]
-
-        return None
 
 
 dicerobot_manager = DiceRobotManager()

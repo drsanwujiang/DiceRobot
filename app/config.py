@@ -19,7 +19,7 @@ chat_settings = ChatSettingsModel()
 replies = RepliesModel()
 
 
-def init_config() -> None:
+def load_config() -> None:
     with Session() as session, session.begin():
         # Settings
         _settings = {}
@@ -58,7 +58,7 @@ def init_config() -> None:
         for _group, _group_replies in _replies.items():
             replies.set_replies(group=_group, replies=_group_replies)
 
-    logger.info("Config initialized")
+    logger.info("Configuration loaded")
 
 
 def save_config() -> None:

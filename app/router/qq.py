@@ -1,14 +1,17 @@
 import asyncio
+from collections.abc import AsyncGenerator
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
+from sse_starlette import ServerSentEvent
 
 from ..log import logger
 from ..auth import verify_jwt_token
 from ..exceptions import BadRequestError
 from ..manage import qq_manager, napcat_manager
+from ..utils import generate_sse
 from ..enum import UpdateStatus
 from ..models.panel.qq import RemoveQQRequest
-from . import JSONResponse, StreamingResponse
+from . import JSONResponse, EventSourceResponse
 
 router = APIRouter(prefix="/qq")
 
@@ -24,14 +27,14 @@ async def get_status() -> JSONResponse:
 
 
 @router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def update(request: Request) -> StreamingResponse:
+async def update() -> EventSourceResponse:
     logger.info("QQ management request received: update")
 
     task = asyncio.create_task(qq_manager.update())
 
-    async def content_generator():
-        while await request.is_disconnected():
-            yield {"status": str(qq_manager.update_status)}
+    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+        while True:
+            yield generate_sse({"status": str(qq_manager.update_status)})
 
             if qq_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
                 qq_manager.update_status = UpdateStatus.NONE
@@ -42,7 +45,7 @@ async def update(request: Request) -> StreamingResponse:
 
             await asyncio.sleep(1)
 
-    return StreamingResponse(content_generator())
+    return EventSourceResponse(content_generator())
 
 
 @router.post("/remove", dependencies=[Depends(verify_jwt_token, use_cache=False)])
@@ -54,6 +57,6 @@ async def remove(data: RemoveQQRequest) -> JSONResponse:
     elif napcat_manager.installed():
         raise BadRequestError(message="NapCat not removed")
 
-    qq_manager.remove(**data.model_dump())
+    await qq_manager.remove(**data.model_dump())
 
     return JSONResponse()

@@ -1,4 +1,5 @@
 from typing import Any
+import os
 import secrets
 from ipaddress import IPv4Address
 from copy import deepcopy
@@ -144,6 +145,20 @@ class Settings:
                 start_napcat_at_startup: Whether to start NapCat at startup.
             """
 
+            class Directory(BaseModel):
+                """Application directory settings.
+
+                Attributes:
+                    base: Base directory of the application.
+                    temp: Temporary directory of the application.
+                    logs: Logs directory of the application.
+                """
+
+                base: str = os.getcwd()
+                temp: str = os.path.join(base, "temp")
+                logs: str = os.path.join(base, "logs")
+
+            dir = Directory()
             start_napcat_at_startup: bool = False
 
         class Cloud(BaseModel):
@@ -173,13 +188,47 @@ class Settings:
             api: API = API()
             download: Download = Download()
 
+        class QQ(BaseModel):
+            """QQ settings.
+
+            Attributes:
+                dir: QQ directory settings.
+            """
+
+            class Directory(BaseModel):
+                """QQ directory settings.
+
+                Attributes:
+                    base: Base directory of QQ.
+                    config: Configuration directory of QQ.
+                """
+
+                base: str = "/opt/QQ"
+                config: str = "/root/.config/QQ"
+
+            dir: Directory = Directory()
+
         class NapCat(BaseModel):
             """NapCat settings.
 
             Attributes:
+                dir: NapCat directory settings.
                 api: NapCat API settings.
                 account: QQ account.
             """
+
+            class Directory(BaseModel):
+                """NapCat directory settings.
+
+                Attributes:
+                    base: Base directory of NapCat.
+                    logs: Logs directory of NapCat.
+                    config: Configuration directory of NapCat.
+                """
+
+                base: str = "/opt/QQ/resources/app/app_launcher/napcat"
+                logs: str = os.path.join(base, "logs")
+                config: str = os.path.join(base, "config")
 
             class API(BaseModel):
                 """NapCat API settings.
@@ -200,12 +249,14 @@ class Settings:
                 def base_url(self) -> str:
                     return f"http://{self.host}:{self.port}"
 
+            dir: Directory = Directory()
             api: API = API()
             account: int = -1
 
         security: Security = Security()
         app: Application = Application()
         cloud: Cloud = Cloud()
+        qq: QQ = QQ()
         napcat: NapCat = NapCat()
 
     _settings: _Settings = _Settings()

@@ -1,11 +1,8 @@
 from typing import Any
-from collections.abc import AsyncGenerator
-import json
 
 from fastapi import FastAPI
-from fastapi.responses import (
-    Response as Response_, JSONResponse as JSONResponse_, StreamingResponse as StreamingResponse_
-)
+from fastapi.responses import Response as Response_, JSONResponse as JSONResponse_
+from sse_starlette import EventSourceResponse as EventSourceResponse_
 
 from ..version import VERSION
 
@@ -45,17 +42,13 @@ class JSONResponse(JSONResponse_):
         super().__init__(headers=self.headers, status_code=status_code, content=content)
 
 
-class StreamingResponse(StreamingResponse_):
+class EventSourceResponse(EventSourceResponse_):
     headers = default_headers | {
         "Content-Type": "text/event-stream; charset=utf-8"
     }
 
-    def __init__(self, content_generator: AsyncGenerator[dict]):
-        async def streaming_generator() -> AsyncGenerator[str]:
-            async for chunk in content_generator:
-                yield f"data: {json.dumps(chunk)}\n\n"
-
-        super().__init__(headers=self.headers, content=streaming_generator())
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(headers=self.headers, *args, **kwargs)
 
 
 def init_router(app: FastAPI) -> None:

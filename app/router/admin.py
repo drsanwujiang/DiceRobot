@@ -1,20 +1,23 @@
 from typing import Annotated
 from datetime import date
 import asyncio
+from collections.abc import AsyncGenerator
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query
+from sse_starlette import ServerSentEvent
 
-from ..log import logger, load_logs
+from ..log import logger
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
 from ..dispatch import dispatcher
-from ..exceptions import ParametersInvalidError, ResourceNotFoundError, BadRequestError
+from ..exceptions import ParametersInvalidError, ResourceNotFoundError
 from ..manage import dicerobot_manager
+from ..utils import generate_sse
 from ..enum import ChatType, UpdateStatus
 from ..models.panel.admin import (
     AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest
 )
-from . import JSONResponse, StreamingResponse
+from . import JSONResponse, EventSourceResponse
 
 router = APIRouter()
 
@@ -35,15 +38,27 @@ async def auth(data: AuthRequest) -> JSONResponse:
 
 
 @router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_logs(date_: Annotated[date, Query(alias="date")]) -> JSONResponse:
+async def get_logs(date_: Annotated[date, Query(alias="date")]) -> EventSourceResponse:
     logger.info(f"Admin request received: get logs, date: {date_}")
 
-    if (logs := load_logs(date_)) is None:
+    if not dicerobot_manager.log.check(filename := "dicerobot-" + date_.strftime("%Y-%m-%d") + ".log"):
         raise ResourceNotFoundError(message="Logs not found")
-    elif logs is False:
-        raise BadRequestError(message="Log file too large")
 
-    return JSONResponse(data=logs)
+    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+        async for batch in dicerobot_manager.log.load(filename):
+            yield generate_sse({"logs": batch})
+
+        queue = await dicerobot_manager.log.subscribe(filename)
+
+        try:
+            while True:
+                yield generate_sse({"logs": await queue.get()})
+        except asyncio.CancelledError:
+            pass
+        finally:
+            await dicerobot_manager.log.unsubscribe(filename, queue)
+
+    return EventSourceResponse(content_generator())
 
 
 @router.get("/status", dependencies=[Depends(verify_jwt_token, use_cache=False)])
@@ -198,14 +213,14 @@ async def get_chat_settings(chat_type: ChatType, chat_id: int, group: str) -> JS
 
 
 @router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def update(request: Request) -> StreamingResponse:
+async def update() -> EventSourceResponse:
     logger.info("Admin request received: update")
 
     task = asyncio.create_task(dicerobot_manager.update())
 
-    async def content_generator():
-        while await request.is_disconnected():
-            yield {"status": str(dicerobot_manager.update_status)}
+    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+        while True:
+            yield generate_sse({"status": str(dicerobot_manager.update_status)})
 
             if dicerobot_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
                 dicerobot_manager.update_status = UpdateStatus.NONE
@@ -216,7 +231,7 @@ async def update(request: Request) -> StreamingResponse:
 
             await asyncio.sleep(1)
 
-    return StreamingResponse(content_generator())
+    return EventSourceResponse(content_generator())
 
 
 @router.post("/restart", dependencies=[Depends(verify_jwt_token, use_cache=False)])
@@ -232,6 +247,6 @@ async def restart() -> JSONResponse:
 async def stop() -> JSONResponse:
     logger.info("Admin request received: stop")
 
-    await dicerobot_manager.stop()
+    dicerobot_manager.stop()
 
     return JSONResponse()
