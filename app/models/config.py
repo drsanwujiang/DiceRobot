@@ -158,7 +158,7 @@ class Settings:
                 temp: str = os.path.join(base, "temp")
                 logs: str = os.path.join(base, "logs")
 
-            dir = Directory()
+            dir: Directory = Directory()
             start_napcat_at_startup: bool = False
 
         class Cloud(BaseModel):
@@ -245,6 +245,7 @@ class Settings:
                 def serialize_host(self, host: IPv4Address, _) -> str:
                     return str(host)
 
+                # noinspection HttpUrlsUsage
                 @property
                 def base_url(self) -> str:
                     return f"http://{self.host}:{self.port}"

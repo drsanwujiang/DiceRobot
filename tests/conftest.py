@@ -17,30 +17,30 @@ def monkeypatch():
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_dicerobot(monkeypatch) -> None:
-    def _init_logger() -> None:
-        logger.debug("Mocking init_logger")
-
     def _init_database() -> None:
         logger.debug("Mocking init_database")
 
     def _clean_database() -> None:
         logger.debug("Mocking clean_database")
 
-    def _init_config() -> None:
-        logger.debug("Mocking init_config")
+    def _load_config() -> None:
+        logger.debug("Mocking load_config")
 
     def _save_config() -> None:
         logger.debug("Mocking save_config")
 
+    def _init_logger() -> None:
+        logger.debug("Mocking init_logger")
+
     async def _init_manager() -> None:
         logger.debug("Mocking init_manager")
 
-    monkeypatch.setattr("app.logger", logger)
-    monkeypatch.setattr("app.init_logger", _init_logger)
     monkeypatch.setattr("app.init_database", _init_database)
     monkeypatch.setattr("app.clean_database", _clean_database)
-    monkeypatch.setattr("app.init_config", _init_config)
+    monkeypatch.setattr("app.load_config", _load_config)
     monkeypatch.setattr("app.save_config", _save_config)
+    monkeypatch.setattr("app.logger", logger)
+    monkeypatch.setattr("app.init_logger", _init_logger)
     monkeypatch.setattr("app.init_manager", _init_manager)
 
 

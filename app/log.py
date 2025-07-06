@@ -4,8 +4,6 @@ import sys
 
 from loguru import logger as _logger
 
-from config import settings
-
 # Disable Uvicorn's default loggers
 uvicorn_error = logging.getLogger("uvicorn.error").disabled = True
 uvicorn_access = logging.getLogger("uvicorn.access").disabled = True
@@ -24,6 +22,8 @@ logger.remove()
 
 
 def init_logger() -> None:
+    from .config import settings
+    
     if os.environ.get("DICEROBOT_DEBUG"):
         logger.add(sys.stdout, level="DEBUG")
 

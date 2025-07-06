@@ -4,14 +4,14 @@ from fastapi import FastAPI
 from apscheduler import AsyncScheduler
 
 from .version import VERSION
-from .log import logger, init_logger
-from .exception_handlers import init_exception_handlers
-from .router import init_router
 from .database import init_database, clean_database
 from .config import load_config, save_config
+from .log import logger, init_logger
 from .schedule import init_scheduler, clean_scheduler
-from .dispatch import init_dispatcher
 from .manage import init_manager
+from .dispatch import init_dispatcher
+from .exception_handlers import init_exception_handlers
+from .router import init_router
 
 
 @asynccontextmanager
