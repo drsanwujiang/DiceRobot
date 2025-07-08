@@ -11,7 +11,7 @@ from ..exceptions import ResourceNotFoundError, BadRequestError
 from ..manage import qq_manager, napcat_manager
 from ..utils import generate_sse
 from ..enum import UpdateStatus
-from ..models.panel.napcat import UpdateNapCatSettingsRequest
+from ..models.router.napcat import UpdateNapCatSettingsRequest
 from . import JSONResponse, EventSourceResponse
 
 router = APIRouter(prefix="/napcat")

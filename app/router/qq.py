@@ -10,7 +10,7 @@ from ..exceptions import BadRequestError
 from ..manage import qq_manager, napcat_manager
 from ..utils import generate_sse
 from ..enum import UpdateStatus
-from ..models.panel.qq import RemoveQQRequest
+from ..models.router.qq import RemoveQQRequest
 from . import JSONResponse, EventSourceResponse
 
 router = APIRouter(prefix="/qq")

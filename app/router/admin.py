@@ -14,7 +14,7 @@ from ..exceptions import ParametersInvalidError, ResourceNotFoundError
 from ..manage import dicerobot_manager
 from ..utils import generate_sse
 from ..enum import ChatType, UpdateStatus
-from ..models.panel.admin import (
+from ..models.router.admin import (
     AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest
 )
 from . import JSONResponse, EventSourceResponse
