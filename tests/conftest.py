@@ -319,7 +319,17 @@ def mock_napcat(monkeypatch) -> None:
 
 @pytest.fixture(scope="session")
 def client() -> Generator[TestClient]:
+    def _verify_jwt_token() -> None:
+        logger.debug("Mocking verify_jwt_token")
+
+    async def _verify_signature() -> None:
+        logger.debug("Mocking verify_signature")
+
     from app import dicerobot
+    from app.auth import verify_jwt_token, verify_signature
+
+    dicerobot.dependency_overrides[verify_jwt_token] = _verify_jwt_token
+    dicerobot.dependency_overrides[verify_signature] = _verify_signature
 
     with TestClient(app=dicerobot) as client:
         yield client

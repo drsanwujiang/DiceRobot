@@ -17,16 +17,12 @@ class BaseTest:
         logger.debug("Waiting for DiceRobot running")
 
         time.sleep(2)
-
         assert status.app == ApplicationStatus.RUNNING
 
-    @staticmethod
-    def post_message(client: TestClient, message: Message) -> dict:
-        response = client.post(
-            "/report", headers={"X-Signature": "sha1=" + "00" * 20}, json=message.model_dump(exclude_none=True)
-        )
-
-        return response.json() if response.status_code == 200 else {}
+    @classmethod
+    def post_message(cls, client: TestClient, message: Message) -> None:
+        response = client.post("/report", json=message.model_dump(exclude_none=True))
+        assert response.status_code == 204
 
     @staticmethod
     def build_private_message(text: str) -> PrivateMessage:
@@ -89,3 +85,14 @@ class BaseTest:
             "post_type": "message",
             "group_id": 12345
         })
+
+    @staticmethod
+    def send_request(client: TestClient, method: str, path: str, data: dict = None) -> dict | None:
+        response = client.request(method, path, json=data)
+        assert response.status_code < 500
+        result = response.json()
+
+        logger.debug(f"Response content: {result}")
+
+        assert result["code"] == 0
+        return result["data"] if "data" in result else None
