@@ -3,6 +3,7 @@ import base64
 import mimetypes
 
 from pydantic import conlist
+import aiofiles
 
 from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
@@ -54,8 +55,8 @@ class Chat(OrderPlugin):
                     file = (await get_image(segment.data.file)).data.file
                     mime_type, _ = mimetypes.guess_type(file)
 
-                    with open(file, "rb") as f:
-                        image_content = base64.b64encode(f.read()).decode()
+                    async with aiofiles.open(file, "rb") as f:
+                        image_content = base64.b64encode(await f.read()).decode()
 
                     content.append(ChatCompletionImageUrlContent.model_validate({
                         "type": "image_url",

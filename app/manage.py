@@ -78,10 +78,10 @@ class LogManager:
         return False
 
     async def load(self, filename: str) -> AsyncGenerator[list[str]]:
-        with open(os.path.join(self.logs_dir, filename), "r", encoding="utf-8") as f:
+        async with aiofiles.open(os.path.join(self.logs_dir, filename), "r", encoding="utf-8") as f:
             batch = []
 
-            for line in f:
+            async for line in f:
                 batch.append(line)
 
                 if len(batch) >= 100:
@@ -135,9 +135,9 @@ class DiceRobotManager:
 
         try:
             async with client.stream("GET", url) as response:
-                with open(zip_file, "wb") as f:
+                with aiofiles.open(zip_file, "wb") as f:
                     async for chunk in response.aiter_bytes(chunk_size=8192):
-                        f.write(chunk)
+                        await f.write(chunk)
         except:
             logger.error("Failed to download")
             self.update_status = UpdateStatus.FAILED
@@ -185,13 +185,13 @@ class QQManager:
     def installed(self) -> bool:
         return os.path.isfile(self.package_json_path)
 
-    def get_version(self) -> str | None:
+    async def get_version(self) -> str | None:
         if not self.installed():
             return None
 
-        with open(self.package_json_path, "r", encoding="utf-8") as f:
+        async with aiofiles.open(self.package_json_path, "r", encoding="utf-8") as f:
             try:
-                data = json.load(f)
+                data = json.loads(await f.read())
                 return data.get("version")
             except ValueError:
                 return None
@@ -210,9 +210,9 @@ class QQManager:
 
         try:
             async with client.stream("GET", url) as response:
-                with open(deb_file, "wb") as f:
+                async with aiofiles.open(deb_file, "wb") as f:
                     async for chunk in response.aiter_bytes(chunk_size=8192):
-                        f.write(chunk)
+                        await f.write(chunk)
         except:
             logger.error("Failed to download")
             self.update_status = UpdateStatus.FAILED
@@ -307,13 +307,13 @@ class NapCatManager:
     async def running() -> bool:
         return (await (await run_command("systemctl is-active --quiet napcat")).wait()) == 0
 
-    def get_version(self) -> str | None:
+    async def get_version(self) -> str | None:
         if not self.installed():
             return None
 
-        with open(self.package_json_path, "r", encoding="utf-8") as f:
+        async with aiofiles.open(self.package_json_path, "r", encoding="utf-8") as f:
             try:
-                data = json.load(f)
+                data = json.loads(await f.read())
                 return data.get("version")
             except ValueError:
                 return None
@@ -343,9 +343,9 @@ class NapCatManager:
 
         try:
             async with client.stream("GET", url) as response:
-                with open(zip_file, "wb") as f:
+                async with aiofiles.open(zip_file, "wb") as f:
                     async for chunk in response.aiter_bytes(chunk_size=8192):
-                        f.write(chunk)
+                        await f.write(chunk)
         except:
             logger.error("Failed to download")
             self.update_status = UpdateStatus.FAILED
@@ -361,8 +361,8 @@ class NapCatManager:
         os.remove(zip_file)
 
         # Configure systemd
-        with open(self.service_path, "w") as f:
-            f.write(f"""[Unit]
+        async with aiofiles.open(self.service_path, "w") as f:
+            await f.write(f"""[Unit]
 Description=NapCat service created by DiceRobot
 After=network.target
 
@@ -378,15 +378,15 @@ WantedBy=multi-user.target""")
         await (await run_command("systemctl daemon-reload")).wait()
 
         # Patch QQ
-        with open(self.loader_path, "w") as f:
-            f.write(f"(async () => {{await import(\"file:///{settings.napcat.dir.base}/napcat.mjs\");}})();")
+        async with aiofiles.open(self.loader_path, "w") as f:
+            await f.write(f"(async () => {{await import(\"file:///{settings.napcat.dir.base}/napcat.mjs\");}})();")
 
-        with open(QQManager.package_json_path, "r+") as f:
-            data = json.load(f)
+        async with aiofiles.open(QQManager.package_json_path, "r+") as f:
+            data = json.loads(await f.read())
             data["main"] = "./loadNapCat.js"
-            f.seek(0)
-            json.dump(data, f, indent=2)
-            f.truncate()
+            await f.seek(0)
+            await f.write(json.dumps(data, indent=2))
+            await f.truncate()
 
         logger.success("Update completed")
 
@@ -409,21 +409,21 @@ WantedBy=multi-user.target""")
         if os.path.isdir(settings.napcat.dir.logs):
             shutil.rmtree(settings.napcat.dir.logs)
 
-        with open(self.env_path, "w") as f:
-            f.write(f"QQ_ACCOUNT={settings.napcat.account}")
+        async with aiofiles.open(self.env_path, "w") as f:
+            await f.write(f"QQ_ACCOUNT={settings.napcat.account}")
 
-        with open(os.path.join(settings.napcat.dir.config, "napcat.json"), "w") as f:
-            json.dump(self.napcat_config, f)
+        async with aiofiles.open(os.path.join(settings.napcat.dir.config, "napcat.json"), "w") as f:
+            await f.write(json.dumps(self.napcat_config))
 
-        with open(os.path.join(settings.napcat.dir.config, f"napcat_{settings.napcat.account}.json"), "w") as f:
-            json.dump(self.napcat_config, f)
+        async with aiofiles.open(os.path.join(settings.napcat.dir.config, f"napcat_{settings.napcat.account}.json"), "w") as f:
+            await f.write(json.dumps(self.napcat_config))
 
         self.onebot_config["network"]["httpServers"][0]["host"] = str(settings.napcat.api.host)
         self.onebot_config["network"]["httpServers"][0]["port"] = settings.napcat.api.port
         self.onebot_config["network"]["httpClients"][0]["token"] = settings.security.webhook.secret
 
-        with open(os.path.join(settings.napcat.dir.config, f"onebot11_{settings.napcat.account}.json"), "w") as f:
-            json.dump(self.onebot_config, f)
+        async with aiofiles.open(os.path.join(settings.napcat.dir.config, f"onebot11_{settings.napcat.account}.json"), "w") as f:
+            await f.write(json.dumps(self.onebot_config))
 
         await (await run_command("systemctl start napcat")).wait()
 

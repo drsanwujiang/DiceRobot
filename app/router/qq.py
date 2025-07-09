@@ -22,7 +22,7 @@ async def get_status() -> JSONResponse:
 
     return JSONResponse(data={
         "installed": qq_manager.installed(),
-        "version": qq_manager.get_version()
+        "version": await qq_manager.get_version()
     })
 
 

@@ -25,7 +25,7 @@ async def get_status() -> JSONResponse:
         "installed": napcat_manager.installed(),
         "configured": napcat_manager.configured(),
         "running": await napcat_manager.running(),
-        "version": napcat_manager.get_version()
+        "version": await napcat_manager.get_version()
     })
 
 
