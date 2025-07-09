@@ -445,7 +445,7 @@ napcat_manager = NapCatManager()
 
 async def init_manager() -> None:
     if all([
-        settings.app.start_napcat_at_startup,
+        settings.napcat.autostart,
         qq_manager.installed(),
         napcat_manager.installed(),
         napcat_manager.configured(),

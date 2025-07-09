@@ -142,7 +142,7 @@ class Settings:
             """Application settings.
 
             Attributes:
-                start_napcat_at_startup: Whether to start NapCat at startup.
+                dir: Application directory settings.
             """
 
             class Directory(BaseModel):
@@ -150,16 +150,15 @@ class Settings:
 
                 Attributes:
                     base: Base directory of the application.
-                    temp: Temporary directory of the application.
                     logs: Logs directory of the application.
+                    temp: Temporary directory of the application.
                 """
 
                 base: str = os.getcwd()
-                temp: str = os.path.join(base, "temp")
                 logs: str = os.path.join(base, "logs")
+                temp: str = os.path.join(base, "temp")
 
             dir: Directory = Directory()
-            start_napcat_at_startup: bool = False
 
         class Cloud(BaseModel):
             """DiceRobot cloud settings.
@@ -215,6 +214,7 @@ class Settings:
                 dir: NapCat directory settings.
                 api: NapCat API settings.
                 account: QQ account.
+                autostart: Whether to start NapCat at application startup.
             """
 
             class Directory(BaseModel):
@@ -253,6 +253,7 @@ class Settings:
             dir: Directory = Directory()
             api: API = API()
             account: int = -1
+            autostart: bool = False
 
         security: Security = Security()
         app: Application = Application()

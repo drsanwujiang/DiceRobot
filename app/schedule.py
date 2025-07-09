@@ -54,7 +54,7 @@ async def init_scheduler(scheduler_: AsyncScheduler) -> None:
         "dicerobot.refresh_group_list", IntervalTrigger(minutes=5), id="dicerobot.refresh_group_list", paused=True
     )
 
-    if settings.app.start_napcat_at_startup:
+    if settings.napcat.autostart:
         # Give NapCat some time to start
         await run_task("dicerobot.check_bot_status", 5)
     else:

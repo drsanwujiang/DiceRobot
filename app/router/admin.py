@@ -88,7 +88,7 @@ async def update_security_settings(data: UpdateSecuritySettingsRequest) -> JSONR
 
 
 @router.get("/settings/app", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_settings() -> JSONResponse:
+async def get_application_settings() -> JSONResponse:
     logger.info("Admin request received: get application settings")
 
     return JSONResponse(data=settings.app.model_dump())
@@ -111,7 +111,7 @@ async def get_plugin_list() -> JSONResponse:
 
 
 @router.get("/plugin/{plugin}", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_plugin_list(plugin: str) -> JSONResponse:
+async def get_plugin(plugin: str) -> JSONResponse:
     logger.info(f"Admin request received: get plugin, plugin: {plugin}")
 
     if plugin in dispatcher.order_plugins:

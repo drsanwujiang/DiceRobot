@@ -34,4 +34,9 @@ class UpdateSecuritySettingsRequest(BaseModel):
 
 
 class UpdateApplicationSettingsRequest(BaseModel):
-    start_napcat_at_startup: bool
+    class Directory(BaseModel):
+        base: str
+        logs: str
+        temp: str
+
+    dir: Directory = None
