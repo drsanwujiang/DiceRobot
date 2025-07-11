@@ -1,3 +1,4 @@
+from loguru import logger
 from sqlalchemy import Enum, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
@@ -46,6 +47,8 @@ class ChatSettings(Base):
 def init_database() -> None:
     engine.connect()
     Base.metadata.create_all(bind=engine)
+
+    logger.debug("Database initialized")
 
 
 def clean_database() -> None:

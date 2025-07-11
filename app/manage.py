@@ -7,11 +7,11 @@ import json
 import signal
 from collections.abc import AsyncGenerator
 
+from loguru import logger
 from watchfiles import Change, awatch
 import aiofiles
 from semver.version import Version
 
-from .log import logger
 from .config import status, settings
 from .enum import UpdateStatus
 from .schedule import run_task
@@ -38,15 +38,19 @@ class FileWatcher:
 
                             if lines:
                                 for queue in self.queues:
-                                    await queue.put(lines)
+                                    queue.put_nowait(lines)
         except asyncio.CancelledError:
-            pass
+            logger.debug("File watcher cancelled")
 
     def start(self):
+        logger.debug(f"Start watching file: {self.filepath}")
+
         self.task = asyncio.create_task(self.watch_loop())
 
     def stop(self):
         if self.task:
+            logger.debug(f"Stop watching file: {self.filepath}")
+
             self.task.cancel()
 
     async def subscribe(self) -> asyncio.Queue:
@@ -60,16 +64,20 @@ class FileWatcher:
             self.queues.remove(queue)
 
 
-class LogManager:
+class LogHelper:
     def __init__(self, logs_dir: str):
         self.logs_dir = logs_dir
         self.watchers: dict[str, FileWatcher] = {}
         self.lock = asyncio.Lock()
 
     def check(self, filename: str) -> bool:
+        logger.debug(f"Check log file: {filename}")
+
         if os.path.isfile(os.path.join(self.logs_dir, filename)):
             return True
         elif os.path.isfile(compressed_file := os.path.join(self.logs_dir, f"{filename}.tar.gz")):
+            logger.info(f"Decompress log file: {compressed_file}.tar.gz")
+
             with tarfile.open(compressed_file, "r:gz") as tar:
                 tar.extract(filename, self.logs_dir)
 
@@ -78,6 +86,8 @@ class LogManager:
         return False
 
     async def load(self, filename: str) -> AsyncGenerator[list[str]]:
+        logger.debug(f"Load log file: {filename}")
+
         async with aiofiles.open(os.path.join(self.logs_dir, filename), "r", encoding="utf-8") as f:
             batch = []
 
@@ -94,8 +104,10 @@ class LogManager:
 
     async def subscribe(self, filename: str) -> asyncio.Queue:
         async with self.lock:
+            logger.debug(f"Subscribe to log file: {filename}")
+
             if filename not in self.watchers:
-                self.watchers[filename] = FileWatcher(filename)
+                self.watchers[filename] = FileWatcher(os.path.join(self.logs_dir, filename))
                 self.watchers[filename].start()
 
             return await self.watchers[filename].subscribe()
@@ -103,6 +115,8 @@ class LogManager:
     async def unsubscribe(self, filename: str, queue: asyncio.Queue) -> None:
         async with self.lock:
             if filename in self.watchers:
+                logger.debug(f"Unsubscribe from log file: {filename}")
+
                 watcher = self.watchers[filename]
                 watcher.unsubscribe(queue)
 
@@ -110,11 +124,35 @@ class LogManager:
                     watcher.stop()
                     del self.watchers[filename]
 
+    async def clean(self):
+        async with self.lock:
+            logger.debug("Clean log watchers")
 
-class DiceRobotManager:
+            for filename, watcher in self.watchers.items():
+                watcher.stop()
+
+                # Clean temporary files
+                if os.path.isfile(os.path.join(self.logs_dir, f"{filename}.tar.gz")):
+                    os.remove(os.path.join(self.logs_dir, filename))
+
+
+class Manager:
     def __init__(self):
-        self.log = LogManager(settings.app.dir.logs)
         self.update_status = UpdateStatus.NONE
+
+
+class LogManager(Manager):
+    def __init__(self, logs_dir: str):
+        super().__init__()
+        self.log = LogHelper(logs_dir)
+
+    async def clean(self):
+        await self.log.clean()
+
+
+class DiceRobotManager(LogManager):
+    def __init__(self):
+        super().__init__(settings.app.dir.logs)
 
     async def update(self) -> None:
         logger.info("Check latest version of Dicerobot")
@@ -175,12 +213,14 @@ class DiceRobotManager:
 
         signal.raise_signal(signal.SIGTERM)
 
+    async def clean(self):
+        logger.debug("Clean DiceRobot manager")
 
-class QQManager:
+        await super().clean()
+
+
+class QQManager(Manager):
     package_json_path = os.path.join(settings.qq.dir.base, "resources/app/package.json")
-
-    def __init__(self):
-        self.update_status = UpdateStatus.NONE
 
     def installed(self) -> bool:
         return os.path.isfile(self.package_json_path)
@@ -244,7 +284,7 @@ class QQManager:
             shutil.rmtree(settings.qq.dir.config, ignore_errors=True)
 
 
-class NapCatManager:
+class NapCatManager(LogManager):
     service_path = "/etc/systemd/system/napcat.service"
     loader_path = os.path.join(settings.qq.dir.base, "resources/app/loadNapCat.js")
     env_path = os.path.join(settings.napcat.dir.base, "env")
@@ -253,7 +293,7 @@ class NapCatManager:
     napcat_config = {
         "fileLog": True,
         "consoleLog": False,
-        "fileLogLevel": "debug" if os.environ.get("DICEROBOT_DEBUG") else "warn",
+        "fileLogLevel": "debug" if status.debug else "warn",
         "consoleLogLevel": "error",
         "packetBackend": "auto",
         "packetServer": ""
@@ -293,8 +333,7 @@ class NapCatManager:
     }
 
     def __init__(self):
-        self.log = LogManager(settings.napcat.dir.logs)
-        self.update_status = UpdateStatus.NONE
+        super().__init__(settings.napcat.dir.logs)
 
     def installed(self) -> bool:
         return os.path.isfile(self.package_json_path)
@@ -437,6 +476,11 @@ WantedBy=multi-user.target""")
 
         logger.info("NapCat stopped")
 
+    async def clean(self):
+        logger.debug("Clean NapCat manager")
+
+        await super().clean()
+
 
 dicerobot_manager = DiceRobotManager()
 qq_manager = QQManager()
@@ -456,3 +500,10 @@ async def init_manager() -> None:
         await napcat_manager.start()
 
     logger.info("Manager initialized")
+
+
+async def clean_manager() -> None:
+    logger.info("Clean manager")
+
+    await dicerobot_manager.clean()
+    await napcat_manager.clean()

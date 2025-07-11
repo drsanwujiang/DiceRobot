@@ -35,7 +35,6 @@ def mock_dicerobot(monkeypatch) -> None:
     monkeypatch.setattr("app.clean_database", _clean_database)
     monkeypatch.setattr("app.load_config", _load_config)
     monkeypatch.setattr("app.save_config", _save_config)
-    monkeypatch.setattr("app.logger", logger)
     monkeypatch.setattr("app.init_logger", _init_logger)
     monkeypatch.setattr("app.init_manager", _init_manager)
 

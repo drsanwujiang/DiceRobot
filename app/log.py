@@ -4,12 +4,14 @@ import sys
 
 from loguru import logger
 
-logger.remove()
+from .config import status, settings
 
 MAX_LOG_LENGTH = 1000  # Maximum length of log messages
 LOG_LEVEL = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
 
-if os.environ.get("DICEROBOT_DEBUG"):
+logger.remove()
+
+if status.debug:
     # Add a console logger for debug mode
     logger.add(sys.stdout, level="DEBUG", diagnose=True)
 else:
@@ -30,8 +32,6 @@ def truncate_formatter(record) -> str:
 
 
 def init_logger() -> None:
-    from .config import settings
-
     logger.add(
         os.path.join(settings.app.dir.logs, "dicerobot-{time:YYYY-MM-DD}.log"),
         level=LOG_LEVEL,

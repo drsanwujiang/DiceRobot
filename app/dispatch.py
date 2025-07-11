@@ -3,8 +3,9 @@ import importlib
 import pkgutil
 import re
 
+from loguru import logger
+
 from plugin import DiceRobotPlugin, OrderPlugin, EventPlugin
-from .log import logger
 from .config import status, plugin_settings
 from .exceptions import DiceRobotRuntimeException
 from .models.report.message import Message

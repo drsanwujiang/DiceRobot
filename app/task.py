@@ -1,4 +1,5 @@
-from .log import logger
+from loguru import logger
+
 from .schedule import scheduler
 from .config import status, save_config as save_config_
 from .exceptions import DiceRobotRuntimeException

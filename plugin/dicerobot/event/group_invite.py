@@ -1,5 +1,6 @@
+from loguru import logger
+
 from plugin import EventPlugin
-from app.log import logger
 from app.models.report.request import GroupAddRequest
 from app.network.napcat import set_group_add_request
 

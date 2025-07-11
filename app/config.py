@@ -1,10 +1,10 @@
 import os
 import json
 
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 
-from .log import logger
 from .models.config import (
     Status as StatusModel, Settings as SettingsModel, PluginSettings as PluginSettingsModel,
     ChatSettings as ChatSettingsModel, Replies as RepliesModel
@@ -58,7 +58,7 @@ def load_config() -> None:
         for _group, _group_replies in _replies.items():
             replies.set_replies(group=_group, replies=_group_replies)
 
-    logger.info("Configuration loaded")
+    logger.debug("Configuration loaded")
 
 
 def save_config() -> None:

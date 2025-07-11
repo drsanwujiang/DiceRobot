@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from typing import Callable
 
+from loguru import logger
 from apscheduler import AsyncScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 
-from .log import logger
 from .config import settings
 
 tasks: dict[str, Callable] = {}

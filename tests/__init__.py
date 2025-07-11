@@ -1,8 +1,8 @@
 import time
 
+from loguru import logger
 from fastapi.testclient import TestClient
 
-from app.log import logger
 from app.config import status
 from app.enum import ApplicationStatus
 from app.models.report.message import Message, PrivateMessage, GroupMessage

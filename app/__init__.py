@@ -1,14 +1,15 @@
 from contextlib import asynccontextmanager
 
+from loguru import logger
 from fastapi import FastAPI
 from apscheduler import AsyncScheduler
 
 from .version import VERSION
 from .database import init_database, clean_database
 from .config import load_config, save_config
-from .log import logger, init_logger
+from .log import init_logger
 from .schedule import init_scheduler, clean_scheduler
-from .manage import init_manager
+from .manage import init_manager, clean_manager
 from .dispatch import init_dispatcher
 from .exception_handlers import init_exception_handlers
 from .router import init_router
@@ -31,6 +32,7 @@ async def lifespan(_: FastAPI):
 
         yield
 
+        await clean_manager()
         await clean_scheduler()
 
     save_config()

@@ -1,9 +1,9 @@
 import json
 
+from loguru import logger
 from httpx import AsyncClient, Request, Response, HTTPError
 
 from ..version import VERSION
-from ..log import logger
 from ..exceptions import NetworkServerError, NetworkClientError, NetworkInvalidContentError, NetworkError
 
 

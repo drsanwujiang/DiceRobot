@@ -3,10 +3,10 @@ from datetime import date
 import asyncio
 from collections.abc import AsyncGenerator
 
+from loguru import logger
 from fastapi import APIRouter, Depends, Query
 from sse_starlette import ServerSentEvent
 
-from ..log import logger
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
 from ..dispatch import dispatcher
@@ -54,7 +54,7 @@ async def get_logs(date_: Annotated[date, Query(alias="date")]) -> EventSourceRe
             while True:
                 yield generate_sse({"logs": await queue.get()})
         except asyncio.CancelledError:
-            pass
+            logger.debug("Server-sent event stream cancelled")
         finally:
             await dicerobot_manager.log.unsubscribe(filename, queue)
 

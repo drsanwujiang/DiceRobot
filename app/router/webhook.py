@@ -1,6 +1,6 @@
+from loguru import logger
 from fastapi import APIRouter, Depends
 
-from ..log import logger
 from ..auth import verify_signature
 from ..config import status
 from ..dispatch import dispatcher

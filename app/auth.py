@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 import hmac
 
+from loguru import logger
 from fastapi import Request, Header
 from werkzeug.security import check_password_hash
 import jwt
 
-from .log import logger
 from .config import settings
 from .exceptions import TokenInvalidError, SignatureInvalidError
 

@@ -1,10 +1,10 @@
 import asyncio
 from collections.abc import AsyncGenerator
 
+from loguru import logger
 from fastapi import APIRouter, Depends
 from sse_starlette import ServerSentEvent
 
-from ..log import logger
 from ..auth import verify_jwt_token
 from ..exceptions import BadRequestError
 from ..manage import qq_manager, napcat_manager

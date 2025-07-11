@@ -1,8 +1,8 @@
+from loguru import logger
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import StarletteHTTPException as HTTPException, RequestValidationError
 
-from .log import logger
 from .config import status
 from .exceptions import DiceRobotHTTPException
 
