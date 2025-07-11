@@ -27,7 +27,7 @@ def truncate_formatter(record) -> str:
     return (
         "<green>{time:YYYY-MM-DD HH:mm:ss.SSS Z}</green> | "
         "<level>{level: <8}</level> | "
-        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>\n"
     )
 
 
