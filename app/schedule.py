@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable
 
 from loguru import logger
@@ -38,20 +38,29 @@ async def init_scheduler(scheduler_: AsyncScheduler) -> None:
     for task, func in tasks.items():
         await scheduler.configure_task(task, func=func)
 
+    # Add schedules but not start them yet
     await scheduler.add_schedule(
         "dicerobot.restart", CronTrigger(year=9999), id="dicerobot.restart", paused=True
     )
     await scheduler.add_schedule(
-        "dicerobot.save_config", IntervalTrigger(minutes=5), id="dicerobot.save_config"
+        "dicerobot.save_config", IntervalTrigger(minutes=5), id="dicerobot.save_config", paused=True
     )
     await scheduler.add_schedule(
-        "dicerobot.check_bot_status", IntervalTrigger(minutes=1), id="dicerobot.check_bot_status"
+        "dicerobot.check_bot_status", IntervalTrigger(minutes=1), id="dicerobot.check_bot_status", paused=True
     )
     await scheduler.add_schedule(
         "dicerobot.refresh_friend_list", IntervalTrigger(minutes=5), id="dicerobot.refresh_friend_list", paused=True
     )
     await scheduler.add_schedule(
         "dicerobot.refresh_group_list", IntervalTrigger(minutes=5), id="dicerobot.refresh_group_list", paused=True
+    )
+
+    # Unpause schedules, make sure they will run at the next fire time
+    await scheduler.unpause_schedule(
+        "dicerobot.save_config", resume_from=datetime.now(timezone.utc) + timedelta(seconds=5)
+    )
+    await scheduler.unpause_schedule(
+        "dicerobot.check_bot_status", resume_from=datetime.now(timezone.utc) + timedelta(seconds=5)
     )
 
     if settings.napcat.autostart:
