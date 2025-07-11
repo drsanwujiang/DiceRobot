@@ -123,14 +123,14 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$(pwd)
-ExecStart=${HOME}/.local/bin/poetry run uvicorn app:dicerobot --host ${host} --port ${port} --log-level warning
+ExecStart=${HOME}/.local/bin/poetry run uvicorn app:dicerobot --host ${host} --port ${port} --log-level warning --timeout-graceful-shutdown 0
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload > /dev/null 2>&1
-systemctl enable dicerobot
+systemctl enable dicerobot > /dev/null 2>&1
 systemctl start dicerobot
 
 success "Success"
