@@ -1,12 +1,8 @@
 from collections.abc import Generator
-import sys
 
 import pytest
 from loguru import logger
 from fastapi.testclient import TestClient
-
-logger.remove()
-logger.add(sys.stdout, level="DEBUG")
 
 
 @pytest.fixture(scope="session")

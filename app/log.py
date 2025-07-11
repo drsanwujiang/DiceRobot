@@ -2,35 +2,40 @@ import logging
 import os
 import sys
 
-from loguru import logger as _logger
+from loguru import logger
 
-# Disable Uvicorn's default loggers
-uvicorn_error = logging.getLogger("uvicorn.error").disabled = True
-uvicorn_access = logging.getLogger("uvicorn.access").disabled = True
+logger.remove()
 
-# Maximum length of log messages
-MAX_LOG_LENGTH = 1000
+MAX_LOG_LENGTH = 1000  # Maximum length of log messages
+LOG_LEVEL = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
+
+if os.environ.get("DICEROBOT_DEBUG"):
+    # Add a console logger for debug mode
+    logger.add(sys.stdout, level="DEBUG", diagnose=True)
+else:
+    # Disable Uvicorn's default loggers
+    logging.getLogger("uvicorn.error").disabled = True
+    logging.getLogger("uvicorn.access").disabled = True
 
 
-def truncate_message(record: dict) -> None:
+def truncate_formatter(record) -> str:
     if len(record["message"]) > MAX_LOG_LENGTH:
         record["message"] = record["message"][:MAX_LOG_LENGTH] + "..."
 
-
-logger = _logger.patch(truncate_message)
-logger.remove()
+    return (
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS Z}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+    )
 
 
 def init_logger() -> None:
     from .config import settings
-    
-    if os.environ.get("DICEROBOT_DEBUG"):
-        logger.add(sys.stdout, level="DEBUG")
 
-    log_level = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
     logger.add(
         os.path.join(settings.app.dir.logs, "dicerobot-{time:YYYY-MM-DD}.log"),
-        level=log_level,
+        level=LOG_LEVEL,
+        format=truncate_formatter,
         rotation="00:00",
         retention="365 days",
         compression="tar.gz"
