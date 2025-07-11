@@ -72,10 +72,10 @@ async def init_scheduler(scheduler_: AsyncScheduler) -> None:
 
     await scheduler.start_in_background()
 
-    logger.info("Scheduler initialized")
+    logger.debug("Scheduler initialized")
 
 
 async def clean_scheduler() -> None:
-    logger.info("Clean scheduler")
+    logger.debug("Clean scheduler")
 
     await scheduler.stop()

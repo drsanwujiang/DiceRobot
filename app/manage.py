@@ -499,11 +499,11 @@ async def init_manager() -> None:
 
         await napcat_manager.start()
 
-    logger.info("Manager initialized")
+    logger.debug("Manager initialized")
 
 
 async def clean_manager() -> None:
-    logger.info("Clean manager")
+    logger.debug("Clean manager")
 
     await dicerobot_manager.clean()
     await napcat_manager.clean()

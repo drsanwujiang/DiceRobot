@@ -183,4 +183,4 @@ async def init_dispatcher() -> None:
     await dispatcher.load_plugins()
     dispatcher.load_orders_and_events()
 
-    logger.info("Dispatcher initialized")
+    logger.debug("Dispatcher initialized")
