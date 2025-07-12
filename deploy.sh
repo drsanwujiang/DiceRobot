@@ -105,11 +105,11 @@ fi
 echo "Install dependencies"
 
 if ! (apt-get -y -qq install curl xvfb libnss3 libgbm1 libasound2 > /dev/null 2>&1); then
-  error "Failed to install dependencies"
+  error "Failed to install QQ dependencies"
 fi
 
 if ! (poetry install > /dev/null 2>&1); then
-  error "Failed to install dependencies"
+  error "Failed to install DiceRobot dependencies"
 fi
 
 # Create service
@@ -123,7 +123,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$(pwd)
-ExecStart=${HOME}/.local/bin/poetry run uvicorn app:dicerobot --host ${host} --port ${port} --log-level warning --timeout-graceful-shutdown 0
+ExecStart=${HOME}/.local/bin/poetry run uvicorn app:dicerobot --host ${host} --port ${port} --no-server-header --timeout-graceful-shutdown 0
 
 [Install]
 WantedBy=multi-user.target
