@@ -154,11 +154,15 @@ class DiceRobotManager(LogManager):
     def __init__(self):
         super().__init__(settings.app.dir.logs)
 
+    @staticmethod
+    def ensure_directory() -> None:
+        os.makedirs(settings.app.dir.temp, exist_ok=True)
+
     async def update(self) -> None:
         logger.info("Check latest version of Dicerobot")
 
         self.update_status = UpdateStatus.CHECKING
-        latest_version = Version.parse((await get_versions()).dicerobot)
+        latest_version = Version.parse((await get_versions()).data.dicerobot)
 
         if status.version >= latest_version:
             logger.info("No updates available")
@@ -177,7 +181,7 @@ class DiceRobotManager(LogManager):
                     async for chunk in response.aiter_bytes(chunk_size=8192):
                         await f.write(chunk)
         except:
-            logger.error("Failed to download")
+            logger.exception("Failed to download")
             self.update_status = UpdateStatus.FAILED
             return
 
@@ -197,7 +201,7 @@ class DiceRobotManager(LogManager):
             logger.error("Failed to update dependencies")
             self.update_status = UpdateStatus.FAILED
 
-        logger.success(f"Update completed")
+        logger.success(f"DiceRobot update completed")
 
         self.update_status = UpdateStatus.COMPLETED
 
@@ -217,6 +221,7 @@ class DiceRobotManager(LogManager):
         logger.debug("Clean DiceRobot manager")
 
         await super().clean()
+        shutil.rmtree(settings.app.dir.temp, ignore_errors=True)  # Clean temporary files
 
 
 class QQManager(Manager):
@@ -240,7 +245,7 @@ class QQManager(Manager):
         logger.info("Check latest version of QQ")
 
         self.update_status = UpdateStatus.CHECKING
-        latest_version = (await get_versions()).qq
+        latest_version = (await get_versions()).data.qq
 
         logger.info(f"Download QQ, version: {latest_version}")
 
@@ -254,7 +259,7 @@ class QQManager(Manager):
                     async for chunk in response.aiter_bytes(chunk_size=8192):
                         await f.write(chunk)
         except:
-            logger.error("Failed to download")
+            logger.exception("Failed to download")
             self.update_status = UpdateStatus.FAILED
             return
 
@@ -269,7 +274,7 @@ class QQManager(Manager):
 
         os.remove(deb_file)
 
-        logger.success("Update completed")
+        logger.success("QQ update completed")
 
         self.update_status = UpdateStatus.COMPLETED
 
@@ -372,7 +377,7 @@ class NapCatManager(LogManager):
         logger.info("Check latest version of NapCat")
 
         self.update_status = UpdateStatus.CHECKING
-        latest_version = (await get_versions()).napcat
+        latest_version = (await get_versions()).data.napcat
 
         logger.info(f"Download NapCat, version: {latest_version}")
 
@@ -386,7 +391,7 @@ class NapCatManager(LogManager):
                     async for chunk in response.aiter_bytes(chunk_size=8192):
                         await f.write(chunk)
         except:
-            logger.error("Failed to download")
+            logger.exception("Failed to download")
             self.update_status = UpdateStatus.FAILED
             return
 
@@ -427,7 +432,7 @@ WantedBy=multi-user.target""")
             await f.write(json.dumps(data, indent=2))
             await f.truncate()
 
-        logger.success("Update completed")
+        logger.success("NapCat update completed")
 
         self.update_status = UpdateStatus.COMPLETED
 
@@ -488,6 +493,8 @@ napcat_manager = NapCatManager()
 
 
 async def init_manager() -> None:
+    dicerobot_manager.ensure_directory()
+
     if all([
         settings.napcat.autostart,
         qq_manager.installed(),

@@ -1,3 +1,5 @@
+from typing import Any
+
 from .. import BaseModel
 
 __all__ = [
@@ -5,7 +7,16 @@ __all__ = [
 ]
 
 
+class CloudAPIResponse(BaseModel):
+    code: int
+    message: str
+    data: Any
+
+
 class GetVersionsResponse(BaseModel):
-    dicerobot: str
-    napcat: str
-    qq: str
+    class Data(BaseModel):
+        dicerobot: str
+        napcat: str
+        qq: str
+
+    data: Data
