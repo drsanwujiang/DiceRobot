@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from ..auth import verify_signature
 from ..config import status
 from ..dispatch import dispatcher
+from ..responses import EmptyResponse
 from ..enum import ApplicationStatus, ReportType, MessageType, NoticeType, RequestType, SegmentType
 from ..exceptions import MessageInvalidError
 from ..models.report import Report
@@ -13,7 +14,6 @@ from ..models.report.notice import (
     FriendAddNotice, GroupRecallNotice, FriendRecallNotice, Notify
 )
 from ..models.report.request import Request, FriendAddRequest, GroupAddRequest
-from . import EmptyResponse
 
 router = APIRouter()
 

@@ -10,9 +10,9 @@ from ..config import settings
 from ..exceptions import ResourceNotFoundError, BadRequestError
 from ..manage import qq_manager, napcat_manager
 from ..utils import generate_sse
+from ..responses import JSONResponse, EventSourceResponse
 from ..enum import UpdateStatus
 from ..models.router.napcat import UpdateNapCatSettingsRequest
-from . import JSONResponse, EventSourceResponse
 
 router = APIRouter(prefix="/napcat")
 
@@ -32,6 +32,9 @@ async def get_status() -> JSONResponse:
 @router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def download() -> EventSourceResponse:
     logger.info("NapCat management request received: update")
+
+    if not qq_manager.installed():
+        raise BadRequestError(message="QQ not installed")
 
     task = asyncio.create_task(napcat_manager.update())
 

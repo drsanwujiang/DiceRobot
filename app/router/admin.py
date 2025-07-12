@@ -13,11 +13,11 @@ from ..dispatch import dispatcher
 from ..exceptions import ParametersInvalidError, ResourceNotFoundError
 from ..manage import dicerobot_manager
 from ..utils import generate_sse
+from ..responses import JSONResponse, EventSourceResponse
 from ..enum import ChatType, UpdateStatus
 from ..models.router.admin import (
     AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest
 )
-from . import JSONResponse, EventSourceResponse
 
 router = APIRouter()
 

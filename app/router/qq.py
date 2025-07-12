@@ -9,9 +9,9 @@ from ..auth import verify_jwt_token
 from ..exceptions import BadRequestError
 from ..manage import qq_manager, napcat_manager
 from ..utils import generate_sse
+from ..responses import JSONResponse, EventSourceResponse
 from ..enum import UpdateStatus
 from ..models.router.qq import RemoveQQRequest
-from . import JSONResponse, EventSourceResponse
 
 router = APIRouter(prefix="/qq")
 
