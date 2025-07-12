@@ -34,7 +34,7 @@ async def update() -> EventSourceResponse:
 
     async def content_generator() -> AsyncGenerator[ServerSentEvent]:
         while True:
-            yield generate_sse({"status": str(qq_manager.update_status)})
+            yield generate_sse({"status": qq_manager.update_status.value})
 
             if qq_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
                 qq_manager.update_status = UpdateStatus.NONE

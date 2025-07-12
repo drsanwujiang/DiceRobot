@@ -40,7 +40,7 @@ async def download() -> EventSourceResponse:
 
     async def content_generator() -> AsyncGenerator[ServerSentEvent]:
         while True:
-            yield generate_sse({"status": str(napcat_manager.update_status)})
+            yield generate_sse({"status": napcat_manager.update_status.value})
 
             if napcat_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
                 napcat_manager.update_status = UpdateStatus.NONE
@@ -102,7 +102,7 @@ async def stop() -> JSONResponse:
 async def get_logs() -> EventSourceResponse:
     logger.info("NapCat management request received: get logs")
 
-    if not napcat_manager.is_running():
+    if not await napcat_manager.running():
         raise BadRequestError(message="NapCat not running")
     elif not (filename := napcat_manager.get_log_file()):
         raise ResourceNotFoundError(message="Logs not found")
@@ -117,7 +117,7 @@ async def get_logs() -> EventSourceResponse:
             while True:
                 yield generate_sse({"logs": await queue.get()})
         except asyncio.CancelledError:
-            pass
+            logger.debug("Server-sent event stream cancelled")
         finally:
             await napcat_manager.log.unsubscribe(filename, queue)
 

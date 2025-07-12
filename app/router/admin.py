@@ -220,7 +220,7 @@ async def update() -> EventSourceResponse:
 
     async def content_generator() -> AsyncGenerator[ServerSentEvent]:
         while True:
-            yield generate_sse({"status": str(dicerobot_manager.update_status)})
+            yield generate_sse({"status": dicerobot_manager.update_status.value})
 
             if dicerobot_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
                 dicerobot_manager.update_status = UpdateStatus.NONE
