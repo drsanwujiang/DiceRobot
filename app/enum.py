@@ -110,6 +110,7 @@ class SegmentType(str, Enum):
     TEXT = "text"
     IMAGE = "image"
     AT = "at"
+    REPLY = "reply"
 
 
 class Sex(str, Enum):

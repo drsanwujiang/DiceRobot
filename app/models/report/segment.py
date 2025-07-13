@@ -7,7 +7,8 @@ __all__ = [
     "Segment",
     "Text",
     "Image",
-    "At"
+    "At",
+    "Reply"
 ]
 
 
@@ -45,4 +46,12 @@ class At(Segment):
         qq: int
 
     type: Literal[SegmentType.AT] = SegmentType.AT
+    data: Data
+
+
+class Reply(Segment):
+    class Data(BaseModel):
+        id: int
+
+    type: Literal[SegmentType.REPLY] = SegmentType.REPLY
     data: Data
