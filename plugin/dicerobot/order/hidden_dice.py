@@ -51,7 +51,7 @@ class HiddenDice(OrderPlugin):
             "群名": (await get_group_info(self.message.group_id)).data.group_name
         })
         await self.reply_to_sender(self.replies["reply_with_reason" if dice.reason else "reply"])
-        await self.send_friend_message(
+        await self.send_private_message(
             self.message.user_id,
             self.format_reply(self.replies["result_with_reason" if dice.reason else "result"])
         )

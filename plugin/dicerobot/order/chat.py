@@ -8,7 +8,7 @@ import aiofiles
 from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
-from app.models.report.segment import Text, Image
+from app.models.report.segment import Text, Image, Reply
 from app.network import Client
 from app.network.napcat import get_image
 
@@ -103,7 +103,12 @@ class Chat(OrderPlugin):
                         if content := completion_chunk.choices[0].delta.content:
                             completion_content += content
 
-        await self.reply_to_sender(completion_content)
+        reply = [Text(data=Text.Data(text=completion_content))]
+
+        if self.message.from_group:
+            reply.insert(0, Reply(data=Reply.Data(id=self.message.message_id)))
+
+        await self.reply_to_sender(reply)
 
 
 class ChatCompletionContent(BaseModel):
