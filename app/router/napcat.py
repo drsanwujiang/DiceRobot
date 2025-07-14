@@ -30,7 +30,7 @@ async def get_status() -> JSONResponse:
 
 
 @router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def download() -> EventSourceResponse:
+async def update() -> EventSourceResponse:
     logger.info("NapCat management request received: update")
 
     if not qq_manager.installed():
@@ -132,7 +132,7 @@ async def get_settings() -> JSONResponse:
 
 
 @router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def update_napcat_settings(data: UpdateNapCatSettingsRequest) -> JSONResponse:
+async def update_settings(data: UpdateNapCatSettingsRequest) -> JSONResponse:
     logger.info("NapCat management request received: update settings")
 
     settings.update_napcat(data.model_dump(exclude_none=True))
