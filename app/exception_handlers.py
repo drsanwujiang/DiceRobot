@@ -1,49 +1,43 @@
-from starlette.exceptions import HTTPException
+from loguru import logger
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import StarletteHTTPException as HTTPException, RequestValidationError
 
-from .log import logger
 from .config import status
 from .exceptions import DiceRobotHTTPException
+from .responses import JSONResponse
 
 
-def http_exception_handler(_: Request, e: HTTPException) -> Response:
+async def http_exception_handler(_: Request, e: HTTPException) -> Response:
     return JSONResponse(
         status_code=e.status_code,
-        content={
-            "code": e.status_code * -1,
-            "message": str(e.detail)
-        }
+        code=e.status_code * -1,
+        message=str(e.detail)
     )
 
 
-def request_validation_error_handler(_: Request, __: RequestValidationError) -> Response:
+async def request_validation_error_handler(_: Request, __: RequestValidationError) -> Response:
     return JSONResponse(
         status_code=400,
-        content={
-            "code": -3,
-            "message": "Invalid request"
-        }
+        code=-3,
+        message="Invalid request"
     )
 
 
-def dicerobot_http_exception_handler(_: Request, e: DiceRobotHTTPException) -> Response:
+async def dicerobot_http_exception_handler(_: Request, e: DiceRobotHTTPException) -> Response:
     return JSONResponse(
         status_code=e.status_code,
-        content={"code": e.code, "message": e.message}
+        code=e.code,
+        message=e.message
     )
 
 
-def exception_handler(_: Request, __: Exception) -> Response:
-    logger.critical("Unexpected exception occurred")
+async def exception_handler(_: Request, __: Exception) -> Response:
+    logger.exception("Unexpected exception occurred")
 
     return JSONResponse(
         status_code=500,
-        content={
-            "code": -500,
-            "message": "Internal server error"
-        }
+        code=-500,
+        message="Internal server error"
     )
 
 

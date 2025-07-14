@@ -9,7 +9,7 @@ class BPDice(OrderPlugin):
     name = "dicerobot.bp_dice"
     display_name = "奖励骰/惩罚骰"
     description = "掷一个骰子，以及一个或多个奖励骰/惩罚骰"
-    version = "1.1.0"
+    version = "1.2.0"
 
     default_plugin_settings = {
         "max_count": 100
@@ -52,7 +52,7 @@ class BPDice(OrderPlugin):
         self.final_result = -1
         self.full_result = ""
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         self.check_repetition()
         self.parse_content()
         self.bonus_or_penalty()
@@ -69,7 +69,7 @@ class BPDice(OrderPlugin):
             "掷骰原因": self.reason,
             "掷骰结果": result
         })
-        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
+        await self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
 
     def parse_content(self) -> None:
         if self.order in self._bp_types["bonus"]:

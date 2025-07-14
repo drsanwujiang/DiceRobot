@@ -1,9 +1,9 @@
 from typing import Any
 
-from pydantic import BaseModel as _BaseModel
+from pydantic import BaseModel as BaseModel_
 
 
-class BaseModel(_BaseModel):
+class BaseModel(BaseModel_):
     def model_dump(self, **kwargs) -> dict[str, Any]:
         return super().model_dump(serialize_as_any=True, **kwargs)
 

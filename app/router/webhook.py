@@ -1,9 +1,10 @@
+from loguru import logger
 from fastapi import APIRouter, Depends
 
-from ..log import logger
 from ..auth import verify_signature
 from ..config import status
 from ..dispatch import dispatcher
+from ..responses import EmptyResponse
 from ..enum import ApplicationStatus, ReportType, MessageType, NoticeType, RequestType, SegmentType
 from ..exceptions import MessageInvalidError
 from ..models.report import Report
@@ -13,7 +14,6 @@ from ..models.report.notice import (
     FriendAddNotice, GroupRecallNotice, FriendRecallNotice, Notify
 )
 from ..models.report.request import Request, FriendAddRequest, GroupAddRequest
-from . import EmptyResponse
 
 router = APIRouter()
 
@@ -34,9 +34,9 @@ async def message_report(content: dict) -> EmptyResponse:
 
                 match message.message_type:
                     case MessageType.PRIVATE:
-                        handle_message(PrivateMessage.model_validate(content))
+                        await handle_message(PrivateMessage.model_validate(content))
                     case MessageType.GROUP:
-                        handle_message(GroupMessage.model_validate(content))
+                        await handle_message(GroupMessage.model_validate(content))
             case ReportType.META_EVENT:
                 pass
             case ReportType.NOTICE:
@@ -44,31 +44,31 @@ async def message_report(content: dict) -> EmptyResponse:
 
                 match notice.notice_type:
                     case NoticeType.GROUP_UPLOAD:
-                        handle_event(GroupUploadNotice.model_validate(content))
+                        await handle_event(GroupUploadNotice.model_validate(content))
                     case NoticeType.GROUP_ADMIN:
-                        handle_event(GroupAdminNotice.model_validate(content))
+                        await handle_event(GroupAdminNotice.model_validate(content))
                     case NoticeType.GROUP_DECREASE:
-                        handle_event(GroupDecreaseNotice.model_validate(content))
+                        await handle_event(GroupDecreaseNotice.model_validate(content))
                     case NoticeType.GROUP_INCREASE:
-                        handle_event(GroupIncreaseNotice.model_validate(content))
+                        await handle_event(GroupIncreaseNotice.model_validate(content))
                     case NoticeType.GROUP_BAN:
-                        handle_event(GroupBanNotice.model_validate(content))
+                        await handle_event(GroupBanNotice.model_validate(content))
                     case NoticeType.FRIEND_ADD:
-                        handle_event(FriendAddNotice.model_validate(content))
+                        await handle_event(FriendAddNotice.model_validate(content))
                     case NoticeType.GROUP_RECALL:
-                        handle_event(GroupRecallNotice.model_validate(content))
+                        await handle_event(GroupRecallNotice.model_validate(content))
                     case NoticeType.FRIEND_RECALL:
-                        handle_event(FriendRecallNotice.model_validate(content))
+                        await handle_event(FriendRecallNotice.model_validate(content))
                     case NoticeType.NOTIFY:
-                        handle_event(Notify.model_validate(content))
+                        await handle_event(Notify.model_validate(content))
             case ReportType.REQUEST:
                 request = Request.model_validate(content)
 
                 match request.request_type:
                     case RequestType.FRIEND:
-                        handle_event(FriendAddRequest.model_validate(content))
+                        await handle_event(FriendAddRequest.model_validate(content))
                     case RequestType.GROUP:
-                        handle_event(GroupAddRequest.model_validate(content))
+                        await handle_event(GroupAddRequest.model_validate(content))
 
         logger.info("Report completed")
     except ValueError:
@@ -80,7 +80,7 @@ async def message_report(content: dict) -> EmptyResponse:
     return EmptyResponse()
 
 
-def handle_message(message: Message):
+async def handle_message(message: Message):
     # Check app status
     if status.app != ApplicationStatus.RUNNING:
         logger.info("Report skipped, DiceRobot not running")
@@ -109,13 +109,13 @@ def handle_message(message: Message):
                 logger.debug("Unsupported segment detected")
                 raise RuntimeError
 
-    dispatcher.dispatch_order(message, "\n".join(message_contents))
+    await dispatcher.dispatch_order(message, "\n".join(message_contents))
 
 
-def handle_event(event: Notice | Request) -> None:
+async def handle_event(event: Notice | Request) -> None:
     # Check module status
     if not status.module.event:
         logger.info("Report skipped, event module disabled")
         return
 
-    dispatcher.dispatch_event(event)
+    await dispatcher.dispatch_event(event)

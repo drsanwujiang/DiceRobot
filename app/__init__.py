@@ -1,44 +1,44 @@
 from contextlib import asynccontextmanager
 
+from loguru import logger
 from fastapi import FastAPI
+from apscheduler import AsyncScheduler
 
 from .version import VERSION
-from .log import logger, init_logger
+from .database import init_database, clean_database
+from .config import load_config, save_config
+from .log import init_logger
+from .schedule import init_scheduler, clean_scheduler
+from .manage import init_manager, clean_manager
+from .dispatch import init_dispatcher
 from .exception_handlers import init_exception_handlers
 from .router import init_router
-from .database import init_database, clean_database
-from .config import init_config, save_config
-from .schedule import init_scheduler, clean_scheduler
-from .dispatch import init_dispatcher
-from .manage import init_manager, clean_manager
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    init_database()
+    load_config()
     init_logger()
 
     logger.info(f"DiceRobot {VERSION}")
-    logger.info("Start DiceRobot")
 
-    init_database()
-    init_config()
+    async with AsyncScheduler() as scheduler:
+        await init_scheduler(scheduler)
+        await init_manager()
+        await init_dispatcher()
 
-    init_dispatcher()
-    init_scheduler()
-    init_manager()
+        logger.success("DiceRobot started")
 
-    logger.success("DiceRobot started")
+        yield
 
-    yield
+        await clean_manager()
+        await clean_scheduler()
 
-    logger.info("Stop DiceRobot")
-
-    clean_manager()
-    clean_scheduler()
     save_config()
     clean_database()
 
-    logger.success("DiceRobot stopped")
+    logger.warning("DiceRobot stopped")
 
 
 dicerobot = FastAPI(

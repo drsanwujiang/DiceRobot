@@ -1,67 +1,62 @@
-from fastapi import APIRouter, Depends
+import asyncio
+from collections.abc import AsyncGenerator
 
-from ..log import logger
+from loguru import logger
+from fastapi import APIRouter, Depends
+from sse_starlette import ServerSentEvent
+
 from ..auth import verify_jwt_token
 from ..exceptions import BadRequestError
 from ..manage import qq_manager, napcat_manager
-from ..models.panel.qq import RemoveQQRequest
-from . import JSONResponse
+from ..utils import generate_sse
+from ..responses import JSONResponse, EventSourceResponse
+from ..enum import UpdateStatus
+from ..models.router.qq import RemoveQQRequest
 
 router = APIRouter(prefix="/qq")
 
 
 @router.get("/status", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_status() -> JSONResponse:
-    logger.info("QQ manage request received: get status")
+    logger.info("QQ management request received: get status")
 
     return JSONResponse(data={
-        "downloading": qq_manager.is_downloading(),
-        "downloaded": qq_manager.is_downloaded(),
-        "installing": qq_manager.is_installing(),
-        "installed": qq_manager.is_installed(),
-        "version": qq_manager.get_version()
+        "installed": qq_manager.installed(),
+        "version": await qq_manager.get_version()
     })
 
 
-@router.post("/download", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def download() -> JSONResponse:
-    logger.info("QQ manage request received: download")
+@router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def update() -> EventSourceResponse:
+    logger.info("QQ management request received: update")
 
-    if qq_manager.is_downloading():
-        raise BadRequestError(message="QQ DEB file is downloading")
-    elif qq_manager.is_downloaded():
-        raise BadRequestError(message="QQ DEB file already downloaded")
+    task = asyncio.create_task(qq_manager.update())
 
-    qq_manager.download()
+    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+        while True:
+            yield generate_sse({"status": qq_manager.update_status.value})
 
-    return JSONResponse()
+            if qq_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
+                qq_manager.update_status = UpdateStatus.NONE
+                break
+            elif task.done() and qq_manager.update_status != UpdateStatus.COMPLETED:
+                qq_manager.update_status = UpdateStatus.FAILED
+                continue
 
+            await asyncio.sleep(1)
 
-@router.post("/install", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def install() -> JSONResponse:
-    logger.info("QQ manage request received: install")
-
-    if not qq_manager.is_downloaded() or qq_manager.is_downloading():
-        raise BadRequestError(message="QQ DEB file not downloaded")
-    elif qq_manager.is_installing():
-        raise BadRequestError(message="QQ DEB file is installing")
-    elif qq_manager.is_installed():
-        raise BadRequestError(message="QQ already installed")
-
-    qq_manager.install()
-
-    return JSONResponse()
+    return EventSourceResponse(content_generator())
 
 
 @router.post("/remove", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def remove(data: RemoveQQRequest) -> JSONResponse:
-    logger.info("NapCat manage request received: remove")
+    logger.info("NapCat management request received: remove")
 
-    if not qq_manager.is_installed():
+    if not qq_manager.installed():
         raise BadRequestError(message="QQ not installed")
-    elif napcat_manager.is_installed():
+    elif napcat_manager.installed():
         raise BadRequestError(message="NapCat not removed")
 
-    qq_manager.remove(**data.model_dump())
+    await qq_manager.remove(**data.model_dump())
 
     return JSONResponse()

@@ -1,3 +1,9 @@
+import asyncio
+import json
+
+from sse_starlette import ServerSentEvent
+
+
 def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
     updated_mapping = mapping.copy()
 
@@ -9,3 +15,15 @@ def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
                 updated_mapping[k] = v
 
     return updated_mapping
+
+
+async def run_command(command: str) -> asyncio.subprocess.Process:
+    return await asyncio.create_subprocess_shell(
+        command,
+        stdout=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.DEVNULL
+    )
+
+
+def generate_sse(data: dict) -> ServerSentEvent:
+    return ServerSentEvent(json.dumps(data))

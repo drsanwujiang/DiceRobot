@@ -5,11 +5,11 @@ from app.models.report.segment import Image
 from app.network import Client
 
 
-class Paint(OrderPlugin):
-    name = "dicerobot.paint"
-    display_name = "画图（DALL·E）"
+class DallE(OrderPlugin):
+    name = "dicerobot.dall_e"
+    display_name = "DALL·E"
     description = "使用 OpenAI 的 DALL·E 模型生成图片"
-    version = "1.2.1"
+    version = "1.3.0"
 
     default_plugin_settings = {
         "domain": "api.openai.com",
@@ -25,11 +25,11 @@ class Paint(OrderPlugin):
     }
 
     orders = [
-        "paint", "画图", "画画", "生成图片", "生成图像"
+        "dalle", "dall_e", "dall-e"
     ]
     priority = 100
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         self.check_order_content()
         self.check_repetition()
 
@@ -48,21 +48,22 @@ class Paint(OrderPlugin):
         except ValueError:
             raise OrderInvalidError
 
-        result = Client().post(
-            "https://" + self.plugin_settings["domain"] + "/v1/images/generations",
-            headers={
-                "Authorization": f"Bearer {api_key}"
-            },
-            json=request.model_dump(exclude_none=True),
-            timeout=60
-        ).json()
+        async with Client() as client:
+            result = (await client.post(
+                "https://" + self.plugin_settings["domain"] + "/v1/images/generations",
+                headers={
+                    "Authorization": f"Bearer {api_key}"
+                },
+                json=request.model_dump(exclude_none=True),
+                timeout=60
+            )).json()
 
         try:
             response = ImageGenerationResponse.model_validate(result)
         except (ValueError, ValueError):
             raise OrderError(self.replies["content_policy_violated"])
 
-        self.reply_to_sender([Image(data=Image.Data(file=f"base64://{response.data[0].b64_json}"))])
+        await self.reply_to_sender([Image(data=Image.Data(file=f"base64://{response.data[0].b64_json}"))])
 
 
 class ImageGenerationRequest(BaseModel):

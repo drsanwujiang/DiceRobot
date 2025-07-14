@@ -1,49 +1,46 @@
-import sys
-import os
+from collections.abc import Generator
 
 import pytest
 from loguru import logger
 from fastapi.testclient import TestClient
 
-logger.remove()
-logger.add(sys.stdout, level="DEBUG")
+
+@pytest.fixture(scope="session")
+def monkeypatch():
+    with pytest.MonkeyPatch.context() as mp:
+        yield mp
 
 
-@pytest.fixture(autouse=True)
-def _mock_dicerobot(monkeypatch) -> None:
-    def _init_logger() -> None:
-        logger.debug("Mocking init_logger")
-
+@pytest.fixture(scope="session", autouse=True)
+def mock_dicerobot(monkeypatch) -> None:
     def _init_database() -> None:
         logger.debug("Mocking init_database")
 
     def _clean_database() -> None:
         logger.debug("Mocking clean_database")
 
-    def _init_config() -> None:
-        logger.debug("Mocking init_config")
+    def _load_config() -> None:
+        logger.debug("Mocking load_config")
 
     def _save_config() -> None:
         logger.debug("Mocking save_config")
 
-    def _init_manager() -> None:
+    def _init_logger() -> None:
+        logger.debug("Mocking init_logger")
+
+    async def _init_manager() -> None:
         logger.debug("Mocking init_manager")
 
-    def _clean_manager() -> None:
-        logger.debug("Mocking clean_manager")
-
-    monkeypatch.setattr("app.logger", logger)
-    monkeypatch.setattr("app.init_logger", _init_logger)
     monkeypatch.setattr("app.init_database", _init_database)
     monkeypatch.setattr("app.clean_database", _clean_database)
-    monkeypatch.setattr("app.init_config", _init_config)
+    monkeypatch.setattr("app.load_config", _load_config)
     monkeypatch.setattr("app.save_config", _save_config)
+    monkeypatch.setattr("app.init_logger", _init_logger)
     monkeypatch.setattr("app.init_manager", _init_manager)
-    monkeypatch.setattr("app.clean_manager", _clean_manager)
 
 
-@pytest.fixture(autouse=True)
-def _mock_napcat(monkeypatch) -> None:
+@pytest.fixture(scope="session", autouse=True)
+def mock_napcat(monkeypatch) -> None:
     from app.models.network.napcat import (
         GetLoginInfoResponse, GetFriendListResponse, GetGroupInfoResponse, GetGroupListResponse,
         GetGroupMemberInfoResponse, GetGroupMemberListResponse, SendPrivateMessageResponse, SendGroupMessageResponse,
@@ -52,7 +49,7 @@ def _mock_napcat(monkeypatch) -> None:
     from app.models.report.segment import Segment
     from app.enum import GroupAddRequestSubType
 
-    def _get_login_info() -> GetLoginInfoResponse:
+    async def _get_login_info() -> GetLoginInfoResponse:
         logger.debug("Mocking get_login_info")
 
         return GetLoginInfoResponse.model_validate({
@@ -67,7 +64,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_friend_list() -> GetFriendListResponse:
+    async def _get_friend_list() -> GetFriendListResponse:
         logger.debug("Mocking get_friend_list")
 
         return GetFriendListResponse.model_validate({
@@ -94,7 +91,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_group_info(_: int, __: bool = False) -> GetGroupInfoResponse:
+    async def _get_group_info(_: int, __: bool = False) -> GetGroupInfoResponse:
         logger.debug("Mocking get_group_info")
 
         return GetGroupInfoResponse.model_validate({
@@ -111,7 +108,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_group_list() -> GetGroupListResponse:
+    async def _get_group_list() -> GetGroupListResponse:
         logger.debug("Mocking get_group_list")
 
         return GetGroupListResponse.model_validate({
@@ -130,7 +127,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_group_member_info(_: int, __: int, ___: bool = False) -> GetGroupMemberInfoResponse:
+    async def _get_group_member_info(_: int, __: int, ___: bool = False) -> GetGroupMemberInfoResponse:
         logger.debug("Mocking get_group_member_info")
 
         return GetGroupMemberInfoResponse.model_validate({
@@ -161,7 +158,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _get_group_member_list(_: int) -> GetGroupMemberListResponse:
+    async def _get_group_member_list(_: int) -> GetGroupMemberListResponse:
         logger.debug("Mocking get_group_member_list")
 
         return GetGroupMemberListResponse.model_validate({
@@ -214,7 +211,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _send_private_message(_: int, message: list[Segment], __: bool = False) -> SendPrivateMessageResponse:
+    async def _send_private_message(_: int, message: list[Segment], __: bool = False) -> SendPrivateMessageResponse:
         logger.debug("Mocking send_private_message")
         logger.debug(f"Message: {[segment.model_dump() for segment in message]}")
 
@@ -229,7 +226,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _send_group_message(_: int, message: list[Segment], __: bool = False) -> SendGroupMessageResponse:
+    async def _send_group_message(_: int, message: list[Segment], __: bool = False) -> SendGroupMessageResponse:
         logger.debug("Mocking send_group_message")
         logger.debug(f"Message: {[segment.model_dump() for segment in message]}")
 
@@ -244,7 +241,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _set_group_card(_: int, __: int, ___: str = "") -> SetGroupCardResponse:
+    async def _set_group_card(_: int, __: int, ___: str = "") -> SetGroupCardResponse:
         logger.debug("Mocking set_group_card")
 
         return SetGroupCardResponse.model_validate({
@@ -256,7 +253,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _set_group_leave(_: int, __: bool = False) -> SetGroupLeaveResponse:
+    async def _set_group_leave(_: int, __: bool = False) -> SetGroupLeaveResponse:
         logger.debug("Mocking set_group_leave")
 
         return SetGroupLeaveResponse.model_validate({
@@ -268,7 +265,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _set_friend_add_request(_: str, __: bool, ___: str = "") -> SetFriendAddRequestResponse:
+    async def _set_friend_add_request(_: str, __: bool, ___: str = "") -> SetFriendAddRequestResponse:
         logger.debug("Mocking set_friend_add_request")
 
         return SetFriendAddRequestResponse.model_validate({
@@ -280,7 +277,7 @@ def _mock_napcat(monkeypatch) -> None:
             "echo": None
         })
 
-    def _set_group_add_request(
+    async def _set_group_add_request(
         _: str, __: GroupAddRequestSubType, ___: bool, ____: str = ""
     ) -> SetGroupAddRequestResponse:
         logger.debug("Mocking set_group_add_request")
@@ -315,17 +312,19 @@ def _mock_napcat(monkeypatch) -> None:
         monkeypatch.setattr(target, replacement)
 
 
-@pytest.fixture()
-def client() -> TestClient:
+@pytest.fixture(scope="session")
+def client() -> Generator[TestClient]:
+    def _verify_jwt_token() -> None:
+        logger.debug("Mocking verify_jwt_token")
+
+    async def _verify_signature() -> None:
+        logger.debug("Mocking verify_signature")
+
     from app import dicerobot
+    from app.auth import verify_jwt_token, verify_signature
 
-    with TestClient(dicerobot) as client:
+    dicerobot.dependency_overrides[verify_jwt_token] = _verify_jwt_token
+    dicerobot.dependency_overrides[verify_signature] = _verify_signature
+
+    with TestClient(app=dicerobot) as client:
         yield client
-
-
-@pytest.fixture()
-def openai() -> None:
-    from app.config import plugin_settings
-
-    plugin_settings._plugin_settings["dicerobot.chat"]["api_key"] = os.environ.get("TEST_OPENAI_API_KEY") or ""
-    plugin_settings._plugin_settings["dicerobot.conversation"]["api_key"] = os.environ.get("TEST_OPENAI_API_KEY") or ""

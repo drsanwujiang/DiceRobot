@@ -7,6 +7,15 @@ class ApplicationStatus(int, Enum):
     STARTED = 1
 
 
+class UpdateStatus(str, Enum):
+    NONE = "None"
+    CHECKING = "Checking"
+    DOWNLOADING = "Downloading"
+    INSTALLING = "Installing"
+    COMPLETED = "Completed"
+    FAILED = "Failed"
+
+
 class ChatType(str, Enum):
     FRIEND = "friend"
     GROUP = "group"
@@ -101,6 +110,7 @@ class SegmentType(str, Enum):
     TEXT = "text"
     IMAGE = "image"
     AT = "at"
+    REPLY = "reply"
 
 
 class Sex(str, Enum):

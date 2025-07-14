@@ -1,5 +1,7 @@
 import datetime
 
+from apscheduler.triggers.cron import CronTrigger
+
 from plugin import OrderPlugin
 from app.schedule import scheduler
 from app.exceptions import OrderInvalidError, OrderError
@@ -12,7 +14,7 @@ class DailySixtySeconds(OrderPlugin):
     name = "dicerobot.daily_60s"
     display_name = "每天60秒读懂世界"
     description = "每天60秒读懂世界，15条简报+1条微语，让你瞬间了解世界正在发生的大事"
-    version = "1.1.4"
+    version = "1.2.0"
 
     default_plugin_settings = {
         "api": "https://api.2xb.cn/zaob",
@@ -32,12 +34,13 @@ class DailySixtySeconds(OrderPlugin):
     priority = 100
 
     @classmethod
-    def initialize(cls) -> None:
-        scheduler.add_job(cls.send_daily_60s, id=f"{cls.name}.send", trigger="cron", hour=10)
+    async def initialize(cls) -> None:
+        await scheduler.add_schedule(cls.send_daily_60s, CronTrigger(hour=10), id=f"{cls.name}.send")
 
     @classmethod
-    def send_daily_60s(cls) -> None:
-        result = Client().get(cls.get_plugin_setting(key="api")).json()
+    async def send_daily_60s(cls) -> None:
+        async with Client() as client:
+            result = (await client.get(cls.get_plugin_setting(key="api"))).json()
 
         if result["datatime"] == str(datetime.date.today()):
             message = [Image(data=Image.Data(file=result["imageUrl"]))]
@@ -45,9 +48,9 @@ class DailySixtySeconds(OrderPlugin):
             message = cls.get_reply(key="api_error")
 
         for chat_id in cls.get_plugin_setting(key="subscribers"):
-            cls.send_group_message(chat_id, message)
+            await cls.send_group_message(chat_id, message)
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         self.check_order_content()
         self.check_repetition()
 
@@ -57,11 +60,11 @@ class DailySixtySeconds(OrderPlugin):
         if self.chat_id not in self.plugin_settings["subscribers"]:
             self.plugin_settings["subscribers"].append(self.chat_id)
             self.save_plugin_settings()
-            self.reply_to_sender(self.replies["subscribe"])
+            await self.reply_to_sender(self.replies["subscribe"])
         else:
             self.plugin_settings["subscribers"].remove(self.chat_id)
             self.save_plugin_settings()
-            self.reply_to_sender(self.replies["unsubscribe"])
+            await self.reply_to_sender(self.replies["unsubscribe"])
 
     def check_order_content(self) -> None:
         if self.order_content:

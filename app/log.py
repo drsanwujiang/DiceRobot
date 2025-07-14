@@ -1,66 +1,44 @@
-from typing import Union
-import sys
+import logging
 import os
-from datetime import date
-import tarfile
+import sys
 
-from loguru import logger as _logger
+from loguru import logger
 
-LOG_DIR = os.path.join(os.getcwd(), "logs")
-TEMP_LOG_DIR = "/tmp/dicerobot-logs"
-MAX_LENGTH = 1000
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+from .config import status, settings
 
+MAX_LOG_LENGTH = 1000  # Maximum length of log messages
+LOG_LEVEL = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
 
-def truncate_message(record: dict) -> None:
-    if len(record["message"]) > MAX_LENGTH:
-        record["message"] = record["message"][:MAX_LENGTH] + "..."
-
-
-logger = _logger.patch(truncate_message)
 logger.remove()
+
+if status.debug:
+    # Add a console logger for debug mode
+    logger.add(sys.stdout, level="DEBUG", diagnose=True)
+else:
+    # Disable Uvicorn's default loggers
+    logging.getLogger("uvicorn.error").disabled = True
+    logging.getLogger("uvicorn.access").disabled = True
+
+
+def truncate_formatter(record) -> str:
+    if len(record["message"]) > MAX_LOG_LENGTH:
+        record["message"] = record["message"][:MAX_LOG_LENGTH] + "..."
+
+    return (
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS Z}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>\n"
+    )
 
 
 def init_logger() -> None:
-    if os.environ.get("DICEROBOT_DEBUG"):
-        logger.add(sys.stdout, level="DEBUG")
-
-    log_level = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
     logger.add(
-        os.path.join(LOG_DIR, "dicerobot-{time:YYYY-MM-DD}.log"),
-        level=log_level,
+        os.path.join(settings.app.dir.logs, "dicerobot-{time:YYYY-MM-DD}.log"),
+        level=LOG_LEVEL,
+        format=truncate_formatter,
         rotation="00:00",
         retention="365 days",
         compression="tar.gz"
     )
 
     logger.debug("Logger initialized")
-
-
-def load_logs(date_: date) -> Union[list[str], None, False]:
-    date_ = date_.strftime("%Y-%m-%d")
-    file = f"dicerobot-{date_}.log"
-    log_file = os.path.join(LOG_DIR, file)
-    compressed_file = os.path.join(LOG_DIR, f"{file}.tar.gz")
-    temp_log_file = os.path.join(TEMP_LOG_DIR, file)
-
-    if os.path.isfile(log_file):
-        return load_log_file(log_file)
-    elif os.path.isfile(temp_log_file):
-        return load_log_file(temp_log_file)
-    elif os.path.isfile(compressed_file):
-        with tarfile.open(compressed_file, "r:gz") as tar:
-            tar.extract(file, TEMP_LOG_DIR)
-
-        return load_log_file(temp_log_file)
-    else:
-        return None
-
-
-def load_log_file(file: str) -> Union[list[str], False]:
-    # For performance reasons, large log file will not be loaded
-    if os.stat(file).st_size > MAX_FILE_SIZE:
-        return False
-
-    with open(file, "r", encoding="utf-8") as f:
-        return f.readlines()

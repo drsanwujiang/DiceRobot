@@ -19,6 +19,7 @@ class Message(Report):
     message_type: MessageType
     message_id: int
     user_id: int
+    group_id: int = None
     message: list[Segment]
     raw_message: str
     font: int
@@ -44,6 +45,18 @@ class Message(Report):
 
         return parsed_segments
 
+    @property
+    def from_group(self) -> bool:
+        return self.message_type == MessageType.GROUP
+
+    @property
+    def from_friend(self) -> bool:
+        return False
+
+    @property
+    def from_group_temp(self) -> bool:
+        return False
+
 
 class PrivateMessage(Message):
     class Sender(BaseModel):
@@ -56,6 +69,13 @@ class PrivateMessage(Message):
     message_type: Literal[MessageType.PRIVATE] = MessageType.PRIVATE
     sub_type: PrivateMessageSubType
     sender: Sender
+
+    def from_friend(self) -> bool:
+        return self.sub_type and self.sub_type == PrivateMessageSubType.FRIEND
+
+    @property
+    def from_group_temp(self) -> bool:
+        return self.sub_type == PrivateMessageSubType.GROUP
 
 
 class GroupMessage(Message):
@@ -72,7 +92,7 @@ class GroupMessage(Message):
         age: int = None
         area: str = None
         level: str = None
-        role: Role = None  # In rare cases, the sender of a group message may not have role field
+        role: Role = None  # In rare cases, the sender of a group message may not have a role field
         title: str = None
 
     message_type: Literal[MessageType.GROUP] = MessageType.GROUP

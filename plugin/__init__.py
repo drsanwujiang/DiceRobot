@@ -4,14 +4,14 @@ from copy import deepcopy
 
 from app.config import status, plugin_settings, chat_settings, replies
 from app.exceptions import OrderInvalidError, OrderRepetitionExceededError
-from app.enum import ChatType, PrivateMessageSubType, GroupMessageSubType
+from app.enum import ChatType
 from app.utils import deep_update
-from app.models.report.message import Message, PrivateMessage, GroupMessage
+from app.models.report.message import Message
 from app.models.report.notice import Notice
 from app.models.report.request import Request
 from app.models.report.segment import Segment, Text
 from app.network.napcat import (
-    send_private_message as napcat_send_private_message, send_group_message as napcat_send_group_message
+    send_group_message as napcat_send_group_message, send_private_message as napcat_send_private_message
 )
 
 
@@ -33,9 +33,9 @@ class DiceRobotPlugin(ABC):
     description: str
     version: str
 
-    default_plugin_settings: dict[str] = {}
+    default_plugin_settings: dict = {}
 
-    default_replies: dict[str] = {}
+    default_replies: dict = {}
     supported_reply_variables: list[str] = []
 
     @classmethod
@@ -52,7 +52,7 @@ class DiceRobotPlugin(ABC):
         ))
 
     @classmethod
-    def initialize(cls) -> None:
+    async def initialize(cls) -> None:
         """Initialize plugin.
 
         This method is called when the plugin is loaded. Usually used to initialize some resources or tasks that the
@@ -102,7 +102,7 @@ class DiceRobotPlugin(ABC):
         self.replies = replies.get_replies(group=self.name)
 
     @abstractmethod
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         """Execute the plugin.
 
         When there is a message that meets the conditions, an instance of the plugin will be created, then this method
@@ -174,18 +174,21 @@ class OrderPlugin(DiceRobotPlugin):
         self._init_reply_variables()
 
     @abstractmethod
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         pass
 
     def _load_chat(self) -> None:
         """Load chat information and settings."""
 
-        if isinstance(self.message, PrivateMessage) and self.message.sub_type == PrivateMessageSubType.FRIEND:
-            self.chat_type = ChatType.FRIEND
-            self.chat_id = self.message.user_id
-        elif isinstance(self.message, GroupMessage) and self.message.sub_type == GroupMessageSubType.NORMAL:
+        if self.message.from_group:
             self.chat_type = ChatType.GROUP
             self.chat_id = self.message.group_id
+        elif self.message.from_friend:
+            self.chat_type = ChatType.FRIEND
+            self.chat_id = self.message.user_id
+        elif self.message.from_group_temp:
+            self.chat_type = ChatType.TEMP
+            self.chat_id = self.message.user_id
         else:
             raise ValueError
 
@@ -278,7 +281,7 @@ class OrderPlugin(DiceRobotPlugin):
 
         return reply
 
-    def reply_to_sender(self, reply: str | list[Segment]) -> None:
+    async def reply_to_sender(self, reply: str | list[Segment]) -> None:
         """Send reply to the sender.
 
         Args:
@@ -288,41 +291,27 @@ class OrderPlugin(DiceRobotPlugin):
         if isinstance(reply, str):
             reply = [Text(data=Text.Data(text=self.format_reply(reply)))]
 
-        self.reply_to_message_sender(self.message, reply)
+        await self.reply_to_message_sender(self.message, reply)
 
     @classmethod
-    def reply_to_message_sender(cls, message: Message, reply: str | list[Segment]) -> None:
-        """Send reply to the sender of specific message.
+    async def reply_to_message_sender(cls, message: Message, reply: str | list[Segment]) -> None:
+        """Send reply to the sender of the specific message.
 
         Args:
             message: Message.
             reply: Reply string or message.
         """
 
-        if isinstance(message, PrivateMessage) and message.sub_type == PrivateMessageSubType.FRIEND:
-            cls.send_friend_message(message.user_id, reply)
-        elif isinstance(message, GroupMessage) and message.sub_type == GroupMessageSubType.NORMAL:
-            cls.send_group_message(message.group_id, reply)
+        if message.from_group:
+            await cls.send_group_message(message.group_id, reply)
+        elif message.from_friend or message.from_group_temp:
+            await cls.send_private_message(message.user_id, reply)
         else:
             raise RuntimeError("Invalid message type or sub type")
 
     @staticmethod
-    def send_friend_message(user_id: int, message: str | list[Segment]) -> None:
-        """Send message to friend.
-
-        Args:
-            user_id: Friend ID.
-            message: String or segments. String will be converted to a text message.
-        """
-
-        if isinstance(message, str):
-            message = [Text(data=Text.Data(text=message))]
-
-        napcat_send_private_message(user_id, message)
-
-    @staticmethod
-    def send_group_message(group_id: int, message: str | list[Message]) -> None:
-        """Send message to group.
+    async def send_group_message(group_id: int, message: str | list[Message]) -> None:
+        """Send the message to the group.
 
         Args:
             group_id: Group ID.
@@ -332,7 +321,21 @@ class OrderPlugin(DiceRobotPlugin):
         if isinstance(message, str):
             message = [Text(data=Text.Data(text=message))]
 
-        napcat_send_group_message(group_id, message)
+        await napcat_send_group_message(group_id, message)
+
+    @staticmethod
+    async def send_private_message(user_id: int, message: str | list[Segment]) -> None:
+        """Send the message to the user.
+
+        Args:
+            user_id: User ID.
+            message: String or segments. String will be converted to a text message.
+        """
+
+        if isinstance(message, str):
+            message = [Text(data=Text.Data(text=message))]
+
+        await napcat_send_private_message(user_id, message)
 
 
 class EventPlugin(DiceRobotPlugin):
@@ -357,5 +360,5 @@ class EventPlugin(DiceRobotPlugin):
         self.reply_variables = {}
 
     @abstractmethod
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         pass

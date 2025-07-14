@@ -1,32 +1,40 @@
-[tool.poetry]
+[project]
 name = "dicerobot"
-version = "4.4.3"
+version = "4.5.0"
 description = "A TRPG assistant bot"
-authors = ["Drsanwujiang <drsanwujiang@gmail.com>"]
-license = "MIT"
+authors = [
+    { name = "Drsanwujiang", email = "drsanwujiang@gmail.com" },
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "uvicorn[standard] (>=0.35.0,<0.36.0)",
+    "fastapi (>=0.115.0,<0.116.0)",
+    "loguru (>=0.7.0,<0.8.0)",
+    "sqlalchemy (>=2.0.0,<3.0.0)",
+    "pydantic (>=2.11.0,<3.0.0)",
+    "httpx (>=0.28.0,<0.29.0)",
+    "apscheduler (==4.0.0a6)",
+    "pyjwt (>=2.10.0,<3.0.0)",
+    "werkzeug (>=3.1.0,<4.0.0)",
+    "semver (>=3.0.0,<4.0.0)",
+    "watchfiles (>=1.1.0,<2.0.0)",
+    "aiofiles (>=24.1.0,<25.0.0)",
+    "sse-starlette (>=2.4.0,<3.0.0)",
+]
+
+[project.urls]
 homepage = "https://dicerobot.tech/"
 repository = "https://github.com/drsanwujiang/DiceRobot"
 documentation = "https://docs.dicerobot.tech/"
-include = [
-    "LICENSE",
-]
+
+[tool.poetry]
+requires-poetry = ">=2.0"
 package-mode = false
 
-[tool.poetry.dependencies]
-python = "^3.10"
-uvicorn = "^0.30.0"
-fastapi = "^0.111.0"
-loguru = "^0.7.0"
-sqlalchemy = "^2.0.0"
-pydantic = "^2.7.0"
-httpx = "^0.27.0"
-apscheduler = "^3.10.0"
-pyjwt = "^2.8.0"
-werkzeug = "^3.0.0"
-
 [tool.poetry.group.test.dependencies]
-pytest = "^8.1.0"
+pytest = "^8.4.0"
 
 [[tool.poetry.source]]
 name = "tsinghua"
@@ -34,5 +42,5 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 priority = "primary"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

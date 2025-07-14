@@ -11,7 +11,7 @@ class Bot(OrderPlugin):
     name = "dicerobot.bot"
     display_name = "Bot 控制"
     description = "与 Bot 有关的各种指令"
-    version = "1.1.1"
+    version = "1.2.0"
 
     default_replies = {
         "about": "DiceRobot {&版本}\nMIT License\n© 2019-{&当前年份} Drsanwujiang",
@@ -58,7 +58,7 @@ class Bot(OrderPlugin):
 
         return super().check_enabled()
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         self.check_repetition()
 
         if self.suborder == "" or self.suborder == "about":
@@ -68,7 +68,7 @@ class Bot(OrderPlugin):
         elif self.suborder == "disable":
             self.disable()
         elif self.suborder == "nickname":
-            self.nickname()
+            await self.nickname()
         else:
             raise OrderInvalidError
 
@@ -110,7 +110,7 @@ class Bot(OrderPlugin):
         self.dicerobot_chat_settings["enabled"] = False
         self.reply_to_sender(self.replies["disable"])
 
-    def nickname(self) -> None:
+    async def nickname(self) -> None:
         # Ignore if not in group chat
         if self.chat_type != ChatType.GROUP:
             return
@@ -121,18 +121,18 @@ class Bot(OrderPlugin):
         if self.suborder_content:
             # Set nickname
             self.dicerobot_chat_settings["nickname"] = self.suborder_content
-            set_group_card(self.chat_id, status.bot.id, self.suborder_content)
+            await set_group_card(self.chat_id, status.bot.id, self.suborder_content)
             self.update_reply_variables({
                 "机器人": self.suborder_content,
                 "机器人昵称": self.suborder_content
             })
-            self.reply_to_sender(self.replies["nickname_set"])
+            await self.reply_to_sender(self.replies["nickname_set"])
         else:
             # Unset nickname
             self.dicerobot_chat_settings["nickname"] = ""
-            set_group_card(self.chat_id, status.bot.id, "")
+            await set_group_card(self.chat_id, status.bot.id, "")
             self.update_reply_variables({
                 "机器人": status.bot.nickname,
                 "机器人昵称": status.bot.nickname
             })
-            self.reply_to_sender(self.replies["nickname_unset"])
+            await self.reply_to_sender(self.replies["nickname_unset"])

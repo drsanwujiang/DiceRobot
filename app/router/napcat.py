@@ -1,126 +1,139 @@
-from fastapi import APIRouter, Depends
+import asyncio
+from collections.abc import AsyncGenerator
 
-from ..log import logger
+from loguru import logger
+from fastapi import APIRouter, Depends
+from sse_starlette import ServerSentEvent
+
 from ..auth import verify_jwt_token
 from ..config import settings
 from ..exceptions import ResourceNotFoundError, BadRequestError
 from ..manage import qq_manager, napcat_manager
-from ..models.panel.napcat import UpdateNapCatSettingsRequest
-from . import JSONResponse
+from ..utils import generate_sse
+from ..responses import JSONResponse, EventSourceResponse
+from ..enum import UpdateStatus
+from ..models.router.napcat import UpdateNapCatSettingsRequest
 
 router = APIRouter(prefix="/napcat")
 
 
 @router.get("/status", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_status() -> JSONResponse:
-    logger.info("NapCat manage request received: get status")
+    logger.info("NapCat management request received: get status")
 
     return JSONResponse(data={
-        "downloading": napcat_manager.is_downloading(),
-        "downloaded": napcat_manager.is_downloaded(),
-        "installed": napcat_manager.is_installed(),
-        "configured": napcat_manager.is_configured(),
-        "running": napcat_manager.is_running(),
-        "version": napcat_manager.get_version()
+        "installed": napcat_manager.installed(),
+        "configured": napcat_manager.configured(),
+        "running": await napcat_manager.running(),
+        "version": await napcat_manager.get_version()
     })
 
 
-@router.post("/download", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def download() -> JSONResponse:
-    logger.info("NapCat manage request received: download")
+@router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def download() -> EventSourceResponse:
+    logger.info("NapCat management request received: update")
 
-    if napcat_manager.is_downloading():
-        raise BadRequestError(message="NapCat ZIP file is downloading")
-    elif napcat_manager.is_downloaded():
-        raise BadRequestError(message="NapCat ZIP file already downloaded")
-
-    napcat_manager.download()
-
-    return JSONResponse()
-
-
-@router.post("/install", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def install() -> JSONResponse:
-    logger.info("NapCat manage request received: install")
-
-    if not qq_manager.is_installed():
+    if not qq_manager.installed():
         raise BadRequestError(message="QQ not installed")
-    elif not napcat_manager.is_downloaded() or napcat_manager.is_downloading():
-        raise BadRequestError(message="NapCat ZIP file not downloaded")
-    elif napcat_manager.is_installed():
-        raise BadRequestError(message="NapCat already installed")
 
-    napcat_manager.install()
+    task = asyncio.create_task(napcat_manager.update())
 
-    return JSONResponse()
+    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+        while True:
+            yield generate_sse({"status": napcat_manager.update_status.value})
+
+            if napcat_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
+                napcat_manager.update_status = UpdateStatus.NONE
+                break
+            elif task.done() and napcat_manager.update_status != UpdateStatus.COMPLETED:
+                napcat_manager.update_status = UpdateStatus.FAILED
+                continue
+
+            await asyncio.sleep(1)
+
+    return EventSourceResponse(content_generator())
 
 
 @router.post("/remove", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def remove() -> JSONResponse:
-    logger.info("NapCat manage request received: remove")
+    logger.info("NapCat management request received: remove")
 
-    if not napcat_manager.is_installed():
+    if not napcat_manager.installed():
         raise BadRequestError(message="NapCat not installed")
-    elif napcat_manager.is_running():
+    elif await napcat_manager.running():
         raise BadRequestError(message="NapCat not stopped")
 
-    napcat_manager.remove()
+    await napcat_manager.remove()
 
     return JSONResponse()
 
 
 @router.post("/start", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def start() -> JSONResponse:
-    logger.info("NapCat manage request received: start")
+    logger.info("NapCat management request received: start")
 
-    if not qq_manager.is_installed():
+    if not qq_manager.installed():
         raise BadRequestError(message="QQ not installed")
-    elif not napcat_manager.is_installed():
+    elif not napcat_manager.installed():
         raise BadRequestError(message="NapCat not installed")
-    elif not napcat_manager.is_configured():
+    elif not napcat_manager.configured():
         raise BadRequestError(message="NapCat not configured")
-    elif napcat_manager.is_running():
+    elif await napcat_manager.running():
         raise BadRequestError(message="NapCat already running")
 
-    napcat_manager.start()
+    await napcat_manager.start()
 
     return JSONResponse()
 
 
 @router.post("/stop", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def stop() -> JSONResponse:
-    logger.info("NapCat manage request received: stop")
+    logger.info("NapCat management request received: stop")
 
-    if not napcat_manager.is_running():
+    if not await napcat_manager.running():
         raise BadRequestError(message="NapCat not running")
 
-    napcat_manager.stop()
+    await napcat_manager.stop()
 
     return JSONResponse()
 
 
 @router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_logs() -> JSONResponse:
-    logger.info("NapCat manage request received: get logs")
+async def get_logs() -> EventSourceResponse:
+    logger.info("NapCat management request received: get logs")
 
-    if not napcat_manager.is_running():
+    if not await napcat_manager.running():
         raise BadRequestError(message="NapCat not running")
-    elif not (logs := napcat_manager.get_logs()):
+    elif not (filename := napcat_manager.get_log_file()):
         raise ResourceNotFoundError(message="Logs not found")
 
-    return JSONResponse(data=logs)
+    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+        async for batch in napcat_manager.log.load(filename):
+            yield generate_sse({"logs": batch})
+
+        queue = await napcat_manager.log.subscribe(filename)
+
+        try:
+            while True:
+                yield generate_sse({"logs": await queue.get()})
+        except asyncio.CancelledError:
+            logger.debug("Server-sent event stream cancelled")
+        finally:
+            await napcat_manager.log.unsubscribe(filename, queue)
+
+    return EventSourceResponse(content_generator())
 
 
 @router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_settings() -> JSONResponse:
-    logger.info("NapCat manage request received: get settings")
+    logger.info("NapCat management request received: get settings")
 
     return JSONResponse(data=settings.napcat.model_dump())
 
 
 @router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def update_napcat_settings(data: UpdateNapCatSettingsRequest) -> JSONResponse:
-    logger.info("NapCat manage request received: update settings")
+    logger.info("NapCat management request received: update settings")
 
     settings.update_napcat(data.model_dump(exclude_none=True))
 

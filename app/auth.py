@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 import hmac
 
+from loguru import logger
 from fastapi import Request, Header
 from werkzeug.security import check_password_hash
 import jwt
 
-from .log import logger
-from .config import status, settings
+from .config import settings
 from .exceptions import TokenInvalidError, SignatureInvalidError
 
 
@@ -48,10 +48,6 @@ async def verify_signature(
     signature: str = Header(alias="X-Signature", min_length=45, max_length=45)
 ) -> None:
     logger.debug("HTTP request received, verify signature")
-
-    if status.debug:
-        logger.debug("Signature verification passed, debug mode")
-        return
 
     signature = signature[5:]
     digest = hmac.digest(

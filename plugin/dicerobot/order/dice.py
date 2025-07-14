@@ -9,7 +9,7 @@ class Dice(OrderPlugin):
     name = "dicerobot.dice"
     display_name = "掷骰"
     description = "掷一个或一堆骰子"
-    version = "1.1.1"
+    version = "1.2.0"
 
     default_plugin_settings = {
         "max_count": 100,
@@ -55,7 +55,7 @@ class Dice(OrderPlugin):
         self.final_result = ""
         self.full_result = ""
 
-    def __call__(self) -> None:
+    async def __call__(self) -> None:
         self.check_repetition()
         self.roll()
         result = self.full_result
@@ -71,7 +71,7 @@ class Dice(OrderPlugin):
             "掷骰原因": self.reason,
             "掷骰结果": result
         })
-        self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
+        await self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
 
     def roll(self) -> None:
         self.parse_content()

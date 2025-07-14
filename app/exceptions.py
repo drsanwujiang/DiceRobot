@@ -1,47 +1,47 @@
 from .config import replies
 
 
-class DiceRobotException(Exception):
+class DiceRobotRuntimeException(Exception):
     def __init__(self, reply: str) -> None:
         self.reply = reply
 
 
-class NetworkClientError(DiceRobotException):
+class NetworkClientError(DiceRobotRuntimeException):
     def __init__(self) -> None:
         super().__init__(replies.get_reply(group="dicerobot", key="network_client_error"))
 
 
-class NetworkServerError(DiceRobotException):
+class NetworkServerError(DiceRobotRuntimeException):
     def __init__(self) -> None:
         super().__init__(replies.get_reply(group="dicerobot", key="network_server_error"))
 
 
-class NetworkInvalidContentError(DiceRobotException):
+class NetworkInvalidContentError(DiceRobotRuntimeException):
     def __init__(self) -> None:
         super().__init__(replies.get_reply(group="dicerobot", key="network_invalid_content"))
 
 
-class NetworkError(DiceRobotException):
+class NetworkError(DiceRobotRuntimeException):
     def __init__(self) -> None:
         super().__init__(replies.get_reply(group="dicerobot", key="network_error"))
 
 
-class OrderInvalidError(DiceRobotException):
+class OrderInvalidError(DiceRobotRuntimeException):
     def __init__(self) -> None:
         super().__init__(replies.get_reply(group="dicerobot", key="order_invalid"))
 
 
-class OrderSuspiciousError(DiceRobotException):
+class OrderSuspiciousError(DiceRobotRuntimeException):
     def __init__(self) -> None:
         super().__init__(replies.get_reply(group="dicerobot", key="order_suspicious"))
 
 
-class OrderRepetitionExceededError(DiceRobotException):
+class OrderRepetitionExceededError(DiceRobotRuntimeException):
     def __init__(self) -> None:
         super().__init__(replies.get_reply(group="dicerobot", key="order_repetition_exceeded"))
 
 
-class OrderError(DiceRobotException):
+class OrderError(DiceRobotRuntimeException):
     pass
 
 

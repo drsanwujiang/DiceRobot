@@ -1,4 +1,5 @@
 from typing import Any
+import os
 import secrets
 from ipaddress import IPv4Address
 from copy import deepcopy
@@ -91,6 +92,7 @@ class Settings:
         Attributes:
             security: Security settings.
             app: Application settings.
+            cloud: DiceRobot cloud settings.
             napcat: NapCat settings.
         """
 
@@ -140,18 +142,93 @@ class Settings:
             """Application settings.
 
             Attributes:
-                start_napcat_at_startup: Whether to start NapCat at startup.
+                dir: Application directory settings.
             """
 
-            start_napcat_at_startup: bool = False
+            class Directory(BaseModel):
+                """Application directory settings.
+
+                Attributes:
+                    base: Base directory of the application.
+                    logs: Logs directory of the application.
+                    temp: Temporary directory of the application.
+                """
+
+                base: str = os.getcwd()
+                logs: str = os.path.join(base, "logs")
+                temp: str = os.path.join(base, "temp")
+
+            dir: Directory = Directory()
+
+        class Cloud(BaseModel):
+            """DiceRobot cloud settings.
+
+            Attributes:
+                api: DiceRobot cloud API settings.
+                download: DiceRobot cloud download settings.
+            """
+
+            class API(BaseModel):
+                """DiceRobot cloud API settings.
+
+                Attributes:
+                    base_url: DiceRobot cloud API base URL.
+                """
+                base_url: str = "https://api.dicerobot.tech"
+
+            class Download(BaseModel):
+                """DiceRobot cloud download settings.
+
+                Attributes:
+                    base_url: DiceRobot cloud download base URL.
+                """
+                base_url: str = "https://download.dicerobot.tech"
+
+            api: API = API()
+            download: Download = Download()
+
+        class QQ(BaseModel):
+            """QQ settings.
+
+            Attributes:
+                dir: QQ directory settings.
+            """
+
+            class Directory(BaseModel):
+                """QQ directory settings.
+
+                Attributes:
+                    base: Base directory of QQ.
+                    config: Configuration directory of QQ.
+                """
+
+                base: str = "/opt/QQ"
+                config: str = "/root/.config/QQ"
+
+            dir: Directory = Directory()
 
         class NapCat(BaseModel):
             """NapCat settings.
 
             Attributes:
+                dir: NapCat directory settings.
                 api: NapCat API settings.
                 account: QQ account.
+                autostart: Whether to start NapCat at application startup.
             """
+
+            class Directory(BaseModel):
+                """NapCat directory settings.
+
+                Attributes:
+                    base: Base directory of NapCat.
+                    logs: Logs directory of NapCat.
+                    config: Configuration directory of NapCat.
+                """
+
+                base: str = "/opt/QQ/resources/app/app_launcher/napcat"
+                logs: str = os.path.join(base, "logs")
+                config: str = os.path.join(base, "config")
 
             class API(BaseModel):
                 """NapCat API settings.
@@ -168,15 +245,20 @@ class Settings:
                 def serialize_host(self, host: IPv4Address, _) -> str:
                     return str(host)
 
+                # noinspection HttpUrlsUsage
                 @property
                 def base_url(self) -> str:
                     return f"http://{self.host}:{self.port}"
 
+            dir: Directory = Directory()
             api: API = API()
             account: int = -1
+            autostart: bool = False
 
         security: Security = Security()
         app: Application = Application()
+        cloud: Cloud = Cloud()
+        qq: QQ = QQ()
         napcat: NapCat = NapCat()
 
     _settings: _Settings = _Settings()
@@ -262,7 +344,7 @@ class PluginSettings:
             plugin: Plugin name.
 
         Returns:
-            A deep copy of the settings of the plugin, for preventing modification.
+            A deep copy of the settings for preventing modification.
         """
 
         return deepcopy(cls._plugin_settings.setdefault(plugin, {}))
@@ -366,7 +448,7 @@ class Replies:
             group: Reply group, usually the name of the plugin.
 
         Returns:
-            A deep copy of the replies of the reply group, for preventing modification.
+            A deep copy of the replies for preventing modification.
         """
 
         return deepcopy(cls._replies.setdefault(group, {}))
