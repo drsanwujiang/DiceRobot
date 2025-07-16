@@ -8,12 +8,12 @@ class ApplicationStatus(int, Enum):
 
 
 class UpdateStatus(str, Enum):
-    NONE = "None"
-    CHECKING = "Checking"
-    DOWNLOADING = "Downloading"
-    INSTALLING = "Installing"
-    COMPLETED = "Completed"
-    FAILED = "Failed"
+    NONE = "none"
+    CHECKING = "checking"
+    DOWNLOADING = "downloading"
+    INSTALLING = "installing"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class ChatType(str, Enum):
