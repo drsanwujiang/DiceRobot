@@ -31,6 +31,9 @@ async def get_status() -> JSONResponse:
 async def update() -> EventSourceResponse:
     logger.info("QQ management request received: update")
 
+    if napcat_manager.installed():
+        raise BadRequestError(message="NapCat not removed")
+
     task = asyncio.create_task(qq_manager.update())
 
     async def content_generator() -> AsyncGenerator[ServerSentEvent]:

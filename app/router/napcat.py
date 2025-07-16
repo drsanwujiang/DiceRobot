@@ -35,6 +35,8 @@ async def update() -> EventSourceResponse:
 
     if not qq_manager.installed():
         raise BadRequestError(message="QQ not installed")
+    elif await napcat_manager.running():
+        raise BadRequestError(message="NapCat not stopped")
 
     task = asyncio.create_task(napcat_manager.update())
 
