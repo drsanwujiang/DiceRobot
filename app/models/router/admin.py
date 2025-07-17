@@ -35,8 +35,8 @@ class UpdateSecuritySettingsRequest(BaseModel):
 
 class UpdateApplicationSettingsRequest(BaseModel):
     class Directory(BaseModel):
-        base: str
-        logs: str
-        temp: str
+        base: str = None
+        logs: str = None
+        temp: str = None
 
     dir: Directory = None
