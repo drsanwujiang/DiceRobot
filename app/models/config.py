@@ -305,6 +305,18 @@ class Settings:
         )
 
     @classmethod
+    def update_qq(cls, settings: dict) -> None:
+        """Update QQ settings.
+
+        Args:
+            settings: New QQ settings.
+        """
+
+        cls._settings.qq = cls._Settings.QQ.model_validate(
+            deep_update(cls._settings.qq.model_dump(), settings)
+        )
+
+    @classmethod
     def update_napcat(cls, settings: dict) -> None:
         """Update NapCat settings.
 

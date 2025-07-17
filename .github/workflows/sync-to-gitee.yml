@@ -6,7 +6,9 @@ on:
 
 jobs:
   sync-to-gitee:
+    name: Sync repository to Gitee
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -14,7 +16,8 @@ jobs:
           fetch-depth: 0
 
       - name: Sync to Gitee
-        run: |
-          git remote add gitee https://drsanwujiang:${{ secrets.GITEE_TOKEN }}@gitee.com/drsanwujiang/DiceRobot.git
-          git push --force --all gitee
-          git push --force --tags gitee
+        uses: abersheeran/sync-gitee-mirror@v1-beta
+        with:
+          repository: abersheeran/sync-gitee-mirror
+          username: drsanwujiang
+          password: ${{ secrets.GITEE_TOKEN }}

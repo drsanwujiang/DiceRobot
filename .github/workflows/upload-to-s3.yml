@@ -6,14 +6,16 @@ on:
 
 jobs:
   upload-to-s3:
+    name: Upload source code to S3
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Compress source code
         run: |
-          zip -r dicerobot-${{ github.ref_name }}.zip .
+          zip -r dicerobot-${{ github.ref_name }}.zip . -x ".git/*"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

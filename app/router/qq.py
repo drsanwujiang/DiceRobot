@@ -6,12 +6,13 @@ from fastapi import APIRouter, Depends
 from sse_starlette import ServerSentEvent
 
 from ..auth import verify_jwt_token
+from ..config import settings
 from ..exceptions import BadRequestError
 from ..manage import qq_manager, napcat_manager
 from ..utils import generate_sse
 from ..responses import JSONResponse, EventSourceResponse
 from ..enum import UpdateStatus
-from ..models.router.qq import RemoveQQRequest
+from ..models.router.qq import RemoveQQRequest, UpdateQQSettingsRequest
 
 router = APIRouter(prefix="/qq")
 
@@ -29,6 +30,9 @@ async def get_status() -> JSONResponse:
 @router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def update() -> EventSourceResponse:
     logger.info("QQ management request received: update")
+
+    if napcat_manager.installed():
+        raise BadRequestError(message="NapCat not removed")
 
     task = asyncio.create_task(qq_manager.update())
 
@@ -50,7 +54,7 @@ async def update() -> EventSourceResponse:
 
 @router.post("/remove", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def remove(data: RemoveQQRequest) -> JSONResponse:
-    logger.info("NapCat management request received: remove")
+    logger.info("QQ management request received: remove")
 
     if not qq_manager.installed():
         raise BadRequestError(message="QQ not installed")
@@ -58,5 +62,21 @@ async def remove(data: RemoveQQRequest) -> JSONResponse:
         raise BadRequestError(message="NapCat not removed")
 
     await qq_manager.remove(**data.model_dump())
+
+    return JSONResponse()
+
+
+@router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def get_settings() -> JSONResponse:
+    logger.info("QQ management request received: get settings")
+
+    return JSONResponse(data=settings.qq.model_dump())
+
+
+@router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def update_settings(data: UpdateQQSettingsRequest) -> JSONResponse:
+    logger.info("QQ management request received: update settings")
+
+    settings.update_qq(data.model_dump(exclude_none=True))
 
     return JSONResponse()

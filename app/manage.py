@@ -132,7 +132,10 @@ class LogHelper:
                 watcher.stop()
 
                 # Clean temporary files
-                if os.path.isfile(os.path.join(self.logs_dir, f"{filename}.tar.gz")):
+                if all([
+                    os.path.isfile(os.path.join(self.logs_dir, f"{filename}.tar.gz")),
+                    os.path.isfile(os.path.join(self.logs_dir, filename))
+                ]):
                     os.remove(os.path.join(self.logs_dir, filename))
 
 
@@ -245,7 +248,13 @@ class QQManager(Manager):
         logger.info("Check latest version of QQ")
 
         self.update_status = UpdateStatus.CHECKING
+        current_version = await self.get_version()
         latest_version = (await get_versions()).data.qq
+
+        if current_version and current_version >= latest_version:
+            logger.info("No updates available")
+            self.update_status = UpdateStatus.COMPLETED
+            return
 
         logger.info(f"Download QQ, version: {latest_version}")
 
@@ -263,9 +272,10 @@ class QQManager(Manager):
             self.update_status = UpdateStatus.FAILED
             return
 
-        logger.info("Install Debian package")
-
         self.update_status = UpdateStatus.INSTALLING
+        await self.remove()
+
+        logger.info("Install Debian package")
 
         if (await (await run_command(f"apt-get install -y -qq {deb_file}")).wait()) != 0:
             logger.error("Failed to install Debian package")
@@ -287,6 +297,8 @@ class QQManager(Manager):
 
         if purge:
             shutil.rmtree(settings.qq.dir.config, ignore_errors=True)
+
+        logger.info("QQ removed")
 
 
 class NapCatManager(LogManager):
@@ -377,7 +389,13 @@ class NapCatManager(LogManager):
         logger.info("Check latest version of NapCat")
 
         self.update_status = UpdateStatus.CHECKING
+        current_version = await self.get_version()
         latest_version = (await get_versions()).data.napcat
+
+        if current_version and current_version >= latest_version:
+            logger.info("No updates available")
+            self.update_status = UpdateStatus.COMPLETED
+            return
 
         logger.info(f"Download NapCat, version: {latest_version}")
 
@@ -395,9 +413,10 @@ class NapCatManager(LogManager):
             self.update_status = UpdateStatus.FAILED
             return
 
-        logger.info(f"Extract files")
-
         self.update_status = UpdateStatus.INSTALLING
+        await self.remove()
+
+        logger.info(f"Extract files")
 
         with zipfile.ZipFile(zip_file, "r") as z:
             z.extractall(settings.napcat.dir.base)
