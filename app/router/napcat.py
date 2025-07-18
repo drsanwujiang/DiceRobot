@@ -3,13 +3,12 @@ from collections.abc import AsyncGenerator
 
 from loguru import logger
 from fastapi import APIRouter, Depends
-from sse_starlette import ServerSentEvent
+from sse_starlette import JSONServerSentEvent
 
 from ..auth import verify_jwt_token
 from ..config import settings
 from ..exceptions import ResourceNotFoundError, BadRequestError
 from ..manage import qq_manager, napcat_manager
-from ..utils import generate_sse
 from ..responses import JSONResponse, EventSourceResponse
 from ..enum import UpdateStatus
 from ..models.router.napcat import UpdateNapCatSettingsRequest
@@ -40,9 +39,9 @@ async def update() -> EventSourceResponse:
 
     task = asyncio.create_task(napcat_manager.update())
 
-    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
         while True:
-            yield generate_sse({"status": napcat_manager.update_status.value})
+            yield JSONServerSentEvent({"status": napcat_manager.update_status.value})
 
             if napcat_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
                 napcat_manager.update_status = UpdateStatus.NONE
@@ -109,15 +108,15 @@ async def get_logs() -> EventSourceResponse:
     elif not (filename := napcat_manager.get_log_file()):
         raise ResourceNotFoundError(message="Logs not found")
 
-    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
         async for batch in napcat_manager.log.load(filename):
-            yield generate_sse({"logs": batch})
+            yield JSONServerSentEvent({"logs": batch})
 
         queue = await napcat_manager.log.subscribe(filename)
 
         try:
             while True:
-                yield generate_sse({"logs": await queue.get()})
+                yield JSONServerSentEvent({"logs": await queue.get()})
         except asyncio.CancelledError:
             logger.debug("Server-sent event stream cancelled")
         finally:
