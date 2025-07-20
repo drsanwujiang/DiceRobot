@@ -51,6 +51,7 @@ async def get_logs(date_: Annotated[date, Query(alias="date")]) -> EventSourceRe
 
         try:
             while True:
+                # TODO: Timeout
                 yield JSONServerSentEvent({"logs": await queue.get()})
         except asyncio.CancelledError:
             logger.debug("Server-sent event stream cancelled")
@@ -86,14 +87,14 @@ async def update_security_settings(data: UpdateSecuritySettingsRequest) -> JSONR
     return JSONResponse()
 
 
-@router.get("/settings/app", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+@router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_application_settings() -> JSONResponse:
     logger.info("Admin request received: get application settings")
 
     return JSONResponse(data=settings.app.model_dump())
 
 
-@router.patch("/settings/app", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+@router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def update_application_settings(data: UpdateApplicationSettingsRequest) -> JSONResponse:
     logger.info("Admin request received: update application settings")
 

@@ -18,11 +18,11 @@ class TestAPI(BaseTest):
         })
 
         # Get application settings
-        result = self.send_request(client, "get", "/settings/app")
+        result = self.send_request(client, "get", "/settings")
         assert "dir" in result
 
         # Update application settings
-        self.send_request(client, "patch", "/settings/app", {
+        self.send_request(client, "patch", "/settings", {
             "dir": {
                 "base": "base",
                 "logs": "logs",
