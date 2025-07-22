@@ -51,7 +51,6 @@ async def get_logs(date_: Annotated[date, Query(alias="date")]) -> EventSourceRe
 
         try:
             while True:
-                # TODO: Timeout
                 yield JSONServerSentEvent({"logs": await queue.get()})
         except asyncio.CancelledError:
             logger.debug("Server-sent event stream cancelled")

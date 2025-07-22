@@ -40,7 +40,9 @@ class JSONResponse(JSONResponse_):
 
 class EventSourceResponse(EventSourceResponse_):
     headers = default_headers | {
-        "Content-Type": "text/event-stream; charset=utf-8"
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
     }
 
     def __init__(self, *args, **kwargs) -> None:
