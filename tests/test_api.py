@@ -18,11 +18,11 @@ class TestAPI(BaseTest):
         })
 
         # Get application settings
-        result = self.send_request(client, "get", "/settings/app")
+        result = self.send_request(client, "get", "/settings")
         assert "dir" in result
 
         # Update application settings
-        self.send_request(client, "patch", "/settings/app", {
+        self.send_request(client, "patch", "/settings", {
             "dir": {
                 "base": "base",
                 "logs": "logs",
@@ -58,6 +58,18 @@ class TestAPI(BaseTest):
         # Get QQ status
         result = self.send_request(client, "get", "/qq/status")
         assert "version" in result
+
+        # Get QQ settings
+        result = self.send_request(client, "get", "/qq/settings")
+        assert "dir" in result
+
+        # Update QQ settings
+        self.send_request(client, "patch", "/qq/settings", {
+            "dir": {
+                "base": "base",
+                "config": "config"
+            }
+        })
 
     def test_napcat_routes(self, client: TestClient):
         self.wait_for_running()

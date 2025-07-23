@@ -8,7 +8,7 @@ import aiofiles
 from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
-from app.models.report.segment import Text, Image, Reply
+from app.models.report.segment import Segment, Text, Image, Reply
 from app.network import Client
 from app.network.napcat import get_image
 
@@ -17,21 +17,22 @@ class Chat(OrderPlugin):
     name = "dicerobot.chat"
     display_name = "AI 聊天"
     description = "使用大语言模型进行聊天对话"
-    version = "2.0.0"
+    version = "2.1.0"
 
     default_plugin_settings = {
-        "base_url": "https://api.openai.com",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key": "",
-        "model": "gpt-4.1-mini"
+        "model": "qwen3-235b-a22b"
     }
 
     default_replies = {
         "unusable": "请先设置神秘代码~",
-        "rate_limit_exceeded": "哎呀，思考不过来了呢……请重新再试一次吧~"
+        "response_invalid": "哎呀，AI有点忙不过来了呢……请重新再试一次吧~"
     }
 
     orders = [
-        "chat", "聊天"
+        "chat", "聊天",
+        "think", "思考"
     ]
     priority = 100
 
@@ -41,6 +42,16 @@ class Chat(OrderPlugin):
 
         if not (api_key := self.plugin_settings["api_key"]):
             raise OrderError(self.replies["unusable"])
+
+        model = self.plugin_settings["model"]
+        enable_thinking = None
+
+        # Only for Qwen
+        if model.startswith("qwen"):
+            if self.order in ["chat", "聊天"]:
+                enable_thinking = False
+            elif self.order in ["think", "思考"]:
+                enable_thinking = True
 
         try:
             content = []
@@ -66,12 +77,13 @@ class Chat(OrderPlugin):
                     }))
 
             request = ChatCompletionRequest.model_validate({
-                "model": self.plugin_settings["model"],
+                "model": model,
                 "messages": [{
                     "role": "user",
                     "content": content
                 }],
-                "stream": True
+                "stream": True,
+                "enable_thinking": enable_thinking
             })
         except ValueError:
             raise OrderInvalidError
@@ -81,7 +93,7 @@ class Chat(OrderPlugin):
         async with Client() as client:
             async with client.stream(
                 "POST",
-                self.plugin_settings["base_url"].rstrip("/") + "/v1/chat/completions",
+                self.plugin_settings["base_url"].rstrip("/") + "/chat/completions",
                 headers={
                     "Authorization": f"Bearer {api_key}"
                 },
@@ -98,12 +110,12 @@ class Chat(OrderPlugin):
                         try:
                             completion_chunk = ChatCompletionChunk.model_validate_json(data)
                         except ValueError:
-                            raise OrderError(self.replies["rate_limit_exceeded"])
+                            raise OrderError(self.replies["response_invalid"])
 
                         if content := completion_chunk.choices[0].delta.content:
                             completion_content += content
 
-        reply = [Text(data=Text.Data(text=completion_content))]
+        reply: list[Segment] = [Text(data=Text.Data(text=completion_content))]
 
         if self.message.from_group:
             reply.insert(0, Reply(data=Reply.Data(id=self.message.message_id)))
@@ -137,13 +149,15 @@ class ChatCompletionRequest(BaseModel):
     model: str
     messages: list[ChatCompletion]
     stream: bool = None
+    enable_thinking: bool = None  # Only for Qwen
 
 
 class ChatCompletionChunk(BaseModel):
     class ChatCompletionChoice(BaseModel):
         class ChatCompletionDelta(BaseModel):
             role: str = None
-            content: str = None
+            content: str | None = None
+            reasoning_content: str | None = None
 
         index: int
         delta: ChatCompletionDelta

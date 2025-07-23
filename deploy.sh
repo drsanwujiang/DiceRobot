@@ -108,13 +108,21 @@ if ! (apt-get -y -qq install curl xvfb libnss3 libgbm1 libasound2 > /dev/null 2>
   error "Failed to install QQ dependencies"
 fi
 
-if ! (poetry install > /dev/null 2>&1); then
+if ! (poetry install > /dev/null 2>&1 && apt-get -y -qq install openssl > /dev/null 2>&1); then
   error "Failed to install DiceRobot dependencies"
 fi
 
-# Create service
-echo "Create service"
+# Configure DiceRobot
+echo "Configure DiceRobot"
 
+# Create self-signed certificates
+mkdir -p certificates
+openssl ecparam -name prime256v1 -genkey -out certificates/ca.key > /dev/null 2>&1
+openssl req -new -x509 -days 3650 -key certificates/ca.key -out certificates/ca.crt -subj "/CN=DiceRobot CA" > /dev/null 2>&1
+openssl ecparam -name prime256v1 -genkey -out certificates/server.key > /dev/null 2>&1
+openssl req -new -key certificates/server.key -subj "/CN=DiceRobot" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1" | openssl x509 -req -days 3650 -CA certificates/ca.crt -CAkey certificates/ca.key -out certificates/server.crt -copy_extensions copyall > /dev/null 2>&1
+
+# Create systemd service
 cat > /etc/systemd/system/dicerobot.service <<EOF
 [Unit]
 Description=A TRPG assistant bot
@@ -123,7 +131,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$(pwd)
-ExecStart=${HOME}/.local/bin/poetry run uvicorn app:dicerobot --host ${host} --port ${port} --no-server-header --timeout-graceful-shutdown 0
+ExecStart=${HOME}/.local/bin/poetry run uvicorn app:dicerobot --host ${host} --port ${port} --no-server-header --timeout-graceful-shutdown 0 --ssl-keyfile certificates/server.key --ssl-certfile certificates/server.crt --ssl-ca-certs certificates/ca.crt
 
 [Install]
 WantedBy=multi-user.target

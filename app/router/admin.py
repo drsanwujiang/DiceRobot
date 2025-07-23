@@ -5,14 +5,13 @@ from collections.abc import AsyncGenerator
 
 from loguru import logger
 from fastapi import APIRouter, Depends, Query
-from sse_starlette import ServerSentEvent
+from sse_starlette import JSONServerSentEvent
 
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
 from ..dispatch import dispatcher
 from ..exceptions import ParametersInvalidError, ResourceNotFoundError
 from ..manage import dicerobot_manager
-from ..utils import generate_sse
 from ..responses import JSONResponse, EventSourceResponse
 from ..enum import ChatType, UpdateStatus
 from ..models.router.admin import (
@@ -44,15 +43,15 @@ async def get_logs(date_: Annotated[date, Query(alias="date")]) -> EventSourceRe
     if not dicerobot_manager.log.check(filename := "dicerobot-" + date_.strftime("%Y-%m-%d") + ".log"):
         raise ResourceNotFoundError(message="Logs not found")
 
-    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
         async for batch in dicerobot_manager.log.load(filename):
-            yield generate_sse({"logs": batch})
+            yield JSONServerSentEvent({"logs": batch})
 
         queue = await dicerobot_manager.log.subscribe(filename)
 
         try:
             while True:
-                yield generate_sse({"logs": await queue.get()})
+                yield JSONServerSentEvent({"logs": await queue.get()})
         except asyncio.CancelledError:
             logger.debug("Server-sent event stream cancelled")
         finally:
@@ -87,14 +86,14 @@ async def update_security_settings(data: UpdateSecuritySettingsRequest) -> JSONR
     return JSONResponse()
 
 
-@router.get("/settings/app", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+@router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_application_settings() -> JSONResponse:
     logger.info("Admin request received: get application settings")
 
     return JSONResponse(data=settings.app.model_dump())
 
 
-@router.patch("/settings/app", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+@router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def update_application_settings(data: UpdateApplicationSettingsRequest) -> JSONResponse:
     logger.info("Admin request received: update application settings")
 
@@ -218,9 +217,9 @@ async def update() -> EventSourceResponse:
 
     task = asyncio.create_task(dicerobot_manager.update())
 
-    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
         while True:
-            yield generate_sse({"status": dicerobot_manager.update_status.value})
+            yield JSONServerSentEvent({"status": dicerobot_manager.update_status.value})
 
             if dicerobot_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
                 dicerobot_manager.update_status = UpdateStatus.NONE

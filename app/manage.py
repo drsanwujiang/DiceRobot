@@ -334,7 +334,7 @@ class NapCatManager(LogManager):
                 {
                     "name": "httpClient",
                     "enable": True,
-                    "url": "http://127.0.0.1:9500/report",
+                    "url": "https://127.0.0.1:9500/report",
                     "messagePostFormat": "array",
                     "reportSelfMessage": False,
                     "token": settings.security.webhook.secret,
@@ -473,7 +473,8 @@ WantedBy=multi-user.target""")
             shutil.rmtree(settings.napcat.dir.logs)
 
         async with aiofiles.open(self.env_path, "w") as f:
-            await f.write(f"QQ_ACCOUNT={settings.napcat.account}")
+            await f.write(f"QQ_ACCOUNT={settings.napcat.account}\n")
+            await f.write(f"NODE_EXTRA_CA_CERTS={settings.app.dir.base}/certificates/ca.crt")
 
         async with aiofiles.open(os.path.join(settings.napcat.dir.config, "napcat.json"), "w") as f:
             await f.write(json.dumps(self.napcat_config))

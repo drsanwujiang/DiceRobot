@@ -3,13 +3,12 @@ from collections.abc import AsyncGenerator
 
 from loguru import logger
 from fastapi import APIRouter, Depends
-from sse_starlette import ServerSentEvent
+from sse_starlette import JSONServerSentEvent
 
 from ..auth import verify_jwt_token
 from ..config import settings
 from ..exceptions import BadRequestError
 from ..manage import qq_manager, napcat_manager
-from ..utils import generate_sse
 from ..responses import JSONResponse, EventSourceResponse
 from ..enum import UpdateStatus
 from ..models.router.qq import RemoveQQRequest, UpdateQQSettingsRequest
@@ -36,9 +35,9 @@ async def update() -> EventSourceResponse:
 
     task = asyncio.create_task(qq_manager.update())
 
-    async def content_generator() -> AsyncGenerator[ServerSentEvent]:
+    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
         while True:
-            yield generate_sse({"status": qq_manager.update_status.value})
+            yield JSONServerSentEvent({"status": qq_manager.update_status.value})
 
             if qq_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
                 qq_manager.update_status = UpdateStatus.NONE
