@@ -15,9 +15,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sync to Gitee
-        uses: abersheeran/sync-gitee-mirror@v1-beta
+      - name: Set git credentials
+        uses: de-vri-es/setup-git-credentials@v2
         with:
-          repository: abersheeran/sync-gitee-mirror
-          username: drsanwujiang
-          password: ${{ secrets.GITEE_TOKEN }}
+          credentials: https://${{ secrets.GITEE_TOKEN }}@gitee.com
+
+      - name: Sync to Gitee
+        run: |
+          git remote add gitee https://gitee.com/drsanwujiang/DiceRobot
+          git push --force --all gitee
