@@ -108,21 +108,7 @@ async def get_logs() -> EventSourceResponse:
     elif not (filename := napcat_manager.get_log_file()):
         raise ResourceNotFoundError(message="Logs not found")
 
-    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
-        async for batch in napcat_manager.log.load(filename):
-            yield JSONServerSentEvent({"logs": batch})
-
-        queue = await napcat_manager.log.subscribe(filename)
-
-        try:
-            while True:
-                yield JSONServerSentEvent({"logs": await queue.get()})
-        except asyncio.CancelledError:
-            logger.debug("Server-sent event stream cancelled")
-        finally:
-            await napcat_manager.log.unsubscribe(filename, queue)
-
-    return EventSourceResponse(content_generator())
+    return EventSourceResponse(napcat_manager.get_logs(filename))
 
 
 @router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])

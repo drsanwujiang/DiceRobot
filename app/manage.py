@@ -11,6 +11,7 @@ from loguru import logger
 from watchfiles import Change, awatch
 import aiofiles
 from semver.version import Version
+from sse_starlette import JSONServerSentEvent
 
 from .config import status, settings
 from .enum import UpdateStatus
@@ -148,6 +149,23 @@ class LogManager(Manager):
     def __init__(self, logs_dir: str):
         super().__init__()
         self.log = LogHelper(logs_dir)
+
+    def check_log_file(self, filename: str) -> bool:
+        return self.log.check(filename)
+
+    async def get_logs(self, filename: str) -> AsyncGenerator[JSONServerSentEvent]:
+        async for batch in self.log.load(filename):
+            yield JSONServerSentEvent({"logs": batch})
+
+        queue = await self.log.subscribe(filename)
+
+        try:
+            while True:
+                yield JSONServerSentEvent({"logs": await queue.get()})
+        except asyncio.CancelledError:
+            logger.debug("Server-sent event stream cancelled")
+        finally:
+            await self.log.unsubscribe(filename, queue)
 
     async def clean(self):
         await self.log.clean()

@@ -40,24 +40,10 @@ async def auth(data: AuthRequest) -> JSONResponse:
 async def get_logs(date_: Annotated[date, Query(alias="date")]) -> EventSourceResponse:
     logger.info(f"Admin request received: get logs, date: {date_}")
 
-    if not dicerobot_manager.log.check(filename := "dicerobot-" + date_.strftime("%Y-%m-%d") + ".log"):
+    if not dicerobot_manager.check_log_file(filename := "dicerobot-" + date_.strftime("%Y-%m-%d") + ".log"):
         raise ResourceNotFoundError(message="Logs not found")
 
-    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
-        async for batch in dicerobot_manager.log.load(filename):
-            yield JSONServerSentEvent({"logs": batch})
-
-        queue = await dicerobot_manager.log.subscribe(filename)
-
-        try:
-            while True:
-                yield JSONServerSentEvent({"logs": await queue.get()})
-        except asyncio.CancelledError:
-            logger.debug("Server-sent event stream cancelled")
-        finally:
-            await dicerobot_manager.log.unsubscribe(filename, queue)
-
-    return EventSourceResponse(content_generator())
+    return EventSourceResponse(dicerobot_manager.get_logs(filename))
 
 
 @router.get("/status", dependencies=[Depends(verify_jwt_token, use_cache=False)])
