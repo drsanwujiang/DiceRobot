@@ -1,5 +1,3 @@
-from abc import ABC
-
 from loguru import logger
 from sqlalchemy import Enum, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
@@ -20,7 +18,7 @@ engine = create_engine("sqlite:///database.db", connect_args={"check_same_thread
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-class Base(DeclarativeBase, ABC):
+class Base(DeclarativeBase):
     ...
 
 

@@ -11,6 +11,7 @@ from .config import settings
 
 __all__ = [
     "scheduler",
+    "run_task",
     "init_scheduler",
     "clean_scheduler"
 ]
