@@ -13,7 +13,8 @@ from .models.report.notice import Notice
 from .models.report.request import Request
 
 __all__ = [
-    "dispatcher"
+    "dispatcher",
+    "init_dispatcher"
 ]
 
 
