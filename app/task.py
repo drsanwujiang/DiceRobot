@@ -7,7 +7,15 @@ from .enum import ApplicationStatus
 from .network.napcat import get_login_info, get_friend_list, get_group_list
 from .utils import run_command
 
-state_tasks = [
+__all__ = [
+    "restart",
+    "save_config",
+    "check_bot_status",
+    "refresh_friend_list",
+    "refresh_group_list"
+]
+
+STATE_TASKS = [
     "dicerobot.refresh_friend_list",
     "dicerobot.refresh_group_list"
 ]
@@ -42,7 +50,7 @@ async def check_bot_status() -> None:
             await refresh_group_list()
 
             # Resume state jobs
-            for schedule in state_tasks:
+            for schedule in STATE_TASKS:
                 if (await scheduler.get_schedule(schedule)).paused:
                     await scheduler.unpause_schedule(schedule, resume_from="now")
     except (DiceRobotRuntimeException, ValueError, RuntimeError):
@@ -58,7 +66,7 @@ async def check_bot_status() -> None:
             logger.warning("Status changed: Holding")
 
             # Pause state jobs
-            for schedule in state_tasks:
+            for schedule in STATE_TASKS:
                 await scheduler.pause_schedule(schedule)
 
 

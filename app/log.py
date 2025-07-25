@@ -6,6 +6,10 @@ from loguru import logger
 
 from .config import status, settings
 
+__all__ = [
+    "init_logger"
+]
+
 MAX_LOG_LENGTH = 1000  # Maximum length of log messages
 LOG_LEVEL = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
 

@@ -12,6 +12,10 @@ from .models.report.message import Message
 from .models.report.notice import Notice
 from .models.report.request import Request
 
+__all__ = [
+    "dispatcher"
+]
+
 
 class Dispatcher:
     order_pattern = re.compile(r"^\s*[.\u3002]\s*([\S\s]+?)\s*(?:#([1-9][0-9]*))?$")

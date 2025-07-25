@@ -9,6 +9,12 @@ from apscheduler.triggers.date import DateTrigger
 
 from .config import settings
 
+__all__ = [
+    "scheduler",
+    "init_scheduler",
+    "clean_scheduler"
+]
+
 tasks: dict[str, Callable] = {}
 scheduler: AsyncScheduler | None = None
 

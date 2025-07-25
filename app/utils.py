@@ -1,5 +1,10 @@
 import asyncio
 
+__all__ = [
+    "deep_update",
+    "run_command"
+]
+
 
 def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
     updated_mapping = mapping.copy()

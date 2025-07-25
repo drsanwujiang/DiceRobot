@@ -6,6 +6,11 @@ from httpx import AsyncClient, Request, Response, HTTPError
 from ..version import VERSION
 from ..exceptions import NetworkServerError, NetworkClientError, NetworkInvalidContentError, NetworkError
 
+__all__ = [
+    "Client",
+    "client"
+]
+
 
 class Client(AsyncClient):
     @staticmethod
