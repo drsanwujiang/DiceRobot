@@ -4,7 +4,7 @@ from ..models.network.napcat import (
     SetGroupCardResponse, SetGroupLeaveResponse, SetFriendAddRequestResponse, SetGroupAddRequestResponse
 )
 from ..config import settings
-from ..enum import GroupAddRequestSubType
+from ..enum import GroupRequestSubType
 from ..models.report.segment import Segment
 from . import client
 
@@ -157,7 +157,7 @@ async def set_friend_add_request(
 
 async def set_group_add_request(
     flag: str,
-    sub_type: GroupAddRequestSubType,
+    sub_type: GroupRequestSubType,
     approve: bool,
     reason: str = ""
 ) -> SetGroupAddRequestResponse:

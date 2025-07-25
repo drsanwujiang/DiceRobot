@@ -8,12 +8,17 @@ from ..responses import EmptyResponse
 from ..enum import ApplicationStatus, ReportType, MessageType, NoticeType, RequestType, SegmentType
 from ..exceptions import MessageInvalidError
 from ..models.report import Report
-from ..models.report.message import Message, PrivateMessage, GroupMessage
-from ..models.report.notice import (
-    Notice, GroupUploadNotice, GroupAdminNotice, GroupDecreaseNotice, GroupIncreaseNotice, GroupBanNotice,
-    FriendAddNotice, GroupRecallNotice, FriendRecallNotice, Notify
+from ..models.report.message import (
+    Message, PrivateMessage, GroupMessage
 )
-from ..models.report.request import Request, FriendAddRequest, GroupAddRequest
+from ..models.report.request import (
+    Request, FriendRequest, GroupRequest
+)
+from ..models.report.notice import (
+    Notice, FriendAddNotice, FriendRecallNotice, GroupUploadNotice, GroupAdminNotice, GroupBanNotice, GroupCardNotice,
+    GroupDecreaseNotice, GroupIncreaseNotice, GroupRecallNotice, GroupMessageEmojiLikeNotice, EssenceNotice,
+    NotifyNotice
+)
 
 router = APIRouter()
 
@@ -29,6 +34,9 @@ async def message_report(content: dict) -> EmptyResponse:
         logger.info("Report started")
 
         match report.post_type:
+            case ReportType.META_EVENT:
+                # Ignore meta event
+                pass
             case ReportType.MESSAGE:
                 message = Message.model_validate(content)
 
@@ -37,38 +45,48 @@ async def message_report(content: dict) -> EmptyResponse:
                         await handle_message(PrivateMessage.model_validate(content))
                     case MessageType.GROUP:
                         await handle_message(GroupMessage.model_validate(content))
-            case ReportType.META_EVENT:
-                pass
-            case ReportType.NOTICE:
-                notice = Notice.model_validate(content)
-
-                match notice.notice_type:
-                    case NoticeType.GROUP_UPLOAD:
-                        await handle_event(GroupUploadNotice.model_validate(content))
-                    case NoticeType.GROUP_ADMIN:
-                        await handle_event(GroupAdminNotice.model_validate(content))
-                    case NoticeType.GROUP_DECREASE:
-                        await handle_event(GroupDecreaseNotice.model_validate(content))
-                    case NoticeType.GROUP_INCREASE:
-                        await handle_event(GroupIncreaseNotice.model_validate(content))
-                    case NoticeType.GROUP_BAN:
-                        await handle_event(GroupBanNotice.model_validate(content))
-                    case NoticeType.FRIEND_ADD:
-                        await handle_event(FriendAddNotice.model_validate(content))
-                    case NoticeType.GROUP_RECALL:
-                        await handle_event(GroupRecallNotice.model_validate(content))
-                    case NoticeType.FRIEND_RECALL:
-                        await handle_event(FriendRecallNotice.model_validate(content))
-                    case NoticeType.NOTIFY:
-                        await handle_event(Notify.model_validate(content))
             case ReportType.REQUEST:
                 request = Request.model_validate(content)
 
                 match request.request_type:
                     case RequestType.FRIEND:
-                        await handle_event(FriendAddRequest.model_validate(content))
+                        await handle_event(FriendRequest.model_validate(content))
                     case RequestType.GROUP:
-                        await handle_event(GroupAddRequest.model_validate(content))
+                        await handle_event(GroupRequest.model_validate(content))
+            case ReportType.NOTICE:
+                notice = Notice.model_validate(content)
+
+                match notice.notice_type:
+                    case NoticeType.FRIEND_ADD:
+                        await handle_event(FriendAddNotice.model_validate(content))
+                    case NoticeType.FRIEND_RECALL:
+                        await handle_event(FriendRecallNotice.model_validate(content))
+                    case NoticeType.OFFLINE_FILE:
+                        # Ignore offline file notice
+                        pass
+                    case NoticeType.CLIENT_STATUS:
+                        # Ignore client status notice
+                        pass
+                    case NoticeType.GROUP_ADMIN:
+                        await handle_event(GroupAdminNotice.model_validate(content))
+                    case NoticeType.GROUP_BAN:
+                        await handle_event(GroupBanNotice.model_validate(content))
+                    case NoticeType.GROUP_CARD:
+                        await handle_event(GroupCardNotice.model_validate(content))
+                    case NoticeType.GROUP_DECREASE:
+                        await handle_event(GroupDecreaseNotice.model_validate(content))
+                    case NoticeType.GROUP_INCREASE:
+                        await handle_event(GroupIncreaseNotice.model_validate(content))
+                    case NoticeType.GROUP_RECALL:
+                        await handle_event(GroupRecallNotice.model_validate(content))
+                    case NoticeType.GROUP_UPLOAD:
+                        await handle_event(GroupUploadNotice.model_validate(content))
+                    case NoticeType.GROUP_MESSAGE_EMOJI_LIKE:
+                        await handle_event(GroupMessageEmojiLikeNotice.model_validate(content))
+                    case NoticeType.ESSENCE:
+                        await handle_event(EssenceNotice.model_validate(content))
+                    case NoticeType.NOTIFY:
+                        await handle_event(NotifyNotice.model_validate(content))
 
         logger.info("Report completed")
     except ValueError:

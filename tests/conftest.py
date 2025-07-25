@@ -47,7 +47,7 @@ def mock_napcat(monkeypatch) -> None:
         SetGroupCardResponse, SetGroupLeaveResponse, SetFriendAddRequestResponse, SetGroupAddRequestResponse
     )
     from app.models.report.segment import Segment
-    from app.enum import GroupAddRequestSubType
+    from app.enum import GroupRequestSubType
 
     async def _get_login_info() -> GetLoginInfoResponse:
         logger.debug("Mocking get_login_info")
@@ -278,7 +278,7 @@ def mock_napcat(monkeypatch) -> None:
         })
 
     async def _set_group_add_request(
-        _: str, __: GroupAddRequestSubType, ___: bool, ____: str = ""
+        _: str, __: GroupRequestSubType, ___: bool, ____: str = ""
     ) -> SetGroupAddRequestResponse:
         logger.debug("Mocking set_group_add_request")
 
