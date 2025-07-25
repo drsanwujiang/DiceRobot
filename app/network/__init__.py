@@ -56,7 +56,7 @@ class Client(AsyncClient):
         }
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         kwargs = Client._defaults | kwargs
         super().__init__(*args, **kwargs)
 
