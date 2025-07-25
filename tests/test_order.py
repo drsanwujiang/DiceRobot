@@ -187,6 +187,7 @@ class TestOrder(BaseTest):
 
         # Valid usage
         self.post_message(client, self.build_group_message(".chat Who are you?"))
+        self.post_message(client, self.build_group_message(".think Who are you?"))
 
         # Invalid usage
         with pytest.raises(OrderInvalidError):
