@@ -16,7 +16,7 @@ from .models.report.request import Request
 class Dispatcher:
     order_pattern = re.compile(r"^\s*[.\u3002]\s*([\S\s]+?)\s*(?:#([1-9][0-9]*))?$")
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.order_plugins: dict[str, Type[OrderPlugin]] = {}
         self.event_plugins: dict[str, Type[EventPlugin]] = {}
         self.orders: dict[int, list[dict[str, re.Pattern | str]]] = {}

@@ -11,7 +11,7 @@ default_headers = {
 
 
 class EmptyResponse(Response_):
-    def __init__(self, status_code: int = 204):
+    def __init__(self, status_code: int = 204) -> None:
         super().__init__(headers=default_headers, status_code=status_code)
 
 
