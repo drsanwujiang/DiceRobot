@@ -8,7 +8,6 @@ from .dall_e import DallE
 from .stable_diffusion import StableDiffusion
 from .daily_60s import DailySixtySeconds
 
-
 __all__ = [
     "Bot",
     "Dice",

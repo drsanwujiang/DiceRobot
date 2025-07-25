@@ -61,7 +61,7 @@ class OrderRepetitionExceededError(DiceRobotRuntimeException):
 
 
 class OrderError(DiceRobotRuntimeException):
-    pass
+    ...
 
 
 class DiceRobotHTTPException(Exception):

@@ -14,6 +14,10 @@ from .dispatch import init_dispatcher
 from .exception_handlers import init_exception_handlers
 from .router import init_router
 
+__all__ = [
+    "dicerobot"
+]
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
