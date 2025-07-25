@@ -237,6 +237,25 @@ class Manager(ABC):
 
         self.update_status = UpdateStatus.COMPLETED
 
+    async def create_update_stream(self) -> AsyncGenerator[JSONServerSentEvent]:
+        task = asyncio.create_task(self.update())
+
+        async def stream_generator() -> AsyncGenerator[JSONServerSentEvent]:
+            while True:
+                yield JSONServerSentEvent({"status": self.update_status.value})
+
+                if self.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
+                    break
+                elif task.done() and self.update_status != UpdateStatus.COMPLETED:
+                    self.update_status = UpdateStatus.FAILED
+                    continue
+
+                await asyncio.sleep(1)
+
+            self.update_status = UpdateStatus.NONE
+
+        return stream_generator()
+
 
 class LogManager:
     def __init__(self, logs_dir: str, **kwargs) -> None:
@@ -247,7 +266,7 @@ class LogManager:
     def check_log_file(self, filename: str) -> bool:
         return self.log.check(filename)
 
-    async def get_logs(self, filename: str) -> AsyncGenerator[JSONServerSentEvent]:
+    async def create_logs_stream(self, filename: str) -> AsyncGenerator[JSONServerSentEvent]:
         async for batch in self.log.load(filename):
             yield JSONServerSentEvent({"logs": batch})
 
