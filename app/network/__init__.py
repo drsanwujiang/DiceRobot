@@ -6,6 +6,11 @@ from httpx import AsyncClient, Request, Response, HTTPError
 from ..version import VERSION
 from ..exceptions import NetworkServerError, NetworkClientError, NetworkInvalidContentError, NetworkError
 
+__all__ = [
+    "Client",
+    "client"
+]
+
 
 class Client(AsyncClient):
     @staticmethod
@@ -56,7 +61,7 @@ class Client(AsyncClient):
         }
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         kwargs = Client._defaults | kwargs
         super().__init__(*args, **kwargs)
 

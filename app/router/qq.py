@@ -26,6 +26,22 @@ async def get_status() -> JSONResponse:
     })
 
 
+@router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def get_settings() -> JSONResponse:
+    logger.info("QQ management request received: get settings")
+
+    return JSONResponse(data=settings.qq.model_dump())
+
+
+@router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def update_settings(data: UpdateQQSettingsRequest) -> JSONResponse:
+    logger.info("QQ management request received: update settings")
+
+    settings.update_qq(data.model_dump(exclude_none=True))
+
+    return JSONResponse()
+
+
 @router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def update() -> EventSourceResponse:
     logger.info("QQ management request received: update")
@@ -61,21 +77,5 @@ async def remove(data: RemoveQQRequest) -> JSONResponse:
         raise BadRequestError(message="NapCat not removed")
 
     await qq_manager.remove(**data.model_dump())
-
-    return JSONResponse()
-
-
-@router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_settings() -> JSONResponse:
-    logger.info("QQ management request received: get settings")
-
-    return JSONResponse(data=settings.qq.model_dump())
-
-
-@router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def update_settings(data: UpdateQQSettingsRequest) -> JSONResponse:
-    logger.info("QQ management request received: update settings")
-
-    settings.update_qq(data.model_dump(exclude_none=True))
 
     return JSONResponse()

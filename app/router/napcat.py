@@ -28,6 +28,34 @@ async def get_status() -> JSONResponse:
     })
 
 
+@router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def get_settings() -> JSONResponse:
+    logger.info("NapCat management request received: get settings")
+
+    return JSONResponse(data=settings.napcat.model_dump())
+
+
+@router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def update_settings(data: UpdateNapCatSettingsRequest) -> JSONResponse:
+    logger.info("NapCat management request received: update settings")
+
+    settings.update_napcat(data.model_dump(exclude_none=True))
+
+    return JSONResponse()
+
+
+@router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def get_logs() -> EventSourceResponse:
+    logger.info("NapCat management request received: get logs")
+
+    if not await napcat_manager.running():
+        raise BadRequestError(message="NapCat not running")
+    elif not (filename := napcat_manager.get_log_file()):
+        raise ResourceNotFoundError(message="Logs not found")
+
+    return EventSourceResponse(napcat_manager.create_logs_stream(filename))
+
+
 @router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def update() -> EventSourceResponse:
     logger.info("NapCat management request received: update")
@@ -37,22 +65,7 @@ async def update() -> EventSourceResponse:
     elif await napcat_manager.running():
         raise BadRequestError(message="NapCat not stopped")
 
-    task = asyncio.create_task(napcat_manager.update())
-
-    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
-        while True:
-            yield JSONServerSentEvent({"status": napcat_manager.update_status.value})
-
-            if napcat_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
-                napcat_manager.update_status = UpdateStatus.NONE
-                break
-            elif task.done() and napcat_manager.update_status != UpdateStatus.COMPLETED:
-                napcat_manager.update_status = UpdateStatus.FAILED
-                continue
-
-            await asyncio.sleep(1)
-
-    return EventSourceResponse(content_generator())
+    return EventSourceResponse(napcat_manager.create_update_stream())
 
 
 @router.post("/remove", dependencies=[Depends(verify_jwt_token, use_cache=False)])
@@ -95,47 +108,5 @@ async def stop() -> JSONResponse:
         raise BadRequestError(message="NapCat not running")
 
     await napcat_manager.stop()
-
-    return JSONResponse()
-
-
-@router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_logs() -> EventSourceResponse:
-    logger.info("NapCat management request received: get logs")
-
-    if not await napcat_manager.running():
-        raise BadRequestError(message="NapCat not running")
-    elif not (filename := napcat_manager.get_log_file()):
-        raise ResourceNotFoundError(message="Logs not found")
-
-    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
-        async for batch in napcat_manager.log.load(filename):
-            yield JSONServerSentEvent({"logs": batch})
-
-        queue = await napcat_manager.log.subscribe(filename)
-
-        try:
-            while True:
-                yield JSONServerSentEvent({"logs": await queue.get()})
-        except asyncio.CancelledError:
-            logger.debug("Server-sent event stream cancelled")
-        finally:
-            await napcat_manager.log.unsubscribe(filename, queue)
-
-    return EventSourceResponse(content_generator())
-
-
-@router.get("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_settings() -> JSONResponse:
-    logger.info("NapCat management request received: get settings")
-
-    return JSONResponse(data=settings.napcat.model_dump())
-
-
-@router.patch("/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def update_settings(data: UpdateNapCatSettingsRequest) -> JSONResponse:
-    logger.info("NapCat management request received: update settings")
-
-    settings.update_napcat(data.model_dump(exclude_none=True))
 
     return JSONResponse()

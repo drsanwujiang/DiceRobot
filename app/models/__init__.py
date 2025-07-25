@@ -2,6 +2,10 @@ from typing import Any
 
 from pydantic import BaseModel as BaseModel_
 
+__all__ = [
+    "BaseModel"
+]
+
 
 class BaseModel(BaseModel_):
     def model_dump(self, **kwargs) -> dict[str, Any]:

@@ -36,30 +36,6 @@ async def auth(data: AuthRequest) -> JSONResponse:
     })
 
 
-@router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def get_logs(date_: Annotated[date, Query(alias="date")]) -> EventSourceResponse:
-    logger.info(f"Admin request received: get logs, date: {date_}")
-
-    if not dicerobot_manager.log.check(filename := "dicerobot-" + date_.strftime("%Y-%m-%d") + ".log"):
-        raise ResourceNotFoundError(message="Logs not found")
-
-    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
-        async for batch in dicerobot_manager.log.load(filename):
-            yield JSONServerSentEvent({"logs": batch})
-
-        queue = await dicerobot_manager.log.subscribe(filename)
-
-        try:
-            while True:
-                yield JSONServerSentEvent({"logs": await queue.get()})
-        except asyncio.CancelledError:
-            logger.debug("Server-sent event stream cancelled")
-        finally:
-            await dicerobot_manager.log.unsubscribe(filename, queue)
-
-    return EventSourceResponse(content_generator())
-
-
 @router.get("/status", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def get_status() -> JSONResponse:
     logger.info("Admin request received: get status")
@@ -211,26 +187,21 @@ async def get_chat_settings(chat_type: ChatType, chat_id: int, group: str) -> JS
     return JSONResponse(data=chat_settings.get(chat_type=chat_type, chat_id=chat_id, setting_group=group))
 
 
+@router.get("/logs", dependencies=[Depends(verify_jwt_token, use_cache=False)])
+async def get_logs(date_: Annotated[date, Query(alias="date")]) -> EventSourceResponse:
+    logger.info(f"Admin request received: get logs, date: {date_}")
+
+    if not dicerobot_manager.check_log_file(filename := "dicerobot-" + date_.strftime("%Y-%m-%d") + ".log"):
+        raise ResourceNotFoundError(message="Logs not found")
+
+    return EventSourceResponse(dicerobot_manager.create_logs_stream(filename))
+
+
 @router.post("/update", dependencies=[Depends(verify_jwt_token, use_cache=False)])
 async def update() -> EventSourceResponse:
     logger.info("Admin request received: update")
 
-    task = asyncio.create_task(dicerobot_manager.update())
-
-    async def content_generator() -> AsyncGenerator[JSONServerSentEvent]:
-        while True:
-            yield JSONServerSentEvent({"status": dicerobot_manager.update_status.value})
-
-            if dicerobot_manager.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
-                dicerobot_manager.update_status = UpdateStatus.NONE
-                break
-            elif task.done() and dicerobot_manager.update_status != UpdateStatus.COMPLETED:
-                dicerobot_manager.update_status = UpdateStatus.FAILED
-                continue
-
-            await asyncio.sleep(1)
-
-    return EventSourceResponse(content_generator())
+    return EventSourceResponse(dicerobot_manager.create_update_stream())
 
 
 @router.post("/restart", dependencies=[Depends(verify_jwt_token, use_cache=False)])

@@ -6,6 +6,10 @@ from .config import status
 from .exceptions import DiceRobotHTTPException
 from .responses import JSONResponse
 
+__all__ = [
+    "init_exception_handlers"
+]
+
 
 async def http_exception_handler(_: Request, e: HTTPException) -> Response:
     return JSONResponse(

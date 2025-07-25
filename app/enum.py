@@ -23,10 +23,21 @@ class ChatType(str, Enum):
 
 
 class ReportType(str, Enum):
-    MESSAGE = "message"
     META_EVENT = "meta_event"
-    NOTICE = "notice"
+    MESSAGE = "message"
     REQUEST = "request"
+    NOTICE = "notice"
+
+
+class MetaEventType(str, Enum):
+    LIFECYCLE = "lifecycle"
+    HEARTBEAT = "heartbeat"
+
+
+class LifecycleMetaEventSubType(str, Enum):
+    ENABLE = "enable"  # Unusable
+    DISABLE = "disable"  # Unusable
+    CONNECT = "connect"
 
 
 class MessageType(str, Enum):
@@ -37,30 +48,54 @@ class MessageType(str, Enum):
 class PrivateMessageSubType(str, Enum):
     FRIEND = "friend"
     GROUP = "group"
-    OTHER = "other"
+    GROUP_SELF = "group_self"  # Unusable
+    OTHER = "other"  # Unusable
 
 
 class GroupMessageSubType(str, Enum):
     NORMAL = "normal"
-    ANONYMOUS = "anonymous"
-    NOTICE = "notice"
+    NOTICE = "notice"  # Unusable
+
+
+class MessageSentType(str, Enum):
+    ...
+
+
+class RequestType(str, Enum):
+    FRIEND = "friend"
+    GROUP = "group"
+
+
+class GroupRequestSubType(str, Enum):
+    ADD = "add"
+    INVITE = "invite"
 
 
 class NoticeType(str, Enum):
-    GROUP_UPLOAD = "group_upload"
+    FRIEND_ADD = "friend_add"
+    FRIEND_RECALL = "friend_recall"
+    OFFLINE_FILE = "offline_file"  # Unusable
+    CLIENT_STATUS = "client_status"  # Unusable
     GROUP_ADMIN = "group_admin"
+    GROUP_BAN = "group_ban"
+    GROUP_CARD = "group_card"
     GROUP_DECREASE = "group_decrease"
     GROUP_INCREASE = "group_increase"
-    GROUP_BAN = "group_ban"
-    FRIEND_ADD = "friend_add"
     GROUP_RECALL = "group_recall"
-    FRIEND_RECALL = "friend_recall"
+    GROUP_UPLOAD = "group_upload"
+    GROUP_MESSAGE_EMOJI_LIKE = "group_msg_emoji_like"
+    ESSENCE = "group_essence"
     NOTIFY = "notify"
 
 
 class GroupAdminNoticeSubType(str, Enum):
     SET = "set"
     UNSET = "unset"
+
+
+class GroupBanNoticeSubType(str, Enum):
+    BAN = "ban"
+    LIFT_BAN = "lift_ban"
 
 
 class GroupDecreaseNoticeSubType(str, Enum):
@@ -74,36 +109,16 @@ class GroupIncreaseNoticeSubType(str, Enum):
     INVITE = "invite"
 
 
-class GroupBanNoticeSubType(str, Enum):
-    BAN = "ban"
-    LIFT_BAN = "lift_ban"
-
-
-class NotifySubType(str, Enum):
-    POKE = "poke"
-    LUCKY_KING = "lucky_king"
-    HONOR = "honor"
-
-
-class RequestType(str, Enum):
-    FRIEND = "friend"
-    GROUP = "group"
-
-
-class GroupAddRequestSubType(str, Enum):
+class EssenceNoticeSubType(str, Enum):
     ADD = "add"
-    INVITE = "invite"
+    DELETE = "delete"
 
 
-class MetaEventType(str, Enum):
-    LIFECYCLE = "lifecycle"
-    HEARTBEAT = "heartbeat"
-
-
-class LifecycleMetaEventSubType(str, Enum):
-    ENABLE = "enable"
-    DISABLE = "disable"
-    CONNECT = "connect"
+class NotifyNoticeSubType(str, Enum):
+    POKE = "poke"
+    INPUT_STATUS = "input_status"
+    TITLE = "title"
+    PROFILE_LIKE = "profile_like"
 
 
 class SegmentType(str, Enum):

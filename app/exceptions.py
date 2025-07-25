@@ -1,5 +1,24 @@
 from .config import replies
 
+__all__ = [
+    "DiceRobotRuntimeException",
+    "NetworkClientError",
+    "NetworkServerError",
+    "NetworkInvalidContentError",
+    "NetworkError",
+    "OrderInvalidError",
+    "OrderSuspiciousError",
+    "OrderRepetitionExceededError",
+    "OrderError",
+    "DiceRobotHTTPException",
+    "TokenInvalidError",
+    "SignatureInvalidError",
+    "MessageInvalidError",
+    "ParametersInvalidError",
+    "ResourceNotFoundError",
+    "BadRequestError"
+]
+
 
 class DiceRobotRuntimeException(Exception):
     def __init__(self, reply: str) -> None:
@@ -42,7 +61,7 @@ class OrderRepetitionExceededError(DiceRobotRuntimeException):
 
 
 class OrderError(DiceRobotRuntimeException):
-    pass
+    ...
 
 
 class DiceRobotHTTPException(Exception):

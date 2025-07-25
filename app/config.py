@@ -12,6 +12,16 @@ from .models.config import (
 from .database import Session, Settings, PluginSettings, Replies, ChatSettings
 from .enum import ChatType
 
+__all__ = [
+    "status",
+    "settings",
+    "plugin_settings",
+    "chat_settings",
+    "replies",
+    "load_config",
+    "save_config"
+]
+
 status = StatusModel(debug=os.environ.get("DICEROBOT_DEBUG") is not None)
 settings = SettingsModel()
 plugin_settings = PluginSettingsModel()

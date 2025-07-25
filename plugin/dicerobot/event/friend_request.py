@@ -1,7 +1,7 @@
 from loguru import logger
 
 from plugin import EventPlugin
-from app.models.report.request import FriendAddRequest
+from app.models.report.request import FriendRequest
 from app.network.napcat import set_friend_add_request
 
 
@@ -16,7 +16,7 @@ class FriendRequestHandler(EventPlugin):
     }
 
     events = [
-        FriendAddRequest
+        FriendRequest
     ]
 
     async def __call__(self) -> None:

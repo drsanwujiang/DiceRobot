@@ -1,12 +1,12 @@
 from typing import Literal
 
-from ...enum import ReportType, RequestType, GroupAddRequestSubType
+from ...enum import ReportType, RequestType, GroupRequestSubType
 from . import Report
 
 __all__ = [
     "Request",
-    "FriendAddRequest",
-    "GroupAddRequest"
+    "FriendRequest",
+    "GroupRequest"
 ]
 
 
@@ -18,11 +18,11 @@ class Request(Report):
     flag: str
 
 
-class FriendAddRequest(Request):
+class FriendRequest(Request):
     request_type: Literal[RequestType.FRIEND] = RequestType.FRIEND
 
 
-class GroupAddRequest(Request):
+class GroupRequest(Request):
     request_type: Literal[RequestType.GROUP] = RequestType.GROUP
-    sub_type: GroupAddRequestSubType
+    sub_type: GroupRequestSubType
     group_id: int

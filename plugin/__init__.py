@@ -14,6 +14,12 @@ from app.network.napcat import (
     send_group_message as napcat_send_group_message, send_private_message as napcat_send_private_message
 )
 
+__all__ = [
+    "DiceRobotPlugin",
+    "OrderPlugin",
+    "EventPlugin"
+]
+
 
 class DiceRobotPlugin(ABC):
     """DiceRobot plugin.
@@ -32,9 +38,7 @@ class DiceRobotPlugin(ABC):
     display_name: str
     description: str
     version: str
-
     default_plugin_settings: dict = {}
-
     default_replies: dict = {}
     supported_reply_variables: list[str] = []
 
@@ -59,7 +63,7 @@ class DiceRobotPlugin(ABC):
         plugin will use.
         """
 
-        pass
+        ...
 
     @classmethod
     def get_plugin_setting(cls, *, plugin: str = None, key: str) -> Any:
@@ -109,7 +113,7 @@ class DiceRobotPlugin(ABC):
         will be executed. The plugin should implement its main logic here.
         """
 
-        pass
+        ...
 
     def save_plugin_settings(self) -> None:
         """Save plugin settings.
@@ -131,7 +135,6 @@ class OrderPlugin(DiceRobotPlugin):
     """
 
     default_chat_settings = {}
-
     supported_reply_variables: list[str] = [
         "机器人昵称",
         "机器人QQ",
@@ -143,7 +146,6 @@ class OrderPlugin(DiceRobotPlugin):
         "发送者QQ",
         "发送者QQ号"
     ]
-
     orders: str | list[str]
     priority: int = 100
     max_repetition: int = 1
@@ -162,12 +164,10 @@ class OrderPlugin(DiceRobotPlugin):
 
         self.chat_type: ChatType
         self.chat_id = -1
-
         self.message = message
         self.order = order
         self.order_content = order_content
         self.repetition = repetition
-
         self.reply_variables = {}
 
         self._load_chat()
@@ -175,7 +175,7 @@ class OrderPlugin(DiceRobotPlugin):
 
     @abstractmethod
     async def __call__(self) -> None:
-        pass
+        ...
 
     def _load_chat(self) -> None:
         """Load chat information and settings."""
@@ -361,4 +361,4 @@ class EventPlugin(DiceRobotPlugin):
 
     @abstractmethod
     async def __call__(self) -> None:
-        pass
+        ...

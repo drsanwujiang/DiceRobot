@@ -5,12 +5,14 @@ import zipfile
 import shutil
 import json
 import signal
+from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
 
 from loguru import logger
 from watchfiles import Change, awatch
 import aiofiles
 from semver.version import Version
+from sse_starlette import JSONServerSentEvent
 
 from .config import status, settings
 from .enum import UpdateStatus
@@ -19,9 +21,17 @@ from .network import client
 from .network.cloud import get_versions
 from .utils import run_command
 
+__all__ = [
+    "dicerobot_manager",
+    "qq_manager",
+    "napcat_manager",
+    "init_manager",
+    "clean_manager"
+]
+
 
 class FileWatcher:
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str) -> None:
         self.filepath = filepath
         self.queues: list[asyncio.Queue] = []
         self.task: asyncio.Task | None = None
@@ -65,7 +75,7 @@ class FileWatcher:
 
 
 class LogHelper:
-    def __init__(self, logs_dir: str):
+    def __init__(self, logs_dir: str) -> None:
         self.logs_dir = logs_dir
         self.watchers: dict[str, FileWatcher] = {}
         self.lock = asyncio.Lock()
@@ -139,74 +149,174 @@ class LogHelper:
                     os.remove(os.path.join(self.logs_dir, filename))
 
 
-class Manager:
-    def __init__(self):
+class Manager(ABC):
+    def __init__(self, name: str, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+        self.name = name
         self.update_status = UpdateStatus.NONE
 
+    @abstractmethod
+    async def get_version(self) -> str | None:
+        ...
 
-class LogManager(Manager):
-    def __init__(self, logs_dir: str):
-        super().__init__()
+    @staticmethod
+    @abstractmethod
+    async def _get_latest_version() -> Version:
+        ...
+
+    @property
+    @abstractmethod
+    def _download_filename(self) -> str:
+        ...
+
+    async def _check_version(self) -> Version | None:
+        current_version = await self.get_version()
+        latest_version = await self._get_latest_version()
+
+        if current_version and current_version >= latest_version:
+            return None
+
+        return latest_version
+
+    async def _download_file(self, filename: str) -> bool:
+        url = f"{settings.cloud.download.base_url}/{self.name.lower()}/{filename}"
+
+        try:
+            async with client.stream("GET", url) as response:
+                with aiofiles.open(f"{settings.app.dir.temp}/{filename}", "wb") as f:
+                    async for chunk in response.aiter_bytes(chunk_size=8192):
+                        await f.write(chunk)
+        except:
+            logger.exception(f"Failed to download {url}")
+
+            return False
+
+        return True
+
+    @abstractmethod
+    async def _install(self, filepath: str) -> bool:
+        ...
+
+    async def update(self) -> None:
+        logger.info(f"Check latest version of {self.name}")
+
+        self.update_status = UpdateStatus.CHECKING
+
+        if (latest_version := await self._check_version()) is None:
+            logger.info("No updates available")
+            self.update_status = UpdateStatus.COMPLETED
+            return
+
+        logger.info(f"Download {self.name}, version: {latest_version}")
+
+        self.update_status = UpdateStatus.DOWNLOADING
+        filename = self._download_filename.format(version=latest_version)
+        filepath = f"{settings.app.dir.temp}/{filename}"
+
+        if not await self._download_file(filename):
+            try:
+                os.remove(filepath)
+            except FileNotFoundError:
+                pass
+
+            self.update_status = UpdateStatus.FAILED
+            return
+
+        logger.info(f"Install {self.name}, version: {latest_version}")
+
+        self.update_status = UpdateStatus.INSTALLING
+        install_result = await self._install(filepath)
+        os.remove(filepath)
+
+        if not install_result:
+            self.update_status = UpdateStatus.FAILED
+            return
+
+        logger.success(f"Update {self.name} completed")
+
+        self.update_status = UpdateStatus.COMPLETED
+
+    async def create_update_stream(self) -> AsyncGenerator[JSONServerSentEvent]:
+        task = asyncio.create_task(self.update())
+
+        async def stream_generator() -> AsyncGenerator[JSONServerSentEvent]:
+            while True:
+                yield JSONServerSentEvent({"status": self.update_status.value})
+
+                if self.update_status in [UpdateStatus.COMPLETED, UpdateStatus.FAILED]:
+                    break
+                elif task.done() and self.update_status != UpdateStatus.COMPLETED:
+                    self.update_status = UpdateStatus.FAILED
+                    continue
+
+                await asyncio.sleep(1)
+
+            self.update_status = UpdateStatus.NONE
+
+        return stream_generator()
+
+
+class LogManager:
+    def __init__(self, logs_dir: str, **kwargs) -> None:
+        super().__init__(**kwargs)
+
         self.log = LogHelper(logs_dir)
+
+    def check_log_file(self, filename: str) -> bool:
+        return self.log.check(filename)
+
+    async def create_logs_stream(self, filename: str) -> AsyncGenerator[JSONServerSentEvent]:
+        async for batch in self.log.load(filename):
+            yield JSONServerSentEvent({"logs": batch})
+
+        queue = await self.log.subscribe(filename)
+
+        try:
+            while True:
+                yield JSONServerSentEvent({"logs": await queue.get()})
+        except asyncio.CancelledError:
+            logger.debug("Server-sent event stream cancelled")
+        finally:
+            await self.log.unsubscribe(filename, queue)
 
     async def clean(self):
         await self.log.clean()
 
 
-class DiceRobotManager(LogManager):
-    def __init__(self):
-        super().__init__(settings.app.dir.logs)
+class DiceRobotManager(Manager, LogManager):
+    def __init__(self) -> None:
+        super().__init__(name="DiceRobot", logs_dir=settings.app.dir.logs)
 
     @staticmethod
     def ensure_directory() -> None:
         os.makedirs(settings.app.dir.temp, exist_ok=True)
 
-    async def update(self) -> None:
-        logger.info("Check latest version of Dicerobot")
+    async def get_version(self) -> str:
+        return status.version
 
-        self.update_status = UpdateStatus.CHECKING
-        latest_version = Version.parse((await get_versions()).data.dicerobot)
+    @staticmethod
+    async def _get_latest_version() -> Version:
+        return Version.parse((await get_versions()).data.dicerobot)
 
-        if status.version >= latest_version:
-            logger.info("No updates available")
-            self.update_status = UpdateStatus.COMPLETED
-            return
+    @property
+    def _download_filename(self) -> str:
+        return "dicerobot-{version}.zip"
 
-        logger.info(f"Download DiceRobot, version: {latest_version}")
-
-        self.update_status = UpdateStatus.DOWNLOADING
-        url = f"{settings.cloud.download.base_url}/dicerobot/dicerobot-{latest_version}.zip"
-        zip_file = f"{settings.app.dir.temp}/dicerobot-{latest_version}.zip"
-
-        try:
-            async with client.stream("GET", url) as response:
-                with aiofiles.open(zip_file, "wb") as f:
-                    async for chunk in response.aiter_bytes(chunk_size=8192):
-                        await f.write(chunk)
-        except:
-            logger.exception("Failed to download")
-            self.update_status = UpdateStatus.FAILED
-            return
-
+    async def _install(self, filepath: str) -> bool:
         logger.info(f"Extract files")
 
-        self.update_status = UpdateStatus.INSTALLING
-
-        with zipfile.ZipFile(zip_file, "r") as z:
+        with zipfile.ZipFile(filepath, "r") as z:
             z.extractall(settings.app.dir.base)
-
-        os.remove(zip_file)
 
         logger.info("Update dependencies")
 
         if (await (await run_command("poetry lock")).wait()) != 0 or \
-           (await (await run_command("poetry update")).wait()) != 0:
+                (await (await run_command("poetry update")).wait()) != 0:
             logger.error("Failed to update dependencies")
-            self.update_status = UpdateStatus.FAILED
+            return False
 
-        logger.success(f"DiceRobot update completed")
-
-        self.update_status = UpdateStatus.COMPLETED
+        return True
 
     @staticmethod
     async def restart() -> None:
@@ -230,6 +340,9 @@ class DiceRobotManager(LogManager):
 class QQManager(Manager):
     package_json_path = os.path.join(settings.qq.dir.base, "resources/app/package.json")
 
+    def __init__(self) -> None:
+        super().__init__("QQ")
+
     def installed(self) -> bool:
         return os.path.isfile(self.package_json_path)
 
@@ -244,49 +357,24 @@ class QQManager(Manager):
             except ValueError:
                 return None
 
-    async def update(self) -> None:
-        logger.info("Check latest version of QQ")
+    @staticmethod
+    async def _get_latest_version() -> Version:
+        return Version.parse((await get_versions()).data.qq)
 
-        self.update_status = UpdateStatus.CHECKING
-        current_version = await self.get_version()
-        latest_version = (await get_versions()).data.qq
+    @property
+    def _download_filename(self) -> str:
+        return "linuxqq-{version}.deb"
 
-        if current_version and current_version >= latest_version:
-            logger.info("No updates available")
-            self.update_status = UpdateStatus.COMPLETED
-            return
-
-        logger.info(f"Download QQ, version: {latest_version}")
-
-        self.update_status = UpdateStatus.DOWNLOADING
-        url = f"{settings.cloud.download.base_url}/qq/linuxqq-{latest_version}.deb"
-        deb_file = f"{settings.app.dir.temp}/linuxqq-{latest_version}.deb"
-
-        try:
-            async with client.stream("GET", url) as response:
-                async with aiofiles.open(deb_file, "wb") as f:
-                    async for chunk in response.aiter_bytes(chunk_size=8192):
-                        await f.write(chunk)
-        except:
-            logger.exception("Failed to download")
-            self.update_status = UpdateStatus.FAILED
-            return
-
-        self.update_status = UpdateStatus.INSTALLING
+    async def _install(self, filepath: str) -> bool:
         await self.remove()
 
         logger.info("Install Debian package")
 
-        if (await (await run_command(f"apt-get install -y -qq {deb_file}")).wait()) != 0:
+        if (await (await run_command(f"apt-get install -y -qq {filepath}")).wait()) != 0:
             logger.error("Failed to install Debian package")
-            self.update_status = UpdateStatus.FAILED
-            return
+            return False
 
-        os.remove(deb_file)
-
-        logger.success("QQ update completed")
-
-        self.update_status = UpdateStatus.COMPLETED
+        return True
 
     @staticmethod
     async def remove(purge: bool = False) -> None:
@@ -301,7 +389,7 @@ class QQManager(Manager):
         logger.info("QQ removed")
 
 
-class NapCatManager(LogManager):
+class NapCatManager(Manager, LogManager):
     service_path = "/etc/systemd/system/napcat.service"
     loader_path = os.path.join(settings.qq.dir.base, "resources/app/loadNapCat.js")
     env_path = os.path.join(settings.napcat.dir.base, "env")
@@ -349,8 +437,8 @@ class NapCatManager(LogManager):
         "parseMultMsg": False
     }
 
-    def __init__(self):
-        super().__init__(settings.napcat.dir.logs)
+    def __init__(self) -> None:
+        super().__init__(name="NapCat", logs_dir=settings.napcat.dir.logs)
 
     def installed(self) -> bool:
         return os.path.isfile(self.package_json_path)
@@ -375,6 +463,14 @@ class NapCatManager(LogManager):
                 return None
 
     @staticmethod
+    async def _get_latest_version() -> Version:
+        return Version.parse((await get_versions()).data.napcat)
+
+    @property
+    def _download_filename(self) -> str:
+        return "napcat-{version}.zip"
+
+    @staticmethod
     def get_log_file() -> str | None:
         if not os.path.isdir(settings.napcat.dir.logs) or not (files := os.listdir(settings.napcat.dir.logs)):
             return None
@@ -385,58 +481,28 @@ class NapCatManager(LogManager):
 
         return None
 
-    async def update(self) -> None:
-        logger.info("Check latest version of NapCat")
-
-        self.update_status = UpdateStatus.CHECKING
-        current_version = await self.get_version()
-        latest_version = (await get_versions()).data.napcat
-
-        if current_version and current_version >= latest_version:
-            logger.info("No updates available")
-            self.update_status = UpdateStatus.COMPLETED
-            return
-
-        logger.info(f"Download NapCat, version: {latest_version}")
-
-        self.update_status = UpdateStatus.DOWNLOADING
-        url = f"{settings.cloud.download.base_url}/napcat/napcat-{latest_version}.zip"
-        zip_file = f"{settings.app.dir.temp}/napcat-{latest_version}.zip"
-
-        try:
-            async with client.stream("GET", url) as response:
-                async with aiofiles.open(zip_file, "wb") as f:
-                    async for chunk in response.aiter_bytes(chunk_size=8192):
-                        await f.write(chunk)
-        except:
-            logger.exception("Failed to download")
-            self.update_status = UpdateStatus.FAILED
-            return
-
-        self.update_status = UpdateStatus.INSTALLING
+    async def _install(self, filepath: str) -> bool:
         await self.remove()
 
         logger.info(f"Extract files")
 
-        with zipfile.ZipFile(zip_file, "r") as z:
+        with zipfile.ZipFile(filepath, "r") as z:
             z.extractall(settings.napcat.dir.base)
-
-        os.remove(zip_file)
 
         # Configure systemd
         async with aiofiles.open(self.service_path, "w") as f:
             await f.write(f"""[Unit]
-Description=NapCat service created by DiceRobot
-After=network.target
+        Description=NapCat service created by DiceRobot
+        After=network.target
 
-[Service]
-Type=simple
-User=root
-EnvironmentFile={self.env_path}
-ExecStart=/usr/bin/xvfb-run -a qq --no-sandbox -q $QQ_ACCOUNT
+        [Service]
+        Type=simple
+        User=root
+        EnvironmentFile={self.env_path}
+        ExecStart=/usr/bin/xvfb-run -a qq --no-sandbox -q $QQ_ACCOUNT
 
-[Install]
-WantedBy=multi-user.target""")
+        [Install]
+        WantedBy=multi-user.target""")
 
         await (await run_command("systemctl daemon-reload")).wait()
 
@@ -451,9 +517,7 @@ WantedBy=multi-user.target""")
             await f.write(json.dumps(data, indent=2))
             await f.truncate()
 
-        logger.success("NapCat update completed")
-
-        self.update_status = UpdateStatus.COMPLETED
+        return True
 
     async def remove(self) -> None:
         logger.info("Remove NapCat")

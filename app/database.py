@@ -4,13 +4,22 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 from .enum import ChatType
 
+__all__ = [
+    "Session",
+    "Settings",
+    "PluginSettings",
+    "Replies",
+    "ChatSettings",
+    "init_database",
+    "clean_database"
+]
 
 engine = create_engine("sqlite:///database.db", connect_args={"check_same_thread": False})
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class Base(DeclarativeBase):
-    pass
+    ...
 
 
 class Settings(Base):

@@ -1,7 +1,7 @@
 from loguru import logger
 
 from plugin import EventPlugin
-from app.models.report.request import GroupAddRequest
+from app.models.report.request import GroupRequest
 from app.network.napcat import set_group_add_request
 
 
@@ -16,7 +16,7 @@ class GroupInvitationHandler(EventPlugin):
     }
 
     events = [
-        GroupAddRequest
+        GroupRequest
     ]
 
     async def __call__(self) -> None:
