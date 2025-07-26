@@ -192,3 +192,6 @@ class TestOrder(BaseTest):
         # Invalid usage
         with pytest.raises(OrderInvalidError):
             self.post_message(client, self.build_group_message(".chat"))
+
+        with pytest.raises(OrderRepetitionExceededError):
+            self.post_message(client, self.build_group_message(".chat Who are you? #3"))
