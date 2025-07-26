@@ -1,4 +1,4 @@
-from ...models import BaseModel
+from . import Request
 
 __all__ = [
     "AuthRequest",
@@ -8,24 +8,24 @@ __all__ = [
 ]
 
 
-class AuthRequest(BaseModel):
+class AuthRequest(Request):
     password: str
 
 
-class SetModuleStatusRequest(BaseModel):
+class SetModuleStatusRequest(Request):
     order: bool
     event: bool
 
 
-class UpdateSecuritySettingsRequest(BaseModel):
-    class Webhook(BaseModel):
+class UpdateSecuritySettingsRequest(Request):
+    class Webhook(Request):
         secret: str
 
-    class JWT(BaseModel):
+    class JWT(Request):
         secret: str
         algorithm: str
 
-    class Admin(BaseModel):
+    class Admin(Request):
         password: str
 
     webhook: Webhook = None
@@ -33,8 +33,8 @@ class UpdateSecuritySettingsRequest(BaseModel):
     admin: Admin = None
 
 
-class UpdateApplicationSettingsRequest(BaseModel):
-    class Directory(BaseModel):
+class UpdateApplicationSettingsRequest(Request):
+    class Directory(Request):
         base: str = None
         logs: str = None
         temp: str = None

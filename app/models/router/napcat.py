@@ -2,20 +2,20 @@ from ipaddress import IPv4Address
 
 from pydantic import Field
 
-from ...models import BaseModel
+from . import Request
 
 __all__ = [
     "UpdateNapCatSettingsRequest"
 ]
 
 
-class UpdateNapCatSettingsRequest(BaseModel):
-    class Directory(BaseModel):
+class UpdateNapCatSettingsRequest(Request):
+    class Directory(Request):
         base: str = None
         logs: str = None
         config: str = None
 
-    class API(BaseModel):
+    class API(Request):
         host: IPv4Address = None
         port: int = Field(None, gt=0)
 
