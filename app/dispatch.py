@@ -125,7 +125,7 @@ class Dispatcher:
             plugin = plugin_class(message, order.lower(), order_content, repetition)
 
             if not plugin.check_enabled():
-                logger.info("Chat disabled, execution skipped")
+                logger.info("Plugin disabled in this chat, execution skipped")
                 return
 
             # Execute plugin
