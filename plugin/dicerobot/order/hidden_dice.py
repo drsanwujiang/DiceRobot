@@ -11,7 +11,11 @@ class HiddenDice(OrderPlugin):
     display_name = "暗骰"
     description = "掷一个或一堆骰子，并通过私聊发送结果"
     version = "1.3.0"
-
+    priority = 10
+    max_repetition = 30
+    orders = [
+        r"r\s*h", "暗骰"
+    ]
     default_replies = {
         "reply": "{&发送者}悄悄地进行了掷骰……",
         "reply_with_reason": "由于{&掷骰原因}，{&发送者}悄悄地进行了掷骰",
@@ -20,12 +24,6 @@ class HiddenDice(OrderPlugin):
         "not_in_group": "只能在群聊中使用暗骰哦！",
         "not_friend": "必须先添加好友才能使用暗骰哦！"
     }
-
-    orders = [
-        r"r\s*h", "暗骰"
-    ]
-    priority = 10
-    max_repetition = 30
 
     async def __call__(self) -> None:
         self.check_chat_type()

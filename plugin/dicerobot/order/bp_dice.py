@@ -10,11 +10,15 @@ class BPDice(OrderPlugin):
     display_name = "奖励骰/惩罚骰"
     description = "掷一个骰子，以及一个或多个奖励骰/惩罚骰"
     version = "1.2.0"
-
+    priority = 10
+    max_repetition = 30
+    orders = [
+        r"r\s*b", "奖励骰",
+        r"r\s*p", "惩罚骰"
+    ]
     default_plugin_settings = {
         "max_count": 100
     }
-
     default_replies = {
         "result": "{&发送者}骰出了：{&掷骰结果}",
         "result_with_reason": "由于{&掷骰原因}，{&发送者}骰出了：{&掷骰结果}",
@@ -24,14 +28,6 @@ class BPDice(OrderPlugin):
         "掷骰原因",
         "掷骰结果"
     ]
-
-    orders = [
-        r"r\s*b", "奖励骰",
-        r"r\s*p", "惩罚骰"
-    ]
-    priority = 10
-    max_repetition = 30
-
     _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
     _bp_types = {
         "bonus": ["rb", "奖励骰"],

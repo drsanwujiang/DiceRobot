@@ -15,23 +15,20 @@ class DailySixtySeconds(OrderPlugin):
     display_name = "每天60秒读懂世界"
     description = "每天60秒读懂世界，15条简报+1条微语，让你瞬间了解世界正在发生的大事"
     version = "1.2.0"
-
+    priority = 100
+    orders = [
+        "60s", "60秒"
+    ]
     default_plugin_settings = {
         "api": "https://api.2xb.cn/zaob",
         "subscribers": []
     }
-
     default_replies = {
         "api_error": "哎呀，今天的简报还没有寄过来呢……",
         "subscribe": "订阅成功~每天准时带你了解世界正在发生的大事",
         "unsubscribe": "取消订阅成功~",
         "unsubscribable": "只能在群聊中订阅哦~"
     }
-
-    orders = [
-        "60s", "60秒"
-    ]
-    priority = 100
 
     @classmethod
     async def initialize(cls) -> None:

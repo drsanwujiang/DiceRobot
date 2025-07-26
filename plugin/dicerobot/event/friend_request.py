@@ -10,11 +10,9 @@ class FriendRequestHandler(EventPlugin):
     display_name = "好友申请"
     description = "处理好友申请"
     version = "1.2.0"
-
     default_plugin_settings = {
         "auto_approve": True
     }
-
     events = [
         FriendRequest
     ]

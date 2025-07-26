@@ -144,12 +144,15 @@ class OrderPlugin(DiceRobotPlugin):
     """DiceRobot order plugin.
 
     Attributes:
-        default_chat_settings: Default chat settings.
-
-        orders: Order or orders that trigger the plugin.
         priority: The priority of the plugin. A larger value means a higher priority.
+        max_repetition: the maximum of repetitions of the plugin.
+        orders: Order or orders that trigger the plugin.
+        default_chat_settings: Default chat settings.
     """
 
+    priority: int = 100
+    max_repetition: int = 1
+    orders: str | list[str]
     default_chat_settings = {}
     supported_reply_variables: list[str] = [
         "机器人昵称",
@@ -162,9 +165,6 @@ class OrderPlugin(DiceRobotPlugin):
         "发送者QQ",
         "发送者QQ号"
     ]
-    orders: str | list[str]
-    priority: int = 100
-    max_repetition: int = 1
 
     def __init__(self, message: Message, order: str, order_content: str, repetition: int = 1) -> None:
         """Initialize order plugin.

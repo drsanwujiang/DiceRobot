@@ -10,11 +10,9 @@ class GroupInvitationHandler(EventPlugin):
     display_name = "群聊邀请"
     description = "处理群聊邀请"
     version = "1.2.0"
-
     default_plugin_settings = {
         "auto_accept": True
     }
-
     events = [
         GroupRequest
     ]
