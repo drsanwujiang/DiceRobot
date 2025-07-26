@@ -12,7 +12,7 @@ class RemoveQQRequest(Request):
 
 class UpdateQQSettingsRequest(Request):
     class Directory(Request):
-        base: str = None
-        config: str = None
+        base: str
+        config: str
 
-    dir: Directory = None
+    dir: Directory
