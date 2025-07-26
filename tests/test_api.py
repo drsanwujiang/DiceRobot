@@ -46,7 +46,7 @@ class TestAPI(BaseTest):
 
         # Update plugin settings
         self.send_request(client, "patch", f"/plugin/{plugin}/settings", {
-            "enabled": False
+            "enabled": True
         })
 
         # Reset plugin settings
