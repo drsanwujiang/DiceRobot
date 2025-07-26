@@ -1,11 +1,8 @@
 from typing import Annotated
 from datetime import date
-import asyncio
-from collections.abc import AsyncGenerator
 
 from loguru import logger
 from fastapi import APIRouter, Depends, Query
-from sse_starlette import JSONServerSentEvent
 
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
@@ -13,7 +10,7 @@ from ..dispatch import dispatcher
 from ..exceptions import ParametersInvalidError, ResourceNotFoundError
 from ..manage import dicerobot_manager
 from ..responses import JSONResponse, EventSourceResponse
-from ..enum import ChatType, UpdateStatus
+from ..enum import ChatType
 from ..models.router.admin import (
     AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest
 )

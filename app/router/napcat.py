@@ -1,16 +1,11 @@
-import asyncio
-from collections.abc import AsyncGenerator
-
 from loguru import logger
 from fastapi import APIRouter, Depends
-from sse_starlette import JSONServerSentEvent
 
 from ..auth import verify_jwt_token
 from ..config import settings
 from ..exceptions import ResourceNotFoundError, BadRequestError
 from ..manage import qq_manager, napcat_manager
 from ..responses import JSONResponse, EventSourceResponse
-from ..enum import UpdateStatus
 from ..models.router.napcat import UpdateNapCatSettingsRequest
 
 router = APIRouter(prefix="/napcat")
