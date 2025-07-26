@@ -1,11 +1,8 @@
 from typing import Annotated
 from datetime import date
-import asyncio
-from collections.abc import AsyncGenerator
 
 from loguru import logger
 from fastapi import APIRouter, Depends, Query
-from sse_starlette import JSONServerSentEvent
 
 from ..auth import verify_password, generate_jwt_token, verify_jwt_token
 from ..config import status, replies, settings, plugin_settings, chat_settings
@@ -13,9 +10,10 @@ from ..dispatch import dispatcher
 from ..exceptions import ParametersInvalidError, ResourceNotFoundError
 from ..manage import dicerobot_manager
 from ..responses import JSONResponse, EventSourceResponse
-from ..enum import ChatType, UpdateStatus
+from ..enum import ChatType
 from ..models.router.admin import (
-    AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest
+    AuthRequest, SetModuleStatusRequest, UpdateSecuritySettingsRequest, UpdateApplicationSettingsRequest,
+    UpdatePluginSettingsRequest
 )
 
 router = APIRouter()
@@ -119,14 +117,20 @@ async def get_plugin_settings(plugin: str) -> JSONResponse:
 
 
 @router.patch("/plugin/{plugin}/settings", dependencies=[Depends(verify_jwt_token, use_cache=False)])
-async def update_plugin_settings(plugin: str, data: dict) -> JSONResponse:
+async def update_plugin_settings(plugin: str, data: UpdatePluginSettingsRequest) -> JSONResponse:
     logger.info(f"Admin request received: update plugin settings, plugin: {plugin}")
 
     if plugin not in status.plugins:
         raise ResourceNotFoundError(message="Plugin not found")
 
+    plugin_class = dispatcher.find_plugin(plugin)
+
+    for key in data.__pydantic_extra__:
+        if key not in plugin_class.default_plugin_settings:
+            raise ParametersInvalidError(message="Plugin settings invalid")
+
     plugin_settings.set(plugin=plugin, settings=data)
-    dispatcher.find_plugin(plugin).load()
+    plugin_class.load()
 
     return JSONResponse()
 
@@ -161,8 +165,14 @@ async def update_plugin_replies(plugin: str, data: dict[str, str]) -> JSONRespon
     if plugin not in status.plugins:
         raise ResourceNotFoundError(message="Plugin not found")
 
+    plugin_class = dispatcher.find_plugin(plugin)
+
+    for key in data.keys():
+        if key not in plugin_class.default_replies:
+            raise ParametersInvalidError(message="Plugin replies invalid")
+
     replies.set_replies(group=plugin, replies=data)
-    dispatcher.find_plugin(plugin).load()
+    plugin_class.load()
 
     return JSONResponse()
 

@@ -2,10 +2,17 @@ import time
 
 from loguru import logger
 from fastapi.testclient import TestClient
+from pydantic import BaseModel
 
 from app.config import status
 from app.enum import ApplicationStatus
 from app.models.report.message import Message, PrivateMessage, GroupMessage
+
+
+class Response(BaseModel):
+    code: int
+    message: str
+    data: dict | None = None
 
 
 class BaseTest:
@@ -87,12 +94,11 @@ class BaseTest:
         })
 
     @staticmethod
-    def send_request(client: TestClient, method: str, path: str, data: dict = None) -> dict | None:
+    def send_request(client: TestClient, method: str, path: str, data: dict = None) -> Response:
         response = client.request(method, path, json=data)
         assert response.status_code < 500
         result = response.json()
 
         logger.debug(f"Response content: {result}")
 
-        assert result["code"] == 0
-        return result["data"] if "data" in result else None
+        return Response.model_validate(result)

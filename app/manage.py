@@ -19,7 +19,7 @@ from .enum import UpdateStatus
 from .schedule import run_task
 from .network import client
 from .network.cloud import get_versions
-from .utils import run_command
+from .utils import run_command, run_command_wait
 
 __all__ = [
     "dicerobot_manager",
@@ -184,7 +184,7 @@ class Manager(ABC):
 
         try:
             async with client.stream("GET", url) as response:
-                with aiofiles.open(f"{settings.app.dir.temp}/{filename}", "wb") as f:
+                async with aiofiles.open(f"{settings.app.dir.temp}/{filename}", "wb") as f:
                     async for chunk in response.aiter_bytes(chunk_size=8192):
                         await f.write(chunk)
         except:
@@ -237,7 +237,7 @@ class Manager(ABC):
 
         self.update_status = UpdateStatus.COMPLETED
 
-    async def create_update_stream(self) -> AsyncGenerator[JSONServerSentEvent]:
+    def create_update_stream(self) -> AsyncGenerator[JSONServerSentEvent]:
         task = asyncio.create_task(self.update())
 
         async def stream_generator() -> AsyncGenerator[JSONServerSentEvent]:
@@ -311,8 +311,7 @@ class DiceRobotManager(Manager, LogManager):
 
         logger.info("Update dependencies")
 
-        if (await (await run_command("poetry lock")).wait()) != 0 or \
-                (await (await run_command("poetry update")).wait()) != 0:
+        if (await run_command_wait("poetry lock")) != 0 or (await run_command_wait("poetry update")) != 0:
             logger.error("Failed to update dependencies")
             return False
 
@@ -370,7 +369,7 @@ class QQManager(Manager):
 
         logger.info("Install Debian package")
 
-        if (await (await run_command(f"apt-get install -y -qq {filepath}")).wait()) != 0:
+        if (await run_command_wait(f"apt-get install -y -qq {filepath}")) != 0:
             logger.error("Failed to install Debian package")
             return False
 
@@ -380,7 +379,7 @@ class QQManager(Manager):
     async def remove(purge: bool = False) -> None:
         logger.info("Remove QQ")
 
-        await (await run_command("apt-get remove -y -qq linuxqq")).wait()
+        await run_command_wait("apt-get remove -y -qq linuxqq")
         shutil.rmtree(settings.qq.dir.base, ignore_errors=True)
 
         if purge:
@@ -449,7 +448,7 @@ class NapCatManager(Manager, LogManager):
 
     @staticmethod
     async def running() -> bool:
-        return (await (await run_command("systemctl is-active --quiet napcat")).wait()) == 0
+        return (await run_command_wait("systemctl is-active --quiet napcat")) == 0
 
     async def get_version(self) -> str | None:
         if not self.installed():
@@ -504,7 +503,7 @@ class NapCatManager(Manager, LogManager):
         [Install]
         WantedBy=multi-user.target""")
 
-        await (await run_command("systemctl daemon-reload")).wait()
+        await run_command_wait("systemctl daemon-reload")
 
         # Patch QQ
         async with aiofiles.open(self.loader_path, "w") as f:
@@ -524,7 +523,7 @@ class NapCatManager(Manager, LogManager):
 
         if os.path.isfile(self.service_path):
             os.remove(self.service_path)
-            await (await run_command("systemctl daemon-reload")).wait()
+            await run_command_wait("systemctl daemon-reload")
 
         shutil.rmtree(settings.napcat.dir.base, ignore_errors=True)
 
@@ -553,7 +552,7 @@ class NapCatManager(Manager, LogManager):
         async with aiofiles.open(os.path.join(settings.napcat.dir.config, f"onebot11_{settings.napcat.account}.json"), "w") as f:
             await f.write(json.dumps(self.onebot_config))
 
-        await (await run_command("systemctl start napcat")).wait()
+        await run_command_wait("systemctl start napcat")
 
         logger.info("NapCat started")
 
@@ -561,7 +560,7 @@ class NapCatManager(Manager, LogManager):
     async def stop() -> None:
         logger.info("Stop NapCat")
 
-        await (await run_command("systemctl stop napcat")).wait()
+        await run_command_wait("systemctl stop napcat")
 
         logger.info("NapCat stopped")
 

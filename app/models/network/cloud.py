@@ -13,7 +13,7 @@ class CloudAPIResponse(BaseModel):
     data: Any
 
 
-class GetVersionsResponse(BaseModel):
+class GetVersionsResponse(CloudAPIResponse):
     class Data(BaseModel):
         dicerobot: str
         napcat: str

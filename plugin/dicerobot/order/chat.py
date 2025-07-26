@@ -18,23 +18,20 @@ class Chat(OrderPlugin):
     display_name = "AI 聊天"
     description = "使用大语言模型进行聊天对话"
     version = "2.1.0"
-
+    priority = 100
+    orders = [
+        "chat", "聊天",
+        "think", "思考"
+    ]
     default_plugin_settings = {
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "api_key": "",
         "model": "qwen3-235b-a22b"
     }
-
     default_replies = {
         "unusable": "请先设置神秘代码~",
         "response_invalid": "哎呀，AI有点忙不过来了呢……请重新再试一次吧~"
     }
-
-    orders = [
-        "chat", "聊天",
-        "think", "思考"
-    ]
-    priority = 100
 
     async def __call__(self) -> None:
         self.check_order_content()

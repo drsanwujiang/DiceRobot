@@ -10,7 +10,12 @@ class SkillRoll(OrderPlugin):
     display_name = "技能检定"
     description = "根据检定规则进行技能检定；加载指定的检定规则"
     version = "1.2.0"
-
+    priority = 10
+    max_repetition = 30
+    orders = [
+        "ra", "检定", "技能检定",
+        "rule", "检定规则"
+    ]
     default_chat_settings = {
         "rule": {
             "name": "COC 7 检定规则",
@@ -49,7 +54,6 @@ class SkillRoll(OrderPlugin):
             ]
         }
     }
-
     default_replies = {
         "result": "{&发送者}进行了检定：{&检定结果}",
         "result_with_reason": "由于{&检定原因}，{&发送者}进行了检定：{&检定结果}",
@@ -61,14 +65,6 @@ class SkillRoll(OrderPlugin):
         "检定原因",
         "检定结果"
     ]
-
-    orders = [
-        "ra", "检定", "技能检定",
-        "rule", "检定规则"
-    ]
-    priority = 10
-    max_repetition = 30
-
     _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
     _rule_pattern = re.compile(r"^[\d()><=+-/&| ]+$", re.I)
 

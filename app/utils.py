@@ -2,7 +2,8 @@ import asyncio
 
 __all__ = [
     "deep_update",
-    "run_command"
+    "run_command",
+    "run_command_wait"
 ]
 
 
@@ -25,3 +26,7 @@ async def run_command(command: str) -> asyncio.subprocess.Process:
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL
     )
+
+
+async def run_command_wait(command: str) -> int:
+    return await (await run_command(command)).wait()

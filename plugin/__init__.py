@@ -46,13 +46,29 @@ class DiceRobotPlugin(ABC):
     def load(cls) -> None:
         """Load plugin settings and replies."""
 
+        loaded_settings = plugin_settings.get(plugin=cls.name)
+        loaded_settings.setdefault("enabled", True)  # Ensure the plugin is enabled by default
+
+        for key in loaded_settings.keys():
+            if key == "enabled":
+                continue
+            elif key not in cls.default_plugin_settings:
+                # Remove settings that are not in the default settings
+                del loaded_settings[key]
+
         plugin_settings.set(plugin=cls.name, settings=deep_update(
-            {"enabled": True},
-            deepcopy(cls.default_plugin_settings), plugin_settings.get(plugin=cls.name)
+            deepcopy(cls.default_plugin_settings), loaded_settings
         ))
+
+        loaded_replies = replies.get_replies(group=cls.name)
+
+        for key in loaded_replies.keys():
+            if key not in cls.default_replies:
+                # Remove replies that are not in the default replies
+                del loaded_replies[key]
+
         replies.set_replies(group=cls.name, replies=deep_update(
-            deepcopy(cls.default_replies),
-            replies.get_replies(group=cls.name)
+            deepcopy(cls.default_replies), loaded_replies
         ))
 
     @classmethod
@@ -128,12 +144,15 @@ class OrderPlugin(DiceRobotPlugin):
     """DiceRobot order plugin.
 
     Attributes:
-        default_chat_settings: Default chat settings.
-
-        orders: Order or orders that trigger the plugin.
         priority: The priority of the plugin. A larger value means a higher priority.
+        max_repetition: the maximum of repetitions of the plugin.
+        orders: Order or orders that trigger the plugin.
+        default_chat_settings: Default chat settings.
     """
 
+    priority: int = 100
+    max_repetition: int = 1
+    orders: str | list[str]
     default_chat_settings = {}
     supported_reply_variables: list[str] = [
         "机器人昵称",
@@ -146,9 +165,6 @@ class OrderPlugin(DiceRobotPlugin):
         "发送者QQ",
         "发送者QQ号"
     ]
-    orders: str | list[str]
-    priority: int = 100
-    max_repetition: int = 1
 
     def __init__(self, message: Message, order: str, order_content: str, repetition: int = 1) -> None:
         """Initialize order plugin.

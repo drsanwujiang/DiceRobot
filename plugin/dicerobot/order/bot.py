@@ -12,7 +12,10 @@ class Bot(OrderPlugin):
     display_name = "Bot 控制"
     description = "与 Bot 有关的各种指令"
     version = "1.2.0"
-
+    priority = 10
+    orders = [
+        "bot", "robot"
+    ]
     default_replies = {
         "about": "DiceRobot {&版本}\nMIT License\n© 2019-{&当前年份} Drsanwujiang",
         "enable": "呐呐~{&机器人昵称}为你服务~☆♪",
@@ -27,12 +30,6 @@ class Bot(OrderPlugin):
         "版本",
         "版权信息"
     ]
-
-    orders = [
-        "bot", "robot"
-    ]
-    priority = 10
-
     _suborders = {
         "about": ["about", "info", "关于", "信息"],
         "enable": ["on", "start", "enable", "开启", "启动"],

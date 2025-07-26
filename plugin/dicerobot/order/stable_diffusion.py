@@ -10,23 +10,20 @@ class StableDiffusion(OrderPlugin):
     display_name = "Stable Diffusion"
     description = "使用 Stability AI 的 Stable Diffusion 模型生成图片"
     version = "1.1.0"
-
+    priority = 100
+    orders = [
+        "sd"
+    ]
     default_plugin_settings = {
         "domain": "api.stability.ai",
         "api_key": "",
         "service": "ultra",
         "aspect_ratio": "1:1"
     }
-
     default_replies = {
         "unusable": "请先设置神秘代码~",
         "content_policy_violated": "啊嘞，画出来的图图不见了……请重新再试一次吧~"
     }
-
-    orders = [
-        "sd"
-    ]
-    priority = 100
 
     async def __call__(self) -> None:
         self.check_order_content()

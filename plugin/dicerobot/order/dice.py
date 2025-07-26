@@ -10,7 +10,11 @@ class Dice(OrderPlugin):
     display_name = "掷骰"
     description = "掷一个或一堆骰子"
     version = "1.2.0"
-
+    priority = 1
+    max_repetition = 30
+    orders = [
+        "r", "掷骰"
+    ]
     default_plugin_settings = {
         "max_count": 100,
         "max_surface": 1000
@@ -18,7 +22,6 @@ class Dice(OrderPlugin):
     default_chat_settings = {
         "default_surface": 100
     }
-
     default_replies = {
         "result": "{&发送者}骰出了：{&掷骰结果}",
         "result_with_reason": "由于{&掷骰原因}，{&发送者}骰出了：{&掷骰结果}",
@@ -31,13 +34,6 @@ class Dice(OrderPlugin):
         "掷骰原因",
         "掷骰结果"
     ]
-
-    orders = [
-        "r", "掷骰"
-    ]
-    priority = 1
-    max_repetition = 30
-
     _content_pattern = re.compile(r"^([\ddk+\-*x×()（）]+)?\s*([\S\s]*)$", re.I)
     _repeated_symbol_pattern = re.compile(r"([dk+\-*])\1+", re.I)
     _dice_expression_split_pattern = re.compile(r"((?:[1-9]\d*)?d(?:[1-9]\d*)?(?:k(?:[1-9]\d*)?)?)", re.I)

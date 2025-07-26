@@ -10,7 +10,10 @@ class DallE(OrderPlugin):
     display_name = "DALL·E"
     description = "使用 OpenAI 的 DALL·E 模型生成图片"
     version = "1.3.0"
-
+    priority = 100
+    orders = [
+        "dalle", "dall_e", "dall-e"
+    ]
     default_plugin_settings = {
         "domain": "api.openai.com",
         "api_key": "",
@@ -18,16 +21,10 @@ class DallE(OrderPlugin):
         "size": "1024x1024",
         "quality": "hd"
     }
-
     default_replies = {
         "unusable": "请先设置神秘代码~",
         "content_policy_violated": "啊嘞，画出来的图图不见了……请重新再试一次吧~"
     }
-
-    orders = [
-        "dalle", "dall_e", "dall-e"
-    ]
-    priority = 100
 
     async def __call__(self) -> None:
         self.check_order_content()

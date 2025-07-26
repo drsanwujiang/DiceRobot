@@ -1,4 +1,4 @@
-from ...models import BaseModel
+from . import Request
 
 __all__ = [
     "RemoveQQRequest",
@@ -6,13 +6,13 @@ __all__ = [
 ]
 
 
-class RemoveQQRequest(BaseModel):
+class RemoveQQRequest(Request):
     purge: bool
 
 
-class UpdateQQSettingsRequest(BaseModel):
-    class Directory(BaseModel):
-        base: str = None
-        config: str = None
+class UpdateQQSettingsRequest(Request):
+    class Directory(Request):
+        base: str
+        config: str
 
-    dir: Directory = None
+    dir: Directory
