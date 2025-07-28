@@ -49,7 +49,7 @@ class DiceRobotPlugin(ABC):
         loaded_settings = plugin_settings.get(plugin=cls.name)
         loaded_settings.setdefault("enabled", True)  # Ensure the plugin is enabled by default
 
-        for key in loaded_settings.keys():
+        for key in loaded_settings.copy().keys():
             if key == "enabled":
                 continue
             elif key not in cls.default_plugin_settings:
@@ -62,7 +62,7 @@ class DiceRobotPlugin(ABC):
 
         loaded_replies = replies.get_replies(group=cls.name)
 
-        for key in loaded_replies.keys():
+        for key in loaded_replies.copy().keys():
             if key not in cls.default_replies:
                 # Remove replies that are not in the default replies
                 del loaded_replies[key]
