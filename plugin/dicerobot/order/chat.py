@@ -5,19 +5,18 @@ import mimetypes
 from pydantic import conlist
 import aiofiles
 
-from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
 from app.models.report.segment import Segment, Text, Image, Reply
-from app.network import Client
-from app.network.napcat import get_image
+from app.network import HttpClient
+from ... import OrderPlugin
 
 
 class Chat(OrderPlugin):
     name = "dicerobot.chat"
     display_name = "AI 聊天"
     description = "使用大语言模型进行聊天对话"
-    version = "2.1.0"
+    version = "2.2.0"
     priority = 100
     orders = [
         "chat", "聊天",
@@ -60,7 +59,7 @@ class Chat(OrderPlugin):
                         "text": segment.data.text
                     }))
                 elif isinstance(segment, Image):
-                    file = (await get_image(segment.data.file)).data.file
+                    file = (await self.context.network_manager.napcat.get_image(segment.data.file)).data.file
                     mime_type, _ = mimetypes.guess_type(file)
 
                     async with aiofiles.open(file, "rb") as f:
@@ -87,7 +86,7 @@ class Chat(OrderPlugin):
 
         completion_content = ""
 
-        async with Client() as client:
+        async with HttpClient() as client:
             async with client.stream(
                 "POST",
                 self.plugin_settings["base_url"].rstrip("/") + "/chat/completions",

@@ -1,20 +1,19 @@
-import datetime
-
 from apscheduler.triggers.cron import CronTrigger
+import arrow
 
-from plugin import OrderPlugin
-from app.schedule import scheduler
+from app.context import AppContext
 from app.exceptions import OrderInvalidError, OrderError
 from app.enum import ChatType
 from app.models.report.segment import Image
-from app.network import Client
+from app.network import HttpClient
+from ... import OrderPlugin
 
 
 class DailySixtySeconds(OrderPlugin):
     name = "dicerobot.daily_60s"
     display_name = "每天60秒读懂世界"
     description = "每天60秒读懂世界，15条简报+1条微语，让你瞬间了解世界正在发生的大事"
-    version = "1.2.0"
+    version = "1.3.0"
     priority = 100
     orders = [
         "60s", "60秒"
@@ -30,22 +29,26 @@ class DailySixtySeconds(OrderPlugin):
         "unsubscribable": "只能在群聊中订阅哦~"
     }
 
-    @classmethod
-    async def initialize(cls) -> None:
-        await scheduler.add_schedule(cls.send_daily_60s, CronTrigger(hour=10), id=f"{cls.name}.send")
+    JOB_ID = f"{name}.send"
 
     @classmethod
-    async def send_daily_60s(cls) -> None:
-        async with Client() as client:
-            result = (await client.get(cls.get_plugin_setting(key="api"))).json()
+    async def initialize(cls, context: AppContext) -> None:
+        await context.task_manager.scheduler.add_schedule(cls.send_daily_60s, CronTrigger(hour=10), id=cls.JOB_ID)
 
-        if result["datatime"] == str(datetime.date.today()):
+    @classmethod
+    async def send_daily_60s(cls, context: AppContext) -> None:
+        settings = context.plugin_settings.get(plugin=cls.name)
+
+        async with HttpClient() as client:
+            result = (await client.get(settings["api"])).json()
+
+        if result["datatime"] == arrow.now().format("YYYY-MM-DD"):
             message = [Image(data=Image.Data(file=result["imageUrl"]))]
         else:
-            message = cls.get_reply(key="api_error")
+            message = context.replies.get_reply(group=cls.name, key="api_error")
 
-        for chat_id in cls.get_plugin_setting(key="subscribers"):
-            await cls.send_group_message(chat_id, message)
+        for chat_id in settings["subscribers"]:
+            await context.network_manager.napcat.send_group_message(chat_id, message)
 
     async def __call__(self) -> None:
         self.check_order_content()

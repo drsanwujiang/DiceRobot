@@ -1,15 +1,17 @@
 import re
 import random
 
-from plugin import OrderPlugin
+import numexpr as ne
+
 from app.exceptions import OrderSuspiciousError, OrderError
+from ... import OrderPlugin
 
 
 class Dice(OrderPlugin):
     name = "dicerobot.dice"
     display_name = "掷骰"
     description = "掷一个或一堆骰子"
-    version = "1.2.0"
+    version = "1.3.0"
     priority = 1
     max_repetition = 30
     orders = [
@@ -45,7 +47,6 @@ class Dice(OrderPlugin):
 
         self.expression = "d"
         self.reason = ""
-
         self.detailed_result = ""
         self.brief_result = ""
         self.final_result = ""
@@ -136,8 +137,8 @@ class Dice(OrderPlugin):
             raise OrderError(self.replies["expression_invalid"])
 
         try:
-            self.final_result = str(eval(self.brief_result, {}, {}))
-        except (ValueError, SyntaxError):
+            self.final_result = str(ne.evaluate(self.brief_result).item())
+        except Exception:
             raise OrderError(self.replies["expression_error"])
 
     def generate_results(self) -> None:

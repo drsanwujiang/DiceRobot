@@ -1,17 +1,15 @@
-from datetime import date
+import arrow
 
-from plugin import OrderPlugin
-from app.config import status
 from app.exceptions import OrderInvalidError, OrderError
 from app.enum import ChatType, Role
-from app.network.napcat import set_group_card
+from ... import OrderPlugin
 
 
 class Bot(OrderPlugin):
     name = "dicerobot.bot"
     display_name = "Bot 控制"
     description = "与 Bot 有关的各种指令"
-    version = "1.2.0"
+    version = "1.3.0"
     priority = 10
     orders = [
         "bot", "robot"
@@ -74,8 +72,8 @@ class Bot(OrderPlugin):
             raise OrderInvalidError
 
         self.update_reply_variables({
-            "版本": status.version,
-            "当前年份": date.today().year
+            "版本": self.context.status.version,
+            "当前年份": arrow.now().year
         })
         self.reply_to_sender(self.replies["about"])
 
@@ -118,7 +116,9 @@ class Bot(OrderPlugin):
         if self.suborder_content:
             # Set nickname
             self.dicerobot_chat_settings["nickname"] = self.suborder_content
-            await set_group_card(self.chat_id, status.bot.id, self.suborder_content)
+            await self.context.network_manager.napcat.set_group_card(
+                self.chat_id, self.context.status.bot.id, self.suborder_content
+            )
             self.update_reply_variables({
                 "机器人": self.suborder_content,
                 "机器人昵称": self.suborder_content
@@ -127,9 +127,11 @@ class Bot(OrderPlugin):
         else:
             # Unset nickname
             self.dicerobot_chat_settings["nickname"] = ""
-            await set_group_card(self.chat_id, status.bot.id, "")
+            await self.context.network_manager.napcat.set_group_card(
+                self.chat_id, self.context.status.bot.id, ""
+            )
             self.update_reply_variables({
-                "机器人": status.bot.nickname,
-                "机器人昵称": status.bot.nickname
+                "机器人": self.context.status.bot.nickname,
+                "机器人昵称": self.context.status.bot.nickname
             })
             await self.reply_to_sender(self.replies["nickname_unset"])

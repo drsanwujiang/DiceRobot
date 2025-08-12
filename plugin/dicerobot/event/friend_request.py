@@ -1,8 +1,7 @@
 from loguru import logger
 
-from plugin import EventPlugin
 from app.models.report.request import FriendRequest
-from app.network.napcat import set_friend_add_request
+from ... import EventPlugin
 
 
 class FriendRequestHandler(EventPlugin):
@@ -21,6 +20,5 @@ class FriendRequestHandler(EventPlugin):
         logger.success(f"Friend request from {self.event.user_id} received")
 
         if self.plugin_settings["auto_approve"]:
-            await set_friend_add_request(self.event.flag, True)
-
+            await self.context.network_manager.napcat.set_friend_add_request(self.event.flag, True)
             logger.success(f"Friend request from {self.event.user_id} automatically approved")

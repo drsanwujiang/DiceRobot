@@ -1,15 +1,15 @@
-from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
 from app.models.report.segment import Image
-from app.network import Client
+from app.network import HttpClient
+from ... import OrderPlugin
 
 
 class DallE(OrderPlugin):
     name = "dicerobot.dall_e"
     display_name = "DALL·E"
     description = "使用 OpenAI 的 DALL·E 模型生成图片"
-    version = "1.3.0"
+    version = "1.4.0"
     priority = 100
     orders = [
         "dalle", "dall_e", "dall-e"
@@ -45,7 +45,7 @@ class DallE(OrderPlugin):
         except ValueError:
             raise OrderInvalidError
 
-        async with Client() as client:
+        async with HttpClient() as client:
             result = (await client.post(
                 "https://" + self.plugin_settings["domain"] + "/v1/images/generations",
                 headers={

@@ -1,15 +1,15 @@
 import re
 import random
 
-from plugin import OrderPlugin
 from app.exceptions import OrderSuspiciousError, OrderError
+from ... import OrderPlugin
 
 
 class BPDice(OrderPlugin):
     name = "dicerobot.bp_dice"
     display_name = "奖励骰/惩罚骰"
     description = "掷一个骰子，以及一个或多个奖励骰/惩罚骰"
-    version = "1.2.0"
+    version = "1.3.0"
     priority = 10
     max_repetition = 30
     orders = [

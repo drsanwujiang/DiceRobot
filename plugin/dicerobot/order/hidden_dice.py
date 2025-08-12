@@ -1,16 +1,14 @@
-from plugin import OrderPlugin
-from plugin.dicerobot.order.dice import Dice
-from app.config import status
 from app.exceptions import OrderError
 from app.models.report.message import GroupMessage
-from app.network.napcat import get_group_info
+from ... import OrderPlugin
+from .dice import Dice
 
 
 class HiddenDice(OrderPlugin):
     name = "dicerobot.hidden_dice"
     display_name = "暗骰"
     description = "掷一个或一堆骰子，并通过私聊发送结果"
-    version = "1.3.0"
+    version = "1.4.0"
     priority = 10
     max_repetition = 30
     orders = [
@@ -46,7 +44,7 @@ class HiddenDice(OrderPlugin):
             "掷骰原因": dice.reason,
             "掷骰结果": result,
             "群号": self.message.group_id,
-            "群名": (await get_group_info(self.message.group_id)).data.group_name
+            "群名": (await self.context.network_manager.napcat.get_group_info(self.message.group_id)).data.group_name
         })
         await self.reply_to_sender(self.replies["reply_with_reason" if dice.reason else "reply"])
         await self.send_private_message(
@@ -59,5 +57,5 @@ class HiddenDice(OrderPlugin):
             raise OrderError(self.replies["not_in_group"])
 
     def check_friend(self) -> None:
-        if self.message.user_id not in status.bot.friends:
+        if self.message.user_id not in self.context.status.bot.friends:
             raise OrderError(self.replies["not_friend"])

@@ -1,15 +1,16 @@
 import re
 import random
 
-from plugin import OrderPlugin
-from app.exceptions import OrderInvalidError, OrderSuspiciousError, OrderError
+from app.exceptions import OrderSuspiciousError, OrderError
+from app.models.data import RuleSet
+from ... import OrderPlugin
 
 
 class SkillRoll(OrderPlugin):
     name = "dicerobot.skill_roll"
     display_name = "技能检定"
     description = "根据检定规则进行技能检定；加载指定的检定规则"
-    version = "1.2.0"
+    version = "1.3.0"
     priority = 10
     max_repetition = 30
     orders = [
@@ -17,53 +18,21 @@ class SkillRoll(OrderPlugin):
         "rule", "检定规则"
     ]
     default_chat_settings = {
-        "rule": {
-            "name": "COC 7 检定规则",
-            "description": "COC 7 版规则书设定的检定规则",
-            "levels": [
-                {
-                    "level": "大成功",
-                    "rule": "骰出 1",
-                    "condition": "{&检定值} == 1"
-                },
-                {
-                    "level": "极难成功",
-                    "rule": "骰出小于等于角色技能或属性值的五分之一（向下取整）",
-                    "condition": "{&检定值} <= {&技能值} // 5"
-                },
-                {
-                    "level": "困难成功",
-                    "rule": "骰出小于等于角色技能或属性值的一半（向下取整）",
-                    "condition": "{&检定值} <= {&技能值} // 2"
-                },
-                {
-                    "level": "成功",
-                    "rule": "骰出小于等于角色技能或属性值，也称为一般成功",
-                    "condition": "{&检定值} <= {&技能值}"
-                },
-                {
-                    "level": "失败",
-                    "rule": "骰出大于角色技能或属性值",
-                    "condition": "({&技能值} < 50 && {&检定值} < 96) || ({&技能值} >= 50 && {&检定值} < 100)"
-                },
-                {
-                    "level": "大失败",
-                    "rule": "骰出 100。若角色技能或属性值低于 50，则大于等于 96 的结果都是大失败",
-                    "condition": "{&检定值} >= 96"
-                }
-            ]
-        }
+        "rule": "coc7"
     }
     default_replies = {
         "result": "{&发送者}进行了检定：{&检定结果}",
         "result_with_reason": "由于{&检定原因}，{&发送者}进行了检定：{&检定结果}",
         "skill_invalid": "技能或属性值无法识别……",
         "rule_invalid": "检定规则无法识别……",
-        "no_rule_matched": "没有匹配到检定等级……"
+        "no_rule_matched": "没有匹配到检定等级……",
+        "rule_not_found": "找不到这个检定规则诶……",
+        "rule_set": "检定规则已设置为：【{&检定规则名称}】"
     }
     supported_reply_variables = [
         "检定原因",
-        "检定结果"
+        "检定结果",
+        "检定规则名称"
     ]
     _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
     _rule_pattern = re.compile(r"^[\d()><=+-/&| ]+$", re.I)
@@ -73,7 +42,6 @@ class SkillRoll(OrderPlugin):
 
         self.skill_value = -1
         self.reason = ""
-
         self.roll_result = -1
         self.difficulty_level = ""
         self.full_result = ""
@@ -98,9 +66,8 @@ class SkillRoll(OrderPlugin):
             })
             await self.reply_to_sender(self.replies["result_with_reason" if self.reason else "result"])
         elif self.order in ["rule", "检定规则"]:
-            self.max_repetition = 1
-            self.check_repetition()
-            await self.show_rule()
+            self.check_repetition(1)
+            await self.show_set_rule()
 
     def parse_content(self) -> None:
         match = self._content_pattern.fullmatch(self.order_content)
@@ -116,45 +83,37 @@ class SkillRoll(OrderPlugin):
             raise OrderError(self.replies["skill_invalid"])
 
     def skill_roll(self) -> None:
+        rule = self.context.data_manager.get_rule(self.chat_settings["rule"])  # type: RuleSet
+
+        if rule is None:
+            raise OrderError(self.replies["rule_invalid"])
+
         self.roll_result = random.randint(1, 100)
-        difficulty_level = None
 
-        for level in self.chat_settings["rule"]["levels"]:
-            expression = level["condition"] \
-                .replace("{&技能值}", str(self.skill_value)) \
-                .replace("{&检定值}", str(self.roll_result))
-
-            # Check rule content
-            if not self._rule_pattern.fullmatch(expression):
-                raise OrderError(self.replies["rule_invalid"])
-
-            expression = expression.replace("&&", "and").replace("||", "or")
-
-            try:
-                eval_result = eval(expression)
-            except:
-                raise OrderError(self.replies["rule_invalid"])
-
-            # Check evaluation result
-            if not isinstance(eval_result, bool):
-                raise OrderError(self.replies["rule_invalid"])
-
-            if eval_result:
-                difficulty_level = level["level"]
+        for level in rule.levels:
+            if level.condition(self.skill_value, self.roll_result):
+                difficulty_level = level.name
                 break
-
-        if difficulty_level is None:
+        else:
             raise OrderError(self.replies["no_rule_matched"])
 
         self.difficulty_level = difficulty_level
         self.full_result = f"D100={self.roll_result}/{self.skill_value}，{self.difficulty_level}"
 
-    async def show_rule(self) -> None:
+    async def show_set_rule(self) -> None:
         if self.order_content:
-            raise OrderInvalidError
+            if self.order_content not in self.context.data_manager.list_rules():
+                raise OrderError(self.replies["rule_not_found"])
 
-        rule = self.chat_settings["rule"]
-        rule_content = f"当前使用的检定规则为：【{rule['name']}】\n{rule['description']}\n\n" + \
-                       "\n".join([f"{level['level']}：{level['rule']}" for level in rule["levels"]])
-
-        await self.reply_to_sender(rule_content)
+            rule: RuleSet = self.context.data_manager.get_rule(self.order_content)
+            self.plugin_settings["rule"] = rule.id
+            self.save_plugin_settings()
+            self.update_reply_variables({
+                "检定规则名称": rule.name
+            })
+            await self.reply_to_sender(self.replies["rule_set"])
+        else:
+            rule = self.context.data_manager.get_rule(self.chat_settings["rule"])  # type: RuleSet
+            rule_content = f"当前使用的检定规则为：【{rule.name}】\n{rule.description}\n\n" + \
+                           "\n".join([f"{level.name}：{level.description}" for level in rule.levels])
+            await self.reply_to_sender(rule_content)

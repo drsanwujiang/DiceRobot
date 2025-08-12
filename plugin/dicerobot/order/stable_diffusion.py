@@ -1,15 +1,15 @@
-from plugin import OrderPlugin
 from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
 from app.models.report.segment import Image
-from app.network import Client
+from app.network import HttpClient
+from ... import OrderPlugin
 
 
 class StableDiffusion(OrderPlugin):
     name = "dicerobot.stable_diffusion"
     display_name = "Stable Diffusion"
     description = "使用 Stability AI 的 Stable Diffusion 模型生成图片"
-    version = "1.1.0"
+    version = "1.2.0"
     priority = 100
     orders = [
         "sd"
@@ -41,7 +41,7 @@ class StableDiffusion(OrderPlugin):
         except ValueError:
             raise OrderInvalidError
 
-        result = (await Client().post(
+        result = (await HttpClient().post(
             "https://" + self.plugin_settings["domain"] + "/v2beta/stable-image/generate/" + self.plugin_settings["service"],
             headers={
                 "Authorization": f"Bearer {api_key}"
