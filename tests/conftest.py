@@ -1,330 +1,164 @@
-from collections.abc import Generator
+from typing import Generator
+import pathlib
+import sys
+import os
+from collections.abc import AsyncGenerator
 
 import pytest
+import pytest_asyncio
 from loguru import logger
-from fastapi.testclient import TestClient
+from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine, AsyncSession
+from fastapi import FastAPI
+
+from app import dicerobot
+from app.context import AppContext
+from app.dependencies import get_app_context
+from app.database import Base
+from app.managers.database import DatabaseManager
+from app.managers.config import ConfigManager
+from app.managers.data import DataManager
+from app.managers.dispatch import DispatchManager
+from app.managers.task import TaskManager
+from app.managers.network import NetworkManager
+from app.actuators.app import AppActuator
+from app.actuators.qq import QQActuator
+from app.actuators.napcat import NapCatActuator
 
 
-@pytest.fixture(scope="session")
-def monkeypatch():
+@pytest.fixture(autouse=True)
+def prepare_environments(tmp_path: pathlib.Path) -> None:
+    os.environ["DICEROBOT_DEBUG"] = "1"
+    os.environ["DICEROBOT_DATABASE"] = str(tmp_path / "test.db")
+    os.environ["DICEROBOT_LOG_DIR"] = str(tmp_path / "logs")
+    os.environ["DICEROBOT_LOG_LEVEL"] = "DEBUG"
+
+
+@pytest.fixture(autouse=True)
+def prepare_logger() -> None:
+    logger.remove()
+    logger.add(sys.stdout, level="DEBUG", diagnose=True)
+
+
+@pytest.fixture
+def monkeypatch() -> Generator[pytest.MonkeyPatch]:
     with pytest.MonkeyPatch.context() as mp:
         yield mp
 
 
-@pytest.fixture(scope="session", autouse=True)
-def mock_dicerobot(monkeypatch) -> None:
-    def _init_database() -> None:
-        logger.debug("Mocking init_database")
+@pytest_asyncio.fixture(scope="session")
+async def db_engine() -> AsyncGenerator[AsyncEngine]:
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:?_pragma=journal_mode=wal")
 
-    def _clean_database() -> None:
-        logger.debug("Mocking clean_database")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-    def _load_config() -> None:
-        logger.debug("Mocking load_config")
-
-    def _save_config() -> None:
-        logger.debug("Mocking save_config")
-
-    def _init_logger() -> None:
-        logger.debug("Mocking init_logger")
-
-    async def _init_manager() -> None:
-        logger.debug("Mocking init_manager")
-
-    monkeypatch.setattr("app.init_database", _init_database)
-    monkeypatch.setattr("app.clean_database", _clean_database)
-    monkeypatch.setattr("app.load_config", _load_config)
-    monkeypatch.setattr("app.save_config", _save_config)
-    monkeypatch.setattr("app.init_logger", _init_logger)
-    monkeypatch.setattr("app.init_manager", _init_manager)
+    yield engine
+    await engine.dispose()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def mock_napcat(monkeypatch) -> None:
-    from app.models.network.napcat import (
-        GetLoginInfoResponse, GetFriendListResponse, GetGroupInfoResponse, GetGroupListResponse,
-        GetGroupMemberInfoResponse, GetGroupMemberListResponse, SendPrivateMessageResponse, SendGroupMessageResponse,
-        SetGroupCardResponse, SetGroupLeaveResponse, SetFriendAddRequestResponse, SetGroupAddRequestResponse
-    )
-    from app.models.report.segment import Segment
-    from app.enum import GroupRequestSubType
+@pytest_asyncio.fixture
+async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
+    async with async_sessionmaker(db_engine, expire_on_commit=False).begin() as session:
+        yield session
 
-    async def _get_login_info() -> GetLoginInfoResponse:
-        logger.debug("Mocking get_login_info")
 
-        return GetLoginInfoResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": {
-                "user_id": 99999,
-                "nickname": "Shinji"
-            },
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
+@pytest_asyncio.fixture
+async def context(db_engine: AsyncEngine, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> AppContext:
+    context = AppContext()
+    context.settings.update_application({
+        "dir": {
+            "base": str(tmp_path / "DiceRobot"),
+            "data": str(tmp_path / "DiceRobot" / "data"),
+            "temp": str(tmp_path / "DiceRobot" / "temp")
+        }
+    })
+    context.settings.update_qq({
+        "dir": {
+            "base": str(tmp_path / "QQ" / "application"),
+            "config": str(tmp_path / "QQ" / "config")
+        }
+    })
+    context.settings.update_napcat({
+        "dir": {
+            "base": str(tmp_path / "NapCat"),
+            "config": str(tmp_path / "NapCat" / "config"),
+            "logs": str(tmp_path / "NapCat" / "logs")
+        }
+    })
+    context.database_manager = DatabaseManager(context)
+    context.database_manager.session = async_sessionmaker(db_engine, expire_on_commit=False)
+    context.config_manager = ConfigManager(context)
+    context.data_manager = DataManager(context)
+    context.dispatch_manager = DispatchManager(context)
+    context.network_manager = NetworkManager(context)
+    context.task_manager = TaskManager(context)
+    context.app_actuator = AppActuator(context)
+    context.qq_actuator = QQActuator(context)
+    context.napcat_actuator = NapCatActuator(context)
+    return context
 
-    async def _get_friend_list() -> GetFriendListResponse:
-        logger.debug("Mocking get_friend_list")
 
-        return GetFriendListResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": [
-                {
-                    "user_id": 88888,
-                    "nickname": "Kaworu",
-                    "remark": "",
-                    "sex": "male",
-                    "level": 0
-                },
-                {
-                    "user_id": 99999,
-                    "nickname": "Shinji",
-                    "remark": "",
-                    "sex": "male",
-                    "level": 0
-                }
-            ],
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
+@pytest.fixture
+def test_app(context: AppContext) -> Generator[FastAPI]:
+    dicerobot.dependency_overrides[get_app_context] = lambda: context
+    yield dicerobot
+    dicerobot.dependency_overrides.clear()
 
-    async def _get_group_info(_: int, __: bool = False) -> GetGroupInfoResponse:
-        logger.debug("Mocking get_group_info")
 
-        return GetGroupInfoResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": {
-                "group_id": 12345,
-                "group_name": "Nerv",
-                "member_count": 2,
-                "max_member_count": 200
-            },
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
+@pytest_asyncio.fixture
+async def client(test_app: FastAPI) -> AsyncGenerator[AsyncClient]:
+    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as client:
+        yield client
 
-    async def _get_group_list() -> GetGroupListResponse:
-        logger.debug("Mocking get_group_list")
 
-        return GetGroupListResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": [
-                {
-                    "group_id": 12345,
-                    "group_name": "Nerv",
-                    "member_count": 2,
-                    "max_member_count": 200
-                }
-            ],
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
+@pytest_asyncio.fixture
+async def auth_token(client: AsyncClient, context: AppContext) -> str:
+    test_password = "testpassword"
+    context.settings.update_security({
+        "admin": {
+            "password": test_password
+        }
+    })
 
-    async def _get_group_member_info(_: int, __: int, ___: bool = False) -> GetGroupMemberInfoResponse:
-        logger.debug("Mocking get_group_member_info")
+    response = await client.post("/auth", json={"password": test_password})
+    assert response.status_code == 200
+    return response.json()["data"]["token"]
 
-        return GetGroupMemberInfoResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": {
-                "group_id": 12345,
-                "user_id": 88888,
-                "nickname": "Kaworu",
-                "card": "",
-                "sex": "male",
-                "age": 0,
-                "area": "",
-                "level": "0",
-                "qq_level": 0,
-                "join_time": 0,
-                "last_sent_time": 0,
-                "title_expire_time": 0,
-                "unfriendly": False,
-                "card_changeable": True,
-                "is_robot": False,
-                "shut_up_timestamp": 0,
-                "role": "owner",
-                "title": ""
-            },
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
 
-    async def _get_group_member_list(_: int) -> GetGroupMemberListResponse:
-        logger.debug("Mocking get_group_member_list")
-
-        return GetGroupMemberListResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": [
-                {
-                    "group_id": 12345,
-                    "user_id": 88888,
-                    "nickname": "Kaworu",
-                    "card": "",
-                    "sex": "male",
-                    "age": 0,
-                    "area": "",
-                    "level": "0",
-                    "qq_level": 0,
-                    "join_time": 0,
-                    "last_sent_time": 0,
-                    "title_expire_time": 0,
-                    "unfriendly": False,
-                    "card_changeable": True,
-                    "is_robot": False,
-                    "shut_up_timestamp": 0,
-                    "role": "owner",
-                    "title": ""
-                },
-                {
-                    "group_id": 12345,
-                    "user_id": 99999,
-                    "nickname": "Shinji",
-                    "card": "",
-                    "sex": "male",
-                    "age": 0,
-                    "area": "",
-                    "level": "0",
-                    "qq_level": 0,
-                    "join_time": 0,
-                    "last_sent_time": 0,
-                    "title_expire_time": 0,
-                    "unfriendly": False,
-                    "card_changeable": True,
-                    "is_robot": False,
-                    "shut_up_timestamp": 0,
-                    "role": "admin",
-                    "title": ""
-                }
-            ],
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
-
-    async def _send_private_message(_: int, message: list[Segment], __: bool = False) -> SendPrivateMessageResponse:
-        logger.debug("Mocking send_private_message")
-        logger.debug(f"Message: {[segment.model_dump() for segment in message]}")
-
-        return SendPrivateMessageResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": {
-                "message_id": -1234567890
-            },
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
-
-    async def _send_group_message(_: int, message: list[Segment], __: bool = False) -> SendGroupMessageResponse:
-        logger.debug("Mocking send_group_message")
-        logger.debug(f"Message: {[segment.model_dump() for segment in message]}")
-
-        return SendGroupMessageResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": {
-                "message_id": -1234567890
-            },
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
-
-    async def _set_group_card(_: int, __: int, ___: str = "") -> SetGroupCardResponse:
-        logger.debug("Mocking set_group_card")
-
-        return SetGroupCardResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": None,
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
-
-    async def _set_group_leave(_: int, __: bool = False) -> SetGroupLeaveResponse:
-        logger.debug("Mocking set_group_leave")
-
-        return SetGroupLeaveResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": None,
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
-
-    async def _set_friend_add_request(_: str, __: bool, ___: str = "") -> SetFriendAddRequestResponse:
-        logger.debug("Mocking set_friend_add_request")
-
-        return SetFriendAddRequestResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": None,
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
-
-    async def _set_group_add_request(
-        _: str, __: GroupRequestSubType, ___: bool, ____: str = ""
-    ) -> SetGroupAddRequestResponse:
-        logger.debug("Mocking set_group_add_request")
-
-        return SetGroupAddRequestResponse.model_validate({
-            "status": "ok",
-            "retcode": 0,
-            "data": None,
-            "message": "",
-            "wording": "",
-            "echo": None
-        })
-
-    _NAPCAT_MOCKS = {
-        "app.network.napcat.get_login_info": _get_login_info,
-        "app.network.napcat.get_friend_list": _get_friend_list,
-        "app.network.napcat.get_group_info": _get_group_info,
-        "app.network.napcat.get_group_list": _get_group_list,
-        "app.network.napcat.get_group_member_info": _get_group_member_info,
-        "app.network.napcat.get_group_member_list": _get_group_member_list,
-        "app.network.napcat.send_private_message": _send_private_message,
-        "app.network.napcat.send_group_message": _send_group_message,
-        "app.network.napcat.set_group_card": _set_group_card,
-        "app.network.napcat.set_group_leave": _set_group_leave,
-        "app.network.napcat.set_friend_add_request": _set_friend_add_request,
-        "app.network.napcat.set_group_add_request": _set_group_add_request,
-        "plugin.napcat_send_private_message": _send_private_message,
-        "plugin.napcat_send_group_message": _send_group_message,
+@pytest.fixture
+def auth_headers(auth_token: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {auth_token}"
     }
 
-    for target, replacement in _NAPCAT_MOCKS.items():
-        monkeypatch.setattr(target, replacement)
+
+@pytest.fixture
+def authed_client(client: AsyncClient, auth_headers: dict[str, str]) -> AsyncClient:
+    client.headers.update(auth_headers)
+    return client
 
 
-@pytest.fixture(scope="session")
-def client() -> Generator[TestClient]:
-    def _verify_jwt_token() -> None:
-        logger.debug("Mocking verify_jwt_token")
+@pytest.fixture
+def config_manager(context: AppContext) -> ConfigManager:
+    return context.config_manager
 
-    async def _verify_signature() -> None:
-        logger.debug("Mocking verify_signature")
 
-    from app import dicerobot
-    from app.auth import verify_jwt_token, verify_signature
+@pytest.fixture
+def dispatch_manager(context: AppContext) -> DispatchManager:
+    return context.dispatch_manager
 
-    dicerobot.dependency_overrides[verify_jwt_token] = _verify_jwt_token
-    dicerobot.dependency_overrides[verify_signature] = _verify_signature
 
-    with TestClient(app=dicerobot) as client:
-        yield client
+@pytest.fixture
+def app_actuator(context: AppContext) -> AppActuator:
+    return context.app_actuator
+
+
+@pytest.fixture
+def qq_actuator(context: AppContext) -> QQActuator:
+    return context.qq_actuator
+
+
+@pytest.fixture
+def napcat_actuator(context: AppContext) -> NapCatActuator:
+    return context.napcat_actuator
