@@ -1,21 +1,15 @@
-from loguru import logger
-from sqlalchemy import Enum, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy import Enum
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from .enum import ChatType
 
 __all__ = [
-    "Session",
+    "Base",
     "Settings",
     "PluginSettings",
     "Replies",
-    "ChatSettings",
-    "init_database",
-    "clean_database"
+    "ChatSettings"
 ]
-
-engine = create_engine("sqlite:///database.db", connect_args={"check_same_thread": False})
-Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class Base(DeclarativeBase):
@@ -51,14 +45,3 @@ class ChatSettings(Base):
     chat_id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
     group: Mapped[str] = mapped_column(primary_key=True, nullable=False)
     json: Mapped[str] = mapped_column(nullable=False)
-
-
-def init_database() -> None:
-    engine.connect()
-    Base.metadata.create_all(bind=engine)
-
-    logger.debug("Database initialized")
-
-
-def clean_database() -> None:
-    engine.dispose()

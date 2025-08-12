@@ -1,8 +1,8 @@
 from loguru import logger
 from fastapi import FastAPI, Request, Response
-from fastapi.exceptions import StarletteHTTPException as HTTPException, RequestValidationError
+from fastapi.exceptions import StarletteHTTPException, RequestValidationError
 
-from .config import status
+from .globals import DEBUG
 from .exceptions import DiceRobotHTTPException
 from .responses import JSONResponse
 
@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-async def http_exception_handler(_: Request, e: HTTPException) -> Response:
+async def http_exception_handler(_: Request, e: StarletteHTTPException) -> Response:
     return JSONResponse(
         status_code=e.status_code,
         code=e.status_code * -1,
@@ -46,9 +46,9 @@ async def exception_handler(_: Request, __: Exception) -> Response:
 
 
 def init_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)  # type: ignore
     app.add_exception_handler(RequestValidationError, request_validation_error_handler)  # type: ignore
     app.add_exception_handler(DiceRobotHTTPException, dicerobot_http_exception_handler)  # type: ignore
 
-    if not status.debug:
+    if not DEBUG:
         app.add_exception_handler(Exception, exception_handler)

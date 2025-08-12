@@ -26,7 +26,7 @@ class Message(Report):
     sender: Any
 
     @field_validator("message", mode="before")
-    def validate_message(cls, segments: list[dict]) -> list[Segment]:
+    def parse_message(cls, segments: list[dict]) -> list[Segment]:
         parsed_segments: list[Segment] = []
 
         for segment in segments:

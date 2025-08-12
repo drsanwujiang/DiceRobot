@@ -29,6 +29,7 @@ class UpdateSecuritySettingsRequest(Request):
     class JWT(Request):
         secret: str
         algorithm: str
+        expiration: int
 
     class Admin(Request):
         password: str
@@ -47,8 +48,7 @@ class UpdateSecuritySettingsRequest(Request):
 
 class UpdateApplicationSettingsRequest(Request):
     class Directory(Request):
-        base: str
-        logs: str
+        data: str
         temp: str
 
     dir: Directory

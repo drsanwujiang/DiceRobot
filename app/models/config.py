@@ -7,7 +7,7 @@ from copy import deepcopy
 from pydantic import Field, field_serializer
 from werkzeug.security import generate_password_hash
 
-from ..version import VERSION
+from ..globals import VERSION, LOG_DIR
 from ..enum import ApplicationStatus, ChatType
 from ..utils import deep_update
 from . import BaseModel
@@ -72,11 +72,11 @@ class Status(BaseModel):
         friends: list[int] = []
         groups: list[int] = []
 
-    debug: bool = Field(False, exclude=True)
+    debug: bool = Field(default=False, exclude=True)
     version: str = VERSION
     app: ApplicationStatus = ApplicationStatus.STARTED
     module: Module = Module()
-    plugins: dict[str, Plugin] = Field({}, exclude=True)
+    plugins: dict[str, Plugin] = Field(default={}, exclude=True)
     bot: Bot = Bot()
 
 
@@ -124,6 +124,7 @@ class Settings:
 
                 secret: str = secrets.token_urlsafe(32)
                 algorithm: str = "HS256"
+                expiration: int = 3600 * 24
 
             class Admin(BaseModel):
                 """Administration settings.
@@ -151,11 +152,13 @@ class Settings:
                 Attributes:
                     base: Base directory of the application.
                     logs: Logs directory of the application.
+                    data: Data directory of the application.
                     temp: Temporary directory of the application.
                 """
 
                 base: str = os.getcwd()
-                logs: str = os.path.join(base, "logs")
+                logs: str = LOG_DIR
+                data: str = os.path.join(base, "data")
                 temp: str = os.path.join(base, "temp")
 
             dir: Directory = Directory()
@@ -222,13 +225,13 @@ class Settings:
 
                 Attributes:
                     base: Base directory of NapCat.
-                    logs: Logs directory of NapCat.
                     config: Configuration directory of NapCat.
+                    logs: Logs directory of NapCat.
                 """
 
                 base: str = "/opt/QQ/resources/app/app_launcher/napcat"
-                logs: str = os.path.join(base, "logs")
                 config: str = os.path.join(base, "config")
+                logs: str = os.path.join(base, "logs")
 
             class API(BaseModel):
                 """NapCat API settings.
@@ -239,10 +242,10 @@ class Settings:
                 """
 
                 host: IPv4Address = IPv4Address("127.0.0.1")
-                port: int = Field(13579, gt=0)
+                port: int = Field(default=13579, gt=0)
 
                 @field_serializer("host")
-                def serialize_host(self, host: IPv4Address, _) -> str:
+                def serialize_host(self, host: IPv4Address) -> str:
                     return str(host)
 
                 # noinspection HttpUrlsUsage
@@ -261,27 +264,26 @@ class Settings:
         qq: QQ = QQ()
         napcat: NapCat = NapCat()
 
-    _settings: _Settings = _Settings()
+    def __init__(self) -> None:
+        self._settings = self._Settings()
 
-    @classmethod
-    def update(cls, settings: dict) -> None:
+    def update(self, settings: dict) -> None:
         """Update all the settings.
 
         Args:
             settings: New settings.
         """
 
-        cls._settings = cls._Settings.model_validate(settings)
+        self._settings = self._Settings.model_validate(settings)
 
-    @classmethod
-    def update_security(cls, settings: dict) -> None:
+    def update_security(self, settings: dict) -> None:
         """Update security settings.
 
         Args:
             settings: New security settings.
         """
 
-        security_settings = cls._settings.security.model_dump()
+        security_settings = self._settings.security.model_dump()
 
         if "webhook" in settings:
             security_settings["webhook"] = deep_update(security_settings["webhook"], settings["webhook"])
@@ -290,47 +292,43 @@ class Settings:
         if "admin" in settings:
             security_settings["admin"]["password_hash"] = generate_password_hash(settings["admin"]["password"])
 
-        cls._settings.security = cls._Settings.Security.model_validate(security_settings)
+        self._settings.security = self._Settings.Security.model_validate(security_settings)
 
-    @classmethod
-    def update_application(cls, settings: dict) -> None:
+    def update_application(self, settings: dict) -> None:
         """Update application settings.
 
         Args:
             settings: New application settings.
         """
 
-        cls._settings.app = cls._Settings.Application.model_validate(
-            deep_update(cls._settings.app.model_dump(), settings)
+        self._settings.app = self._Settings.Application.model_validate(
+            deep_update(self._settings.app.model_dump(), settings)
         )
 
-    @classmethod
-    def update_qq(cls, settings: dict) -> None:
+    def update_qq(self, settings: dict) -> None:
         """Update QQ settings.
 
         Args:
             settings: New QQ settings.
         """
 
-        cls._settings.qq = cls._Settings.QQ.model_validate(
-            deep_update(cls._settings.qq.model_dump(), settings)
+        self._settings.qq = self._Settings.QQ.model_validate(
+            deep_update(self._settings.qq.model_dump(), settings)
         )
 
-    @classmethod
-    def update_napcat(cls, settings: dict) -> None:
+    def update_napcat(self, settings: dict) -> None:
         """Update NapCat settings.
 
         Args:
             settings: New NapCat settings.
         """
 
-        cls._settings.napcat = cls._Settings.NapCat.model_validate(
-            deep_update(cls._settings.napcat.model_dump(), settings)
+        self._settings.napcat = self._Settings.NapCat.model_validate(
+            deep_update(self._settings.napcat.model_dump(), settings)
         )
 
-    @classmethod
-    def model_dump(cls, safe_dump: bool = True, **kwargs) -> dict:
-        data = cls._settings.model_dump(**kwargs)
+    def model_dump(self, safe_dump: bool = True, **kwargs) -> dict:
+        data = self._settings.model_dump(**kwargs)
 
         if safe_dump:
             del data["security"]  # For security, sensitive data should be excluded
@@ -346,10 +344,10 @@ class Settings:
 class PluginSettings:
     """DiceRobot plugin settings."""
 
-    _plugin_settings: dict[str, dict] = {}
+    def __init__(self) -> None:
+        self._settings: dict[str, dict] = {}
 
-    @classmethod
-    def get(cls, *, plugin: str) -> dict:
+    def get(self, *, plugin: str) -> dict:
         """Get settings of a plugin.
 
         Args:
@@ -359,10 +357,9 @@ class PluginSettings:
             A deep copy of the settings for preventing modification.
         """
 
-        return deepcopy(cls._plugin_settings.setdefault(plugin, {}))
+        return deepcopy(self._settings.setdefault(plugin, {}))
 
-    @classmethod
-    def set(cls, *, plugin: str, settings: dict) -> None:
+    def set(self, *, plugin: str, settings: dict) -> None:
         """Set settings of a plugin.
 
         Args:
@@ -370,90 +367,87 @@ class PluginSettings:
             settings: Settings to be set.
         """
 
-        if plugin in cls._plugin_settings:
-            cls._plugin_settings[plugin] |= deepcopy(settings)
+        if plugin in self._settings:
+            self._settings[plugin] |= deepcopy(settings)
         else:
-            cls._plugin_settings[plugin] = deepcopy(settings)
+            self._settings[plugin] = deepcopy(settings)
 
-    @classmethod
-    def dict(cls) -> dict:
-        """Get all plugin settings.
+    def model_dump(self) -> dict:
+        """Dump all plugin settings.
 
         Returns:
             A deep copy of all plugin settings.
         """
 
-        return deepcopy(cls._plugin_settings)
+        return deepcopy(self._settings)
 
 
 class ChatSettings:
     """DiceRobot chat settings."""
 
-    _chat_settings: dict[ChatType, dict[int, dict[str, dict]]] = {
-        ChatType.FRIEND: {},
-        ChatType.GROUP: {},
-        ChatType.TEMP: {}
-    }
+    def __init__(self) -> None:
+        self._settings: dict[ChatType, dict[int, dict[str, dict]]] = {
+            ChatType.FRIEND: {},
+            ChatType.GROUP: {},
+            ChatType.TEMP: {}
+        }
 
-    @classmethod
-    def get(cls, *, chat_type: ChatType, chat_id: int, setting_group: str) -> dict:
+    def get(self, *, chat_type: ChatType, chat_id: int, settings_group: str) -> dict:
         """Get settings of a chat.
 
         Args:
             chat_type: Chat type.
             chat_id: Chat ID.
-            setting_group: Setting group.
+            settings_group: Settings group.
 
         Returns:
             Settings of the chat.
         """
 
-        return cls._chat_settings[chat_type].setdefault(chat_id, {}).setdefault(setting_group, {})
+        return self._settings[chat_type].setdefault(chat_id, {}).setdefault(settings_group, {})
 
-    @classmethod
-    def set(cls, *, chat_type: ChatType, chat_id: int, setting_group: str, settings: dict) -> None:
+    def set(self, *, chat_type: ChatType, chat_id: int, settings_group: str, settings: dict) -> None:
         """Set settings of a chat.
 
         Args:
             chat_type: Chat type.
             chat_id: Chat ID.
-            setting_group: Setting group.
+            settings_group: Settings group.
             settings: Settings to be set.
         """
 
-        if setting_group in cls._chat_settings[chat_type].setdefault(chat_id, {}):
-            cls._chat_settings[chat_type][chat_id][setting_group] |= deepcopy(settings)
+        if settings_group in self._settings[chat_type].setdefault(chat_id, {}):
+            self._settings[chat_type][chat_id][settings_group] |= deepcopy(settings)
         else:
-            cls._chat_settings[chat_type][chat_id][setting_group] = deepcopy(settings)
+            self._settings[chat_type][chat_id][settings_group] = deepcopy(settings)
 
-    @classmethod
-    def dict(cls) -> dict:
-        """Get all chat settings.
+    def model_dump(self) -> dict:
+        """Dump all chat settings.
 
         Returns:
             A deep copy of all chat settings.
         """
 
-        return deepcopy(cls._chat_settings)
+        return deepcopy(self._settings)
 
 
 class Replies:
     """DiceRobot plugin replies."""
 
-    _replies: dict[str, dict[str, str]] = {
-        "dicerobot": {
-            "network_client_error": "致远星拒绝了我们的请求……请稍后再试",
-            "network_server_error": "糟糕，致远星出错了……请稍后再试",
-            "network_invalid_content": "致远星返回了无法解析的内容……请稍后再试",
-            "network_error": "无法连接到致远星，请检查星际通讯是否正常",
-            "order_invalid": "不太理解这个指令呢……",
-            "order_suspicious": "唔……这个指令有点问题……",
-            "order_repetition_exceeded": "这条指令不可以执行这么多次哦~",
+    def __init__(self) -> None:
+        self._replies: dict[str, dict[str, str]] = {
+            "dicerobot": {
+                "network_client_error": "致远星拒绝了我们的请求……请稍后再试",
+                "network_server_error": "糟糕，致远星出错了……请稍后再试",
+                "network_invalid_content": "致远星返回了无法解析的内容……请稍后再试",
+                "network_error": "无法连接到致远星，请检查星际通讯是否正常",
+                "order_invalid": "不太理解这个指令呢……",
+                "order_suspicious": "唔……这个指令有点问题……",
+                "order_repetition_exceeded": "这条指令不可以执行这么多次哦~",
+            }
         }
-    }
 
-    @classmethod
-    def get_replies(cls, *, group: str) -> dict:
+    def get_replies(self, *, group: str) -> dict:
         """Get replies of a group.
 
         Args:
@@ -463,10 +457,9 @@ class Replies:
             A deep copy of the replies for preventing modification.
         """
 
-        return deepcopy(cls._replies.setdefault(group, {}))
+        return deepcopy(self._replies.setdefault(group, {}))
 
-    @classmethod
-    def get_reply(cls, *, group: str, key: str) -> str:
+    def get_reply(self, *, group: str, key: str) -> str:
         """Get a reply of a group.
 
         Args:
@@ -477,10 +470,9 @@ class Replies:
             The reply.
         """
 
-        return cls._replies[group][key]
+        return self._replies[group][key]
 
-    @classmethod
-    def set_replies(cls, *, group: str, replies: dict) -> None:
+    def set_replies(self, *, group: str, replies: dict) -> None:
         """Set replies of a group.
 
         Args:
@@ -488,17 +480,16 @@ class Replies:
             replies: Replies to be set.
         """
 
-        if group in cls._replies:
-            cls._replies[group] |= deepcopy(replies)
+        if group in self._replies:
+            self._replies[group] |= deepcopy(replies)
         else:
-            cls._replies[group] = deepcopy(replies)
+            self._replies[group] = deepcopy(replies)
 
-    @classmethod
-    def dict(cls) -> dict:
-        """Get all plugin replies.
+    def model_dump(self) -> dict:
+        """Dump all plugin replies.
 
         Returns:
             A deep copy of all plugin replies.
         """
 
-        return deepcopy(cls._replies)
+        return deepcopy(self._replies)

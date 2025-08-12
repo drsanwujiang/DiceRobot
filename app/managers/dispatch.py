@@ -1,31 +1,40 @@
-from typing import Type
+from typing import TYPE_CHECKING, Type
 import importlib
 import pkgutil
 import re
 
 from loguru import logger
 
+from ..exceptions import DiceRobotRuntimeException
+from ..models.report.message import Message
+from ..models.report.notice import Notice
+from ..models.report.request import Request
+from . import Manager
 from plugin import DiceRobotPlugin, OrderPlugin, EventPlugin
-from .config import status, plugin_settings
-from .exceptions import DiceRobotRuntimeException
-from .models.report.message import Message
-from .models.report.notice import Notice
-from .models.report.request import Request
+
+if TYPE_CHECKING:
+    from ..context import AppContext
 
 __all__ = [
-    "dispatcher",
-    "init_dispatcher"
+    "DispatchManager"
 ]
 
 
-class Dispatcher:
+class DispatchManager(Manager):
     order_pattern = re.compile(r"^\s*[.\u3002]\s*([\S\s]+?)\s*(?:#([1-9][0-9]*))?$")
 
-    def __init__(self) -> None:
+    def __init__(self, context: "AppContext") -> None:
+        super().__init__(context)
+
         self.order_plugins: dict[str, Type[OrderPlugin]] = {}
         self.event_plugins: dict[str, Type[EventPlugin]] = {}
         self.orders: dict[int, list[dict[str, re.Pattern | str]]] = {}
         self.events: dict[str, list[str]] = {}
+
+    async def initialize(self) -> None:
+        await self.load_plugins()
+        self.load_orders_and_events()
+        logger.debug("Dispatch manager initialized")
 
     async def load_plugins(self) -> None:
         package = importlib.import_module("plugin")
@@ -45,13 +54,13 @@ class Dispatcher:
                 self.event_plugins[plugin.name] = plugin
 
         for plugin in list(self.order_plugins.values()) + list(self.event_plugins.values()):
-            status.plugins[plugin.name] = status.Plugin(
+            self.context.status.plugins[plugin.name] = self.context.status.Plugin(
                 display_name=plugin.display_name,
                 description=plugin.description,
                 version=plugin.version
             )
-            plugin.load()
-            await plugin.initialize()
+            plugin.load(self.context)
+            await plugin.initialize(self.context)
 
         logger.info(
             f"{len(self.order_plugins)} order plugins and {len(self.event_plugins)} event plugins loaded"
@@ -88,6 +97,7 @@ class Dispatcher:
 
                         events[event.__name__].append(plugin_name)
 
+        # The bigger the priority number, the higher the priority
         self.orders = dict(sorted(orders.items(), reverse=True))
         self.events = events
 
@@ -97,6 +107,45 @@ class Dispatcher:
 
     def find_plugin(self, plugin_name: str) -> Type[DiceRobotPlugin] | None:
         return self.order_plugins.get(plugin_name) or self.event_plugins.get(plugin_name)
+
+    def match_plugin(self, order_and_content: str) -> tuple[str | None, str | None, str | None]:
+        for priority, orders in self.orders.items():
+            for pattern_and_name in orders:
+                if match := pattern_and_name["pattern"].fullmatch(order_and_content):
+                    return pattern_and_name["name"], match.group(1), match.group(2)
+
+        return None, None, None
+
+    async def execute_plugin(self, plugin_instance: DiceRobotPlugin) -> None:
+        if not self.context.plugin_settings.get(plugin=plugin_instance.name)["enabled"]:
+            logger.info("Plugin disabled, execution skipped")
+            return
+        elif isinstance(plugin_instance, OrderPlugin) and not plugin_instance.check_enabled():
+            logger.info("Plugin disabled in this chat, execution skipped")
+            return
+
+        try:
+            await plugin_instance()
+        except DiceRobotRuntimeException as e:
+            if isinstance(plugin_instance, OrderPlugin):
+                await plugin_instance.reply_to_sender(self.context.replies.get_reply(group="dicerobot", key=e.key))
+            elif isinstance(plugin_instance, EventPlugin):
+                logger.error(
+                    f"DiceRobot runtime exception \"{e.__class__.__name__}\" occurred while executing "
+                    f"plugin \"{plugin_instance.name}\""
+                )
+
+            # Raise exception in debug mode
+            if self.context.status.debug:
+                raise
+        except Exception:
+            logger.exception(
+                f"Exception occurred while executing plugin \"{plugin_instance.name}\""
+            )
+
+            # Raise exception in debug mode
+            if self.context.status.debug:
+                raise
 
     async def dispatch_order(self, message: Message, message_content: str) -> None:
         match = self.order_pattern.fullmatch(message_content)
@@ -112,46 +161,14 @@ class Dispatcher:
         if not plugin_name:
             logger.debug("Plugin match missed")
             raise RuntimeError
-        elif not plugin_settings.get(plugin=plugin_name)["enabled"]:
-            logger.info("Plugin disabled, execution skipped")
-            return
 
         logger.info(f"Dispatch to plugin {plugin_name}")
 
         plugin_class = self.order_plugins[plugin_name]
+        # Always pass the order converted to lowercase to the plugin
+        plugin_instance = plugin_class(self.context, message, order.lower(), order_content, repetition)
 
-        try:
-            # Always pass the order converted to lowercase to the plugin
-            plugin = plugin_class(message, order.lower(), order_content, repetition)
-
-            if not plugin.check_enabled():
-                logger.info("Plugin disabled in this chat, execution skipped")
-                return
-
-            # Execute plugin
-            await plugin()
-        except DiceRobotRuntimeException as e:
-            await plugin_class.reply_to_message_sender(message, e.reply)
-
-            # Raise exception in debug mode
-            if status.debug:
-                raise
-        except:
-            logger.exception(
-                f"Exception occurred while dispatching plugin \"{plugin_name}\" to handle order"
-            )
-
-            # Raise exception in debug mode
-            if status.debug:
-                raise
-
-    def match_plugin(self, order_and_content: str) -> tuple[str | None, str | None, str | None]:
-        for priority, orders in self.orders.items():
-            for pattern_and_name in orders:
-                if match := pattern_and_name["pattern"].fullmatch(order_and_content):
-                    return pattern_and_name["name"], match.group(1), match.group(2)
-
-        return None, None, None
+        await self.execute_plugin(plugin_instance)
 
     async def dispatch_event(self, event: Notice | Request) -> None:
         if event.__class__.__name__ not in self.events:
@@ -159,33 +176,7 @@ class Dispatcher:
             raise RuntimeError
 
         for plugin_name in self.events[event.__class__.__name__]:
-            try:
-                await self.event_plugins[plugin_name](event)()
-            except DiceRobotRuntimeException as e:
-                logger.error(
-                    f"DiceRobot runtime exception \"{e.__class__.__name__}\" occurred while dispatching plugin"
-                    f"\"{plugin_name}\" to handle event \"{event.__class__.__name__}\""
-                )
+            plugin_class = self.event_plugins[plugin_name]
+            plugin_instance = plugin_class(self.context, event)
 
-                # Raise exception in debug mode
-                if status.debug:
-                    raise
-            except:
-                logger.exception(
-                    f"Exception occurred while dispatching plugin \"{plugin_name}\" to handle event "
-                    f"\"{event.__class__.__name__}\""
-                )
-
-                # Raise exception in debug mode
-                if status.debug:
-                    raise
-
-
-dispatcher = Dispatcher()
-
-
-async def init_dispatcher() -> None:
-    await dispatcher.load_plugins()
-    dispatcher.load_orders_and_events()
-
-    logger.debug("Dispatcher initialized")
+            await self.execute_plugin(plugin_instance)

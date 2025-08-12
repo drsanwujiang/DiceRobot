@@ -3,7 +3,7 @@ from typing import Any
 from fastapi.responses import Response as Response_, JSONResponse as JSONResponse_
 from sse_starlette import EventSourceResponse as EventSourceResponse_
 
-from .version import VERSION
+from .globals import VERSION
 
 __all__ = [
     "EmptyResponse",
