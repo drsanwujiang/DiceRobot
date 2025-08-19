@@ -1,4 +1,5 @@
 from typing import Generator
+from unittest.mock import AsyncMock
 import pathlib
 import sys
 import os
@@ -11,33 +12,24 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine, AsyncSession
 from fastapi import FastAPI
 
-from app import dicerobot
+from app.exception_handlers import init_exception_handlers
+from app.routers import init_routers
 from app.context import AppContext
-from app.dependencies import get_app_context
 from app.database import Base
 from app.managers.database import DatabaseManager
 from app.managers.config import ConfigManager
 from app.managers.data import DataManager
 from app.managers.dispatch import DispatchManager
 from app.managers.task import TaskManager
-from app.managers.network import NetworkManager
 from app.actuators.app import AppActuator
 from app.actuators.qq import QQActuator
 from app.actuators.napcat import NapCatActuator
-
-
-@pytest.fixture(autouse=True)
-def prepare_environments(tmp_path: pathlib.Path) -> None:
-    os.environ["DICEROBOT_DEBUG"] = "1"
-    os.environ["DICEROBOT_DATABASE"] = str(tmp_path / "test.db")
-    os.environ["DICEROBOT_LOG_DIR"] = str(tmp_path / "logs")
-    os.environ["DICEROBOT_LOG_LEVEL"] = "DEBUG"
-
-
-@pytest.fixture(autouse=True)
-def prepare_logger() -> None:
-    logger.remove()
-    logger.add(sys.stdout, level="DEBUG", diagnose=True)
+from app.models.network.napcat import (
+    GetLoginInfoResponse, GetFriendListResponse, GetGroupInfoResponse, GetGroupListResponse,
+    GetGroupMemberInfoResponse, GetGroupMemberListResponse, SendPrivateMessageResponse, SendGroupMessageResponse,
+    SetGroupCardResponse, SetGroupLeaveResponse, SetFriendAddRequestResponse, SetGroupAddRequestResponse
+)
+from app.models.report.segment import Segment
 
 
 @pytest.fixture
@@ -46,8 +38,29 @@ def monkeypatch() -> Generator[pytest.MonkeyPatch]:
         yield mp
 
 
-@pytest_asyncio.fixture(scope="session")
-async def db_engine() -> AsyncGenerator[AsyncEngine]:
+@pytest.fixture(autouse=True)
+def prepare_environments(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    debug = os.environ["DICEROBOT_DEBUG"] = "1"
+    database = os.environ["DICEROBOT_DATABASE"] = str(tmp_path / "test.db")
+    log_dir = os.environ["DICEROBOT_LOG_DIR"] = str(tmp_path / "logs")
+    log_level = os.environ["DICEROBOT_LOG_LEVEL"] = "DEBUG"
+    monkeypatch.setattr("app.globals.DEBUG", debug)
+    monkeypatch.setattr("app.globals.DATABASE", database)
+    monkeypatch.setattr("app.globals.LOG_DIR", log_dir)
+    monkeypatch.setattr("app.globals.LOG_LEVEL", log_level)
+    monkeypatch.setattr("app.exception_handlers.DEBUG", debug)
+    monkeypatch.setattr("app.context.DEBUG", debug)
+    monkeypatch.setattr("app.managers.dispatch.DEBUG", debug)
+
+
+@pytest.fixture(autouse=True)
+def prepare_logger() -> None:
+    logger.remove()
+    logger.add(sys.stdout, level="DEBUG", diagnose=True)
+
+
+@pytest_asyncio.fixture(name="db_engine", scope="session")
+async def prepare_database_engine() -> AsyncGenerator[AsyncEngine]:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:?_pragma=journal_mode=wal")
 
     async with engine.begin() as conn:
@@ -57,15 +70,16 @@ async def db_engine() -> AsyncGenerator[AsyncEngine]:
     await engine.dispose()
 
 
-@pytest_asyncio.fixture
-async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
+@pytest_asyncio.fixture(name="db_session")
+async def prepare_database_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     async with async_sessionmaker(db_engine, expire_on_commit=False).begin() as session:
         yield session
 
 
-@pytest_asyncio.fixture
-async def context(db_engine: AsyncEngine, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> AppContext:
+@pytest_asyncio.fixture(name="context")
+async def prepare_context(db_engine: AsyncEngine, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> AppContext:
     context = AppContext()
+    context.status.bot.id = 99999
     context.settings.update_application({
         "dir": {
             "base": str(tmp_path / "DiceRobot"),
@@ -91,7 +105,6 @@ async def context(db_engine: AsyncEngine, tmp_path: pathlib.Path, monkeypatch: p
     context.config_manager = ConfigManager(context)
     context.data_manager = DataManager(context)
     context.dispatch_manager = DispatchManager(context)
-    context.network_manager = NetworkManager(context)
     context.task_manager = TaskManager(context)
     context.app_actuator = AppActuator(context)
     context.qq_actuator = QQActuator(context)
@@ -99,11 +112,269 @@ async def context(db_engine: AsyncEngine, tmp_path: pathlib.Path, monkeypatch: p
     return context
 
 
-@pytest.fixture
-def test_app(context: AppContext) -> Generator[FastAPI]:
-    dicerobot.dependency_overrides[get_app_context] = lambda: context
-    yield dicerobot
-    dicerobot.dependency_overrides.clear()
+@pytest.fixture(autouse=True)
+def mock_network_manager(context: AppContext, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _get_login_info() -> GetLoginInfoResponse:
+        logger.debug("Request NapCat API: get_login_info")
+
+        return GetLoginInfoResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "user_id": 99999,
+                "nickname": "Shinji"
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _get_friend_list() -> GetFriendListResponse:
+        logger.debug("Request NapCat API: get_friend_list")
+
+        return GetFriendListResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": [
+                {
+                    "user_id": 88888,
+                    "nickname": "Kaworu",
+                    "remark": "",
+                    "sex": "male",
+                    "level": 0
+                },
+                {
+                    "user_id": 99999,
+                    "nickname": "Shinji",
+                    "remark": "",
+                    "sex": "male",
+                    "level": 0
+                }
+            ],
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _get_group_info(*_) -> GetGroupInfoResponse:
+        logger.debug("Request NapCat API: get_group_info")
+
+        return GetGroupInfoResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "group_id": 12345,
+                "group_name": "Nerv",
+                "member_count": 2,
+                "max_member_count": 200
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _get_group_list() -> GetGroupListResponse:
+        logger.debug("Request NapCat API: get_group_list")
+
+        return GetGroupListResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": [
+                {
+                    "group_id": 12345,
+                    "group_name": "Nerv",
+                    "member_count": 2,
+                    "max_member_count": 200
+                }
+            ],
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _get_group_member_info(*_) -> GetGroupMemberInfoResponse:
+        logger.debug("Request NapCat API: get_group_member_info")
+
+        return GetGroupMemberInfoResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "group_id": 12345,
+                "user_id": 88888,
+                "nickname": "Kaworu",
+                "card": "",
+                "sex": "male",
+                "age": 0,
+                "area": "",
+                "level": "0",
+                "qq_level": 0,
+                "join_time": 0,
+                "last_sent_time": 0,
+                "title_expire_time": 0,
+                "unfriendly": False,
+                "card_changeable": True,
+                "is_robot": False,
+                "shut_up_timestamp": 0,
+                "role": "owner",
+                "title": ""
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _get_group_member_list(*_) -> GetGroupMemberListResponse:
+        logger.debug("Request NapCat API: get_group_member_list")
+
+        return GetGroupMemberListResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": [
+                {
+                    "group_id": 12345,
+                    "user_id": 88888,
+                    "nickname": "Kaworu",
+                    "card": "",
+                    "sex": "male",
+                    "age": 0,
+                    "area": "",
+                    "level": "0",
+                    "qq_level": 0,
+                    "join_time": 0,
+                    "last_sent_time": 0,
+                    "title_expire_time": 0,
+                    "unfriendly": False,
+                    "card_changeable": True,
+                    "is_robot": False,
+                    "shut_up_timestamp": 0,
+                    "role": "owner",
+                    "title": ""
+                },
+                {
+                    "group_id": 12345,
+                    "user_id": 99999,
+                    "nickname": "Shinji",
+                    "card": "",
+                    "sex": "male",
+                    "age": 0,
+                    "area": "",
+                    "level": "0",
+                    "qq_level": 0,
+                    "join_time": 0,
+                    "last_sent_time": 0,
+                    "title_expire_time": 0,
+                    "unfriendly": False,
+                    "card_changeable": True,
+                    "is_robot": False,
+                    "shut_up_timestamp": 0,
+                    "role": "admin",
+                    "title": ""
+                }
+            ],
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _send_private_message(_: int, message: list[Segment], *__) -> SendPrivateMessageResponse:
+        logger.debug(f"Request NapCat API: send_private_message. Message: {[segment.model_dump_json() for segment in message]}")
+
+        return SendPrivateMessageResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "message_id": -1234567890
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _send_group_message(_: int, message: list[Segment], *__) -> SendGroupMessageResponse:
+        logger.debug(f"Request NapCat API: send_group_message. Message: {[segment.model_dump_json() for segment in message]}")
+
+        return SendGroupMessageResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "message_id": -1234567890
+            },
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _set_group_card(*_) -> SetGroupCardResponse:
+        logger.debug("Request NapCat API: set_group_card")
+
+        return SetGroupCardResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": None,
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _set_group_leave(*_) -> SetGroupLeaveResponse:
+        logger.debug("Request NapCat API: set_group_leave")
+
+        return SetGroupLeaveResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": None,
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _set_friend_add_request(*_) -> SetFriendAddRequestResponse:
+        logger.debug("Request NapCat API: set_friend_add_request")
+
+        return SetFriendAddRequestResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": None,
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    async def _set_group_add_request(*_) -> SetGroupAddRequestResponse:
+        logger.debug("Request NapCat API: set_group_add_request")
+
+        return SetGroupAddRequestResponse.model_validate({
+            "status": "ok",
+            "retcode": 0,
+            "data": None,
+            "message": "",
+            "wording": "",
+            "echo": None
+        })
+
+    mock_manager = AsyncMock()
+    mock_manager.napcat.get_login_info = AsyncMock(side_effect=_get_login_info)
+    mock_manager.napcat.get_friend_list = AsyncMock(side_effect=_get_friend_list)
+    mock_manager.napcat.get_group_info = AsyncMock(side_effect=_get_group_info)
+    mock_manager.napcat.get_group_list = AsyncMock(side_effect=_get_group_list)
+    mock_manager.napcat.get_group_member_info = AsyncMock(side_effect=_get_group_member_info)
+    mock_manager.napcat.get_group_member_list = AsyncMock(side_effect=_get_group_member_list)
+    mock_manager.napcat.send_private_message = AsyncMock(side_effect=_send_private_message)
+    mock_manager.napcat.send_group_message = AsyncMock(side_effect=_send_group_message)
+    mock_manager.napcat.set_group_card = AsyncMock(side_effect=_set_group_card)
+    mock_manager.napcat.set_group_leave = AsyncMock(side_effect=_set_group_leave)
+    mock_manager.napcat.set_friend_add_request = AsyncMock(side_effect=_set_friend_add_request)
+    mock_manager.napcat.set_group_add_request = AsyncMock(side_effect=_set_group_add_request)
+    context.network_manager = mock_manager
+
+
+@pytest.fixture(name="test_app")
+def prepare_app(context: AppContext) -> FastAPI:
+    test_app = FastAPI()
+    test_app.state.context = context
+    init_exception_handlers(test_app)
+    init_routers(test_app)
+    return test_app
 
 
 @pytest_asyncio.fixture
@@ -113,7 +384,7 @@ async def client(test_app: FastAPI) -> AsyncGenerator[AsyncClient]:
 
 
 @pytest_asyncio.fixture
-async def auth_token(client: AsyncClient, context: AppContext) -> str:
+async def authed_client(context: AppContext, client: AsyncClient) -> AsyncClient:
     test_password = "testpassword"
     context.settings.update_security({
         "admin": {
@@ -123,42 +394,9 @@ async def auth_token(client: AsyncClient, context: AppContext) -> str:
 
     response = await client.post("/auth", json={"password": test_password})
     assert response.status_code == 200
-    return response.json()["data"]["token"]
+    result = response.json()
 
-
-@pytest.fixture
-def auth_headers(auth_token: str) -> dict[str, str]:
-    return {
-        "Authorization": f"Bearer {auth_token}"
-    }
-
-
-@pytest.fixture
-def authed_client(client: AsyncClient, auth_headers: dict[str, str]) -> AsyncClient:
-    client.headers.update(auth_headers)
+    client.headers.update({
+        "Authorization": "Bearer " + result["data"]["token"]
+    })
     return client
-
-
-@pytest.fixture
-def config_manager(context: AppContext) -> ConfigManager:
-    return context.config_manager
-
-
-@pytest.fixture
-def dispatch_manager(context: AppContext) -> DispatchManager:
-    return context.dispatch_manager
-
-
-@pytest.fixture
-def app_actuator(context: AppContext) -> AppActuator:
-    return context.app_actuator
-
-
-@pytest.fixture
-def qq_actuator(context: AppContext) -> QQActuator:
-    return context.qq_actuator
-
-
-@pytest.fixture
-def napcat_actuator(context: AppContext) -> NapCatActuator:
-    return context.napcat_actuator
