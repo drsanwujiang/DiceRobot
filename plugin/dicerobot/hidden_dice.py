@@ -1,6 +1,6 @@
 from app.exceptions import OrderError
 from app.models.report.message import GroupMessage
-from ... import OrderPlugin
+from plugin import OrderPlugin
 from .dice import Dice
 
 
@@ -19,16 +19,14 @@ class HiddenDice(OrderPlugin):
         "reply_with_reason": "由于{&掷骰原因}，{&发送者}悄悄地进行了掷骰",
         "result": "在{&群名}（{&群号}）中骰出了：{&掷骰结果}",
         "result_with_reason": "由于{&掷骰原因}，在{&群名}（{&群号}）中骰出了：{&掷骰结果}",
-        "not_in_group": "只能在群聊中使用暗骰哦！",
-        "not_friend": "必须先添加好友才能使用暗骰哦！"
+        "not_in_group": "只能在群聊中使用暗骰哦！"
     }
 
     async def __call__(self) -> None:
         self.check_chat_type()
-        self.check_friend()
         self.check_repetition()
 
-        dice = Dice(self.message, ".r", self.order_content)
+        dice = Dice(self.context, self.message, ".r", self.order_content)
         dice.roll()
         result = dice.full_result
 
@@ -55,7 +53,3 @@ class HiddenDice(OrderPlugin):
     def check_chat_type(self) -> None:
         if not isinstance(self.message, GroupMessage):
             raise OrderError(self.replies["not_in_group"])
-
-    def check_friend(self) -> None:
-        if self.message.user_id not in self.context.status.bot.friends:
-            raise OrderError(self.replies["not_friend"])

@@ -9,7 +9,7 @@ from app.exceptions import OrderInvalidError, OrderError
 from app.models import BaseModel
 from app.models.report.segment import Segment, Text, Image, Reply
 from app.network import HttpClient
-from ... import OrderPlugin
+from plugin import OrderPlugin
 
 
 class Chat(OrderPlugin):

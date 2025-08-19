@@ -2,7 +2,7 @@ import arrow
 
 from app.exceptions import OrderInvalidError, OrderError
 from app.enum import ChatType, Role
-from ... import OrderPlugin
+from plugin import OrderPlugin
 
 
 class Bot(OrderPlugin):
@@ -57,17 +57,17 @@ class Bot(OrderPlugin):
         self.check_repetition()
 
         if self.suborder == "" or self.suborder == "about":
-            self.about()
+            await self.about()
         elif self.suborder == "enable":
-            self.enable()
+            await self.enable()
         elif self.suborder == "disable":
-            self.disable()
+            await self.disable()
         elif self.suborder == "nickname":
             await self.nickname()
         else:
             raise OrderInvalidError
 
-    def about(self) -> None:
+    async def about(self) -> None:
         if self.suborder_content:
             raise OrderInvalidError
 
@@ -75,9 +75,9 @@ class Bot(OrderPlugin):
             "版本": self.context.status.version,
             "当前年份": arrow.now().year
         })
-        self.reply_to_sender(self.replies["about"])
+        await self.reply_to_sender(self.replies["about"])
 
-    def enable(self) -> None:
+    async def enable(self) -> None:
         # Ignore if not in group chat
         if self.chat_type != ChatType.GROUP:
             return
@@ -89,9 +89,9 @@ class Bot(OrderPlugin):
             raise OrderError(self.replies["enable_denied"])
 
         self.dicerobot_chat_settings["enabled"] = True
-        self.reply_to_sender(self.replies["enable"])
+        await self.reply_to_sender(self.replies["enable"])
 
-    def disable(self) -> None:
+    async def disable(self) -> None:
         # Ignore if not in group chat
         if self.chat_type != ChatType.GROUP:
             return
@@ -103,7 +103,7 @@ class Bot(OrderPlugin):
             raise OrderError(self.replies["disable_denied"])
 
         self.dicerobot_chat_settings["enabled"] = False
-        self.reply_to_sender(self.replies["disable"])
+        await self.reply_to_sender(self.replies["disable"])
 
     async def nickname(self) -> None:
         # Ignore if not in group chat

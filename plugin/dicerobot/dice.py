@@ -4,7 +4,7 @@ import random
 import numexpr as ne
 
 from app.exceptions import OrderSuspiciousError, OrderError
-from ... import OrderPlugin
+from plugin import OrderPlugin
 
 
 class Dice(OrderPlugin):
@@ -38,8 +38,8 @@ class Dice(OrderPlugin):
     ]
     _content_pattern = re.compile(r"^([\ddk+\-*x×()（）]+)?\s*([\S\s]*)$", re.I)
     _repeated_symbol_pattern = re.compile(r"([dk+\-*])\1+", re.I)
-    _dice_expression_split_pattern = re.compile(r"((?:[1-9]\d*)?d(?:[1-9]\d*)?(?:k(?:[1-9]\d*)?)?)", re.I)
-    _dice_expression_pattern = re.compile(r"^([1-9]\d*)?d([1-9]\d*)?(k([1-9]\d*)?)?$", re.I)
+    _dice_expression_split_pattern = re.compile(r"((?:\d*)?d(?:\d*)?(?:k(?:\d*)?)?)", re.I)
+    _dice_expression_pattern = re.compile(r"^(\d*)?d(\d*)?(k(\d*)?)?$", re.I)
     _math_expression_pattern = re.compile(r"^[\d+\-*()]+$")
 
     def __init__(self, *args, **kwargs) -> None:
@@ -113,12 +113,18 @@ class Dice(OrderPlugin):
                     self.plugin_settings["max_surface"]
                 )
 
-                # Check count, surface and max result count (K number)
-                if dice_expression.count > dice_expression.max_count:
+                # Check count, surface and keep
+                if any([
+                    dice_expression.count <= 0,
+                    dice_expression.surface <= 0,
+                    dice_expression.keep is not None and dice_expression.keep <= 0
+                ]):
+                    raise OrderError(self.replies["expression_invalid"])
+                elif dice_expression.count > dice_expression.max_count:
                     raise OrderError(self.replies["max_count_exceeded"])
                 elif dice_expression.surface > dice_expression.max_surface:
                     raise OrderError(self.replies["max_surface_exceeded"])
-                elif dice_expression.max_result_count > dice_expression.count:
+                elif dice_expression.keep is not None and dice_expression.keep > dice_expression.count:
                     raise OrderError(self.replies["expression_invalid"])
 
                 # Calculate results
@@ -153,7 +159,7 @@ class Dice(OrderPlugin):
 
 
 class DiceExpression:
-    expression_pattern = re.compile(r"^([1-9]\d*)?d([1-9]\d*)?(?:k([1-9]\d*)?)?$", re.I)
+    expression_pattern = re.compile(r"^(\d*)?d(\d*)?(?:k(\d*)?)?$", re.I)
 
     def __init__(
         self,
@@ -169,7 +175,7 @@ class DiceExpression:
         self.expression = expression
         self.count = 0
         self.surface = 0
-        self.max_result_count = 0
+        self.keep = None
         self.detailed_dice_result = ""
         self.dice_result = ""
 
@@ -179,14 +185,14 @@ class DiceExpression:
         match = self.expression_pattern.fullmatch(self.expression)
         self.count = int(match.group(1)) if match.group(1) else 1
         self.surface = int(match.group(2)) if match.group(2) else self.default_surface
-        self.max_result_count = int(match.group(3)) if match.group(3) else 0
+        self.keep = int(match.group(3)) if match.group(3) else None
 
     def calculate(self) -> None:
         results = [random.randint(1, self.surface) for _ in range(self.count)]
 
-        if self.max_result_count > 0:
+        if self.keep is not None and self.keep > 0:
             results.sort(reverse=True)
-            results = results[:self.max_result_count]
+            results = results[:self.keep]
 
         self.detailed_dice_result = "(" + "+".join(map(str, results)) + ")" if self.count > 1 else str(results[0])
         self.dice_result = str(sum(results))
@@ -194,5 +200,5 @@ class DiceExpression:
     def __str__(self) -> str:
         subexpression = str(self.count) if self.count > 1 else ""
         subexpression += "D" + str(self.surface)
-        subexpression += "K" + str(self.max_result_count) if self.max_result_count > 0 else ""
+        subexpression += "K" + str(self.keep) if self.keep is not None and self.keep > 0 else ""
         return subexpression

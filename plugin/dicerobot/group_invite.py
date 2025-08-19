@@ -1,7 +1,7 @@
 from loguru import logger
 
 from app.models.report.request import GroupRequest
-from ... import EventPlugin
+from plugin import EventPlugin
 
 
 class GroupInvitationHandler(EventPlugin):

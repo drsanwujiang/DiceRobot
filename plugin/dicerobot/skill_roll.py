@@ -3,7 +3,7 @@ import random
 
 from app.exceptions import OrderSuspiciousError, OrderError
 from app.models.data import RuleSet
-from ... import OrderPlugin
+from plugin import OrderPlugin
 
 
 class SkillRoll(OrderPlugin):

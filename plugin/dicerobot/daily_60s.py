@@ -6,7 +6,7 @@ from app.exceptions import OrderInvalidError, OrderError
 from app.enum import ChatType
 from app.models.report.segment import Image
 from app.network import HttpClient
-from ... import OrderPlugin
+from plugin import OrderPlugin
 
 
 class DailySixtySeconds(OrderPlugin):

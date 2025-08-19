@@ -2,11 +2,11 @@ import re
 import random
 
 from app.exceptions import OrderSuspiciousError, OrderError
-from ... import OrderPlugin
+from plugin import OrderPlugin
 
 
-class BPDice(OrderPlugin):
-    name = "dicerobot.bp_dice"
+class BonusPenaltyDice(OrderPlugin):
+    name = "dicerobot.bonus_penalty_dice"
     display_name = "奖励骰/惩罚骰"
     description = "掷一个骰子，以及一个或多个奖励骰/惩罚骰"
     version = "1.3.0"
@@ -22,13 +22,14 @@ class BPDice(OrderPlugin):
     default_replies = {
         "result": "{&发送者}骰出了：{&掷骰结果}",
         "result_with_reason": "由于{&掷骰原因}，{&发送者}骰出了：{&掷骰结果}",
-        "max_count_exceeded": "被骰子淹没，不知所措……"
+        "max_count_exceeded": "被骰子淹没，不知所措……",
+        "expression_invalid": "掷骰表达式不符合规则……"
     }
     supported_reply_variables = [
         "掷骰原因",
         "掷骰结果"
     ]
-    _content_pattern = re.compile(r"^([1-9]\d*)?\s*([\S\s]*)$", re.I)
+    _content_pattern = re.compile(r"^(\d*)?\s*([\S\s]*)$", re.I)
     _bp_types = {
         "bonus": ["rb", "奖励骰"],
         "penalty": ["rp", "惩罚骰"]
@@ -86,6 +87,8 @@ class BPDice(OrderPlugin):
         self.reason = match.group(2)
 
         # Check count
+        if self.count <= 0:
+            raise OrderError(self.replies["expression_invalid"])
         if self.count > self.plugin_settings["max_count"]:
             raise OrderError(self.replies["max_count_exceeded"])
 
