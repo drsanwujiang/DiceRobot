@@ -47,7 +47,9 @@ class DataManager(Manager):
         for filename in os.listdir(dir_path):
             if filename.endswith(".json") and (data := await handler.load_file(os.path.join(dir_path, filename))):
                 self._registry[handler.type][data.id] = data
-                logger.debug(f"Data loaded, type: {handler.type.value}, id: {data.id}")
+                logger.debug(f"Data file loaded, type: {handler.type.value}, id: {data.id}")
+
+        logger.info("Data loaded")
 
     async def load_data(self):
         for type_ in DataType.__members__.values():
