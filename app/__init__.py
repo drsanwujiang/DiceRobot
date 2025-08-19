@@ -19,7 +19,7 @@ from .actuators.app import AppActuator
 from .actuators.qq import QQActuator
 from .actuators.napcat import NapCatActuator
 from .exception_handlers import init_exception_handlers
-from .routers import init_router
+from .routers import init_routers
 
 __all__ = [
     "dicerobot"
@@ -76,4 +76,4 @@ dicerobot = FastAPI(
 )
 
 init_exception_handlers(dicerobot)
-init_router(dicerobot)
+init_routers(dicerobot)

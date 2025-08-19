@@ -19,7 +19,7 @@ class Message(Report):
     message_type: MessageType
     message_id: int
     user_id: int
-    group_id: int = None
+    group_id: int | None = None
     message: list[Segment]
     raw_message: str
     font: int
@@ -62,9 +62,9 @@ class PrivateMessage(Message):
     class Sender(BaseModel):
         user_id: int
         nickname: str
-        sex: Sex = None
-        age: int = None
-        card: str = None
+        sex: Sex | None = None
+        age: int | None = None
+        card: str | None = None
 
     message_type: Literal[MessageType.PRIVATE] = MessageType.PRIVATE
     sub_type: PrivateMessageSubType
@@ -87,16 +87,16 @@ class GroupMessage(Message):
     class Sender(BaseModel):
         user_id: int
         nickname: str
-        card: str = None
-        sex: Sex = None
-        age: int = None
-        area: str = None
-        level: str = None
-        role: Role = None  # In rare cases, the sender of a group message may not have a role field
-        title: str = None
+        card: str | None = None
+        sex: Sex | None = None
+        age: int | None = None
+        area: str | None = None
+        level: str | None = None
+        role: Role | None = None  # In rare cases, the sender of a group message may not have a role field
+        title: str | None = None
 
     message_type: Literal[MessageType.GROUP] = MessageType.GROUP
     sub_type: GroupMessageSubType
     group_id: int
-    anonymous: Anonymous = None
+    anonymous: Anonymous | None = None
     sender: Sender

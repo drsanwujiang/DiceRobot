@@ -5,6 +5,7 @@ import re
 
 from loguru import logger
 
+from ..globals import DEBUG
 from ..exceptions import DiceRobotRuntimeException
 from ..models.report.message import Message
 from ..models.report.notice import Notice
@@ -128,7 +129,8 @@ class DispatchManager(Manager):
             await plugin_instance()
         except DiceRobotRuntimeException as e:
             if isinstance(plugin_instance, OrderPlugin):
-                await plugin_instance.reply_to_sender(self.context.replies.get_reply(group="dicerobot", key=e.key))
+                reply = self.context.replies.get_reply(group="dicerobot", key=e.key) if e.key else e.message
+                await plugin_instance.reply_to_sender(reply)
             elif isinstance(plugin_instance, EventPlugin):
                 logger.error(
                     f"DiceRobot runtime exception \"{e.__class__.__name__}\" occurred while executing "
@@ -136,7 +138,7 @@ class DispatchManager(Manager):
                 )
 
             # Raise exception in debug mode
-            if self.context.status.debug:
+            if DEBUG:
                 raise
         except Exception:
             logger.exception(
@@ -144,7 +146,7 @@ class DispatchManager(Manager):
             )
 
             # Raise exception in debug mode
-            if self.context.status.debug:
+            if DEBUG:
                 raise
 
     async def dispatch_order(self, message: Message, message_content: str) -> None:

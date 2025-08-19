@@ -57,7 +57,7 @@ class Auth:
 
 async def verify_signature(
     request: Request,
-    signature: Annotated[str, Header(alias="X-Signature", min_length=42, max_length=48)],
+    signature: Annotated[str, Header(alias="X-Signature", min_length=45, max_length=71)],
     auth: Annotated[Auth, Depends()]
 ) -> None:
     logger.debug("HTTP request received, verify signature")
