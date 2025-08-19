@@ -41,11 +41,6 @@ class DataManager(Manager):
         self._registry[handler.type] = {}
         logger.debug(f"Data handler for type \"{handler.type.value}\" registered")
 
-    async def load_data(self):
-        for type_ in DataType.__members__.values():
-            if type_ in self._handlers:
-                await self._load_from_handler(self._handlers[type_])
-
     async def _load_from_handler(self, handler: DataHandler):
         dir_path = os.path.join(self.context.settings.app.dir.data, handler.type.value)
 
@@ -53,6 +48,11 @@ class DataManager(Manager):
             if filename.endswith(".json") and (data := await handler.load_file(os.path.join(dir_path, filename))):
                 self._registry[handler.type][data.id] = data
                 logger.debug(f"Data loaded, type: {handler.type.value}, id: {data.id}")
+
+    async def load_data(self):
+        for type_ in DataType.__members__.values():
+            if type_ in self._handlers:
+                await self._load_from_handler(self._handlers[type_])
 
     def get_data(self, data_type: DataType, data_id: str) -> Any | None:
         return self._registry.get(data_type, {}).get(data_id)
