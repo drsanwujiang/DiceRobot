@@ -19,43 +19,46 @@ __all__ = [
 
 
 class DiceRobotRuntimeException(Exception):
-    def __init__(self, key: str) -> None:
+    def __init__(self, message: str = None, key: str = None) -> None:
+        super().__init__(message)
+
+        self.message = message
         self.key = key
 
 
 class NetworkClientError(DiceRobotRuntimeException):
     def __init__(self) -> None:
-        super().__init__("network_client_error")
+        super().__init__(key="network_client_error")
 
 
 class NetworkServerError(DiceRobotRuntimeException):
     def __init__(self) -> None:
-        super().__init__("network_server_error")
+        super().__init__(key="network_server_error")
 
 
 class NetworkInvalidContentError(DiceRobotRuntimeException):
     def __init__(self) -> None:
-        super().__init__("network_invalid_content")
+        super().__init__(key="network_invalid_content")
 
 
 class NetworkError(DiceRobotRuntimeException):
     def __init__(self) -> None:
-        super().__init__("network_error")
+        super().__init__(key="network_error")
 
 
 class OrderInvalidError(DiceRobotRuntimeException):
     def __init__(self) -> None:
-        super().__init__("order_invalid")
+        super().__init__(key="order_invalid")
 
 
 class OrderSuspiciousError(DiceRobotRuntimeException):
     def __init__(self) -> None:
-        super().__init__("order_suspicious")
+        super().__init__(key="order_suspicious")
 
 
 class OrderRepetitionExceededError(DiceRobotRuntimeException):
     def __init__(self) -> None:
-        super().__init__("order_repetition_exceeded")
+        super().__init__(key="order_repetition_exceeded")
 
 
 class OrderError(DiceRobotRuntimeException):
