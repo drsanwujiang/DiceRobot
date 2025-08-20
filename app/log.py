@@ -4,24 +4,13 @@ import sys
 
 from loguru import logger
 
-from .config import status, settings
+from .globals import DEBUG, LOG_DIR, LOG_LEVEL
+
+MAX_LOG_LENGTH = 1000  # Maximum length of log messages
 
 __all__ = [
     "init_logger"
 ]
-
-MAX_LOG_LENGTH = 1000  # Maximum length of log messages
-LOG_LEVEL = os.environ.get("DICEROBOT_LOG_LEVEL") or "INFO"
-
-logger.remove()
-
-if status.debug:
-    # Add a console logger for debug mode
-    logger.add(sys.stdout, level="DEBUG", diagnose=True)
-else:
-    # Disable Uvicorn's default loggers
-    logging.getLogger("uvicorn.error").disabled = True
-    logging.getLogger("uvicorn.access").disabled = True
 
 
 def truncate_formatter(record) -> str:
@@ -36,8 +25,18 @@ def truncate_formatter(record) -> str:
 
 
 def init_logger() -> None:
+    logger.remove()
+
+    if DEBUG:
+        # Add a console logger for debug mode
+        logger.add(sys.stdout, level="DEBUG", diagnose=True)
+    else:
+        # Disable Uvicorn's default loggers
+        logging.getLogger("uvicorn.error").disabled = True
+        logging.getLogger("uvicorn.access").disabled = True
+
     logger.add(
-        os.path.join(settings.app.dir.logs, "dicerobot-{time:YYYY-MM-DD}.log"),
+        os.path.join(LOG_DIR, "dicerobot-{time:YYYY-MM-DD}.log"),
         level=LOG_LEVEL,
         format=truncate_formatter,
         rotation="00:00",

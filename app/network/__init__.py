@@ -3,20 +3,18 @@ import json
 from loguru import logger
 from httpx import AsyncClient, Request, Response, HTTPError
 
-from ..version import VERSION
+from ..globals import VERSION
 from ..exceptions import NetworkServerError, NetworkClientError, NetworkInvalidContentError, NetworkError
 
 __all__ = [
-    "Client",
-    "client"
+    "HttpClient"
 ]
 
 
-class Client(AsyncClient):
+class HttpClient(AsyncClient):
     @staticmethod
     async def log_request(request: Request) -> None:
         await request.aread()
-
         logger.debug(f"Request: {request.method} {request.url}, content: {request.content.decode()}")
 
     @staticmethod
@@ -54,7 +52,7 @@ class Client(AsyncClient):
             "Accept": "application/json",
             "User-Agent": f"DiceRobot/{VERSION}"
         },
-        "timeout": 30,  # For some file uploading
+        "timeout": 60,
         "event_hooks": {
             "request": [log_request],
             "response": [log_response]
@@ -62,7 +60,7 @@ class Client(AsyncClient):
     }
 
     def __init__(self, *args, **kwargs) -> None:
-        kwargs = Client._defaults | kwargs
+        kwargs = self._defaults | kwargs
         super().__init__(*args, **kwargs)
 
     async def request(self, *args, **kwargs) -> Response:
@@ -71,6 +69,3 @@ class Client(AsyncClient):
         except HTTPError as e:
             logger.error(f"Failed to request {e.request.url}, \"{e.__class__.__name__}\" occurred")
             raise NetworkError
-
-
-client = Client()

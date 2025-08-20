@@ -1,8 +1,8 @@
+from typing import TYPE_CHECKING, Type, Any
 from abc import ABC, abstractmethod
-from typing import Type, Any
 from copy import deepcopy
+import re
 
-from app.config import status, plugin_settings, chat_settings, replies
 from app.exceptions import OrderInvalidError, OrderRepetitionExceededError
 from app.enum import ChatType
 from app.utils import deep_update
@@ -10,9 +10,9 @@ from app.models.report.message import Message
 from app.models.report.notice import Notice
 from app.models.report.request import Request
 from app.models.report.segment import Segment, Text
-from app.network.napcat import (
-    send_group_message as napcat_send_group_message, send_private_message as napcat_send_private_message
-)
+
+if TYPE_CHECKING:
+    from app.context import AppContext
 
 __all__ = [
     "DiceRobotPlugin",
@@ -43,10 +43,10 @@ class DiceRobotPlugin(ABC):
     supported_reply_variables: list[str] = []
 
     @classmethod
-    def load(cls) -> None:
+    def load(cls, context: "AppContext") -> None:
         """Load plugin settings and replies."""
 
-        loaded_settings = plugin_settings.get(plugin=cls.name)
+        loaded_settings = context.plugin_settings.get(plugin=cls.name)
         loaded_settings.setdefault("enabled", True)  # Ensure the plugin is enabled by default
 
         for key in loaded_settings.copy().keys():
@@ -56,23 +56,23 @@ class DiceRobotPlugin(ABC):
                 # Remove settings that are not in the default settings
                 del loaded_settings[key]
 
-        plugin_settings.set(plugin=cls.name, settings=deep_update(
+        context.plugin_settings.set(plugin=cls.name, settings=deep_update(
             deepcopy(cls.default_plugin_settings), loaded_settings
         ))
 
-        loaded_replies = replies.get_replies(group=cls.name)
+        loaded_replies = context.replies.get_replies(group=cls.name)
 
         for key in loaded_replies.copy().keys():
             if key not in cls.default_replies:
                 # Remove replies that are not in the default replies
                 del loaded_replies[key]
 
-        replies.set_replies(group=cls.name, replies=deep_update(
+        context.replies.set_replies(group=cls.name, replies=deep_update(
             deepcopy(cls.default_replies), loaded_replies
         ))
 
     @classmethod
-    async def initialize(cls) -> None:
+    async def initialize(cls, context: "AppContext") -> None:
         """Initialize plugin.
 
         This method is called when the plugin is loaded. Usually used to initialize some resources or tasks that the
@@ -81,45 +81,16 @@ class DiceRobotPlugin(ABC):
 
         ...
 
-    @classmethod
-    def get_plugin_setting(cls, *, plugin: str = None, key: str) -> Any:
-        """Get plugin setting.
-
-        This method should only be used to dynamically get plugin settings within a class method. For normal execution,
-        use `self.plugin_settings` instead.
+    def __init__(self, context: "AppContext") -> None:
+        """Initialize DiceRobot plugin.
 
         Args:
-            plugin: Plugin name.
-            key: Setting key.
-
-        Returns:
-            Setting.
+            context: Application context.
         """
 
-        return plugin_settings.get(plugin=plugin or cls.name)[key]
-
-    @classmethod
-    def get_reply(cls, *, group: str = None, key: str) -> str:
-        """Get plugin reply.
-
-        This method should only be used to dynamically get plugin reply within a class method. For normal execution,
-        use ``self.replies`` instead.
-
-        Args:
-            group: Reply group.
-            key: Reply key.
-
-        Returns:
-            Reply.
-        """
-
-        return replies.get_reply(group=group or cls.name, key=key)
-
-    def __init__(self) -> None:
-        """Initialize DiceRobot plugin."""
-
-        self.plugin_settings = plugin_settings.get(plugin=self.name)
-        self.replies = replies.get_replies(group=self.name)
+        self.context = context
+        self.plugin_settings = context.plugin_settings.get(plugin=self.name)
+        self.replies = context.replies.get_replies(group=self.name)
 
     @abstractmethod
     async def __call__(self) -> None:
@@ -137,7 +108,7 @@ class DiceRobotPlugin(ABC):
         Plugin settings must be saved explicitly to avoid inappropriate modification.
         """
 
-        plugin_settings.set(plugin=self.name, settings=self.plugin_settings)
+        self.context.plugin_settings.set(plugin=self.name, settings=self.plugin_settings)
 
 
 class OrderPlugin(DiceRobotPlugin):
@@ -166,17 +137,18 @@ class OrderPlugin(DiceRobotPlugin):
         "发送者QQ号"
     ]
 
-    def __init__(self, message: Message, order: str, order_content: str, repetition: int = 1) -> None:
+    def __init__(self, context: "AppContext", message: Message, order: str, order_content: str, repetition: int = 1) -> None:
         """Initialize order plugin.
 
         Args:
+            context: Application context.
             message: Message that triggered the plugin.
             order: Order that triggered the plugin.
             order_content: Order content.
             repetition: Repetitions.
         """
 
-        super().__init__()
+        super().__init__(context)
 
         self.chat_type: ChatType
         self.chat_id = -1
@@ -209,9 +181,11 @@ class OrderPlugin(DiceRobotPlugin):
             raise ValueError
 
         # Settings used by the plugin in this chat
-        self.chat_settings = chat_settings.get(chat_type=self.chat_type, chat_id=self.chat_id, setting_group=self.name)
+        self.chat_settings = \
+            self.context.chat_settings.get(chat_type=self.chat_type, chat_id=self.chat_id, settings_group=self.name)
         # Settings used by DiceRobot in this chat (bot nickname etc.)
-        self.dicerobot_chat_settings = chat_settings.get(chat_type=self.chat_type, chat_id=self.chat_id, setting_group="dicerobot")
+        self.dicerobot_chat_settings = \
+            self.context.chat_settings.get(chat_type=self.chat_type, chat_id=self.chat_id, settings_group="dicerobot")
 
         if not self.chat_settings:
             # Use default chat settings in a new chat
@@ -220,14 +194,14 @@ class OrderPlugin(DiceRobotPlugin):
     def _init_reply_variables(self) -> None:
         """Initialize common used reply variables."""
 
-        bot_id = status.bot.id
+        bot_id = self.context.status.bot.id
         bot_nickname = self.dicerobot_chat_settings.setdefault("nickname", "")
 
         self.reply_variables = {
             "机器人QQ": bot_id,
             "机器人QQ号": bot_id,
-            "机器人": bot_nickname if bot_nickname else status.bot.nickname,
-            "机器人昵称": bot_nickname if bot_nickname else status.bot.nickname,
+            "机器人": bot_nickname if bot_nickname else self.context.status.bot.nickname,
+            "机器人昵称": bot_nickname if bot_nickname else self.context.status.bot.nickname,
             "发送者QQ": self.message.user_id,
             "发送者QQ号": self.message.user_id,
             "发送者": self.message.sender.nickname,
@@ -260,20 +234,20 @@ class OrderPlugin(DiceRobotPlugin):
         if not self.order_content:
             raise OrderInvalidError
 
-    def check_repetition(self) -> None:
+    def check_repetition(self, max_repetition: int = None) -> None:
         """Check whether the repetition is valid.
 
-        This method should not return anything. If the repetition is invalid, it should raise an
-        `OrderRepetitionExceededError` exception.
-
-        By default, it will check whether the repetition exceeds the maximum. The plugin can modify the `max_repetition`
-        attribute to control the maximum of repetitions, or override this method as needed.
+        This method should not return anything. If `max_repetition` is not provided, it will use the `max_repetition`
+        attribute of the plugin. If the repetition exceeds the maximum, an `OrderRepetitionExceededError` exception
+        will be raised.
 
         Raises:
             OrderRepetitionExceededError: Repetition exceeds the maximum.
         """
 
-        if self.repetition > self.max_repetition:
+        max_repetition = max_repetition if max_repetition is not None else self.max_repetition
+
+        if self.repetition > max_repetition:
             raise OrderRepetitionExceededError
 
     def update_reply_variables(self, d: dict[str, Any]) -> None:
@@ -292,10 +266,51 @@ class OrderPlugin(DiceRobotPlugin):
             reply: Reply.
         """
 
-        for key, value in self.reply_variables.items():
-            reply = reply.replace(f"{{&{key}}}", str(value))
+        def replacer(match: re.Match) -> str:
+            return str(self.reply_variables.get(match.group(1), match.group(0)))
 
-        return reply
+        return re.sub(r"\{&(.+?)}", replacer, reply)
+
+    async def send_group_message(self, group_id: int, message: str | list[Message]) -> None:
+        """Send the message to the group.
+
+        Args:
+            group_id: Group ID.
+            message: String or segments. String will be converted to a text message.
+        """
+
+        if isinstance(message, str):
+            message = [Text(data=Text.Data(text=message))]
+
+        await self.context.network_manager.napcat.send_group_message(group_id, message)
+
+    async def send_private_message(self, user_id: int, message: str | list[Segment]) -> None:
+        """Send the message to the user.
+
+        Args:
+            user_id: User ID.
+            message: String or segments. String will be converted to a text message.
+        """
+
+        if isinstance(message, str):
+            message = [Text(data=Text.Data(text=message))]
+
+        await self.context.network_manager.napcat.send_private_message(user_id, message)
+
+    async def reply_to_message_sender(self, message: Message, reply: str | list[Segment]) -> None:
+        """Send reply to the sender of the specific message.
+
+        Args:
+            message: Message.
+            reply: Reply string or message.
+        """
+
+        if message.from_group:
+            await self.send_group_message(message.group_id, reply)
+        elif message.from_friend or message.from_group_temp:
+            await self.send_private_message(message.user_id, reply)
+        else:
+            raise RuntimeError("Invalid message type or sub type")
 
     async def reply_to_sender(self, reply: str | list[Segment]) -> None:
         """Send reply to the sender.
@@ -309,50 +324,6 @@ class OrderPlugin(DiceRobotPlugin):
 
         await self.reply_to_message_sender(self.message, reply)
 
-    @classmethod
-    async def reply_to_message_sender(cls, message: Message, reply: str | list[Segment]) -> None:
-        """Send reply to the sender of the specific message.
-
-        Args:
-            message: Message.
-            reply: Reply string or message.
-        """
-
-        if message.from_group:
-            await cls.send_group_message(message.group_id, reply)
-        elif message.from_friend or message.from_group_temp:
-            await cls.send_private_message(message.user_id, reply)
-        else:
-            raise RuntimeError("Invalid message type or sub type")
-
-    @staticmethod
-    async def send_group_message(group_id: int, message: str | list[Message]) -> None:
-        """Send the message to the group.
-
-        Args:
-            group_id: Group ID.
-            message: String or segments. String will be converted to a text message.
-        """
-
-        if isinstance(message, str):
-            message = [Text(data=Text.Data(text=message))]
-
-        await napcat_send_group_message(group_id, message)
-
-    @staticmethod
-    async def send_private_message(user_id: int, message: str | list[Segment]) -> None:
-        """Send the message to the user.
-
-        Args:
-            user_id: User ID.
-            message: String or segments. String will be converted to a text message.
-        """
-
-        if isinstance(message, str):
-            message = [Text(data=Text.Data(text=message))]
-
-        await napcat_send_private_message(user_id, message)
-
 
 class EventPlugin(DiceRobotPlugin):
     """DiceRobot event plugin.
@@ -363,14 +334,15 @@ class EventPlugin(DiceRobotPlugin):
 
     events: list[Type[Notice | Request]] = []
 
-    def __init__(self, event: Notice | Request) -> None:
+    def __init__(self, context: "AppContext", event: Notice | Request) -> None:
         """Initialize event plugin.
 
         Args:
+            context: Application context.
             event: Event that triggered the plugin.
         """
 
-        super().__init__()
+        super().__init__(context)
 
         self.event = event
         self.reply_variables = {}

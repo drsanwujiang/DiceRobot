@@ -34,8 +34,8 @@ class Text(Segment):
 class Image(Segment):
     class Data(BaseModel):
         file: str
-        type: str = None
-        url: str = None
+        type: str | None = None
+        url: str | None = None
 
     type: Literal[SegmentType.IMAGE] = SegmentType.IMAGE
     data: Data

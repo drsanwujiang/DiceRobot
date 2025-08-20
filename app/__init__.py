@@ -4,15 +4,22 @@ from loguru import logger
 from fastapi import FastAPI
 from apscheduler import AsyncScheduler
 
-from .version import VERSION
-from .database import init_database, clean_database
-from .config import load_config, save_config
+from .globals import VERSION
 from .log import init_logger
-from .schedule import init_scheduler, clean_scheduler
-from .manage import init_manager, clean_manager
-from .dispatch import init_dispatcher
+from .context import AppContext
+from .managers import Manager
+from .managers.database import DatabaseManager
+from .managers.config import ConfigManager
+from .managers.data import DataManager
+from .managers.dispatch import DispatchManager
+from .managers.task import TaskManager
+from .managers.network import NetworkManager
+from .actuators import Actuator
+from .actuators.app import AppActuator
+from .actuators.qq import QQActuator
+from .actuators.napcat import NapCatActuator
 from .exception_handlers import init_exception_handlers
-from .router import init_router
+from .routers import init_routers
 
 __all__ = [
     "dicerobot"
@@ -20,29 +27,45 @@ __all__ = [
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
-    init_database()
-    load_config()
+async def lifespan(app: FastAPI):
     init_logger()
-
     logger.info(f"DiceRobot {VERSION}")
 
     async with AsyncScheduler() as scheduler:
-        await init_scheduler(scheduler)
-        await init_manager()
-        await init_dispatcher()
+        app.state.context = AppContext()
+        app.state.context.scheduler = scheduler
+        app.state.context.database_manager = DatabaseManager(app.state.context)
+        app.state.context.config_manager = ConfigManager(app.state.context)
+        app.state.context.data_manager = DataManager(app.state.context)
+        app.state.context.dispatch_manager = DispatchManager(app.state.context)
+        app.state.context.task_manager = TaskManager(app.state.context)
+        app.state.context.network_manager = NetworkManager(app.state.context)
+        app.state.context.app_actuator = AppActuator(app.state.context)
+        app.state.context.qq_actuator = QQActuator(app.state.context)
+        app.state.context.napcat_actuator = NapCatActuator(app.state.context)
+
+        components = [
+            app.state.context.database_manager,
+            app.state.context.config_manager,
+            app.state.context.data_manager,
+            app.state.context.dispatch_manager,
+            app.state.context.network_manager,
+            app.state.context.task_manager,
+            app.state.context.app_actuator,
+            app.state.context.qq_actuator,
+            app.state.context.napcat_actuator
+        ]
+
+        for component in components:
+            await component.initialize()
 
         logger.success("DiceRobot started")
-
         yield
 
-        await clean_manager()
-        await clean_scheduler()
+        for component in reversed(components):
+            await component.cleanup()
 
-    save_config()
-    clean_database()
-
-    logger.warning("DiceRobot stopped")
+        logger.warning("DiceRobot stopped")
 
 
 dicerobot = FastAPI(
@@ -53,4 +76,4 @@ dicerobot = FastAPI(
 )
 
 init_exception_handlers(dicerobot)
-init_router(dicerobot)
+init_routers(dicerobot)

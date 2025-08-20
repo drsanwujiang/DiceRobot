@@ -1,3 +1,4 @@
+from typing import Any
 import asyncio
 
 __all__ = [
@@ -7,17 +8,17 @@ __all__ = [
 ]
 
 
-def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
-    updated_mapping = mapping.copy()
+def deep_update(base: dict[str, Any], *updates: dict[str, Any]) -> dict[str, Any]:
+    result = base.copy()
 
-    for updating_mapping in updating_mappings:
-        for k, v in updating_mapping.items():
-            if k in updated_mapping and isinstance(updated_mapping[k], dict) and isinstance(v, dict):
-                updated_mapping[k] = deep_update(updated_mapping[k], v)
+    for update in updates:
+        for key, value in update.items():
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = deep_update(result[key], value)
             else:
-                updated_mapping[k] = v
+                result[key] = value
 
-    return updated_mapping
+    return result
 
 
 async def run_command(command: str) -> asyncio.subprocess.Process:

@@ -13,8 +13,8 @@ __all__ = [
 class UpdateNapCatSettingsRequest(Request):
     class Directory(Request):
         base: str
-        logs: str
         config: str
+        logs: str
 
     class API(Request):
         host: IPv4Address
@@ -22,7 +22,7 @@ class UpdateNapCatSettingsRequest(Request):
 
     dir: Directory = None
     api: API = None
-    account: int = Field(None, gt=10000)
+    account: int = Field(default=None, gt=10000)
     autostart: bool = None
 
     @model_validator(mode="after")

@@ -1,0 +1,37 @@
+{
+  "id": "coc7",
+  "name": "COC 7 检定规则",
+  "description": "COC 7 版规则书设定的检定规则",
+  "levels": [
+    {
+      "name": "大成功",
+      "description": "骰出 1",
+      "condition": "roll == 1"
+    },
+    {
+      "name": "极难成功",
+      "description": "骰出小于等于角色技能或属性值的五分之一（向下取整）",
+      "condition": "roll <= skill // 5"
+    },
+    {
+      "name": "困难成功",
+      "description": "骰出小于等于角色技能或属性值的一半（向下取整）",
+      "condition": "roll <= skill // 2"
+    },
+    {
+      "name": "成功",
+      "description": "骰出小于等于角色技能或属性值，也称为一般成功",
+      "condition": "roll <= skill"
+    },
+    {
+      "name": "失败",
+      "description": "骰出大于角色技能或属性值",
+      "condition": "(skill < 50 and roll < 96 and roll > skill) or (skill >= 50 and roll < 100 and roll > skill)"
+    },
+    {
+      "name": "大失败",
+      "description": "骰出 100。若角色技能或属性值低于 50，则大于等于 96 的结果都是大失败",
+      "condition": "(skill < 50 and roll >= 96) or (skill >= 50 and roll == 100)"
+    }
+  ]
+}
