@@ -2,12 +2,7 @@
 
 DiceRobot，你的 TRPG 小助手。
 
-## 环境
-
-DiceRobot 需要以下环境：
-
-- Python 3.10 或更高版本
-- Poetry
+支持多种 TRPG 常用指令：掷骰（暗骰、奖励/惩罚骰）、技能检定等。同时支持接入 AI 大模型，借助 AI 丰富人物、剧情，同时生成角色、场景图片，身临其境地体验冒险之旅。
 
 ## 安装
 
@@ -41,21 +36,6 @@ bash deploy.sh
 - Ubuntu 24.04（默认 Python 版本为 3.12）
 - Ubuntu 22.04（默认 Python 版本为 3.10）
 
-其他操作系统建议手动安装。
-
-### 手动安装
-
-请参照相关文档，安装以下依赖环境：
-
-- Python 3.10 或更高版本
-- Poetry
-
-此外还需要安装 NTQQ 相关依赖环境：
-
-```shell
-apt install curl xvfb libnss3 libgbm1 libasound2
-```
-
 ## 管理
 
-在 [DiceRobot 控制面板](https://panel.dicerobot.tech/) 可以对 DiceRobot 进行管理，并且支持一键安装 NapCat 和 QQ，上手体验十分简单。
+通过 [DiceRobot 控制面板](https://panel.dicerobot.tech/) 轻松管理 DiceRobot，还支持一键安装/更新 QQ，仅需几分钟便可开启旅程，十分简单~
