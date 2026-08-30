@@ -1,0 +1,15 @@
+# 领域层的额外约束：trpg 包不依赖 Web 框架、HTTP 客户端、ORM，也不依赖本项目的任何
+# 外层包。依赖方向为 bot -> trpg，不允许反向。
+#
+# 该约束保证掷骰引擎可完全离线开发与测试，故由 CI 强制执行。
+# Ruff 会为本目录下的文件就近发现此配置，根目录的规则通过 extend 继承。
+extend = "../../pyproject.toml"
+
+[lint.flake8-tidy-imports.banned-api]
+"fastapi".msg = "trpg 层不得依赖 Web 框架"
+"httpx".msg = "trpg 层不得依赖 HTTP 客户端"
+"sqlalchemy".msg = "trpg 层不得依赖 ORM"
+"loguru".msg = "trpg 层不得产生副作用，错误应通过异常向上传递"
+"dicerobot.qq".msg = "trpg 层不得依赖平台适配层"
+"dicerobot.bot".msg = "trpg 层不得依赖运行时层"
+"dicerobot.storage".msg = "trpg 层不得依赖持久化层"

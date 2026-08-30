@@ -1,0 +1,7 @@
+# 仓库内一律以 LF 存储，检出时的行尾由各自平台的设置决定。
+# 不依赖每个人的 core.autocrlf 配置，避免 CRLF 被提交进来。
+* text=auto
+
+*.db binary
+*.png binary
+*.jpg binary

@@ -1,0 +1,5 @@
+# 插件不得直接使用平台客户端：输出一律经由上下文，以便回复配额得到统一计量。
+extend = "../../pyproject.toml"
+
+[lint.flake8-tidy-imports.banned-api]
+"dicerobot.qq.client".msg = "插件应通过 context.write 输出，而非直接调用平台客户端"

@@ -1,0 +1,84 @@
+[project]
+name = "dicerobot"
+version = "5.0.0"
+description = "TRPG assistant bot built on the QQ bot platform"
+authors = [
+    { name = "Drsanwujiang", email = "drsanwujiang@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "fastapi>=0.141",
+    "uvicorn[standard]>=0.52",
+    "pydantic>=2.13",
+    "pydantic-settings>=2.15",
+    "httpx>=0.28",
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.22",
+    "alembic>=1.19",
+    "loguru>=0.7",
+    "cryptography>=50.0",
+]
+
+[project.scripts]
+dicerobot = "dicerobot.__main__:main"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "dicerobot" }]
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=9.1"
+pytest-asyncio = ">=1.4"
+hypothesis = ">=6.165"
+respx = ">=0.23"
+ruff = ">=0.16"
+mypy = ">=2.3"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-q --strict-markers --strict-config"
+
+[tool.ruff]
+src = ["."]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "F",      # pyflakes
+    "E", "W", # pycodestyle
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # bugbear
+    "A",      # builtins shadowing
+    "C4",     # comprehensions
+    "DTZ",    # naive datetime
+    "PT",     # pytest style
+    "SIM",    # simplify
+    "TID",    # tidy imports
+    "RUF",
+]
+ignore = [
+    "RUF001", "RUF002", "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = "."
+packages = ["dicerobot"]
+strict = true
+warn_unreachable = true
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

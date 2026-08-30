@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: 静态检查与测试
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Poetry
+        run: pipx install "poetry>=2.0,<3.0"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: poetry
+
+      - name: 安装依赖
+        run: poetry install
+
+      - name: Ruff
+        run: |
+          poetry run ruff check .
+          poetry run ruff format --check .
+
+      - name: mypy
+        run: poetry run mypy
+
+      - name: pytest
+        run: poetry run pytest
+
+      - name: 迁移与模型是否一致
+        # 先在空库上升级到最新，再比对模型：改了模型却忘了写迁移会在此暴露。
+        run: |
+          poetry run alembic upgrade head
+          poetry run alembic check
+
+  image:
+    name: 镜像构建与冒烟测试
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: dicerobot:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 容器能否启动并通过健康检查
+        run: |
+          docker run --detach --name dicerobot-ci \
+            --env QQ__APP_ID=000000 \
+            --env QQ__SECRET=ci-placeholder-secret \
+            --publish 8080:8080 \
+            dicerobot:ci
+
+          for _ in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "健康检查未通过，容器日志："
+          docker logs dicerobot-ci
+          exit 1
+
+      - name: 收尾
+        if: always()
+        run: docker rm --force dicerobot-ci || true
