@@ -1,4 +1,4 @@
-"""非消息事件归一化的测试。"""
+"""事件归一化的测试。"""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from dicerobot.bot.message import normalize_event, normalize_message
+from dicerobot.bot.message import IncomingMessage, normalize_event, normalize_message
 from dicerobot.enums import Scene
 from dicerobot.qq.enums import EventType
 from dicerobot.qq.schemas import Payload
@@ -17,6 +17,47 @@ RECEIVED_AT = datetime(2026, 1, 1, tzinfo=UTC)
 
 def payload(event_type: str, data: dict[str, Any], *, event_id: str | None = "EVENT_1") -> Payload:
     return Payload(op=0, id=event_id, t=event_type, d=data)
+
+
+def group_message(content: str) -> IncomingMessage | None:
+    return normalize_message(
+        payload(
+            "GROUP_AT_MESSAGE_CREATE",
+            {"id": "MSG_1", "group_openid": "G1", "author": {"member_openid": "U1"}, "content": content},
+        ),
+        received_at=RECEIVED_AT,
+    )
+
+
+class TestContentCleanup:
+    def test_strips_the_mention_of_the_bot(self) -> None:
+        """平台不剥离 @ 机器人的标记，正文形如 <@openid> .r，且 openid 不是数字。"""
+
+        message = group_message("<@F0A70CF8E9C1CB6E46614D877FBBDBED> .r")
+
+        assert message is not None
+        assert message.content == ".r"
+
+    def test_strips_mentions_of_other_members(self) -> None:
+        message = group_message("<@F0A70CF8E9C1CB6E46614D877FBBDBED> .ra 侦查 <@EC89EBEC3CF575BD5832927E4B689CAC>")
+
+        assert message is not None
+        assert "<@" not in message.content
+        assert message.content.startswith(".ra 侦查")
+
+    def test_strips_the_legacy_numeric_form(self) -> None:
+        """频道时代的 <@!数字> 形式仍应剥离。"""
+
+        message = group_message("<@!123456789> .ping")
+
+        assert message is not None
+        assert message.content == ".ping"
+
+    def test_keeps_content_without_a_mention(self) -> None:
+        message = group_message(".r 3d6+2 侦查")
+
+        assert message is not None
+        assert message.content == ".r 3d6+2 侦查"
 
 
 class TestGroupRobotEvents:

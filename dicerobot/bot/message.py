@@ -22,8 +22,9 @@ from dicerobot.qq.schemas import C2CMessage, FriendEvent, GroupMessage, GroupRob
 
 __all__ = ["IncomingEvent", "IncomingMessage", "ReplyTarget", "normalize_event", "normalize_message"]
 
-# 机器人自身的 @ 已被平台剥离，但正文中可能残留其他成员的 @ 标记。
-_MENTION_PATTERN = re.compile(r"<@!?\d+>")
+# @ 标记形如 <@openid>，其中 openid 是十六进制串而非数字；按数字匹配会一个都剥不掉。
+# 被 @ 的既可能是机器人自身，也可能是其他成员，两者形式相同，一并剥离。
+_MENTION_PATTERN = re.compile(r"<@!?[^<>\s]+>")
 
 _MESSAGE_EVENTS = frozenset(
     {
@@ -198,9 +199,10 @@ def normalize_event(payload: Payload, *, received_at: datetime) -> IncomingEvent
 
 
 def _clean_content(content: str) -> str:
-    """剥离残留的 @ 标记并去除首尾空白。
+    """剥离 @ 标记并去除首尾空白。
 
-    @ 机器人的消息正文以空格开头，不清理则指令前缀无法匹配。
+    平台不会替调用方清理正文：@ 机器人的消息正文形如 ``<@openid> .r``，标记与其后的
+    空格若不去除，指令前缀便无法匹配。
     """
 
     return _MENTION_PATTERN.sub("", content).strip()
