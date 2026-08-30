@@ -91,7 +91,9 @@ def router() -> Iterator[respx.MockRouter]:
 
 
 @pytest.fixture
-async def client(settings: Settings) -> AsyncIterator[httpx.AsyncClient]:
+async def client(settings: Settings, router: respx.MockRouter) -> AsyncIterator[httpx.AsyncClient]:
+    # 依赖 router：lifespan 会预取 access token，mock 须在创建应用之前安装，
+    # 否则请求会穿透到真实平台。
     app = create_app(settings)
 
     async with app.router.lifespan_context(app):

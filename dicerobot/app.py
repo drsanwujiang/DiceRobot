@@ -64,12 +64,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             settings.debug,
         )
         await upgrade_to_head(settings.database_url)
+        await token_provider.start()
         await pipeline.start()
 
         try:
             yield
         finally:
             await pipeline.stop()
+            await token_provider.stop()
             await http_client.aclose()
             await database.dispose()
             logger.info("DiceRobot 已停止")
