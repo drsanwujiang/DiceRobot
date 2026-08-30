@@ -3,8 +3,8 @@
 Webhook 须立即返回，平台在超时未收到响应时会重推同一事件，因此实际处理交由后台
 worker 完成。
 
-群若被开启全量消息推送，每条群消息都会到达，故入队后的快速路径需保持廉价：先按
-前缀与指令表判断是否命中，未命中的消息在触及下游之前丢弃。
+群若被开启全量消息推送，每条群消息都会到达，故入队后的快速路径开销要低：先按前缀
+与指令表判断是否命中，未命中的消息在进入下游之前丢弃。
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ _FAILURE_REPLY = "指令执行出错了，请稍后再试……"
 _TIMEOUT_REPLY = "指令执行超时了……"
 
 _CONTENT_PREVIEW = 50
-"""未命中指令的消息在日志中截断至此长度，群开启全量推送时这条日志会很密集。"""
+"""未命中指令的消息在日志中截断至此长度，群开启全量推送时这条日志会非常频繁。"""
 
 
 class Pipeline:
@@ -246,7 +246,7 @@ class Pipeline:
             async with asyncio.timeout(self._settings.handler_timeout):
                 await handler(context)
         except Exception:
-            # 事件不是用户主动发起的，失败不回复错误提示，以免在入群一类的时刻刷屏。
+            # 事件不是用户主动发起的，失败不回复错误提示，以免在入群等场景下连续发送无效回复。
             # 单个插件出错也不应影响其余插件。
             logger.exception("插件 {} 处理事件 {} 失败", plugin.name, event.type)
 

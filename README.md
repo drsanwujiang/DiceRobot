@@ -15,7 +15,7 @@ dicerobot/
 
 依赖方向单向：`plugins -> bot -> qq`、`bot -> trpg`、`bot -> storage`。
 
-`qq` 为叶子包，不依赖任何内部模块。webhook 通过本地 `Protocol` 接收事件汇聚点，
+`qq` 为叶子包，不依赖任何内部模块。webhook 以本地 `Protocol` 声明事件接收方，
 由 `app.py` 负责装配，因此 `bot` 调用客户端发消息不会与 webhook 形成循环依赖。
 
 `trpg` 同样不依赖任何其他层，该约束由 `dicerobot/trpg/ruff.toml` 在 CI 中强制。

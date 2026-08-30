@@ -14,7 +14,7 @@ from dicerobot.errors import ConfigurationError, SignatureError
 from dicerobot.qq.signature import sign_challenge, verify_signature
 
 SECRET = "abc"
-# "abc" 自我拼接至不短于 32 字节后截断，即 "abc" 无限重复的前 32 字节。
+# "abc" 重复拼接至不短于 32 字节后截断，即 "abc" 无限重复的前 32 字节。
 EXPECTED_SEED = b"abcabcabcabcabcabcabcabcabcabcab"
 
 

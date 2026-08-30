@@ -113,7 +113,7 @@ class TestMultipleHandlers:
         assert harness.client.calls[0]["content"] == "第二句"
 
     async def test_failures_produce_no_error_reply(self, make_harness: Any) -> None:
-        """事件不是用户发起的，出错不应在入群一类的时刻刷屏。"""
+        """事件不是用户发起的，出错不应在入群等场景下连续发送无效回复。"""
 
         broken = Plugin(name="broken", display_name="broken")
 

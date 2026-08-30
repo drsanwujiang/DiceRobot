@@ -29,7 +29,7 @@ class EventType(StrEnum):
     GROUP_MESSAGE_CREATE = "GROUP_MESSAGE_CREATE"
     """群内全量消息。
 
-    是否推送由群主或管理员在群内开关，不是机器人可申请的权限；开关变化时平台推送
+    是否推送由群主或管理员在群内设置，不是机器人可申请的权限；该设置变化时平台推送
     GROUP_MSG_RECEIVE / GROUP_MSG_REJECT，本项目不订阅，因而不假定当前处于哪种模式。
     """
 

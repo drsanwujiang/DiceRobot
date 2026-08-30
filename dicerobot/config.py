@@ -21,7 +21,7 @@ __all__ = ["DEFAULT_DATABASE_URL", "BotSettings", "LogSettings", "QQSettings", "
 class _Section(BaseModel):
     """配置分节的基类。
 
-    拒绝未知字段：pydantic 默认忽略多余的键，字段名拼错时会静默退回默认值。
+    拒绝未知字段：pydantic 默认忽略多余的键，字段名拼错时会静默回退到默认值。
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -35,7 +35,7 @@ class QQSettings(_Section):
     """开放平台接入凭据。"""
 
     app_id: str = Field(min_length=1, description="AppID，同时用作 X-Union-Appid 请求头")
-    secret: SecretStr = Field(description="AppSecret，用于换取 access token 及派生 Ed25519 签名密钥")
+    secret: SecretStr = Field(description="AppSecret，用于获取 access token 及派生 Ed25519 签名密钥")
     request_timeout: float = Field(default=10.0, gt=0, description="调用 OpenAPI 的超时秒数")
 
 

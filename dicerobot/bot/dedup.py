@@ -40,7 +40,7 @@ class EventDeduplicator:
         self._seen: OrderedDict[str, datetime] = OrderedDict()
 
     def is_new(self, event_id: str) -> bool:
-        """判断事件是否首次出现，并登记之。
+        """判断事件是否首次出现，并记录该事件。
 
         Returns:
             首次出现返回 ``True``，重复出现返回 ``False``。

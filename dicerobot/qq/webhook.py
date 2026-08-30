@@ -3,7 +3,7 @@
 处理函数只做验签、解析与转交三件事。业务处理须异步进行：平台在超时未收到响应时
 会重推同一事件。
 
-事件汇聚点通过本地 ``Protocol`` 传入，因此 ``qq`` 包不依赖运行时层，装配由
+事件接收方通过本地 ``Protocol`` 传入，因此 ``qq`` 包不依赖运行时层，装配由
 ``app`` 负责。
 """
 
@@ -25,7 +25,7 @@ __all__ = ["EventSink", "create_webhook_router"]
 
 
 class EventSink(Protocol):
-    """事件汇聚点。实现方须保证 :meth:`submit` 不阻塞。"""
+    """事件接收方。实现方须保证 :meth:`submit` 不阻塞。"""
 
     def submit(self, payload: Payload) -> None: ...
 
@@ -36,7 +36,7 @@ def create_webhook_router(*, path: str, secret: str, sink: EventSink) -> APIRout
     Args:
         path: 回调路径，需与平台配置一致。
         secret: AppSecret，用于验签与回调地址校验。
-        sink: 事件汇聚点。
+        sink: 事件接收方。
     """
 
     router = APIRouter()

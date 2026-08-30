@@ -38,7 +38,7 @@ async def upgrade_to_head(database_url: str, *, root: Path | None = None) -> Non
     config = Config(str(config_path))
     config.set_main_option("script_location", str(config_path.parent / "migrations"))
     config.set_main_option("sqlalchemy.url", database_url)
-    # 不让 alembic 按 alembic.ini 重设日志，否则会覆盖应用已装好的转发配置。
+    # 不让 alembic 按 alembic.ini 重设日志，否则会覆盖应用已安装的转发配置。
     config.attributes["configure_logger"] = False
 
     logger.debug("执行 alembic upgrade head，配置：{}", config_path)

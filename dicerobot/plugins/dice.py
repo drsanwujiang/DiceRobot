@@ -24,7 +24,7 @@ _RNG: random.Random = random.SystemRandom()
 # 掷骰表达式允许出现的字符。据此切出开头的表达式，其余部分视为掷骰理由。
 _ARGUMENTS_PATTERN = re.compile(r"^(?P<expression>[0-9dDkKlL+\-*/xX×÷()（）]*)\s*(?P<reason>[\s\S]*)$")
 
-# 用于判断切出的"表达式"是否为误伤，如 `.r kick` 的开头 k 实为理由的一部分。
+# 用于判断切出的"表达式"是否为误匹配，如 `.r kick` 的开头 k 实为理由的一部分。
 _LOOKS_LIKE_EXPRESSION = re.compile(r"[0-9dD]")
 
 

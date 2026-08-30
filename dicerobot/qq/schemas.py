@@ -19,7 +19,7 @@ __all__ = [
 
 
 class Payload(BaseModel):
-    """Webhook 上行 payload 的信封。
+    """Webhook 推送 payload 的信封。
 
     ``op`` 保留为 ``int`` 而非枚举，使平台新增操作码时未知取值被安全忽略而非解析失败。
     事件数据 ``d`` 同样延后到确定 ``t`` 之后再解析。

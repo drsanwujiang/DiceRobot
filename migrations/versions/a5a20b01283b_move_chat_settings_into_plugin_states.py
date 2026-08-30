@@ -120,7 +120,7 @@ def _migrate_settings(*, select: str, build: dict[str, object]) -> None:
 
 
 def _restore_settings() -> None:
-    """把插件设置写回 chats 的两列。缺失或非法的取值退回默认值。"""
+    """把插件设置写回 chats 的两列。缺失或非法的取值回退到默认值。"""
 
     connection = op.get_bind()
     rows = connection.execute(

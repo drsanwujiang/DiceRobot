@@ -159,7 +159,7 @@ class TestConflicts:
             registry.add(make_plugin("dice", ("x",)))
 
     def test_alias_conflict_names_both_plugins(self, registry: Registry) -> None:
-        """第三方插件接入后别名撞车会变常见，错误信息必须能直接定位。"""
+        """第三方插件接入后别名冲突会变得常见，错误信息必须能直接定位。"""
 
         with pytest.raises(ValueError, match=r"'mine'.*'dice'.*'r'"):
             registry.add(make_plugin("mine", ("r",)))

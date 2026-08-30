@@ -22,7 +22,7 @@ from dicerobot.qq.schemas import C2CMessage, FriendEvent, GroupMessage, GroupRob
 
 __all__ = ["IncomingEvent", "IncomingMessage", "ReplyTarget", "normalize_event", "normalize_message"]
 
-# @ 标记形如 <@openid>，其中 openid 是十六进制串而非数字；按数字匹配会一个都剥不掉。
+# @ 标记形如 <@openid>，其中 openid 是十六进制串而非数字；按数字匹配将无法命中任何标记。
 # 被 @ 的既可能是机器人自身，也可能是其他成员，两者形式相同，一并剥离。
 _MENTION_PATTERN = re.compile(r"<@!?[^<>\s]+>")
 

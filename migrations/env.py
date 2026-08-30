@@ -21,7 +21,7 @@ config = context.config
 
 # 仅在通过命令行独立运行时按 alembic.ini 配置日志。应用启动时的自动迁移会把
 # configure_logger 置为假：fileConfig 会重设 root handler 并禁用未在 ini 中列出的
-# logger，从而让应用已经装好的日志转发失效，uvicorn 与 httpx 的日志会就此消失。
+# logger，从而让应用已安装的日志转发失效，uvicorn 与 httpx 的日志会就此消失。
 if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name)
 
