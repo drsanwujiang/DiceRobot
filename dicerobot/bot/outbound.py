@@ -150,6 +150,7 @@ class ReplyBuffer:
         """
 
         if not self._lines:
+            logger.debug("回复缓冲为空，跳过发送")
             return False
 
         content = "\n".join(self._lines)

@@ -140,8 +140,12 @@ class QQClient:
 
         token = await self._token_provider.get()
 
+        # 请求与响应各记一行：仅有请求而无响应，即可定位到调用阻塞在平台侧。
+        # 两行均不含 token 与响应体，避免凭据与用户内容落盘。
+        logger.debug("发起请求 {} {}", method, path)
+
         try:
-            return await self._client.request(
+            response = await self._client.request(
                 method,
                 f"{self._base_url}{path}",
                 json=payload,
@@ -152,6 +156,10 @@ class QQClient:
             )
         except httpx.HTTPError as e:
             raise ApiError(code=-1, message=f"请求失败：{e}", status_code=0) from e
+
+        logger.debug("收到响应 {} {}：HTTP {}", method, path, response.status_code)
+
+        return response
 
     @staticmethod
     def _parse_body(response: httpx.Response) -> dict[str, Any]:

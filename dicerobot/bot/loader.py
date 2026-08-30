@@ -59,6 +59,10 @@ def load_registry(*, include_entry_points: bool = True) -> Registry:
     # 它捕获的是注册表对象本身，加载完成后即可看到全部插件。
     registry.add(build_system_plugin(registry))
 
+    for plugin in registry.plugins:
+        aliases = [alias for command in plugin.commands for alias in command.names]
+        logger.debug("插件 {} v{} 的指令别名：{}", plugin.name, plugin.version, "、".join(aliases) or "无")
+
     logger.info(
         "已加载 {} 个插件，共 {} 条指令",
         len(registry.plugins),

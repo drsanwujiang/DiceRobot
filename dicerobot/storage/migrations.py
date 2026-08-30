@@ -41,6 +41,8 @@ async def upgrade_to_head(database_url: str, *, root: Path | None = None) -> Non
     # 不让 alembic 按 alembic.ini 重设日志，否则会覆盖应用已装好的转发配置。
     config.attributes["configure_logger"] = False
 
+    logger.debug("执行 alembic upgrade head，配置：{}", config_path)
+
     # alembic 的迁移入口是同步的，且内部会自行 asyncio.run，因此必须放到独立线程中，
     # 否则会与当前事件循环冲突。
     await asyncio.to_thread(command.upgrade, config, "head")

@@ -64,6 +64,8 @@ def create_webhook_router(*, path: str, secret: str, sink: EventSink) -> APIRout
             logger.warning("Webhook payload 无法解析：{}", e)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bad request") from e
 
+        logger.debug("收到事件推送：op={}，t={}，id={}", payload.op, payload.t, payload.id)
+
         if payload.op == OpCode.CALLBACK_VALIDATION:
             return _validate_callback(secret, payload)
 

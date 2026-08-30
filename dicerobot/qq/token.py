@@ -92,11 +92,13 @@ class AccessTokenProvider:
         self._token = None
         self._expires_at = datetime.min.replace(tzinfo=UTC)
 
+        logger.debug("access token 缓存已作废")
+
     def _valid(self) -> bool:
         return self._token is not None and self._now() + _REFRESH_MARGIN < self._expires_at
 
     async def _refresh(self) -> None:
-        logger.debug("正在换取 access token")
+        logger.debug("正在获取 access token")
 
         try:
             response = await self._client.post(
@@ -106,11 +108,11 @@ class AccessTokenProvider:
             response.raise_for_status()
             payload = _AccessTokenResponse.model_validate(response.json())
         except httpx.HTTPError as e:
-            raise TokenError(f"换取 access token 失败：{e}") from e
+            raise TokenError(f"获取 access token 失败：{e}") from e
         except ValueError as e:
             # 含 JSON 解析失败与 pydantic 的 ValidationError。
             # 响应体不写入日志，避免 AppSecret 或 token 落盘。
-            raise TokenError("换取 access token 的响应无法解析，请检查 AppID 与 AppSecret") from e
+            raise TokenError("获取 access token 的响应无法解析，请检查 AppID 与 AppSecret") from e
 
         self._token = payload.access_token
         self._expires_at = self._now() + timedelta(seconds=payload.expires_in)

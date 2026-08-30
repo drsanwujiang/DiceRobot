@@ -33,6 +33,9 @@ __all__ = ["Pipeline"]
 _FAILURE_REPLY = "指令执行出错了，请稍后再试……"
 _TIMEOUT_REPLY = "指令执行超时了……"
 
+_CONTENT_PREVIEW = 50
+"""未命中指令的消息在日志中截断至此长度，群开启全量推送时这条日志会很密集。"""
+
 
 class Pipeline:
     """接收事件并调度指令执行。"""
@@ -67,13 +70,15 @@ class Pipeline:
         """
 
         if payload.id is not None and not self._deduplicator.is_new(payload.id):
-            logger.debug("事件 {} 是重复推送，丢弃", payload.id)
+            logger.debug("事件 {} 重复推送，已丢弃", payload.id)
             return
 
         try:
             self._queue.put_nowait((payload, self._now()))
         except asyncio.QueueFull:
             logger.warning("事件队列已满（容量 {}），丢弃事件 {}", self._settings.queue_size, payload.id)
+        else:
+            logger.debug("事件 {} 入队，队列深度 {}/{}", payload.id, self._queue.qsize(), self._settings.queue_size)
 
     async def start(self) -> None:
         """启动 worker。"""
@@ -132,6 +137,12 @@ class Pipeline:
         invocation = self._registry.resolve(message.content)
 
         if invocation is None:
+            logger.debug(
+                "消息未匹配任何指令：scene={}，sender={}，content={!r}",
+                message.scene,
+                message.sender_id,
+                message.content[:_CONTENT_PREVIEW],
+            )
             return
 
         logger.info(

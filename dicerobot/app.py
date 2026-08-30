@@ -54,7 +54,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        logger.info("DiceRobot 启动，已加载 {} 个插件", len(registry.plugins))
+        logger.info("DiceRobot 已启动，监听 {}:{}", settings.host, settings.port)
+        logger.debug(
+            "生效配置：webhook_path={}，database_url={}，workers={}，queue_size={}，debug={}",
+            settings.webhook_path,
+            settings.database_url,
+            settings.bot.workers,
+            settings.bot.queue_size,
+            settings.debug,
+        )
         await upgrade_to_head(settings.database_url)
         await pipeline.start()
 
