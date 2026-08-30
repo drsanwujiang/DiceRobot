@@ -24,10 +24,14 @@ class EventType(StrEnum):
     """已订阅的事件类型。"""
 
     GROUP_AT_MESSAGE_CREATE = "GROUP_AT_MESSAGE_CREATE"
-    """群内 @ 机器人的消息。公域机器人的默认能力。"""
+    """群内 @ 机器人的消息。正文已由平台剥去 @ 前缀。"""
 
     GROUP_MESSAGE_CREATE = "GROUP_MESSAGE_CREATE"
-    """群内全量消息。需向平台单独申请权限，未获批时不会收到。"""
+    """群内全量消息。
+
+    是否推送由群主或管理员在群内开关，不是机器人可申请的权限；开关变化时平台推送
+    GROUP_MSG_RECEIVE / GROUP_MSG_REJECT，本项目不订阅，因而不假定当前处于哪种模式。
+    """
 
     C2C_MESSAGE_CREATE = "C2C_MESSAGE_CREATE"
     """单聊消息。"""
@@ -39,13 +43,10 @@ class EventType(StrEnum):
 
 
 class MessageType(IntEnum):
-    """发送消息时的 ``msg_type``。"""
+    """发送消息时的 ``msg_type``。V2 的群聊与单聊接口只定义了这三种。"""
 
     TEXT = 0
-    MIXED = 1
     MARKDOWN = 2
-    ARK = 3
-    EMBED = 4
     MEDIA = 7
 
 
@@ -56,4 +57,3 @@ class FileType(IntEnum):
     VIDEO = 2
     VOICE = 3
     FILE = 4
-    """平台暂未开放。"""

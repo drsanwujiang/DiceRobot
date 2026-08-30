@@ -17,10 +17,9 @@ from dicerobot.qq.enums import EventType
 
 __all__ = ["Invocation", "Registry"]
 
-# 指令行：可选的 . 或 。前缀、指令体、可选的行尾 #N 重复次数。
+# 指令行：. 或 。前缀、指令体、可选的行尾 #N 重复次数。
 # 次数限制为至多三位，避免 #999999 一类输入在解析阶段被视为有效值。
-_REQUIRED_PREFIX_PATTERN = re.compile(r"^[.。]\s*(?P<body>.*?)\s*(?:#(?P<times>\d{1,3}))?$", re.DOTALL)
-_OPTIONAL_PREFIX_PATTERN = re.compile(r"^[.。]?\s*(?P<body>.*?)\s*(?:#(?P<times>\d{1,3}))?$", re.DOTALL)
+_COMMAND_PATTERN = re.compile(r"^[.。]\s*(?P<body>.*?)\s*(?:#(?P<times>\d{1,3}))?$", re.DOTALL)
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,20 +89,20 @@ class Registry:
 
         return tuple(self._by_event.get(event_type, ()))
 
-    def resolve(self, text: str, *, prefix_required: bool = True) -> Invocation | None:
+    def resolve(self, text: str) -> Invocation | None:
         """把一行文本解析为指令调用。
+
+        指令一律要求 ``.`` 或 ``。`` 前缀：群是否推送全量消息由群主或管理员随时开关，
+        机器人无从得知当前模式，因而不能依赖「收到即是冲着我来的」这一假设。
 
         Args:
             text: 消息正文，应已去除首尾空白。
-            prefix_required: 是否必须以 ``.`` 或 ``。`` 开头。全量群消息权限下须为真，
-                否则无法区分指令与闲聊。
 
         Returns:
             无法解析或未命中任何指令时返回 ``None``。
         """
 
-        pattern = _REQUIRED_PREFIX_PATTERN if prefix_required else _OPTIONAL_PREFIX_PATTERN
-        match = pattern.fullmatch(text)
+        match = _COMMAND_PATTERN.fullmatch(text)
 
         if match is None:
             return None

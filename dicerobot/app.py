@@ -40,12 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # 所有出站请求共用一个连接池，其生命周期与应用一致，在 lifespan 中关闭。
     http_client = httpx.AsyncClient(timeout=settings.qq.request_timeout)
     token_provider = AccessTokenProvider(app_id=settings.qq.app_id, secret=secret, client=http_client)
-    client = QQClient(
-        app_id=settings.qq.app_id,
-        base_url=settings.qq.api_base_url,
-        token_provider=token_provider,
-        client=http_client,
-    )
+    client = QQClient(app_id=settings.qq.app_id, token_provider=token_provider, client=http_client)
 
     database = Database(settings.database_url, echo=settings.debug)
     registry = load_registry()
@@ -59,12 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        logger.info(
-            "DiceRobot 启动：{} 环境，{} 个插件，指令前缀{}",
-            "沙箱" if settings.qq.sandbox else "正式",
-            len(registry.plugins),
-            "必需" if settings.bot.prefix_required else "可选",
-        )
+        logger.info("DiceRobot 启动，已加载 {} 个插件", len(registry.plugins))
         await upgrade_to_head(settings.database_url)
         await pipeline.start()
 

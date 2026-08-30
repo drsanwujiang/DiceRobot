@@ -3,8 +3,8 @@
 Webhook 须立即返回，平台在超时未收到响应时会重推同一事件，因此实际处理交由后台
 worker 完成。
 
-全量群消息权限下每条群消息都会推送，故入队后的快速路径需保持廉价：先按前缀与指令
-表判断是否命中，未命中的消息在触及下游之前丢弃。
+群若被开启全量消息推送，每条群消息都会到达，故入队后的快速路径需保持廉价：先按
+前缀与指令表判断是否命中，未命中的消息在触及下游之前丢弃。
 """
 
 from __future__ import annotations
@@ -129,10 +129,7 @@ class Pipeline:
             await self._process_event(payload, received_at)
             return
 
-        invocation = self._registry.resolve(
-            message.content,
-            prefix_required=self._settings.prefix_required,
-        )
+        invocation = self._registry.resolve(message.content)
 
         if invocation is None:
             return

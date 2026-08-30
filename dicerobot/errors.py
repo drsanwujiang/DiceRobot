@@ -48,17 +48,25 @@ class ApiError(QQError):
     """平台 OpenAPI 返回业务错误码。
 
     Attributes:
-        code: 平台返回的错误码。
-        message: 平台返回的错误描述。
+        code: 平台返回的 ``err_code``，无法解析时为 -1。
+        message: 平台返回的错误描述。文档声明其措辞随时可能调整，判定失败须依据
+            ``code``，此字段仅供人阅读。
         status_code: HTTP 状态码，网络层失败时为 0。
+        trace_id: 平台的链路追踪 ID，向平台反馈问题时需要提供。
     """
 
-    def __init__(self, code: int, message: str, status_code: int) -> None:
-        super().__init__(f"QQ OpenAPI 错误 {code}（HTTP {status_code}）：{message}")
+    def __init__(self, code: int, message: str, status_code: int, trace_id: str | None = None) -> None:
+        detail = f"QQ OpenAPI 错误 {code}（HTTP {status_code}）：{message}"
+
+        if trace_id:
+            detail += f"，trace_id={trace_id}"
+
+        super().__init__(detail)
 
         self.code = code
         self.message = message
         self.status_code = status_code
+        self.trace_id = trace_id
 
 
 class ReplyError(QQError):

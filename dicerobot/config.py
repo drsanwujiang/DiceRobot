@@ -4,7 +4,6 @@
 
     QQ__APP_ID=102...
     QQ__SECRET=xxxx
-    QQ__SANDBOX=true
 """
 
 from __future__ import annotations
@@ -31,35 +30,18 @@ class _Section(BaseModel):
 DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///data/dicerobot.db"
 """数据库地址的默认值。迁移脚本亦引用此常量，避免出现两份来源。"""
 
-# 官方文档亦给出 https://api.bot.qq.com，两者等价。此处沿用官方 SDK 使用的域名。
-API_BASE_URL = "https://api.sgroup.qq.com"
-SANDBOX_API_BASE_URL = "https://sandbox.api.sgroup.qq.com"
-
 
 class QQSettings(_Section):
-    """开放平台接入凭据与环境。"""
+    """开放平台接入凭据。"""
 
     app_id: str = Field(min_length=1, description="AppID，同时用作 X-Union-Appid 请求头")
     secret: SecretStr = Field(description="AppSecret，用于换取 access token 及派生 Ed25519 签名密钥")
-    sandbox: bool = Field(default=False, description="是否指向沙箱环境。正式环境需在平台配置 IP 白名单")
     request_timeout: float = Field(default=10.0, gt=0, description="调用 OpenAPI 的超时秒数")
-
-    @property
-    def api_base_url(self) -> str:
-        return SANDBOX_API_BASE_URL if self.sandbox else API_BASE_URL
 
 
 class BotSettings(_Section):
     """机器人行为配置。"""
 
-    prefix_required: bool = Field(
-        default=True,
-        description=(
-            "指令是否必须以 . 或 。开头。"
-            "全量群消息权限下须为 true，否则无法区分指令与闲聊；"
-            "仅接收 @ 消息时可设为 false。"
-        ),
-    )
     queue_size: int = Field(default=1000, gt=0, description="事件队列容量，队列满时丢弃并告警")
     workers: int = Field(default=4, gt=0, description="并发消费事件的 worker 数量")
     handler_timeout: float = Field(default=30.0, gt=0, description="单条指令的执行超时秒数")

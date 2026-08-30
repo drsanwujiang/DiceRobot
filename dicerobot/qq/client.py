@@ -11,6 +11,7 @@ import httpx
 from loguru import logger
 
 from dicerobot.errors import ApiError
+from dicerobot.qq import API_BASE_URL
 from dicerobot.qq.enums import MessageType
 from dicerobot.qq.schemas import SendMessageResult
 from dicerobot.qq.token import AccessTokenProvider
@@ -25,16 +26,16 @@ class QQClient:
         self,
         *,
         app_id: str,
-        base_url: str,
         token_provider: AccessTokenProvider,
         client: httpx.AsyncClient,
+        base_url: str = API_BASE_URL,
     ) -> None:
         """
         Args:
             app_id: AppID，同时作为 ``X-Union-Appid`` 请求头。
-            base_url: OpenAPI 域名，沙箱与正式环境不同。
             token_provider: access token 来源。
             client: 共享的 HTTP 客户端，生命周期由调用方管理。
+            base_url: OpenAPI 域名，仅测试需要覆盖。
         """
 
         self._app_id = app_id
@@ -167,12 +168,14 @@ class QQClient:
     @classmethod
     def _to_api_error(cls, response: httpx.Response) -> ApiError:
         body = cls._parse_body(response)
-        # 平台在不同接口上使用过 code/message 与 errcode/errmsg 两套字段名。
-        code = body.get("code", body.get("errcode", -1))
-        message = body.get("message", body.get("errmsg", response.text[:200]))
+        # V2 的失败响应为 {"err_code", "message", "trace_id"}；code 是旧版字段名，一并兼容。
+        code = body.get("err_code", body.get("code", -1))
+        message = body.get("message", response.text[:200])
+        trace_id = body.get("trace_id")
 
         return ApiError(
             code=int(code) if isinstance(code, int | str) and str(code).lstrip("-").isdigit() else -1,
             message=str(message),
             status_code=response.status_code,
+            trace_id=str(trace_id) if trace_id else None,
         )

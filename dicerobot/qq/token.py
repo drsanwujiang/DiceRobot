@@ -1,7 +1,7 @@
 """App access token 的获取与缓存。
 
-token 有效期 7200 秒，采用惰性刷新：取用时检查有效期，失效则就地续期。换取 token
-的域名与调用 OpenAPI 的域名不同，且沙箱与正式环境共用。
+token 有效期 7200 秒，采用惰性刷新：取用时检查有效期，失效则就地续期。平台仅在接近
+过期的 60 秒内才签发新 token，提前刷新只会拿回同一个，故不另设定时任务。
 """
 
 from __future__ import annotations
@@ -15,10 +15,11 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 from dicerobot.errors import TokenError
+from dicerobot.qq import API_BASE_URL
 
 __all__ = ["ACCESS_TOKEN_URL", "AccessTokenProvider"]
 
-ACCESS_TOKEN_URL = "https://bots.qq.com/app/getAppAccessToken"
+ACCESS_TOKEN_URL = f"{API_BASE_URL}/app/getAppAccessToken"
 
 # 提前量，避免请求在途中 token 失效。
 _REFRESH_MARGIN = timedelta(seconds=60)

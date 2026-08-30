@@ -21,14 +21,15 @@ from pydantic import SecretStr
 
 from dicerobot.app import create_app
 from dicerobot.config import BotSettings, LogSettings, QQSettings, Settings
+from dicerobot.qq import API_BASE_URL
 from dicerobot.qq.signature import SIGNATURE_HEADER, TIMESTAMP_HEADER
 from dicerobot.qq.token import ACCESS_TOKEN_URL
 
 SECRET = "test-secret"
 APP_ID = "102"
 WEBHOOK_PATH = "/qq/webhook"
-BASE_URL = "https://sandbox.api.sgroup.qq.com"
-SEND_GROUP_URL = f"{BASE_URL}/v2/groups/G1/messages"
+# 取自被测代码，域名变动时测试随之改变，不会静默地打到真实平台。
+SEND_GROUP_URL = f"{API_BASE_URL}/v2/groups/G1/messages"
 
 
 def sign(timestamp: str, body: bytes) -> str:
@@ -72,8 +73,8 @@ def settings(tmp_path: Path) -> Settings:
         debug=False,
         webhook_path=WEBHOOK_PATH,
         database_url=f"sqlite+aiosqlite:///{tmp_path.as_posix()}/test.db",
-        qq=QQSettings(app_id=APP_ID, secret=SecretStr(SECRET), sandbox=True),
-        bot=BotSettings(prefix_required=True, workers=1),
+        qq=QQSettings(app_id=APP_ID, secret=SecretStr(SECRET)),
+        bot=BotSettings(workers=1),
         log=LogSettings(level="WARNING", directory=tmp_path / "logs"),
     )
 
@@ -314,7 +315,7 @@ class TestDispatch:
         assert route.call_count == 0
 
     async def test_non_command_message_is_ignored(self, client: httpx.AsyncClient, router: respx.MockRouter) -> None:
-        """全量群消息模式下，闲聊须在触及下游之前丢弃。"""
+        """群开启全量消息推送时，闲聊须在触及下游之前丢弃。"""
 
         route = router.post(SEND_GROUP_URL).mock(return_value=httpx.Response(200, json={}))
 

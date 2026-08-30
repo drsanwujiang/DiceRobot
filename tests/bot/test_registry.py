@@ -120,15 +120,10 @@ class TestPrefix:
     def test_accepts_both_half_and_full_width_prefix(self, registry: Registry, text: str) -> None:
         assert registry.resolve(text) is not None
 
-    def test_rejects_missing_prefix_when_required(self, registry: Registry) -> None:
-        """全量群消息模式下，无前缀的闲聊不应被识别为指令。"""
+    def test_rejects_missing_prefix(self, registry: Registry) -> None:
+        """群随时可能被开启全量消息推送，无前缀的闲聊不得被识别为指令。"""
 
-        assert registry.resolve("r 1d100", prefix_required=True) is None
-
-    def test_accepts_missing_prefix_when_optional(self, registry: Registry) -> None:
-        """仅接收 @ 消息时，被 @ 即为意图信号，前缀可省略。"""
-
-        assert registry.resolve("r 1d100", prefix_required=False) is not None
+        assert registry.resolve("r 1d100") is None
 
     def test_bare_prefix_is_not_a_command(self, registry: Registry) -> None:
         assert registry.resolve(".") is None
