@@ -24,6 +24,7 @@ from dicerobot.bot.plugin import EventHandler as EventHandlerType
 from dicerobot.bot.plugin import Plugin
 from dicerobot.bot.registry import Invocation, Registry
 from dicerobot.config import BotSettings
+from dicerobot.enums import Scene
 from dicerobot.errors import CommandError, ReplyError
 from dicerobot.qq.client import QQClient
 from dicerobot.qq.schemas import Payload
@@ -35,7 +36,7 @@ _FAILURE_REPLY = "指令执行出错了，请稍后再试……"
 _TIMEOUT_REPLY = "指令执行超时了……"
 
 _CONTENT_PREVIEW = 50
-"""未命中指令的消息在日志中截断至此长度，群开启全量推送时这条日志会非常频繁。"""
+"""正文在日志中截断至此长度，群开启全量推送时每条消息都会记录一行。"""
 
 
 class Pipeline:
@@ -149,15 +150,21 @@ class Pipeline:
             await self._process_event(payload, received_at)
             return
 
+        # 单聊没有群，其 scene_id 即发送者本人，不再重复记录。
+        group = f"，group={message.scene_id}" if message.scene is Scene.GROUP else ""
+
+        logger.debug(
+            "收到消息 {}：sender={}{}，content={!r}",
+            message.message_id,
+            message.sender_id,
+            group,
+            message.content[:_CONTENT_PREVIEW],
+        )
+
         invocation = self._registry.resolve(message.content)
 
         if invocation is None:
-            logger.debug(
-                "消息未匹配任何指令：scene={}，sender={}，content={!r}",
-                message.scene,
-                message.sender_id,
-                message.content[:_CONTENT_PREVIEW],
-            )
+            logger.debug("消息未匹配任何指令，已丢弃")
             return
 
         logger.info(

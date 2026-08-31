@@ -152,6 +152,48 @@ class TestPipeline:
         assert "EVENT_2" in second
 
 
+class TestIncomingMessage:
+    async def test_message_is_recorded_with_its_source(
+        self, log_lines: Callable[[], list[str]], database: Database
+    ) -> None:
+        """msg_id 是被动回复与向平台反馈问题时唯一能对上的凭据，必须落在日志里。"""
+
+        payload = Payload(
+            op=0,
+            id="EVENT_MSG",
+            t="GROUP_AT_MESSAGE_CREATE",
+            d={"id": "MSG_1", "group_openid": "G1", "author": {"member_openid": "U1"}, "content": "闲聊内容"},
+        )
+
+        await dispatch(database, logging_plugin(), payload)
+
+        line = next(line for line in log_lines() if "收到消息" in line)
+
+        assert "MSG_1" in line
+        assert "sender=U1" in line
+        assert "group=G1" in line
+        assert "闲聊内容" in line
+
+    async def test_private_message_records_no_group(
+        self, log_lines: Callable[[], list[str]], database: Database
+    ) -> None:
+        """单聊的 scene_id 就是发送者本人，记成 group 会误导。"""
+
+        payload = Payload(
+            op=0,
+            id="EVENT_C2C",
+            t="C2C_MESSAGE_CREATE",
+            d={"id": "MSG_2", "author": {"user_openid": "U9"}, "content": "闲聊内容"},
+        )
+
+        await dispatch(database, logging_plugin(), payload)
+
+        line = next(line for line in log_lines() if "收到消息" in line)
+
+        assert "sender=U9" in line
+        assert "group=" not in line
+
+
 class TestTiming:
     async def test_webhook_records_its_own_duration(self, log_lines: Callable[[], list[str]]) -> None:
         app = FastAPI()
