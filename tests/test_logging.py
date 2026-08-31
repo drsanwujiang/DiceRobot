@@ -1,7 +1,7 @@
 """事件 ID 与阶段耗时的日志测试。
 
-事件 ID 由 loguru 的上下文携带：同一事件在各阶段产生的日志——包括插件自己打的——都
-应带上它，而事件之外的日志不应多出这一列，事件之间也不得串扰。
+事件 ID 由 loguru 的上下文携带：同一事件在各阶段产生的日志（含插件内部输出的）都应携带
+该字段，事件之外的日志不应多出这一列，并发的事件之间也不得互相影响。
 
 webhook 与 worker 各记录一对开始、结束日志，结束时记录本阶段耗时，据此可还原一条消息
 在各阶段的耗时。
@@ -50,14 +50,14 @@ def join_payload(event_id: str, group_openid: str) -> Payload:
     )
 
 
-def noisy_plugin(delay: float = 0.0) -> Plugin:
-    """事件处理器只打一行日志，用于观察它落在哪个事件的上下文里。"""
+def logging_plugin(delay: float = 0.0) -> Plugin:
+    """事件处理器只输出一行日志，用于确认该日志归属于哪个事件的上下文。"""
 
-    plugin = Plugin(name="noisy", display_name="noisy")
+    plugin = Plugin(name="logging", display_name="logging")
 
     @plugin.event(EventType.GROUP_ADD_ROBOT)
     async def on_join(context: EventContext) -> None:
-        # 让并发的事件在处理中交错：上下文若被共用，两行日志会带上同一个 ID。
+        # 使并发事件的处理相互交错：上下文若被共用，两行日志会记录同一个事件 ID。
         await asyncio.sleep(delay)
         logger.info("插件正在处理 {}", context.event.scene_id)
 
@@ -72,7 +72,7 @@ def log_lines(tmp_path: Path) -> Iterator[Callable[[], list[str]]]:
     setup_logging(LogSettings(level="DEBUG", directory=directory))
 
     def read() -> list[str]:
-        # 文件 handler 以 enqueue 方式写入，移除 handler 时才会等待队列写完。
+        # 文件 handler 以 enqueue 方式写入，移除 handler 时才会等待队列写入完成。
         logger.remove()
 
         return [line for path in directory.glob("*.log") for line in path.read_text(encoding="utf-8").splitlines()]
@@ -122,7 +122,7 @@ class TestFormat:
 
 class TestPipeline:
     async def test_plugin_logs_carry_the_event_id(self, log_lines: Callable[[], list[str]], database: Database) -> None:
-        await dispatch(database, noisy_plugin(), join_payload("EVENT_JOIN", "G1"))
+        await dispatch(database, logging_plugin(), join_payload("EVENT_JOIN", "G1"))
 
         line = next(line for line in log_lines() if "插件正在处理 G1" in line)
 
@@ -131,11 +131,11 @@ class TestPipeline:
     async def test_concurrent_events_do_not_share_the_id(
         self, log_lines: Callable[[], list[str]], database: Database
     ) -> None:
-        """各 worker 是独立任务，contextvar 不会互相覆盖。"""
+        """各 worker 为独立任务，contextvar 不会互相覆盖。"""
 
         await dispatch(
             database,
-            noisy_plugin(delay=0.01),
+            logging_plugin(delay=0.01),
             join_payload("EVENT_1", "G1"),
             join_payload("EVENT_2", "G2"),
             workers=2,
@@ -164,7 +164,7 @@ class TestTiming:
     async def test_worker_records_queue_wait_and_duration(
         self, log_lines: Callable[[], list[str]], database: Database
     ) -> None:
-        await dispatch(database, noisy_plugin(), join_payload("EVENT_JOIN", "G1"))
+        await dispatch(database, logging_plugin(), join_payload("EVENT_JOIN", "G1"))
 
         lines = [line for line in log_lines() if "EVENT_JOIN" in line]
 
@@ -177,7 +177,7 @@ class TestTiming:
         """处理失败的事件往往耗时最长，结束日志不能因异常而丢失。"""
 
         # 缺少 group_openid，归一化时抛出 ValidationError。
-        await dispatch(database, noisy_plugin(), Payload(op=0, id="EVENT_BAD", t="GROUP_ADD_ROBOT", d={}))
+        await dispatch(database, logging_plugin(), Payload(op=0, id="EVENT_BAD", t="GROUP_ADD_ROBOT", d={}))
 
         lines = [line for line in log_lines() if "EVENT_BAD" in line]
 

@@ -68,7 +68,7 @@ def create_webhook_router(*, path: str, secret: str, sink: EventSink) -> APIRout
             logger.warning("Webhook payload 无法解析：{}", e)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bad request") from e
 
-        # 事件 ID 自此进入日志上下文，本次推送的日志与后续处理阶段的日志得以对应。
+        # 事件 ID 自此进入日志上下文，本次推送与后续处理阶段的日志得以关联。
         with logger.contextualize(event_id=payload.id):
             logger.debug("收到事件推送：op={}，t={}", payload.op, payload.t)
 

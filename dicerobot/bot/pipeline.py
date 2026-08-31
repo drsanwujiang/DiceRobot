@@ -70,7 +70,7 @@ class Pipeline:
         积压的事件多半已超出回复窗口。重推的事件在此被去重拦下。
         """
 
-        # 自行绑定事件 ID，不依赖调用方是否已经绑定。
+        # 本方法自行绑定事件 ID，不依赖调用方的上下文。
         with logger.contextualize(event_id=payload.id):
             if payload.id is not None and not self._deduplicator.is_new(payload.id):
                 logger.debug("事件重复推送，已丢弃")
@@ -122,8 +122,8 @@ class Pipeline:
         while True:
             payload, received_at = await self._queue.get()
 
-            # 事件 ID 绑定到日志上下文，本事件在处理期间产生的日志——含插件与平台调用——
-            # 都会带上它。上下文由 contextvar 承载，各 worker 是独立任务，不会互相串扰。
+            # 事件 ID 绑定到日志上下文，处理期间产生的日志（含插件与平台调用）都会携带
+            # 该字段。上下文由 contextvar 承载，各 worker 为独立任务，互不影响。
             with logger.contextualize(event_id=payload.id):
                 # 排队耗时跨 submit 与 worker 两个调用点，只能使用注入的时钟；处理耗时在
                 # 同一处取值，改用单调时钟，避免系统时间调整导致负值。

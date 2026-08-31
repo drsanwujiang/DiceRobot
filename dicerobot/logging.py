@@ -4,9 +4,8 @@
 各自安装 handler 导致格式不一致或重复输出。
 
 事件 ID 通过 ``logger.contextualize(event_id=...)`` 注入上下文，处理同一事件期间
-产生的所有日志（含插件与平台调用，以及被转发的标准库日志）都会带上它，便于把
-webhook、队列与执行各阶段的记录串起来。上下文由 contextvar 承载，worker 之间互不
-影响。
+产生的日志（含插件、平台调用与转发自标准库的日志）都会携带该字段，便于关联 webhook、
+队列与执行各阶段的记录。上下文由 contextvar 承载，worker 之间互不影响。
 """
 
 from __future__ import annotations
@@ -49,8 +48,8 @@ _FORMAT_SUFFIX = (
 def _format_record(record: Record) -> str:
     """按记录是否携带事件 ID 选择格式。
 
-    未绑定事件 ID 的记录（启动、token 刷新等）不插入该列，否则每行都会多出一个占位
-    符。``format`` 传入可调用对象时 loguru 不会再自动补上换行与异常，故模板须自带。
+    未绑定事件 ID 的记录（启动、token 刷新等）不插入该列，否则每行都会多出一个占位符。
+    ``format`` 为可调用对象时 loguru 不再自动追加换行与异常，故模板须显式包含。
     """
 
     if record["extra"].get("event_id"):
@@ -96,7 +95,7 @@ def setup_logging(settings: LogSettings) -> None:
     logger.add(
         settings.directory / "dicerobot_{time:YYYY-MM-DD}.log",
         level=settings.level,
-        # 与控制台同一格式，事件 ID 同样落盘；serialize 时 extra 另有独立字段。
+        # 与控制台使用同一格式，事件 ID 同样写入文件；serialize 时另在 extra 中单独成字段。
         format=_format_record,
         rotation=settings.rotation,
         retention=settings.retention,
