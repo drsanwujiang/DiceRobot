@@ -2,6 +2,11 @@
 
 统一由 loguru 输出，并接管标准库 ``logging``，避免 uvicorn、SQLAlchemy 等库
 各自安装 handler 导致格式不一致或重复输出。
+
+事件 ID 通过 ``logger.contextualize(event_id=...)`` 注入上下文，处理同一事件期间
+产生的所有日志（含插件与平台调用，以及被转发的标准库日志）都会带上它，便于把
+webhook、队列与执行各阶段的记录串起来。上下文由 contextvar 承载，worker 之间互不
+影响。
 """
 
 from __future__ import annotations
@@ -10,10 +15,15 @@ import inspect
 import logging
 import sys
 from types import FrameType
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
 from dicerobot.config import LogSettings
+
+if TYPE_CHECKING:
+    # loguru 只在类型存根中定义 Record，运行时无法导入。
+    from loguru import Record
 
 __all__ = ["InterceptHandler", "setup_logging"]
 
@@ -29,12 +39,24 @@ _INTERCEPTED_LOGGERS = (
     "alembic",
 )
 
-_CONSOLE_FORMAT = (
-    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
-    "<level>{level: <8}</level> | "
-    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-    "<level>{message}</level>"
+_FORMAT_PREFIX = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | "
+_FORMAT_EVENT_ID = "<magenta>{extra[event_id]}</magenta> | "
+_FORMAT_SUFFIX = (
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>\n{exception}"
 )
+
+
+def _format_record(record: Record) -> str:
+    """按记录是否携带事件 ID 选择格式。
+
+    未绑定事件 ID 的记录（启动、token 刷新等）不插入该列，否则每行都会多出一个占位
+    符。``format`` 传入可调用对象时 loguru 不会再自动补上换行与异常，故模板须自带。
+    """
+
+    if record["extra"].get("event_id"):
+        return _FORMAT_PREFIX + _FORMAT_EVENT_ID + _FORMAT_SUFFIX
+
+    return _FORMAT_PREFIX + _FORMAT_SUFFIX
 
 
 class InterceptHandler(logging.Handler):
@@ -64,7 +86,7 @@ def setup_logging(settings: LogSettings) -> None:
     logger.add(
         sys.stderr,
         level=settings.level,
-        format=_CONSOLE_FORMAT,
+        format=_format_record,
         backtrace=True,
         # 关闭变量快照，异常回溯中可能包含 AppSecret 等敏感值。
         diagnose=False,
@@ -74,6 +96,8 @@ def setup_logging(settings: LogSettings) -> None:
     logger.add(
         settings.directory / "dicerobot_{time:YYYY-MM-DD}.log",
         level=settings.level,
+        # 与控制台同一格式，事件 ID 同样落盘；serialize 时 extra 另有独立字段。
+        format=_format_record,
         rotation=settings.rotation,
         retention=settings.retention,
         serialize=settings.serialize,

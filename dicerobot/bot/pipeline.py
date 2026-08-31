@@ -69,16 +69,18 @@ class Pipeline:
         积压的事件多半已超出回复窗口。重推的事件在此被去重拦下。
         """
 
-        if payload.id is not None and not self._deduplicator.is_new(payload.id):
-            logger.debug("事件 {} 重复推送，已丢弃", payload.id)
-            return
+        # 自行绑定事件 ID，不依赖调用方是否已经绑定。
+        with logger.contextualize(event_id=payload.id):
+            if payload.id is not None and not self._deduplicator.is_new(payload.id):
+                logger.debug("事件重复推送，已丢弃")
+                return
 
-        try:
-            self._queue.put_nowait((payload, self._now()))
-        except asyncio.QueueFull:
-            logger.warning("事件队列已满（容量 {}），丢弃事件 {}", self._settings.queue_size, payload.id)
-        else:
-            logger.debug("事件 {} 入队，队列深度 {}/{}", payload.id, self._queue.qsize(), self._settings.queue_size)
+            try:
+                self._queue.put_nowait((payload, self._now()))
+            except asyncio.QueueFull:
+                logger.warning("事件队列已满（容量 {}），丢弃事件", self._settings.queue_size)
+            else:
+                logger.debug("事件入队，队列深度 {}/{}", self._queue.qsize(), self._settings.queue_size)
 
     async def start(self) -> None:
         """启动 worker。"""
@@ -119,13 +121,16 @@ class Pipeline:
         while True:
             payload, received_at = await self._queue.get()
 
-            try:
-                await self._process(payload, received_at)
-            except Exception:
-                # worker 须存活至关停，任何未捕获的异常都不能使其退出。
-                logger.exception("处理事件 {} 时发生未捕获的异常", payload.id)
-            finally:
-                self._queue.task_done()
+            # 事件 ID 绑定到日志上下文，本事件在处理期间产生的日志——含插件与平台调用——
+            # 都会带上它。上下文由 contextvar 承载，各 worker 是独立任务，不会互相串扰。
+            with logger.contextualize(event_id=payload.id):
+                try:
+                    await self._process(payload, received_at)
+                except Exception:
+                    # worker 须存活至关停，任何未捕获的异常都不能使其退出。
+                    logger.exception("处理事件时发生未捕获的异常")
+                finally:
+                    self._queue.task_done()
 
     async def _process(self, payload: Payload, received_at: datetime) -> None:
         message = normalize_message(payload, received_at=received_at)

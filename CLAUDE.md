@@ -69,6 +69,10 @@ dicerobot/
 6. `bot/outbound.py`：`ReplyBuffer` 把执行期间的多段 `write` 合并成一条消息，`ReplySession` 计量
    被动回复配额（群聊 5 分钟 5 条，单聊 60 分钟 4 条）。`msg_seq` 在发出前递增，失败也消耗配额。
 
+整条链路的日志都带事件 ID：webhook、`Pipeline.submit` 与 worker 各自用
+`logger.contextualize(event_id=...)` 绑定一次，处理期间的插件日志、平台调用日志乃至被转发的标准库
+日志都会带上它；不属于任何事件的日志（启动、token 刷新）不含该列，日志消息中也不必再重复事件 ID。
+
 非消息事件走 `_process_event`：多个插件共享同一个 buffer 与 session，输出合并为一条回复；单个插件
 失败不影响其余插件，且**不向用户回复错误提示**（入群等场景下会造成连续无效回复）。
 
