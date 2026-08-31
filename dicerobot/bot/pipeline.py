@@ -10,6 +10,7 @@ worker 完成。
 from __future__ import annotations
 
 import asyncio
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 
@@ -124,12 +125,21 @@ class Pipeline:
             # 事件 ID 绑定到日志上下文，本事件在处理期间产生的日志——含插件与平台调用——
             # 都会带上它。上下文由 contextvar 承载，各 worker 是独立任务，不会互相串扰。
             with logger.contextualize(event_id=payload.id):
+                # 排队耗时跨 submit 与 worker 两个调用点，只能使用注入的时钟；处理耗时在
+                # 同一处取值，改用单调时钟，避免系统时间调整导致负值。
+                queue_wait_ms = (self._now() - received_at).total_seconds() * 1000
+                started = time.perf_counter()
+
+                logger.debug("开始处理事件，排队耗时 {:.1f} ms", queue_wait_ms)
+
                 try:
                     await self._process(payload, received_at)
                 except Exception:
                     # worker 须存活至关停，任何未捕获的异常都不能使其退出。
                     logger.exception("处理事件时发生未捕获的异常")
                 finally:
+                    # 异常路径同样记录：处理失败的事件往往耗时最长，缺少这行便无从排查。
+                    logger.debug("事件处理完成，耗时 {:.1f} ms", (time.perf_counter() - started) * 1000)
                     self._queue.task_done()
 
     async def _process(self, payload: Payload, received_at: datetime) -> None:

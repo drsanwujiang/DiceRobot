@@ -1,7 +1,10 @@
-"""日志中事件 ID 的测试。
+"""事件 ID 与阶段耗时的日志测试。
 
 事件 ID 由 loguru 的上下文携带：同一事件在各阶段产生的日志——包括插件自己打的——都
 应带上它，而事件之外的日志不应多出这一列，事件之间也不得串扰。
+
+webhook 与 worker 各记录一对开始、结束日志，结束时记录本阶段耗时，据此可还原一条消息
+在各阶段的耗时。
 """
 
 from __future__ import annotations
@@ -11,7 +14,9 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import cast
 
+import httpx
 import pytest
+from fastapi import FastAPI
 from loguru import logger
 
 from dicerobot.bot.context import EventContext
@@ -23,8 +28,17 @@ from dicerobot.logging import setup_logging
 from dicerobot.qq.client import QQClient
 from dicerobot.qq.enums import EventType
 from dicerobot.qq.schemas import Payload
+from dicerobot.qq.webhook import create_webhook_router
 from dicerobot.storage import Database
 from tests.conftest import RecordingClient
+from tests.test_app import SECRET, WEBHOOK_PATH, group_message_payload, post_event
+
+
+class NullSink:
+    """仅用于满足 EventSink 协议：webhook 阶段的耗时与后续处理无关。"""
+
+    def submit(self, payload: Payload) -> None:
+        pass
 
 
 def join_payload(event_id: str, group_openid: str) -> Payload:
@@ -133,3 +147,39 @@ class TestPipeline:
 
         assert "EVENT_1" in first
         assert "EVENT_2" in second
+
+
+class TestTiming:
+    async def test_webhook_records_its_own_duration(self, log_lines: Callable[[], list[str]]) -> None:
+        app = FastAPI()
+        app.include_router(create_webhook_router(path=WEBHOOK_PATH, secret=SECRET, sink=NullSink()))
+        transport = httpx.ASGITransport(app=app)
+
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await post_event(client, group_message_payload(".r"))
+
+        assert response.status_code == 200
+        assert any("webhook 处理完成，耗时" in line and "EVENT_1" in line for line in log_lines())
+
+    async def test_worker_records_queue_wait_and_duration(
+        self, log_lines: Callable[[], list[str]], database: Database
+    ) -> None:
+        await dispatch(database, noisy_plugin(), join_payload("EVENT_JOIN", "G1"))
+
+        lines = [line for line in log_lines() if "EVENT_JOIN" in line]
+
+        assert any("开始处理事件，排队耗时" in line for line in lines)
+        assert any("事件处理完成，耗时" in line for line in lines)
+
+    async def test_duration_is_recorded_when_processing_fails(
+        self, log_lines: Callable[[], list[str]], database: Database
+    ) -> None:
+        """处理失败的事件往往耗时最长，结束日志不能因异常而丢失。"""
+
+        # 缺少 group_openid，归一化时抛出 ValidationError。
+        await dispatch(database, noisy_plugin(), Payload(op=0, id="EVENT_BAD", t="GROUP_ADD_ROBOT", d={}))
+
+        lines = [line for line in log_lines() if "EVENT_BAD" in line]
+
+        assert any("处理事件时发生未捕获的异常" in line for line in lines)
+        assert any("事件处理完成，耗时" in line for line in lines)

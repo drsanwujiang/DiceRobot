@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Protocol
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -43,6 +44,9 @@ def create_webhook_router(*, path: str, secret: str, sink: EventSink) -> APIRout
 
     @router.post(path, include_in_schema=False)
     async def handle(request: Request) -> JSONResponse:
+        # 耗时自函数入口起算：验签与解析同样计入平台的响应超时。
+        started = time.perf_counter()
+
         # 验签的输入必须是原始字节，重新序列化会改变字节导致校验失败。
         raw = await request.body()
 
@@ -68,15 +72,19 @@ def create_webhook_router(*, path: str, secret: str, sink: EventSink) -> APIRout
         with logger.contextualize(event_id=payload.id):
             logger.debug("收到事件推送：op={}，t={}", payload.op, payload.t)
 
-            if payload.op == OpCode.CALLBACK_VALIDATION:
-                return _validate_callback(secret, payload)
+            try:
+                if payload.op == OpCode.CALLBACK_VALIDATION:
+                    return _validate_callback(secret, payload)
 
-            if payload.op == OpCode.DISPATCH:
-                sink.submit(payload)
-            else:
-                logger.debug("收到未处理的操作码 {}", payload.op)
+                if payload.op == OpCode.DISPATCH:
+                    sink.submit(payload)
+                else:
+                    logger.debug("收到未处理的操作码 {}", payload.op)
 
-            return JSONResponse({})
+                return JSONResponse({})
+            finally:
+                # 与 worker 的处理耗时分开记录：这段耗时决定平台是否因超时重推。
+                logger.debug("webhook 处理完成，耗时 {:.1f} ms", (time.perf_counter() - started) * 1000)
 
     return router
 
