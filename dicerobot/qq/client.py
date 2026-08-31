@@ -140,8 +140,8 @@ class QQClient:
 
         token = await self._token_provider.get()
 
-        # 请求与响应各记一行：仅有请求而无响应，即可定位到调用阻塞在平台侧。
-        # 两行均不含 token 与响应体，避免凭据与用户内容落盘。
+        # 请求与响应各记一行：仅有请求而无响应，即可定位到调用阻塞在平台侧；响应一行带耗时，
+        # 平台侧变慢可据此与本地处理耗时区分。两行均不含 token 与响应体，避免凭据与用户内容落盘。
         logger.debug("发起请求 {} {}", method, path)
 
         try:
@@ -157,7 +157,13 @@ class QQClient:
         except httpx.HTTPError as e:
             raise ApiError(code=-1, message=f"请求失败：{e}", status_code=0) from e
 
-        logger.debug("收到响应 {} {}：HTTP {}", method, path, response.status_code)
+        logger.debug(
+            "收到响应 {} {}：HTTP {}，耗时 {:.1f} ms",
+            method,
+            path,
+            response.status_code,
+            response.elapsed.total_seconds() * 1000,
+        )
 
         return response
 

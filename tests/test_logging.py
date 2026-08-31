@@ -16,6 +16,7 @@ from typing import cast
 
 import httpx
 import pytest
+import respx
 from fastapi import FastAPI
 from loguru import logger
 
@@ -25,9 +26,11 @@ from dicerobot.bot.plugin import Plugin
 from dicerobot.bot.registry import Registry
 from dicerobot.config import BotSettings, LogSettings
 from dicerobot.logging import setup_logging
+from dicerobot.qq import API_BASE_URL
 from dicerobot.qq.client import QQClient
 from dicerobot.qq.enums import EventType
 from dicerobot.qq.schemas import Payload
+from dicerobot.qq.token import ACCESS_TOKEN_URL, AccessTokenProvider
 from dicerobot.qq.webhook import create_webhook_router
 from dicerobot.storage import Database
 from tests.conftest import RecordingClient
@@ -183,3 +186,25 @@ class TestTiming:
 
         assert any("处理事件时发生未捕获的异常" in line for line in lines)
         assert any("事件处理完成，耗时" in line for line in lines)
+
+    async def test_platform_call_records_its_duration(self, log_lines: Callable[[], list[str]]) -> None:
+        """处理耗时几乎都在平台调用上，故这一行必须能单独看出平台花了多久。"""
+
+        async with httpx.AsyncClient() as http_client:
+            client = QQClient(
+                app_id="102",
+                token_provider=AccessTokenProvider(app_id="102", secret="secret", client=http_client),
+                client=http_client,
+            )
+
+            with respx.mock(assert_all_called=False) as router:
+                router.post(ACCESS_TOKEN_URL).mock(
+                    return_value=httpx.Response(200, json={"access_token": "token-1", "expires_in": "7200"})
+                )
+                router.post(f"{API_BASE_URL}/v2/groups/G1/messages").mock(
+                    return_value=httpx.Response(200, json={"id": "REPLY_1"})
+                )
+
+                await client.send_group_message(group_openid="G1", content="pong", msg_seq=1, msg_id="MSG_1")
+
+        assert any("收到响应" in line and "耗时" in line for line in log_lines())
