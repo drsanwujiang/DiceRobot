@@ -37,6 +37,9 @@ class QQSettings(_Section):
     app_id: str = Field(min_length=1, description="AppID，同时用作 X-Union-Appid 请求头")
     secret: SecretStr = Field(description="AppSecret，用于获取 access token 及派生 Ed25519 签名密钥")
     request_timeout: float = Field(default=10.0, gt=0, description="调用 OpenAPI 的超时秒数")
+    keepalive_expiry: float = Field(
+        default=300.0, gt=0, description="出站连接的空闲保活秒数，连接被回收后下次请求需重做 TLS 握手"
+    )
 
 
 class BotSettings(_Section):

@@ -38,7 +38,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     secret = settings.qq.secret.get_secret_value()
 
     # 所有出站请求共用一个连接池，其生命周期与应用一致，在 lifespan 中关闭。
-    http_client = httpx.AsyncClient(timeout=settings.qq.request_timeout)
+    http_client = httpx.AsyncClient(
+        timeout=settings.qq.request_timeout,
+        limits=httpx.Limits(
+            max_connections=100,
+            max_keepalive_connections=20,
+            keepalive_expiry=settings.qq.keepalive_expiry,
+        ),
+    )
     token_provider = AccessTokenProvider(app_id=settings.qq.app_id, secret=secret, client=http_client)
     client = QQClient(app_id=settings.qq.app_id, token_provider=token_provider, client=http_client)
 
