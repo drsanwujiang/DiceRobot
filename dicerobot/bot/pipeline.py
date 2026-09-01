@@ -154,8 +154,9 @@ class Pipeline:
         group = f"，group={message.scene_id}" if message.scene is Scene.GROUP else ""
 
         logger.debug(
-            "收到消息 {}：sender={}{}，content={!r}",
+            "收到消息 {}：timestamp={}，sender={}{}，content={!r}",
             message.message_id,
+            message.timestamp or "-",
             message.sender_id,
             group,
             message.content[:_CONTENT_PREVIEW],

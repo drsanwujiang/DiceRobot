@@ -60,6 +60,34 @@ class TestContentCleanup:
         assert message.content == ".r 3d6+2 侦查"
 
 
+class TestTimestamp:
+    def test_platform_timestamp_is_carried_over(self) -> None:
+        """与本地收到时刻相比即可看出投递延迟，故原样保留而不解析。"""
+
+        message = normalize_message(
+            payload(
+                "GROUP_AT_MESSAGE_CREATE",
+                {
+                    "id": "MSG_1",
+                    "group_openid": "G1",
+                    "author": {"member_openid": "U1"},
+                    "content": ".ping",
+                    "timestamp": "2026-09-01T00:12:33+08:00",
+                },
+            ),
+            received_at=RECEIVED_AT,
+        )
+
+        assert message is not None
+        assert message.timestamp == "2026-09-01T00:12:33+08:00"
+
+    def test_missing_timestamp_is_empty(self) -> None:
+        message = group_message(".ping")
+
+        assert message is not None
+        assert message.timestamp is None
+
+
 class TestGroupRobotEvents:
     def test_normalizes_being_added_to_a_group(self) -> None:
         event = normalize_event(

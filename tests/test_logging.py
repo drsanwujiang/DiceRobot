@@ -162,7 +162,13 @@ class TestIncomingMessage:
             op=0,
             id="EVENT_MSG",
             t="GROUP_AT_MESSAGE_CREATE",
-            d={"id": "MSG_1", "group_openid": "G1", "author": {"member_openid": "U1"}, "content": "闲聊内容"},
+            d={
+                "id": "MSG_1",
+                "group_openid": "G1",
+                "author": {"member_openid": "U1"},
+                "content": "闲聊内容",
+                "timestamp": "2026-09-01T00:12:33+08:00",
+            },
         )
 
         await dispatch(database, logging_plugin(), payload)
@@ -172,6 +178,7 @@ class TestIncomingMessage:
         assert "MSG_1" in line
         assert "sender=U1" in line
         assert "group=G1" in line
+        assert "timestamp=2026-09-01T00:12:33+08:00" in line
         assert "闲聊内容" in line
 
     async def test_private_message_records_no_group(

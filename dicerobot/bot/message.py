@@ -69,6 +69,8 @@ class IncomingMessage:
         content: 已清理的正文。
         message_id: 平台消息 ID。
         received_at: 本地收到事件的时刻。
+        timestamp: 平台标注的发送时刻，原样保留。与 ``received_at`` 相比即可看出投递
+            延迟，平台未提供时为空。
     """
 
     scene: Scene
@@ -77,6 +79,7 @@ class IncomingMessage:
     content: str
     message_id: str
     received_at: datetime
+    timestamp: str | None = None
 
     @property
     def reply_target(self) -> ReplyTarget:
@@ -142,6 +145,7 @@ def normalize_message(payload: Payload, *, received_at: datetime) -> IncomingMes
             content=_clean_content(c2c.content),
             message_id=c2c.id,
             received_at=received_at,
+            timestamp=c2c.timestamp,
         )
 
     group = GroupMessage.model_validate(payload.d)
@@ -153,6 +157,7 @@ def normalize_message(payload: Payload, *, received_at: datetime) -> IncomingMes
         content=_clean_content(group.content),
         message_id=group.id,
         received_at=received_at,
+        timestamp=group.timestamp,
     )
 
 
