@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import random
 import re
+from collections.abc import Callable
 
 from pydantic import BaseModel, Field
 
 from dicerobot.bot.context import CommandContext
 from dicerobot.bot.plugin import Plugin
+from dicerobot.enums import Scene
 from dicerobot.errors import CommandError
 from dicerobot.trpg.dice import DiceError, DiceSyntaxError, Limits, evaluate, parse
 
@@ -47,31 +49,23 @@ plugin = Plugin(
 async def roll(context: CommandContext) -> None:
     """掷一个或一组骰子。"""
 
-    expression, reason = _split_arguments(context.args)
+    _, lead, results = _roll(context)
 
-    if context.times > MAX_REPETITIONS:
-        raise CommandError(f"一次最多重复 {MAX_REPETITIONS} 次……")
+    _write(context.write, lead, results)
 
-    settings = context.chat_settings(DiceChatSettings)
-    limits = Limits(default_surface=settings.default_surface)
 
-    try:
-        node = parse(expression)
-        results = [str(evaluate(node, rng=_RNG, limits=limits)) for _ in range(context.times)]
-    except DiceSyntaxError as e:
-        raise CommandError(f"掷骰表达式第 {e.position + 1} 个字符处有问题：{e.message}") from e
-    except DiceError as e:
-        raise CommandError(str(e)) from e
+@plugin.command("rh", "暗骰", description="暗骰，结果私聊发送，如 .rh 1d100 侦查", max_times=MAX_REPETITIONS)
+async def hidden_roll(context: CommandContext) -> None:
+    """掷骰并把结果私聊发给掷骰者，群内只公布掷了什么。"""
 
-    prefix = f"由于{reason}，" if reason else ""
-    lead = f"{prefix}{context.display_name}骰出了："
+    if context.message.scene is not Scene.GROUP:
+        raise CommandError("暗骰只能在群聊中使用……")
 
-    if len(results) == 1:
-        context.write(f"{lead}{results[0]}")
-    else:
-        # 缓冲区以换行拼接各段，故此处不应自带换行。全部内容合并为一条消息发出。
-        context.write(lead)
-        context.write("\n".join(results))
+    expression, lead, results = _roll(context)
+
+    _write(context.write_private, lead, results)
+    # 公开掷了什么、隐藏结果，是桌面上的惯例。
+    context.write(f"{context.display_name}进行了一次暗骰（{expression}）")
 
 
 @plugin.command("set", "默认骰", description="查看或设置默认骰，如 .set 20")
@@ -95,6 +89,48 @@ async def default_surface(context: CommandContext) -> None:
     settings.default_surface = surface
     context.save_chat_settings(settings)
     context.write(f"默认骰已设置为：D{surface}")
+
+
+def _roll(context: CommandContext) -> tuple[str, str, list[str]]:
+    """执行一次掷骰。
+
+    Returns:
+        表达式、开头一句与各次结果。公开掷骰与暗骰只在输出去向上不同，故共用此处。
+
+    Raises:
+        CommandError: 重复次数超限，或表达式无法解析、无法求值。
+    """
+
+    expression, reason = _split_arguments(context.args)
+
+    if context.times > MAX_REPETITIONS:
+        raise CommandError(f"一次最多重复 {MAX_REPETITIONS} 次……")
+
+    settings = context.chat_settings(DiceChatSettings)
+    limits = Limits(default_surface=settings.default_surface)
+
+    try:
+        node = parse(expression)
+        results = [str(evaluate(node, rng=_RNG, limits=limits)) for _ in range(context.times)]
+    except DiceSyntaxError as e:
+        raise CommandError(f"掷骰表达式第 {e.position + 1} 个字符处有问题：{e.message}") from e
+    except DiceError as e:
+        raise CommandError(str(e)) from e
+
+    prefix = f"由于{reason}，" if reason else ""
+
+    return expression, f"{prefix}{context.display_name}骰出了：", results
+
+
+def _write(write: Callable[[str], None], lead: str, results: list[str]) -> None:
+    """把结果写入指定的输出通道：公开回复或私聊。"""
+
+    if len(results) == 1:
+        write(f"{lead}{results[0]}")
+    else:
+        # 缓冲区以换行拼接各段，故此处不应自带换行。全部内容合并为一条消息发出。
+        write(lead)
+        write("\n".join(results))
 
 
 def _split_arguments(args: str) -> tuple[str, str]:

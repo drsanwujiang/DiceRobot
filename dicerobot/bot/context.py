@@ -94,6 +94,7 @@ class CommandContext(Context):
         args: str,
         times: int,
         buffer: ReplyBuffer,
+        private: ReplyBuffer,
         chat: Chat,
         member: Member,
         plugin_state: PluginState,
@@ -107,6 +108,7 @@ class CommandContext(Context):
             args: 指令名之后的参数原文，已去除首尾空白。
             times: ``#N`` 指定的重复次数，未指定时为 1。
             member: 当前发送者的记录。
+            private: 私聊输出缓冲，见 :meth:`write_private`。
 
         其余参数含义见 :class:`Context`。
         """
@@ -124,6 +126,17 @@ class CommandContext(Context):
         self.args = args
         self.times = times
         self.member = member
+
+        self._private = private
+
+    def write_private(self, text: str) -> None:
+        """追加一段私聊输出。
+
+        执行结束后作为主动消息发给当前发送者本人，不占被动回复配额。只能发给发送者，
+        因而不会成为群发手段；投递失败由调度器在原会话中提示，插件无需处理。
+        """
+
+        self._private.write(text)
 
     @property
     def display_name(self) -> str:

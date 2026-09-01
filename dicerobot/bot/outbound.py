@@ -11,6 +11,9 @@
 
 :class:`ReplySession` 负责计量，:class:`ReplyBuffer` 把一次指令执行期间的多段输出
 合并为一条消息，以减少消耗。
+
+:class:`DirectSession` 是例外：它发出的是不带来源凭据的主动消息，不占上表的配额，
+用于把结果私聊发给发送者本人（如暗骰）。
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Protocol
 
 from loguru import logger
 
@@ -26,7 +30,13 @@ from dicerobot.enums import Scene
 from dicerobot.errors import ReplyQuotaExhaustedError, ReplyWindowExpiredError
 from dicerobot.qq.client import QQClient
 
-__all__ = ["QUOTAS", "Quota", "ReplyBuffer", "ReplySession"]
+__all__ = ["QUOTAS", "DirectSession", "MessageSession", "Quota", "ReplyBuffer", "ReplySession"]
+
+
+class MessageSession(Protocol):
+    """一条消息的发送通道。"""
+
+    async def send(self, content: str) -> None: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,6 +126,30 @@ class ReplySession:
         logger.debug("已回复 {}（seq={}，剩余 {} 条）", self._target.scene, msg_seq, self.remaining)
 
 
+class DirectSession:
+    """向某个用户直接发送私聊消息。
+
+    不携带来源凭据，因而是主动消息：不占被动回复配额，也不受回复窗口限制，但平台按用户
+    计频，且用户可在客户端关闭，投递失败属于正常情形，调用方须自行兜底。
+    """
+
+    def __init__(self, *, client: QQClient, openid: str) -> None:
+        self._client = client
+        self._openid = openid
+
+    async def send(self, content: str) -> None:
+        """发送一条私聊消息。
+
+        Raises:
+            ApiError: 平台拒绝投递，例如用户关闭了主动消息。
+        """
+
+        # 主动消息没有需要延续的序号，每条都是独立的一条。
+        await self._client.send_c2c_message(openid=self._openid, content=content, msg_seq=1)
+
+        logger.debug("已发送私聊消息")
+
+
 class ReplyBuffer:
     """累积输出，在指令执行结束时合并为一条消息发出。
 
@@ -123,7 +157,7 @@ class ReplyBuffer:
     显式调用 :meth:`flush`。
     """
 
-    def __init__(self, session: ReplySession) -> None:
+    def __init__(self, session: MessageSession) -> None:
         self._session = session
         self._lines: list[str] = []
 

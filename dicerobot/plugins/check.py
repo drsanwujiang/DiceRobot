@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import random
 import re
+from collections.abc import Callable
 
 from pydantic import BaseModel, Field
 
 from dicerobot.bot.context import CommandContext
 from dicerobot.bot.plugin import Plugin
+from dicerobot.enums import Scene
 from dicerobot.errors import CommandError
 from dicerobot.trpg.check import DEFAULT_RULE_ID, RULES, CheckRule, check, get_rule
 
@@ -42,23 +44,22 @@ plugin = Plugin(
 async def skill_check(context: CommandContext) -> None:
     """以 d100 对技能值进行检定。"""
 
-    skill, reason = _split_arguments(context.args)
-    rule = _current_rule(context)
-    results = []
+    _, lead, results = _check(context)
 
-    for _ in range(context.times):
-        roll = _RNG.randint(1, 100)
-        level = check(rule, skill=skill, roll=roll)
-        results.append(f"D100={roll}/{skill}，{level.name}")
+    _write(context.write, lead, results)
 
-    prefix = f"由于{reason}，" if reason else ""
-    lead = f"{prefix}{context.display_name}进行了检定："
 
-    if len(results) == 1:
-        context.write(f"{lead}{results[0]}")
-    else:
-        context.write(lead)
-        context.write("\n".join(results))
+@plugin.command("rah", "暗检定", description="暗检定，结果私聊发送，如 .rah 60 侦查", max_times=MAX_REPETITIONS)
+async def hidden_check(context: CommandContext) -> None:
+    """检定并把结果私聊发给发起者，群内只公布检定了什么。"""
+
+    if context.message.scene is not Scene.GROUP:
+        raise CommandError("暗检定只能在群聊中使用……")
+
+    skill, lead, results = _check(context)
+
+    _write(context.write_private, lead, results)
+    context.write(f"{context.display_name}进行了一次暗检定（{skill}）")
 
 
 @plugin.command("rule", "检定规则", description="查看或设置检定规则")
@@ -83,6 +84,37 @@ async def show_or_set_rule(context: CommandContext) -> None:
     settings.rule = target.id
     context.save_chat_settings(settings)
     context.write(f"检定规则已设置为：{target.name}")
+
+
+def _check(context: CommandContext) -> tuple[int, str, list[str]]:
+    """执行一次检定。
+
+    Returns:
+        技能值、开头一句与各次结果。公开检定与暗检定只在输出去向上不同，故共用此处。
+    """
+
+    skill, reason = _split_arguments(context.args)
+    rule = _current_rule(context)
+    results = []
+
+    for _ in range(context.times):
+        roll = _RNG.randint(1, 100)
+        level = check(rule, skill=skill, roll=roll)
+        results.append(f"D100={roll}/{skill}，{level.name}")
+
+    prefix = f"由于{reason}，" if reason else ""
+
+    return skill, f"{prefix}{context.display_name}进行了检定：", results
+
+
+def _write(write: Callable[[str], None], lead: str, results: list[str]) -> None:
+    """把结果写入指定的输出通道：公开回复或私聊。"""
+
+    if len(results) == 1:
+        write(f"{lead}{results[0]}")
+    else:
+        write(lead)
+        write("\n".join(results))
 
 
 def _current_rule(context: CommandContext) -> CheckRule:

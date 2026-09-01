@@ -15,7 +15,7 @@ import pytest
 
 from dicerobot.bot.context import CommandContext
 from dicerobot.bot.message import IncomingMessage
-from dicerobot.bot.outbound import ReplyBuffer, ReplySession
+from dicerobot.bot.outbound import DirectSession, ReplyBuffer, ReplySession
 from dicerobot.bot.plugin import CommandHandler, Plugin
 from dicerobot.enums import MemberRole, Scene
 from dicerobot.qq.client import QQClient
@@ -65,8 +65,8 @@ class CommandRunner:
     ) -> str:
         """执行一次指令，返回最终在会话中发出的消息内容。未发出任何内容时返回空串。
 
-        ``scene`` 只改变消息本身，chat 与 member 仍是群内的记录，故它只适用于在场景判断处
-        即返回的用例。
+        私聊输出另见 :attr:`private_messages`。``scene`` 只改变消息本身，chat 与 member
+        仍是群内的记录，故它只适用于在场景判断处即返回的用例。
         """
 
         message = IncomingMessage(
@@ -80,6 +80,7 @@ class CommandRunner:
             role=role,
         )
         buffer = ReplyBuffer(ReplySession(client=cast(QQClient, self.client), target=message.reply_target))
+        private = ReplyBuffer(DirectSession(client=cast(QQClient, self.client), openid=MEMBER_OPENID))
 
         await handler(
             CommandContext(
@@ -88,6 +89,7 @@ class CommandRunner:
                 args=args,
                 times=times,
                 buffer=buffer,
+                private=private,
                 chat=self.chat,
                 member=self.member,
                 plugin_state=await self.store.get_plugin_state(self.plugin.name),
@@ -95,9 +97,19 @@ class CommandRunner:
                 store=self.store,
             )
         )
+        # 与流水线一致：私聊先发，会话内的回复随后。
+        await private.flush()
         await buffer.flush()
 
-        return str(self.client.calls[-1]["content"]) if self.client.calls else ""
+        replies = [call for call in self.client.calls if "group_openid" in call]
+
+        return str(replies[-1]["content"]) if replies else ""
+
+    @property
+    def private_messages(self) -> list[str]:
+        """经私聊发出的内容，按发出顺序排列。"""
+
+        return [str(call["content"]) for call in self.client.calls if "openid" in call]
 
 
 @pytest.fixture

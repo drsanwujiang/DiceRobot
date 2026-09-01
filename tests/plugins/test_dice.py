@@ -11,8 +11,16 @@ from typing import Any
 
 import pytest
 
+from dicerobot.enums import Scene
 from dicerobot.errors import CommandError
-from dicerobot.plugins.dice import MAX_REPETITIONS, DiceChatSettings, default_surface, plugin, roll
+from dicerobot.plugins.dice import (
+    MAX_REPETITIONS,
+    DiceChatSettings,
+    default_surface,
+    hidden_roll,
+    plugin,
+    roll,
+)
 from tests.conftest import CommandRunner
 
 
@@ -139,3 +147,31 @@ class TestErrors:
     async def test_division_by_zero_is_reported(self, runner: CommandRunner) -> None:
         with pytest.raises(CommandError, match="不能除以零"):
             await runner.run(roll, "1d6/0")
+
+
+class TestHiddenRoll:
+    async def test_result_goes_to_the_sender_privately(self, runner: CommandRunner) -> None:
+        reply = await runner.run(hidden_roll, "1d100", name="rh")
+
+        assert len(runner.private_messages) == 1
+        assert "D100=" in runner.private_messages[0]
+        assert "D100=" not in reply
+
+    async def test_the_group_only_learns_what_was_rolled(self, runner: CommandRunner) -> None:
+        """公开掷了什么、隐藏结果，是桌面上的惯例。"""
+
+        reply = await runner.run(hidden_roll, "3d6+2 侦查", name="rh", username="三无酱")
+
+        assert reply == "三无酱进行了一次暗骰（3d6+2）"
+
+    async def test_repeated_rolls_stay_private(self, runner: CommandRunner) -> None:
+        reply = await runner.run(hidden_roll, "1d100", name="rh", times=3)
+
+        assert runner.private_messages[0].count("D100=") == 3
+        assert "D100=" not in reply
+
+    async def test_is_rejected_in_private_chat(self, runner: CommandRunner) -> None:
+        """单聊里没有可隐藏的对象，且回复通道就是私聊本身。"""
+
+        with pytest.raises(CommandError, match="只能在群聊"):
+            await runner.run(hidden_roll, "1d100", name="rh", scene=Scene.C2C)

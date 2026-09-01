@@ -70,7 +70,8 @@ dicerobot/
 6. `bot/outbound.py`：`ReplyBuffer` 把执行期间的多段 `write` 合并成一条消息，`ReplySession` 计量
    被动回复配额（群聊 5 分钟 5 条，单聊 60 分钟 4 条）。`msg_seq` 在发出前递增，失败也消耗配额。
    **回复在会话提交之后发出**：一次平台调用约 700 ms，横跨事务会让其他 worker 的提交等在写锁上。
-   指令自行调用 `context.flush()` 发进度提示是例外，它必然在会话内。
+   指令自行调用 `context.flush()` 发进度提示是例外，它必然在会话内。私聊输出排在回复之前发出，
+   失败时在回复里追加提示。
 
 整条链路的日志均携带事件 ID：webhook、`Pipeline.submit` 与 worker 各用
 `logger.contextualize(event_id=...)` 绑定一次，处理期间的插件日志、平台调用日志与转发自标准库的
@@ -92,6 +93,8 @@ loader 在其余插件之后用 `build_plugin(registry)` 构造。
 - **三层开关**：会话总开关（`.bot`）→ 插件全局开关 → 插件在本会话的开关（`.plugin`）。开关类指令
   必须声明 `requires_enabled=False`，否则关闭后无法恢复；群聊中的启停仅限群主与管理员，依据
   `message.role`，未知取值一律拒绝。
+- **两种输出**：`context.write` 进入本会话的被动回复；`context.write_private` 作为主动消息私聊发给
+  发送者本人（暗骰即用此），只能发给发送者，不会成为群发手段。
 - **设置以 JSON 存储**：`PluginState.settings` / `ChatPluginState.settings` 为 JSON 列，读取时由插件
   声明的 pydantic 模型校验并补齐默认值，因此增删设置项**不需要迁移数据库**。写回必须显式调用
   `save_settings` / `save_chat_settings`。
@@ -100,8 +103,9 @@ loader 在其余插件之后用 `build_plugin(registry)` 构造。
 
 ## 数据模型要点
 
-平台仅提供不透明的 openid，且**群内标识与单聊标识互不相通**，不存在跨场景的统一用户身份，因此
-`Chat` / `Member` / `ChatPluginState` 均以 `(scene, openid…)` 为复合主键。会话与成员在首次出现时
+平台仅提供不透明的 openid：群消息中是 `member_openid`，单聊中是 `user_openid`。**实测同一用户在两
+者中取值相同**，暗骰据此把群内掷出的结果私聊发给本人；但文档并未承诺这一点，故 `Chat` / `Member`
+/ `ChatPluginState` 仍以 `(scene, openid…)` 为复合主键。会话与成员在首次出现时
 由 `Store` 惰性创建（平台不提供成员列表），插入放在 SAVEPOINT 中：多个 worker 会同时遇到同一个新
 会话，抢输的一方撞上主键冲突后改取对方创建的记录，本会话的其他改动不受影响。SQLite 不支持多数
 ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL 与 busy_timeout
@@ -113,8 +117,10 @@ ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL �
 
 ## 平台约束（改动相关代码前务必知悉）
 
-- 回复必须携带来源的 `msg_id` 或 `event_id`；两者都不传即成为主动消息，配额极其有限，本项目不使用。
-  请求体中不能出现 `null` 的来源字段。
+- 回复必须携带来源的 `msg_id` 或 `event_id`；两者都不传即成为主动消息。请求体中不能出现 `null` 的
+  来源字段。
+- 主动消息按用户计频（单聊 1000 条/用户/日），且用户可在客户端关闭，投递失败属于正常情形。暗骰用它
+  把结果私聊给发起者，见 `bot/outbound.py::DirectSession`。
 - access token 有效期 7200 秒，平台**仅在过期前 60 秒内**签发新的，提前刷新得到的仍是同一个。启动时
   预取 + 后台轮询刷新，401 时 `invalidate()` 后重试一次。
 - Ed25519 密钥由 AppSecret 重复拼接至 32 字节派生；验签内容是 `timestamp + body`，回调校验签名内容

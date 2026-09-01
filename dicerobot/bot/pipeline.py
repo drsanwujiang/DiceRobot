@@ -19,13 +19,13 @@ from loguru import logger
 from dicerobot.bot.context import CommandContext, EventContext
 from dicerobot.bot.dedup import EventDeduplicator
 from dicerobot.bot.message import IncomingEvent, IncomingMessage, normalize_event, normalize_message
-from dicerobot.bot.outbound import ReplyBuffer, ReplySession
+from dicerobot.bot.outbound import DirectSession, ReplyBuffer, ReplySession
 from dicerobot.bot.plugin import EventHandler as EventHandlerType
 from dicerobot.bot.plugin import Plugin
 from dicerobot.bot.registry import Invocation, Registry
 from dicerobot.config import BotSettings
 from dicerobot.enums import Scene
-from dicerobot.errors import CommandError, ReplyError
+from dicerobot.errors import ApiError, CommandError, ReplyError
 from dicerobot.qq.client import QQClient
 from dicerobot.qq.schemas import Payload
 from dicerobot.storage import Chat, ChatPluginState, Database, PluginState, Store
@@ -34,6 +34,7 @@ __all__ = ["Pipeline"]
 
 _FAILURE_REPLY = "指令执行出错了，请稍后再试……"
 _TIMEOUT_REPLY = "指令执行超时了……"
+_PRIVATE_FAILURE_REPLY = "私聊消息发送失败，请确认没有在客户端关闭机器人的主动消息……"
 
 _CONTENT_PREVIEW = 50
 """正文在日志中截断至此长度，群开启全量推送时每条消息都会记录一行。"""
@@ -181,6 +182,7 @@ class Pipeline:
 
     async def _execute(self, message: IncomingMessage, invocation: Invocation) -> None:
         buffer = ReplyBuffer(ReplySession(client=self._client, target=message.reply_target, now=self._now))
+        private = ReplyBuffer(DirectSession(client=self._client, openid=message.sender_id))
 
         # 会话在指令执行期间保持开启，指令对 chat 与 member 的修改在退出时一并提交。
         async with self._database.session() as session:
@@ -202,6 +204,7 @@ class Pipeline:
                 args=invocation.args,
                 times=invocation.times,
                 buffer=buffer,
+                private=private,
                 chat=chat,
                 member=member,
                 plugin_state=plugin_state,
@@ -213,6 +216,9 @@ class Pipeline:
 
         # 会话提交之后再发送：一次平台调用约 700 ms，横跨事务会让其他 worker 的提交一直
         # 等在 SQLite 的写锁上。发送失败原本也不回滚，改变先后顺序不影响既有语义。
+        #
+        # 私聊排在前面，其失败才来得及在原会话的回复里提示。
+        await self._deliver(private, buffer)
         await self._reply(buffer)
 
     async def _process_event(self, payload: Payload, received_at: datetime) -> None:
@@ -315,6 +321,23 @@ class Pipeline:
 
             buffer.clear()
             buffer.write(_FAILURE_REPLY)
+
+    @staticmethod
+    async def _deliver(private: ReplyBuffer, buffer: ReplyBuffer) -> None:
+        """发出私聊输出，失败则在原会话的回复中追加提示。
+
+        用户可在客户端关闭主动消息，投递失败属于正常情形；提示措辞面向用户，故由此处
+        统一给出，插件不必各自处理。
+        """
+
+        if not private.pending:
+            return
+
+        try:
+            await private.flush()
+        except ApiError as e:
+            logger.warning("私聊消息发送失败：{}", e)
+            buffer.write(_PRIVATE_FAILURE_REPLY)
 
     @staticmethod
     async def _reply(buffer: ReplyBuffer) -> None:

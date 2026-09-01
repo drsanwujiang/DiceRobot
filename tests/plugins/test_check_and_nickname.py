@@ -6,9 +6,10 @@ from typing import Any
 
 import pytest
 
+from dicerobot.enums import Scene
 from dicerobot.errors import CommandError
+from dicerobot.plugins.check import hidden_check, show_or_set_rule, skill_check
 from dicerobot.plugins.check import plugin as check_plugin
-from dicerobot.plugins.check import show_or_set_rule, skill_check
 from dicerobot.plugins.nickname import MAX_NICKNAME_LENGTH, nickname
 from dicerobot.plugins.nickname import plugin as nickname_plugin
 from tests.conftest import CommandRunner
@@ -44,6 +45,19 @@ class TestSkillCheck:
     async def test_requires_a_skill_value(self, checker: CommandRunner) -> None:
         with pytest.raises(CommandError, match="请给出技能值"):
             await checker.run(skill_check, "侦查")
+
+
+class TestHiddenCheck:
+    async def test_result_goes_to_the_sender_privately(self, checker: CommandRunner) -> None:
+        reply = await checker.run(hidden_check, "60 侦查", name="rah", username="三无酱")
+
+        assert len(checker.private_messages) == 1
+        assert "D100=" in checker.private_messages[0]
+        assert reply == "三无酱进行了一次暗检定（60）"
+
+    async def test_is_rejected_in_private_chat(self, checker: CommandRunner) -> None:
+        with pytest.raises(CommandError, match="只能在群聊"):
+            await checker.run(hidden_check, "60", name="rah", scene=Scene.C2C)
 
 
 class TestRule:
