@@ -36,18 +36,16 @@ class QQSettings(_Section):
 
     app_id: str = Field(min_length=1, description="AppID，同时用作 X-Union-Appid 请求头")
     secret: SecretStr = Field(description="AppSecret，用于获取 access token 及派生 Ed25519 签名密钥")
-    request_timeout: float = Field(default=10.0, gt=0, description="调用 OpenAPI 的超时秒数")
-    keepalive_expiry: float = Field(
-        default=300.0, gt=0, description="出站连接的空闲保活秒数，连接被回收后下次请求需重做 TLS 握手"
-    )
+    request_timeout: float = Field(default=10.0, gt=0, description="调用 OpenAPI 的超时时间")
+    keepalive_expiry: float = Field(default=300.0, gt=0, description="出站连接的空闲存活时间")
 
 
 class BotSettings(_Section):
     """机器人行为配置。"""
 
     queue_size: int = Field(default=1000, gt=0, description="事件队列容量，队列满时丢弃并告警")
-    workers: int = Field(default=4, gt=0, description="并发消费事件的 worker 数量")
-    handler_timeout: float = Field(default=30.0, gt=0, description="单条指令的执行超时秒数")
+    workers: int = Field(default=32, gt=0, description="消费事件的 worker 数量")
+    handler_timeout: float = Field(default=30.0, gt=0, description="单条指令的执行超时时间")
 
 
 class LogSettings(_Section):

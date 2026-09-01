@@ -24,6 +24,9 @@ from dicerobot.storage import Database, upgrade_to_head
 
 __all__ = ["create_app"]
 
+# worker 之外的出站请求，目前只有 access token 的预取与刷新。
+_SPARE_CONNECTIONS = 4
+
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     """构造应用实例。
@@ -37,12 +40,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     secret = settings.qq.secret.get_secret_value()
 
-    # 所有出站请求共用一个连接池，其生命周期与应用一致，在 lifespan 中关闭。
+    # 所有出站请求共用一个连接池，其生命周期与应用一致，在 lifespan 中关闭。保活连接数与 worker
+    # 数对齐：并发超过它之后，多出来的连接用完即关，下一条回复又要重做 TLS 握手。
     http_client = httpx.AsyncClient(
         timeout=settings.qq.request_timeout,
         limits=httpx.Limits(
-            max_connections=100,
-            max_keepalive_connections=20,
+            max_connections=settings.bot.workers + _SPARE_CONNECTIONS,
+            max_keepalive_connections=settings.bot.workers,
             keepalive_expiry=settings.qq.keepalive_expiry,
         ),
     )

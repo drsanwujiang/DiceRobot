@@ -121,7 +121,9 @@ loader 在其余插件之后用 `build_plugin(registry)` 构造。
 
 ## 配置
 
-全部来自环境变量或 `.env`，不入库；嵌套字段以双下划线分隔（`QQ__APP_ID`、`LOG__LEVEL`）。各分节继承
+全部来自环境变量或 `.env`，不入库；嵌套字段以双下划线分隔（`QQ__APP_ID`、`LOG__LEVEL`）。
+`BOT__WORKERS` 是并发槽位数而非 CPU 并行度：一条指令约 700 ms 全耗在等平台响应，所需槽位约等于
+指令到达率乘以单条耗时，故默认取 32；出站连接的保活上限在 `app.py` 中与之对齐。各分节继承
 `_Section`（`extra="forbid"`），字段名拼错会直接报错而非静默回退默认值。`get_settings()` 带 lru_cache，
 测试需要时调用 `get_settings.cache_clear()`。
 

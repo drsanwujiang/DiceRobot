@@ -58,7 +58,7 @@ class PipelineHarness:
 async def make_harness(database: Database) -> AsyncIterator[Any]:
     harnesses: list[Pipeline] = []
 
-    async def factory(*plugins: Plugin) -> PipelineHarness:
+    async def factory(*plugins: Plugin, workers: int = 1) -> PipelineHarness:
         registry = Registry()
 
         for plugin in plugins:
@@ -69,7 +69,7 @@ async def make_harness(database: Database) -> AsyncIterator[Any]:
             registry=registry,
             client=cast(QQClient, client),
             database=database,
-            settings=BotSettings(workers=1),
+            settings=BotSettings(workers=workers),
         )
         await pipeline.start()
         harnesses.append(pipeline)
@@ -164,3 +164,39 @@ class TestUnhandledEvents:
         await harness.dispatch(Payload(op=0, id="E1", t="SOMETHING_NEW", d={}))
 
         assert harness.client.calls == []
+
+
+class TestConcurrency:
+    async def test_workers_process_events_in_parallel(self, make_harness: Any, database: Database) -> None:
+        """worker 是并发槽位：一条指令的耗时几乎都在等待平台响应，串行处理会直接压垮吞吐。"""
+
+        # 先建好两个会话涉及的记录：惰性创建是写操作，会在 handler 执行期间一直握着 SQLite
+        # 的写锁，两个事件将因此串行，测不出 worker 的并发。
+        async with database.session() as session:
+            store = Store(session)
+            await store.get_plugin_state("barrier")
+
+            for openid in ("G1", "G2"):
+                await store.get_chat(Scene.GROUP, openid)
+                await store.get_chat_plugin_state(Scene.GROUP, openid, "barrier")
+
+        # 两个 handler 都到达栅栏才能继续，只有一个 worker 时后者永远等不到前者。
+        barrier = asyncio.Barrier(2)
+        plugin = Plugin(name="barrier", display_name="barrier")
+        passed = 0
+
+        @plugin.event(EventType.GROUP_ADD_ROBOT)
+        async def wait_for_each_other(context: EventContext) -> None:
+            nonlocal passed
+
+            async with asyncio.timeout(1):
+                await barrier.wait()
+
+            passed += 1
+
+        harness = await make_harness(plugin, workers=2)
+        harness.pipeline.submit(JOIN_PAYLOAD)
+        harness.pipeline.submit(Payload(op=0, id="EVENT_JOIN_2", t="GROUP_ADD_ROBOT", d={"group_openid": "G2"}))
+        await harness.pipeline.stop()
+
+        assert passed == 2
