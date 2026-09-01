@@ -32,8 +32,8 @@ poetry run mypy
 数据库迁移在应用启动时自动执行，也可手动运行：
 
 ```bash
-poetry run alembic upgrade head          # 升级到最新版本
-poetry run alembic revision --autogenerate -m "说明"   # 依据模型变更生成迁移
+poetry run alembic upgrade head  # 升级到最新版本
+poetry run alembic revision --autogenerate -m "说明"  # 依据模型变更生成迁移
 ```
 
 迁移只需 `DATABASE_URL`（缺省时用默认值），不依赖机器人凭据。
@@ -137,8 +137,8 @@ Windows 下若测试输出中的中文显示为乱码，设置 `PYTHONUTF8=1` �
 数据库迁移在每次启动时自动执行，且可重复运行，容器重建无需额外操作。
 
 ```bash
-docker compose logs -f dicerobot   # 查看日志
-docker compose pull && docker compose up -d   # 更新
+docker compose logs -f dicerobot  # 查看日志
+docker compose pull && docker compose up -d  # 更新
 ```
 
 镜像以非 root 用户运行，健康检查探测 `/health`。
