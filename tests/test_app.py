@@ -41,18 +41,24 @@ def sign(timestamp: str, body: bytes) -> str:
     return Ed25519PrivateKey.from_private_bytes(seed[:32]).sign(timestamp.encode() + body).hex()
 
 
-def group_message_payload(content: str, *, event_id: str = "EVENT_1", message_id: str = "MSG_1") -> dict[str, Any]:
-    return {
-        "op": 0,
-        "id": event_id,
-        "t": "GROUP_AT_MESSAGE_CREATE",
-        "d": {
-            "id": message_id,
-            "group_openid": "G1",
-            "author": {"member_openid": "U1", "member_role": "owner"},
-            "content": content,
-        },
+def group_message_payload(
+    content: str,
+    *,
+    event_id: str = "EVENT_1",
+    message_id: str = "MSG_1",
+    mentions: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "id": message_id,
+        "group_openid": "G1",
+        "author": {"member_openid": "U1", "member_role": "owner"},
+        "content": content,
     }
+
+    if mentions is not None:
+        data["mentions"] = mentions
+
+    return {"op": 0, "id": event_id, "t": "GROUP_AT_MESSAGE_CREATE", "d": data}
 
 
 async def wait_until(predicate: Callable[[], bool], *, timeout: float = 2.0) -> None:
@@ -157,6 +163,36 @@ class TestSignature:
 
 
 class TestDispatch:
+    async def test_a_command_aimed_at_another_bot_is_ignored(
+        self, client: httpx.AsyncClient, router: respx.MockRouter
+    ) -> None:
+        """群里可能有多个骰子机器人：@ 的不是自己就不该抢答。"""
+
+        route = router.post(SEND_GROUP_URL).mock(return_value=httpx.Response(200, json={"id": "REPLY_1"}))
+
+        await post_event(
+            client,
+            group_message_payload("<@OTHERBOT> .ping", mentions=[{"member_openid": "OTHERBOT", "is_you": False}]),
+        )
+        await asyncio.sleep(0.05)
+
+        assert route.call_count == 0
+
+    async def test_a_command_mentioning_us_is_answered(
+        self, client: httpx.AsyncClient, router: respx.MockRouter
+    ) -> None:
+        route = router.post(SEND_GROUP_URL).mock(return_value=httpx.Response(200, json={"id": "REPLY_1"}))
+
+        await post_event(
+            client,
+            group_message_payload(
+                "<@OTHERBOT> <@US> .ping",
+                mentions=[{"member_openid": "OTHERBOT", "is_you": False}, {"member_openid": "US", "is_you": True}],
+            ),
+        )
+
+        await wait_until(lambda: route.call_count == 1)
+
     async def test_ping_produces_a_passive_reply(self, client: httpx.AsyncClient, router: respx.MockRouter) -> None:
         route = router.post(SEND_GROUP_URL).mock(return_value=httpx.Response(200, json={"id": "REPLY_1"}))
 

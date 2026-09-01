@@ -64,10 +64,12 @@ dicerobot/
    反压。webhook 处理函数不得阻塞。
 3. worker 取出事件 → `bot/message.py` 归一化为 `IncomingMessage` / `IncomingEvent`（剥离 `<@openid>`
    标记，统一群聊与单聊的字段结构，`ReplyTarget` 统一 `msg_id` 与 `event_id` 两种回复凭据）。
-4. `bot/registry.py::resolve` 解析指令：要求 `.` 或 `。` 前缀，**最长别名优先**（故 `.ra` 命中检定
+4. 被 @ 的若不含自己，直接丢弃：群里可能有多个骰子机器人，正文中的 `<@openid>` 标记会被一并剥离，
+   仅凭前缀无法区分这条指令发给谁。
+5. `bot/registry.py::resolve` 解析指令：要求 `.` 或 `。` 前缀，**最长别名优先**（故 `.ra` 命中检定
    而非掷骰），行尾 `#N` 为重复次数。未命中即丢弃——群可能开启全量消息推送，快速路径开销要低。
-5. 整条指令共用一个数据库会话，构造 `CommandContext` 执行 handler，退出时统一提交。
-6. `bot/outbound.py`：`ReplyBuffer` 把执行期间的多段 `write` 合并成一条消息，`ReplySession` 计量
+6. 整条指令共用一个数据库会话，构造 `CommandContext` 执行 handler，退出时统一提交。
+7. `bot/outbound.py`：`ReplyBuffer` 把执行期间的多段 `write` 合并成一条消息，`ReplySession` 计量
    被动回复配额（群聊 5 分钟 5 条，单聊 60 分钟 4 条）。`msg_seq` 在发出前递增，失败也消耗配额。
    **回复在会话提交之后发出**：一次平台调用约 700 ms，横跨事务会让其他 worker 的提交等在写锁上。
    指令自行调用 `context.flush()` 发进度提示是例外，它必然在会话内。私聊输出排在回复之前发出，
@@ -117,6 +119,9 @@ ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL �
 
 ## 平台约束（改动相关代码前务必知悉）
 
+- 群是否推送全量消息由管理员设置，两种模式互斥：开启后 @ 消息也以 `GROUP_MESSAGE_CREATE` 到达，正文
+  保留 `<@openid>` 标记并带 `mentions`；关闭后才是 `GROUP_AT_MESSAGE_CREATE`，正文已由平台剥离，且
+  没有 `mentions`。`mentions` 中只有 `is_you` 可信——平台不把其他机器人标记为 `bot`。
 - 回复必须携带来源的 `msg_id` 或 `event_id`；两者都不传即成为主动消息。请求体中不能出现 `null` 的
   来源字段。
 - 主动消息按用户计频（单聊 1000 条/用户/日），且用户可在客户端关闭，投递失败属于正常情形。暗骰用它

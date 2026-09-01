@@ -11,6 +11,7 @@ __all__ = [
     "FriendEvent",
     "GroupMessage",
     "GroupRobotEvent",
+    "Mention",
     "Payload",
     "SendMessageResult",
     "ValidationData",
@@ -77,11 +78,25 @@ class _MessageBase(BaseModel):
     """
 
 
+class Mention(BaseModel):
+    """正文中被 @ 的一个对象。"""
+
+    is_you: bool | None = None
+    """被 @ 的是否为本机器人。
+
+    平台不把其他机器人标记为 ``bot``，故只有该字段可用于判断。缺失时留空而非按 ``False``
+    处理：宁可多响应一次，也不要静默忽略本该由自己处理的消息。
+    """
+
+
 class GroupMessage(_MessageBase):
     """``GROUP_AT_MESSAGE_CREATE`` 与 ``GROUP_MESSAGE_CREATE`` 的事件数据。"""
 
     group_openid: str
     author: _GroupAuthor
+
+    mentions: list[Mention] = Field(default_factory=list)
+    """被 @ 的对象。仅全量推送模式下有此字段，@ 模式的正文已由平台剥离。"""
 
 
 class C2CMessage(_MessageBase):

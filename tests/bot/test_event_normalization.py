@@ -111,6 +111,53 @@ class TestAuthor:
         assert message.username == ""
 
 
+class TestMentions:
+    """群里可能同时有多个机器人，正文中的 @ 标记会被一并剥离，只能靠 mentions 区分。"""
+
+    def mention_payload(self, *mentions: dict[str, Any]) -> IncomingMessage | None:
+        return normalize_message(
+            payload(
+                "GROUP_MESSAGE_CREATE",
+                {
+                    "id": "MSG_1",
+                    "group_openid": "G1",
+                    "author": {"member_openid": "U1"},
+                    "content": ".r",
+                    "mentions": list(mentions),
+                },
+            ),
+            received_at=RECEIVED_AT,
+        )
+
+    def test_a_mention_of_someone_else_marks_the_message(self) -> None:
+        message = self.mention_payload({"is_you": False})
+
+        assert message is not None
+        assert message.addressed_to_others is True
+
+    def test_being_mentioned_alongside_others_is_still_ours(self) -> None:
+        message = self.mention_payload({"is_you": False}, {"is_you": True})
+
+        assert message is not None
+        assert message.addressed_to_others is False
+
+    def test_a_message_without_mentions_is_ours(self) -> None:
+        """全量推送下的普通消息没有 mentions，仍按前缀判断。"""
+
+        message = self.mention_payload()
+
+        assert message is not None
+        assert message.addressed_to_others is False
+
+    def test_missing_is_you_is_treated_as_ours(self) -> None:
+        """平台若不再下发该字段，宁可多响应一次，也不要静默忽略。"""
+
+        message = self.mention_payload({"username": "Moira"})
+
+        assert message is not None
+        assert message.addressed_to_others is False
+
+
 class TestTimestamp:
     def test_platform_timestamp_is_carried_over(self) -> None:
         """与本地收到时刻相比即可看出投递延迟，故原样保留而不解析。"""

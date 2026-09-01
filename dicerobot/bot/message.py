@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -18,7 +19,7 @@ from loguru import logger
 
 from dicerobot.enums import MemberRole, Scene
 from dicerobot.qq.enums import EventType
-from dicerobot.qq.schemas import C2CMessage, FriendEvent, GroupMessage, GroupRobotEvent, Payload
+from dicerobot.qq.schemas import C2CMessage, FriendEvent, GroupMessage, GroupRobotEvent, Mention, Payload
 
 __all__ = ["IncomingEvent", "IncomingMessage", "ReplyTarget", "normalize_event", "normalize_message"]
 
@@ -73,6 +74,8 @@ class IncomingMessage:
             延迟，平台未提供时为空。
         username: 平台侧昵称。群消息中有值，单聊中为空串。
         role: 发送者在群内的身份，单聊与未知取值时为空。
+        addressed_to_others: 消息 @ 了他人且其中不含机器人自己。群里可能同时存在多个
+            机器人，此时这条消息不该由自己响应。
     """
 
     scene: Scene
@@ -84,6 +87,7 @@ class IncomingMessage:
     timestamp: str | None = None
     username: str = ""
     role: MemberRole | None = None
+    addressed_to_others: bool = False
 
     @property
     def reply_target(self) -> ReplyTarget:
@@ -165,6 +169,7 @@ def normalize_message(payload: Payload, *, received_at: datetime) -> IncomingMes
         timestamp=group.timestamp,
         username=group.author.username,
         role=_to_role(group.author.member_role),
+        addressed_to_others=_addressed_to_others(group.mentions),
     )
 
 
@@ -208,6 +213,23 @@ def normalize_event(payload: Payload, *, received_at: datetime) -> IncomingEvent
         received_at=received_at,
         data=payload.d,
     )
+
+
+def _addressed_to_others(mentions: Sequence[Mention]) -> bool:
+    """判断这条消息 @ 的是否只有别人。
+
+    群里可能同时有多个机器人，正文中的 ``<@openid>`` 标记会被一并剥离，仅凭前缀无法区分
+    这条指令是发给谁的。全量推送模式下平台给出 ``mentions``，据此即可让每个机器人只应答
+    冲自己来的消息。
+
+    ``is_you`` 全部缺失时返回 ``False``：无从判断时按发给自己处理，宁可多响应一次，也不
+    要静默忽略。
+    """
+
+    if not any(mention.is_you is not None for mention in mentions):
+        return False
+
+    return not any(mention.is_you for mention in mentions)
 
 
 def _to_role(raw: str | None) -> MemberRole | None:
