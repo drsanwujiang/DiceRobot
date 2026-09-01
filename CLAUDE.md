@@ -101,9 +101,10 @@ loader 在其余插件之后用 `build_plugin(registry)` 构造。
 
 平台仅提供不透明的 openid，且**群内标识与单聊标识互不相通**，不存在跨场景的统一用户身份，因此
 `Chat` / `Member` / `ChatPluginState` 均以 `(scene, openid…)` 为复合主键。会话与成员在首次出现时
-由 `Store` 惰性创建（平台不提供成员列表）。SQLite 不支持多数 ALTER TABLE，迁移使用
-`render_as_batch=True`。连接建立时开启 WAL 与 busy_timeout（`storage/database.py`）：默认的回滚
-日志下，一个 worker 的读事务会挡住其他 worker 的提交。
+由 `Store` 惰性创建（平台不提供成员列表），插入放在 SAVEPOINT 中：多个 worker 会同时遇到同一个新
+会话，抢输的一方撞上主键冲突后改取对方创建的记录，本会话的其他改动不受影响。SQLite 不支持多数
+ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL 与 busy_timeout
+（`storage/database.py`）：默认的回滚日志下，一个 worker 的读事务会挡住其他 worker 的提交。
 
 迁移在应用启动时自动执行（`storage/migrations.py`），alembic 入口是同步的且内部自行 `asyncio.run`，
 故必须 `asyncio.to_thread` 调用；配置按**当前工作目录**查找 `alembic.ini`，进程必须从项目根启动。

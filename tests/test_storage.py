@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 from contextlib import suppress
+from typing import Any
 
-from sqlalchemy import text
+import pytest
+from sqlalchemy import func, select, text
 
 from dicerobot.enums import Scene
 from dicerobot.storage import Chat, Database, Store
@@ -108,6 +111,63 @@ class TestSession:
 
             assert chat.created_at is not None
             assert chat.updated_at is not None
+
+
+class TestConcurrentCreation:
+    """多个 worker 会同时遇到同一个新群：都查不到记录，于是都执行插入。"""
+
+    async def test_a_conflicting_insert_falls_back_to_the_existing_row(
+        self, database: Database, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """抢输的一方必须改取对方创建的记录，且本会话的其他改动不受影响。"""
+
+        async with database.session() as session:
+            # 另一个 worker 抢先创建并提交。
+            async with database.session() as other:
+                await Store(other).get_chat(Scene.GROUP, "G1")
+
+            # 令本会话的首次查询落空，以此模拟它发生在对方提交之前——插入才会真正撞上主键冲突。
+            original = session.get
+            missed = False
+
+            async def get_with_one_miss(*args: Any, **kwargs: Any) -> Any:
+                nonlocal missed
+
+                if not missed:
+                    missed = True
+
+                    return None
+
+                return await original(*args, **kwargs)
+
+            monkeypatch.setattr(session, "get", get_with_one_miss)
+
+            chat = await Store(session).get_chat(Scene.GROUP, "G1")
+
+            assert chat.openid == "G1"
+
+            # SAVEPOINT 只回滚了那次插入，本会话仍可继续写入并提交。
+            chat.enabled = False
+
+        async with database.session() as session:
+            assert (await Store(session).get_chat(Scene.GROUP, "G1")).enabled is False
+
+    async def test_parallel_creation_leaves_one_row(self, database: Database) -> None:
+        """并发创建同一条记录不应抛出异常，也不应留下重复记录。
+
+        能否触发冲突取决于调度，上一例才是钉住回退分支的那个。
+        """
+
+        async def touch() -> Chat:
+            async with database.session() as session:
+                return await Store(session).get_chat(Scene.GROUP, "G1")
+
+        chats = await asyncio.gather(*(touch() for _ in range(8)))
+
+        assert [chat.openid for chat in chats] == ["G1"] * 8
+
+        async with database.session() as session:
+            assert await session.scalar(select(func.count()).select_from(Chat)) == 1
 
 
 class TestPragmas:
