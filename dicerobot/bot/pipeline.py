@@ -164,7 +164,7 @@ class Pipeline:
         )
 
         if message.addressed_to_others:
-            logger.debug("消息 @ 的不是自己，已丢弃")
+            logger.debug("消息未 @ 到自己，已丢弃")
             return
 
         invocation = self._registry.resolve(message.content)

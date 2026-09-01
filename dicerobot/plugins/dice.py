@@ -56,7 +56,7 @@ async def roll(context: CommandContext) -> None:
 
 @plugin.command("rh", "暗骰", description="暗骰，结果私聊发送，如 .rh 1d100 侦查", max_times=MAX_REPETITIONS)
 async def hidden_roll(context: CommandContext) -> None:
-    """掷骰并把结果私聊发给掷骰者，群内只公布掷了什么。"""
+    """掷骰并把结果私聊发给掷骰者，群内只公布掷骰表达式。"""
 
     if context.message.scene is not Scene.GROUP:
         raise CommandError("暗骰只能在群聊中使用……")
@@ -64,7 +64,7 @@ async def hidden_roll(context: CommandContext) -> None:
     expression, lead, results = _roll(context)
 
     _write(context.write_private, lead, results)
-    # 公开掷了什么、隐藏结果，是桌面上的惯例。
+    # 公开掷骰表达式、隐藏结果，是 TRPG 的惯例。
     context.write(f"{context.display_name}进行了一次暗骰（{expression}）")
 
 

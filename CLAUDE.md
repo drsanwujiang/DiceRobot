@@ -96,7 +96,7 @@ loader 在其余插件之后用 `build_plugin(registry)` 构造。
   必须声明 `requires_enabled=False`，否则关闭后无法恢复；群聊中的启停仅限群主与管理员，依据
   `message.role`，未知取值一律拒绝。
 - **两种输出**：`context.write` 进入本会话的被动回复；`context.write_private` 作为主动消息私聊发给
-  发送者本人（暗骰即用此），只能发给发送者，不会成为群发手段。
+  发送者本人（暗骰即用此），只能发给发送者，不能用于群发。
 - **设置以 JSON 存储**：`PluginState.settings` / `ChatPluginState.settings` 为 JSON 列，读取时由插件
   声明的 pydantic 模型校验并补齐默认值，因此增删设置项**不需要迁移数据库**。写回必须显式调用
   `save_settings` / `save_chat_settings`。
@@ -109,7 +109,7 @@ loader 在其余插件之后用 `build_plugin(registry)` 构造。
 者中取值相同**，暗骰据此把群内掷出的结果私聊发给本人；但文档并未承诺这一点，故 `Chat` / `Member`
 / `ChatPluginState` 仍以 `(scene, openid…)` 为复合主键。会话与成员在首次出现时
 由 `Store` 惰性创建（平台不提供成员列表），插入放在 SAVEPOINT 中：多个 worker 会同时遇到同一个新
-会话，抢输的一方撞上主键冲突后改取对方创建的记录，本会话的其他改动不受影响。SQLite 不支持多数
+会话，冲突的一方改取对方创建的记录，本会话的其他改动不受影响。SQLite 不支持多数
 ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL 与 busy_timeout
 （`storage/database.py`）：默认的回滚日志下，一个 worker 的读事务会挡住其他 worker 的提交。
 
@@ -121,7 +121,8 @@ ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL �
 
 - 群是否推送全量消息由管理员设置，两种模式互斥：开启后 @ 消息也以 `GROUP_MESSAGE_CREATE` 到达，正文
   保留 `<@openid>` 标记并带 `mentions`；关闭后才是 `GROUP_AT_MESSAGE_CREATE`，正文已由平台剥离，且
-  没有 `mentions`。`mentions` 中只有 `is_you` 可信——平台不把其他机器人标记为 `bot`。
+  没有 `mentions`。判断是否 @ 到自己只能用 `mentions` 中的 `is_you`：同组的 `bot` 表示对方是否为
+  开放平台机器人，与「是否为本机器人」无关。
 - 回复必须携带来源的 `msg_id` 或 `event_id`；两者都不传即成为主动消息。请求体中不能出现 `null` 的
   来源字段。
 - 主动消息按用户计频（单聊 1000 条/用户/日），且用户可在客户端关闭，投递失败属于正常情形。暗骰用它
@@ -135,8 +136,8 @@ ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL �
 ## 配置
 
 全部来自环境变量或 `.env`，不入库；嵌套字段以双下划线分隔（`QQ__APP_ID`、`LOG__LEVEL`）。
-`BOT__WORKERS` 是并发槽位数而非 CPU 并行度：一条指令约 700 ms 全耗在等平台响应，所需槽位约等于
-指令到达率乘以单条耗时，故默认取 32；出站连接的保活上限在 `app.py` 中与之对齐。各分节继承
+`BOT__WORKERS` 是并发槽位数而非 CPU 并行度：一条指令约 700 ms，几乎全部用于等待平台响应，所需槽位
+约等于指令到达率乘以单条耗时，故默认取 32；出站连接的保活上限在 `app.py` 中与之对齐。各分节继承
 `_Section`（`extra="forbid"`），字段名拼错会直接报错而非静默回退默认值。`get_settings()` 带 lru_cache，
 测试需要时调用 `get_settings.cache_clear()`。
 

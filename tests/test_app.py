@@ -166,7 +166,7 @@ class TestDispatch:
     async def test_a_command_aimed_at_another_bot_is_ignored(
         self, client: httpx.AsyncClient, router: respx.MockRouter
     ) -> None:
-        """群里可能有多个骰子机器人：@ 的不是自己就不该抢答。"""
+        """群里可能有多个骰子机器人，@ 的不是自己就不应响应。"""
 
         route = router.post(SEND_GROUP_URL).mock(return_value=httpx.Response(200, json={"id": "REPLY_1"}))
 

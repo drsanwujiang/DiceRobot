@@ -158,7 +158,7 @@ class TestHiddenRoll:
         assert "D100=" not in reply
 
     async def test_the_group_only_learns_what_was_rolled(self, runner: CommandRunner) -> None:
-        """公开掷了什么、隐藏结果，是桌面上的惯例。"""
+        """公开掷骰表达式、隐藏结果，是 TRPG 的惯例。"""
 
         reply = await runner.run(hidden_roll, "3d6+2 侦查", name="rh", username="三无酱")
 

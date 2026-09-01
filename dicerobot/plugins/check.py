@@ -51,7 +51,7 @@ async def skill_check(context: CommandContext) -> None:
 
 @plugin.command("rah", "暗检定", description="暗检定，结果私聊发送，如 .rah 60 侦查", max_times=MAX_REPETITIONS)
 async def hidden_check(context: CommandContext) -> None:
-    """检定并把结果私聊发给发起者，群内只公布检定了什么。"""
+    """检定并把结果私聊发给发起者，群内只公布技能值。"""
 
     if context.message.scene is not Scene.GROUP:
         raise CommandError("暗检定只能在群聊中使用……")

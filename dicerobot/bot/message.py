@@ -220,10 +220,10 @@ def _addressed_to_others(mentions: Sequence[Mention]) -> bool:
 
     群里可能同时有多个机器人，正文中的 ``<@openid>`` 标记会被一并剥离，仅凭前缀无法区分
     这条指令是发给谁的。全量推送模式下平台给出 ``mentions``，据此即可让每个机器人只应答
-    冲自己来的消息。
+    @ 到自己的消息。
 
-    ``is_you`` 全部缺失时返回 ``False``：无从判断时按发给自己处理，宁可多响应一次，也不
-    要静默忽略。
+    ``is_you`` 全部缺失时返回 ``False``，即无从判断时按发给自己处理，理由见
+    :class:`~dicerobot.qq.schemas.Mention`。
     """
 
     if not any(mention.is_you is not None for mention in mentions):
@@ -235,7 +235,7 @@ def _addressed_to_others(mentions: Sequence[Mention]) -> bool:
 def _to_role(raw: str | None) -> MemberRole | None:
     """把平台的角色字符串转为枚举。
 
-    未知取值返回空而非按普通成员处理：调用方据此拒绝敏感操作，宁可失败也不放行。
+    未知取值返回空而非按普通成员处理，调用方据此拒绝敏感操作。
     """
 
     if raw is None:

@@ -130,7 +130,7 @@ class DirectSession:
     """向某个用户直接发送私聊消息。
 
     不携带来源凭据，因而是主动消息：不占被动回复配额，也不受回复窗口限制，但平台按用户
-    计频，且用户可在客户端关闭，投递失败属于正常情形，调用方须自行兜底。
+    计频，且用户可在客户端关闭，投递失败属于正常情形，调用方须自行处理。
     """
 
     def __init__(self, *, client: QQClient, openid: str) -> None:
@@ -144,7 +144,7 @@ class DirectSession:
             ApiError: 平台拒绝投递，例如用户关闭了主动消息。
         """
 
-        # 主动消息没有需要延续的序号，每条都是独立的一条。
+        # 主动消息没有需要延续的序号。
         await self._client.send_c2c_message(openid=self._openid, content=content, msg_seq=1)
 
         logger.debug("已发送私聊消息")

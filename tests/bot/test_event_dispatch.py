@@ -168,7 +168,7 @@ class TestUnhandledEvents:
 
 class TestConcurrency:
     async def test_workers_process_events_in_parallel(self, make_harness: Any, database: Database) -> None:
-        """worker 是并发槽位：一条指令的耗时几乎都在等待平台响应，串行处理会直接压垮吞吐。"""
+        """worker 是并发槽位：一条指令的耗时几乎都在等待平台响应，串行处理会成为吞吐瓶颈。"""
 
         # 先建好两个会话涉及的记录：惰性创建是写操作，会在 handler 执行期间一直握着 SQLite
         # 的写锁，两个事件将因此串行，测不出 worker 的并发。

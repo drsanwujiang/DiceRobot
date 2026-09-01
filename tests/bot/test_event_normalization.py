@@ -82,7 +82,7 @@ class TestAuthor:
         assert message.role is MemberRole.OWNER
 
     def test_an_unknown_role_is_treated_as_absent(self) -> None:
-        """平台新增取值时宁可拦下敏感操作，也不按普通成员放行。"""
+        """平台新增取值时应拦下敏感操作，而非按普通成员放行。"""
 
         message = normalize_message(
             payload(
@@ -150,7 +150,7 @@ class TestMentions:
         assert message.addressed_to_others is False
 
     def test_missing_is_you_is_treated_as_ours(self) -> None:
-        """平台若不再下发该字段，宁可多响应一次，也不要静默忽略。"""
+        """平台若不再下发该字段，仍按发给自己处理。"""
 
         message = self.mention_payload({"username": "Moira"})
 

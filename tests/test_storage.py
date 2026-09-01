@@ -119,7 +119,7 @@ class TestConcurrentCreation:
     async def test_a_conflicting_insert_falls_back_to_the_existing_row(
         self, database: Database, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """抢输的一方必须改取对方创建的记录，且本会话的其他改动不受影响。"""
+        """冲突的一方必须改取对方创建的记录，且本会话的其他改动不受影响。"""
 
         async with database.session() as session:
             # 另一个 worker 抢先创建并提交。

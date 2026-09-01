@@ -169,7 +169,7 @@ class TestIncomingMessage:
     async def test_message_is_recorded_with_its_source(
         self, log_lines: Callable[[], list[str]], database: Database
     ) -> None:
-        """msg_id 是被动回复与向平台反馈问题时唯一能对上的凭据，必须落在日志里。"""
+        """msg_id 是被动回复与向平台反馈问题时唯一能对应的凭据，必须落在日志里。"""
 
         payload = Payload(
             op=0,
@@ -245,7 +245,7 @@ class TestTiming:
         assert any("事件处理完成，耗时" in line for line in lines)
 
     async def test_platform_call_records_its_duration(self, log_lines: Callable[[], list[str]]) -> None:
-        """处理耗时几乎都在平台调用上，故这一行必须能单独看出平台花了多久。"""
+        """处理耗时几乎都在平台调用上，故这一行必须能单独反映平台耗时。"""
 
         async with httpx.AsyncClient() as http_client:
             client = QQClient(

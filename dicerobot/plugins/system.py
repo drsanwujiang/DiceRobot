@@ -115,8 +115,7 @@ def build_plugin(registry: Registry) -> Plugin:
 def _require_manager(context: CommandContext, action: str) -> None:
     """群聊中的启停操作仅限群主与管理员。
 
-    单聊里机器人只服务于对方本人，没有身份之分，不作限制；群内身份未知时一律拒绝，
-    宁可拦下也不放行。
+    单聊里机器人只服务于对方本人，没有身份之分，不作限制；群内身份未知时一律拒绝。
     """
 
     if context.message.scene is not Scene.GROUP:

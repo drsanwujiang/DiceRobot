@@ -145,7 +145,7 @@ class QQClient:
         # 请求与响应各记一行：仅有请求而无响应，即可定位到调用阻塞在平台侧；响应一行带耗时，
         # 平台侧变慢可据此与本地处理耗时区分。两行都不含 token，避免凭据落盘。
         #
-        # 报文只在 TRACE 记录：其中含用户内容，且 lazy 使拼装只在该级别生效时才发生。
+        # 报文只在 TRACE 记录，其中含用户内容；用 lazy 求值，未开启该级别时不做拼装。
         logger.debug("发起请求 {} {}", method, path)
         logger.opt(lazy=True).trace("请求体 {}", lambda: preview(json.dumps(payload, ensure_ascii=False)))
 
