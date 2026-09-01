@@ -163,6 +163,7 @@ class AccessTokenProvider:
         return self._token is not None and self._now() + _REFRESH_MARGIN < self._expires_at
 
     async def _refresh(self) -> None:
+        # 请求体含 AppSecret，故不像 client 那样记录 TRACE 报文。
         logger.debug("正在获取 access token")
 
         try:

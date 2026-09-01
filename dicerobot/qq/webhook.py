@@ -18,6 +18,7 @@ from loguru import logger
 from pydantic import ValidationError
 
 from dicerobot.errors import SignatureError
+from dicerobot.logging import preview
 from dicerobot.qq.enums import OpCode
 from dicerobot.qq.schemas import Payload, ValidationData, ValidationResponse
 from dicerobot.qq.signature import SIGNATURE_HEADER, TIMESTAMP_HEADER, sign_challenge, verify_signature
@@ -71,6 +72,9 @@ def create_webhook_router(*, path: str, secret: str, sink: EventSink) -> APIRout
         # 事件 ID 自此进入日志上下文，本次推送与后续处理阶段的日志得以关联。
         with logger.contextualize(event_id=payload.id):
             logger.debug("收到事件推送：op={}，t={}", payload.op, payload.t)
+            # 平台实际下发的字段与文档时有出入，排查时需要原始报文。lazy 使拼装只在
+            # TRACE 生效时才发生。
+            logger.opt(lazy=True).trace("请求体 {}", lambda: preview(raw.decode("utf-8", "replace")))
 
             try:
                 if payload.op == OpCode.CALLBACK_VALIDATION:

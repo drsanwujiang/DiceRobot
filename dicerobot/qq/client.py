@@ -5,12 +5,14 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
 from loguru import logger
 
 from dicerobot.errors import ApiError
+from dicerobot.logging import preview
 from dicerobot.qq import API_BASE_URL
 from dicerobot.qq.enums import MessageType
 from dicerobot.qq.schemas import SendMessageResult
@@ -141,8 +143,11 @@ class QQClient:
         token = await self._token_provider.get()
 
         # 请求与响应各记一行：仅有请求而无响应，即可定位到调用阻塞在平台侧；响应一行带耗时，
-        # 平台侧变慢可据此与本地处理耗时区分。两行均不含 token 与响应体，避免凭据与用户内容落盘。
+        # 平台侧变慢可据此与本地处理耗时区分。两行都不含 token，避免凭据落盘。
+        #
+        # 报文只在 TRACE 记录：其中含用户内容，且 lazy 使拼装只在该级别生效时才发生。
         logger.debug("发起请求 {} {}", method, path)
+        logger.opt(lazy=True).trace("请求体 {}", lambda: preview(json.dumps(payload, ensure_ascii=False)))
 
         try:
             response = await self._client.request(
@@ -164,6 +169,7 @@ class QQClient:
             response.status_code,
             response.elapsed.total_seconds() * 1000,
         )
+        logger.opt(lazy=True).trace("响应体 {}", lambda: preview(response.text))
 
         return response
 

@@ -24,7 +24,10 @@ if TYPE_CHECKING:
     # loguru 只在类型存根中定义 Record，运行时无法导入。
     from loguru import Record
 
-__all__ = ["InterceptHandler", "setup_logging"]
+__all__ = ["TRACE_BODY_LIMIT", "InterceptHandler", "preview", "setup_logging"]
+
+TRACE_BODY_LIMIT = 1000
+"""TRACE 报文在日志中的截断长度。报文可能很长，且含用户内容，不宜整条落盘。"""
 
 # 这些库默认自行安装 handler，需清空后交给 loguru。
 _INTERCEPTED_LOGGERS = (
@@ -56,6 +59,15 @@ def _format_record(record: Record) -> str:
         return _FORMAT_PREFIX + _FORMAT_EVENT_ID + _FORMAT_SUFFIX
 
     return _FORMAT_PREFIX + _FORMAT_SUFFIX
+
+
+def preview(text: str, limit: int = TRACE_BODY_LIMIT) -> str:
+    """截断过长的报文，并标出原始长度。"""
+
+    if len(text) <= limit:
+        return text
+
+    return f"{text[:limit]}…（共 {len(text)} 字符）"
 
 
 class InterceptHandler(logging.Handler):

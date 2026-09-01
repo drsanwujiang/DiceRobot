@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import httpx
 import pytest
@@ -25,7 +25,7 @@ from dicerobot.bot.pipeline import Pipeline
 from dicerobot.bot.plugin import Plugin
 from dicerobot.bot.registry import Registry
 from dicerobot.config import BotSettings, LogSettings
-from dicerobot.logging import setup_logging
+from dicerobot.logging import TRACE_BODY_LIMIT, preview, setup_logging
 from dicerobot.qq import API_BASE_URL
 from dicerobot.qq.client import QQClient
 from dicerobot.qq.enums import EventType
@@ -42,6 +42,16 @@ class NullSink:
 
     def submit(self, payload: Payload) -> None:
         pass
+
+
+async def post_to_webhook(payload: dict[str, Any]) -> httpx.Response:
+    """把一条推送投给只挂了 webhook 路由的应用。"""
+
+    app = FastAPI()
+    app.include_router(create_webhook_router(path=WEBHOOK_PATH, secret=SECRET, sink=NullSink()))
+
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+        return await post_event(client, payload)
 
 
 def join_payload(event_id: str, group_openid: str) -> Payload:
@@ -68,11 +78,14 @@ def logging_plugin(delay: float = 0.0) -> Plugin:
 
 
 @pytest.fixture
-def log_lines(tmp_path: Path) -> Iterator[Callable[[], list[str]]]:
-    """安装真实的日志配置，并返回读取已写出日志的函数。"""
+def log_lines(tmp_path: Path, request: pytest.FixtureRequest) -> Iterator[Callable[[], list[str]]]:
+    """安装真实的日志配置，并返回读取已写出日志的函数。
+
+    级别默认 DEBUG，需要 TRACE 的用例以 indirect 参数指定。
+    """
 
     directory = tmp_path / "logs"
-    setup_logging(LogSettings(level="DEBUG", directory=directory))
+    setup_logging(LogSettings(level=getattr(request, "param", "DEBUG"), directory=directory))
 
     def read() -> list[str]:
         # 文件 handler 以 enqueue 方式写入，移除 handler 时才会等待队列写入完成。
@@ -203,12 +216,7 @@ class TestIncomingMessage:
 
 class TestTiming:
     async def test_webhook_records_its_own_duration(self, log_lines: Callable[[], list[str]]) -> None:
-        app = FastAPI()
-        app.include_router(create_webhook_router(path=WEBHOOK_PATH, secret=SECRET, sink=NullSink()))
-        transport = httpx.ASGITransport(app=app)
-
-        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await post_event(client, group_message_payload(".r"))
+        response = await post_to_webhook(group_message_payload(".r"))
 
         assert response.status_code == 200
         assert any("webhook 处理完成，耗时" in line and "EVENT_1" in line for line in log_lines())
@@ -257,3 +265,72 @@ class TestTiming:
                 await client.send_group_message(group_openid="G1", content="pong", msg_seq=1, msg_id="MSG_1")
 
         assert any("收到响应" in line and "耗时" in line for line in log_lines())
+
+
+class TestPreview:
+    def test_short_text_is_kept(self) -> None:
+        assert preview("短报文") == "短报文"
+
+    def test_long_text_is_truncated_with_its_length(self) -> None:
+        body = "x" * (TRACE_BODY_LIMIT * 2)
+        shown = preview(body)
+
+        assert shown.count("x") == TRACE_BODY_LIMIT
+        assert str(len(body)) in shown
+
+
+class TestTraceBody:
+    """报文含用户内容，仅在 TRACE 记录。"""
+
+    @pytest.mark.parametrize("log_lines", ["TRACE"], indirect=True)
+    async def test_inbound_payload_is_recorded(self, log_lines: Callable[[], list[str]]) -> None:
+        """平台实际下发的字段与文档时有出入，排查时需要原始报文。"""
+
+        await post_to_webhook(group_message_payload(".r"))
+
+        assert any("请求体" in line and "member_openid" in line for line in log_lines())
+
+    async def test_inbound_payload_is_not_recorded_at_debug(self, log_lines: Callable[[], list[str]]) -> None:
+        await post_to_webhook(group_message_payload(".r"))
+
+        assert not any("请求体" in line for line in log_lines())
+
+    @pytest.mark.parametrize("log_lines", ["TRACE"], indirect=True)
+    async def test_outbound_bodies_are_recorded(self, log_lines: Callable[[], list[str]]) -> None:
+        async with httpx.AsyncClient() as http_client:
+            client = QQClient(
+                app_id="102",
+                token_provider=AccessTokenProvider(app_id="102", secret="secret", client=http_client),
+                client=http_client,
+            )
+
+            with respx.mock(assert_all_called=False) as router:
+                router.post(ACCESS_TOKEN_URL).mock(
+                    return_value=httpx.Response(200, json={"access_token": "token-1", "expires_in": "7200"})
+                )
+                router.post(f"{API_BASE_URL}/v2/groups/G1/messages").mock(
+                    return_value=httpx.Response(200, json={"id": "REPLY_1"})
+                )
+
+                await client.send_group_message(group_openid="G1", content="pong", msg_seq=1, msg_id="MSG_1")
+
+        lines = log_lines()
+
+        assert any("请求体" in line and "pong" in line for line in lines)
+        assert any("响应体" in line and "REPLY_1" in line for line in lines)
+
+    @pytest.mark.parametrize("log_lines", ["TRACE"], indirect=True)
+    async def test_the_app_secret_is_never_recorded(self, log_lines: Callable[[], list[str]]) -> None:
+        """token 请求体含 AppSecret，不得落盘。"""
+
+        async with httpx.AsyncClient() as http_client:
+            provider = AccessTokenProvider(app_id="102", secret="s3cr3t", client=http_client)
+
+            with respx.mock(assert_all_called=False) as router:
+                router.post(ACCESS_TOKEN_URL).mock(
+                    return_value=httpx.Response(200, json={"access_token": "token-1", "expires_in": "7200"})
+                )
+
+                await provider.get()
+
+        assert not any("s3cr3t" in line for line in log_lines())
