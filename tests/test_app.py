@@ -49,7 +49,7 @@ def group_message_payload(content: str, *, event_id: str = "EVENT_1", message_id
         "d": {
             "id": message_id,
             "group_openid": "G1",
-            "author": {"member_openid": "U1"},
+            "author": {"member_openid": "U1", "member_role": "owner"},
             "content": content,
         },
     }

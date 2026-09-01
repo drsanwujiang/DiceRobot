@@ -17,7 +17,7 @@ from dicerobot.bot.context import CommandContext
 from dicerobot.bot.message import IncomingMessage
 from dicerobot.bot.outbound import ReplyBuffer, ReplySession
 from dicerobot.bot.plugin import CommandHandler, Plugin
-from dicerobot.enums import Scene
+from dicerobot.enums import MemberRole, Scene
 from dicerobot.qq.client import QQClient
 from dicerobot.storage import Base, Chat, Database, Member, Store
 
@@ -52,16 +52,32 @@ class CommandRunner:
         self.plugin = plugin
         self.client = RecordingClient()
 
-    async def run(self, handler: CommandHandler, args: str = "", *, name: str = "", times: int = 1) -> str:
-        """执行一次指令，返回最终发出的消息内容。未发出任何内容时返回空串。"""
+    async def run(
+        self,
+        handler: CommandHandler,
+        args: str = "",
+        *,
+        name: str = "",
+        times: int = 1,
+        username: str = "",
+        role: MemberRole = MemberRole.MEMBER,
+        scene: Scene = Scene.GROUP,
+    ) -> str:
+        """执行一次指令，返回最终在会话中发出的消息内容。未发出任何内容时返回空串。
+
+        ``scene`` 只改变消息本身，chat 与 member 仍是群内的记录，故它只适用于在场景判断处
+        即返回的用例。
+        """
 
         message = IncomingMessage(
-            scene=Scene.GROUP,
-            scene_id=CHAT_OPENID,
+            scene=scene,
+            scene_id=CHAT_OPENID if scene is Scene.GROUP else MEMBER_OPENID,
             sender_id=MEMBER_OPENID,
             content=f".{name} {args}".strip(),
             message_id="MSG_1",
             received_at=datetime.now(UTC),
+            username=username,
+            role=role,
         )
         buffer = ReplyBuffer(ReplySession(client=cast(QQClient, self.client), target=message.reply_target))
 

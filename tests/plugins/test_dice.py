@@ -38,10 +38,20 @@ class TestPresentation:
 
         assert (await runner.run(roll)).startswith("调查员骰出了：")
 
+    async def test_falls_back_to_the_platform_name(self, runner: CommandRunner) -> None:
+        """未用 .nn 设置过时，用平台在群消息里给出的昵称。"""
+
+        assert (await runner.run(roll, username="三无酱")).startswith("三无酱骰出了：")
+
     async def test_falls_back_to_a_generated_name(self, runner: CommandRunner) -> None:
-        """平台不提供昵称，未设置时以 openid 末尾几位区分不同的人。"""
+        """单聊里平台给的昵称为空串，只能以 openid 末尾几位区分不同的人。"""
 
         assert (await runner.run(roll)).startswith("玩家0001骰出了：")
+
+    async def test_the_configured_nickname_wins_over_the_platform_one(self, runner: CommandRunner) -> None:
+        runner.member.nickname = "调查员"
+
+        assert (await runner.run(roll, username="三无酱")).startswith("调查员骰出了：")
 
     async def test_reason_precedes_the_name(self, runner: CommandRunner) -> None:
         runner.member.nickname = "调查员"

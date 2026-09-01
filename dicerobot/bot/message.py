@@ -16,7 +16,7 @@ from typing import Any
 
 from loguru import logger
 
-from dicerobot.enums import Scene
+from dicerobot.enums import MemberRole, Scene
 from dicerobot.qq.enums import EventType
 from dicerobot.qq.schemas import C2CMessage, FriendEvent, GroupMessage, GroupRobotEvent, Payload
 
@@ -71,6 +71,8 @@ class IncomingMessage:
         received_at: 本地收到事件的时刻。
         timestamp: 平台标注的发送时刻，原样保留。与 ``received_at`` 相比即可看出投递
             延迟，平台未提供时为空。
+        username: 平台侧昵称。群消息中有值，单聊中为空串。
+        role: 发送者在群内的身份，单聊与未知取值时为空。
     """
 
     scene: Scene
@@ -80,6 +82,8 @@ class IncomingMessage:
     message_id: str
     received_at: datetime
     timestamp: str | None = None
+    username: str = ""
+    role: MemberRole | None = None
 
     @property
     def reply_target(self) -> ReplyTarget:
@@ -146,6 +150,7 @@ def normalize_message(payload: Payload, *, received_at: datetime) -> IncomingMes
             message_id=c2c.id,
             received_at=received_at,
             timestamp=c2c.timestamp,
+            username=c2c.author.username,
         )
 
     group = GroupMessage.model_validate(payload.d)
@@ -158,6 +163,8 @@ def normalize_message(payload: Payload, *, received_at: datetime) -> IncomingMes
         message_id=group.id,
         received_at=received_at,
         timestamp=group.timestamp,
+        username=group.author.username,
+        role=_to_role(group.author.member_role),
     )
 
 
@@ -201,6 +208,23 @@ def normalize_event(payload: Payload, *, received_at: datetime) -> IncomingEvent
         received_at=received_at,
         data=payload.d,
     )
+
+
+def _to_role(raw: str | None) -> MemberRole | None:
+    """把平台的角色字符串转为枚举。
+
+    未知取值返回空而非按普通成员处理：调用方据此拒绝敏感操作，宁可失败也不放行。
+    """
+
+    if raw is None:
+        return None
+
+    try:
+        return MemberRole(raw)
+    except ValueError:
+        logger.debug("未知的群成员身份 {}", raw)
+
+        return None
 
 
 def _clean_content(content: str) -> str:

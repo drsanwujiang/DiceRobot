@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from dicerobot.bot.message import IncomingMessage, normalize_event, normalize_message
-from dicerobot.enums import Scene
+from dicerobot.enums import MemberRole, Scene
 from dicerobot.qq.enums import EventType
 from dicerobot.qq.schemas import Payload
 
@@ -58,6 +58,57 @@ class TestContentCleanup:
 
         assert message is not None
         assert message.content == ".r 3d6+2 侦查"
+
+
+class TestAuthor:
+    def test_platform_nickname_and_role_are_carried_over(self) -> None:
+        """群消息带昵称与群内身份，前者用于展示，后者用于启停这类敏感操作的鉴权。"""
+
+        message = normalize_message(
+            payload(
+                "GROUP_AT_MESSAGE_CREATE",
+                {
+                    "id": "MSG_1",
+                    "group_openid": "G1",
+                    "author": {"member_openid": "U1", "username": "三无酱", "member_role": "owner"},
+                    "content": ".ping",
+                },
+            ),
+            received_at=RECEIVED_AT,
+        )
+
+        assert message is not None
+        assert message.username == "三无酱"
+        assert message.role is MemberRole.OWNER
+
+    def test_an_unknown_role_is_treated_as_absent(self) -> None:
+        """平台新增取值时宁可拦下敏感操作，也不按普通成员放行。"""
+
+        message = normalize_message(
+            payload(
+                "GROUP_AT_MESSAGE_CREATE",
+                {
+                    "id": "MSG_1",
+                    "group_openid": "G1",
+                    "author": {"member_openid": "U1", "member_role": "moderator"},
+                    "content": ".ping",
+                },
+            ),
+            received_at=RECEIVED_AT,
+        )
+
+        assert message is not None
+        assert message.role is None
+
+    def test_private_messages_have_no_role(self) -> None:
+        message = normalize_message(
+            payload("C2C_MESSAGE_CREATE", {"id": "MSG_1", "author": {"user_openid": "U9"}, "content": ".ping"}),
+            received_at=RECEIVED_AT,
+        )
+
+        assert message is not None
+        assert message.role is None
+        assert message.username == ""
 
 
 class TestTimestamp:

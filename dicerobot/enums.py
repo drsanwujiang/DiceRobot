@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-__all__ = ["Scene"]
+__all__ = ["MemberRole", "Scene"]
 
 
 class Scene(StrEnum):
@@ -16,3 +16,11 @@ class Scene(StrEnum):
 
     GROUP = "group"
     C2C = "c2c"
+
+
+class MemberRole(StrEnum):
+    """发送者在群内的身份。单聊没有这一概念。"""
+
+    OWNER = "owner"
+    ADMIN = "admin"
+    MEMBER = "member"

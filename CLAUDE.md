@@ -90,7 +90,8 @@ handler。内置插件在 `bot/loader.py` 的 `_BUILTIN_MODULES` 清单中声明
 loader 在其余插件之后用 `build_plugin(registry)` 构造。
 
 - **三层开关**：会话总开关（`.bot`）→ 插件全局开关 → 插件在本会话的开关（`.plugin`）。开关类指令
-  必须声明 `requires_enabled=False`，否则关闭后无法恢复。
+  必须声明 `requires_enabled=False`，否则关闭后无法恢复；群聊中的启停仅限群主与管理员，依据
+  `message.role`，未知取值一律拒绝。
 - **设置以 JSON 存储**：`PluginState.settings` / `ChatPluginState.settings` 为 JSON 列，读取时由插件
   声明的 pydantic 模型校验并补齐默认值，因此增删设置项**不需要迁移数据库**。写回必须显式调用
   `save_settings` / `save_chat_settings`。

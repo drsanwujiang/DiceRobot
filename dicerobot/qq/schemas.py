@@ -46,12 +46,20 @@ class ValidationResponse(BaseModel):
     signature: str
 
 
-class _GroupAuthor(BaseModel):
+class _Author(BaseModel):
+    username: str = ""
+    """平台侧昵称。群消息中有值，单聊中实测为空串。"""
+
+
+class _GroupAuthor(_Author):
     member_openid: str
-    """发送者在该群内的标识，与单聊的 user_openid 不互通。"""
+    """发送者在该群内的标识。实测与同一用户单聊的 user_openid 取值相同。"""
+
+    member_role: str | None = None
+    """群内身份，取值为 owner / admin / member。保留为 str，平台新增取值时不致解析失败。"""
 
 
-class _C2CAuthor(BaseModel):
+class _C2CAuthor(_Author):
     user_openid: str
 
 

@@ -129,12 +129,15 @@ class CommandContext(Context):
     def display_name(self) -> str:
         """发送者的可读名称。
 
-        平台不提供昵称，未通过 ``.nn`` 设置时回退到 openid 的末几位，以便在同一会话中
-        区分不同的人。
+        依次取自行设置的昵称、平台在群消息中给出的昵称，最后回退到 openid 的末几位——
+        单聊的昵称实测为空串，只能落到最后一档。
         """
 
         if self.member.nickname:
             return self.member.nickname
+
+        if self.message.username:
+            return self.message.username
 
         return f"玩家{self.member.openid[-_ANONYMOUS_ID_LENGTH:].upper()}"
 
