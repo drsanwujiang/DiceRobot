@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from contextlib import suppress
 
+from sqlalchemy import text
+
 from dicerobot.enums import Scene
 from dicerobot.storage import Chat, Database, Store
 
@@ -106,6 +108,18 @@ class TestSession:
 
             assert chat.created_at is not None
             assert chat.updated_at is not None
+
+
+class TestPragmas:
+    async def test_wal_is_enabled(self, database: Database) -> None:
+        """默认的回滚日志下，一个 worker 的读事务会挡住其他 worker 的提交。"""
+
+        async with database.engine.connect() as connection:
+            assert await connection.scalar(text("PRAGMA journal_mode")) == "wal"
+
+    async def test_busy_timeout_is_set(self, database: Database) -> None:
+        async with database.engine.connect() as connection:
+            assert await connection.scalar(text("PRAGMA busy_timeout")) == 5000
 
 
 class TestPluginState:

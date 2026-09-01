@@ -69,6 +69,8 @@ dicerobot/
 5. 整条指令共用一个数据库会话，构造 `CommandContext` 执行 handler，退出时统一提交。
 6. `bot/outbound.py`：`ReplyBuffer` 把执行期间的多段 `write` 合并成一条消息，`ReplySession` 计量
    被动回复配额（群聊 5 分钟 5 条，单聊 60 分钟 4 条）。`msg_seq` 在发出前递增，失败也消耗配额。
+   **回复在会话提交之后发出**：一次平台调用约 700 ms，横跨事务会让其他 worker 的提交等在写锁上。
+   指令自行调用 `context.flush()` 发进度提示是例外，它必然在会话内。
 
 整条链路的日志均携带事件 ID：webhook、`Pipeline.submit` 与 worker 各用
 `logger.contextualize(event_id=...)` 绑定一次，处理期间的插件日志、平台调用日志与转发自标准库的
@@ -100,7 +102,8 @@ loader 在其余插件之后用 `build_plugin(registry)` 构造。
 平台仅提供不透明的 openid，且**群内标识与单聊标识互不相通**，不存在跨场景的统一用户身份，因此
 `Chat` / `Member` / `ChatPluginState` 均以 `(scene, openid…)` 为复合主键。会话与成员在首次出现时
 由 `Store` 惰性创建（平台不提供成员列表）。SQLite 不支持多数 ALTER TABLE，迁移使用
-`render_as_batch=True`。
+`render_as_batch=True`。连接建立时开启 WAL 与 busy_timeout（`storage/database.py`）：默认的回滚
+日志下，一个 worker 的读事务会挡住其他 worker 的提交。
 
 迁移在应用启动时自动执行（`storage/migrations.py`），alembic 入口是同步的且内部自行 `asyncio.run`，
 故必须 `asyncio.to_thread` 调用；配置按**当前工作目录**查找 `alembic.ini`，进程必须从项目根启动。

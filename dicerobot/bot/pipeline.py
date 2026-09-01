@@ -211,6 +211,10 @@ class Pipeline:
 
             await self._run(context, invocation, buffer)
 
+        # 会话提交之后再发送：一次平台调用约 700 ms，横跨事务会让其他 worker 的提交一直
+        # 等在 SQLite 的写锁上。发送失败原本也不回滚，改变先后顺序不影响既有语义。
+        await self._reply(buffer)
+
     async def _process_event(self, payload: Payload, received_at: datetime) -> None:
         """派发非消息事件。
 
@@ -239,7 +243,7 @@ class Pipeline:
             for plugin, spec in handlers:
                 await self._run_event_handler(plugin, spec.handler, event, chat, store, buffer)
 
-        await self._reply_quietly(buffer)
+        await self._reply(buffer)
 
     async def _run_event_handler(
         self,
@@ -283,27 +287,26 @@ class Pipeline:
         return chat.enabled and plugin_state.enabled and chat_plugin_state.enabled
 
     async def _run(self, context: CommandContext, invocation: Invocation, buffer: ReplyBuffer) -> None:
+        """执行 handler。输出留在缓冲中，由调用方在会话结束后发出。"""
+
         try:
             if invocation.times > invocation.command.max_times:
                 raise CommandError(f"这个指令最多只能重复 {invocation.command.max_times} 次……")
 
             async with asyncio.timeout(self._settings.handler_timeout):
                 await invocation.command.handler(context)
-
-            await buffer.flush()
         except CommandError as e:
             # 用户输入有误，回复原因并丢弃指令已产生的部分输出。
             buffer.clear()
             buffer.write(e.message)
-            await self._reply_quietly(buffer)
         except TimeoutError:
             logger.warning("指令 {} 执行超时（{} 秒）", invocation.name, self._settings.handler_timeout)
             buffer.clear()
             buffer.write(_TIMEOUT_REPLY)
-            await self._reply_quietly(buffer)
         except ReplyError as e:
-            # 回复通道本身不可用，再次回复只会重复失败。
+            # 指令自行调用 flush 发送进度提示时失败：回复通道不可用，缓冲中的内容同样发不出去。
             logger.warning("指令 {} 的回复无法送达：{}", invocation.name, e)
+            buffer.clear()
         except Exception:
             logger.exception("指令 {} 执行失败", invocation.name)
 
@@ -312,13 +315,15 @@ class Pipeline:
 
             buffer.clear()
             buffer.write(_FAILURE_REPLY)
-            await self._reply_quietly(buffer)
 
     @staticmethod
-    async def _reply_quietly(buffer: ReplyBuffer) -> None:
-        """尽力发出错误提示，失败则仅记录日志。"""
+    async def _reply(buffer: ReplyBuffer) -> None:
+        """发出缓冲中的内容，失败则仅记录日志。
+
+        回复通道本身不可用时，再次回复只会重复失败。
+        """
 
         try:
             await buffer.flush()
         except ReplyError as e:
-            logger.warning("错误提示无法送达：{}", e)
+            logger.warning("回复无法送达：{}", e)
