@@ -152,6 +152,16 @@ class TestRepetition:
         assert invocation.args == "1d100 #侦查"
         assert invocation.times == 1
 
+    @pytest.mark.parametrize("text", [".r 1d100#0", ".r 1d100#00"])
+    def test_zero_is_not_a_repetition(self, registry: Registry, text: str) -> None:
+        """次数为零时指令一次都不执行，却照常消耗一条回复配额，故 `#0` 不构成次数。"""
+
+        invocation = registry.resolve(text)
+
+        assert invocation is not None
+        assert invocation.times == 1
+        assert invocation.args == text.removeprefix(".r ")
+
 
 class TestConflicts:
     def test_rejects_a_duplicate_plugin_name(self, registry: Registry) -> None:

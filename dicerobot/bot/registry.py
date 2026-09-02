@@ -18,13 +18,22 @@ from dicerobot.qq.enums import EventType
 __all__ = ["Invocation", "Registry"]
 
 # 指令行：. 或 。前缀、指令体、可选的行尾 #N 重复次数。
-# 次数限制为至多三位，避免 #999999 一类输入在解析阶段被视为有效值。
-_COMMAND_PATTERN = re.compile(r"^[.。]\s*(?P<body>.*?)\s*(?:#(?P<times>\d{1,3}))?$", re.DOTALL)
+# 次数须为一到三位的正整数：三位的上限避免 #999999 一类输入在解析阶段被视为有效值；
+# #0 不构成次数，与 #侦查 一样留在指令体中，否则指令将执行零次却照常消耗一条回复配额。
+_COMMAND_PATTERN = re.compile(r"^[.。]\s*(?P<body>.*?)\s*(?:#(?P<times>[1-9]\d{0,2}))?$", re.DOTALL)
 
 
 @dataclass(frozen=True, slots=True)
 class Invocation:
-    """一次解析成功的指令调用。"""
+    """一次解析成功的指令调用。
+
+    Attributes:
+        plugin: 指令所属的插件。
+        command: 命中的指令。
+        name: 实际匹配到的别名。
+        args: 别名之后的参数原文，已去除首尾空白。
+        times: 重复次数，恒为正整数；未写 ``#N`` 时为 1。
+    """
 
     plugin: Plugin
     command: CommandSpec
