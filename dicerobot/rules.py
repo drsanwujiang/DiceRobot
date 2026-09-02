@@ -25,38 +25,65 @@ __all__ = ["DEFAULT_RULES", "MAX_SKILL_CHECKED", "load_rules"]
 # 穷举验证的技能值上界
 MAX_SKILL_CHECKED = 100
 
+# 与规则文件排版保持一致
+# fmt: off
 DEFAULT_RULES: Mapping[str, dict[str, Any]] = {
     "coc7": {
         "id": "coc7",
         "name": "COC 7 检定规则",
         "description": "COC 7 版规则书设定的检定规则",
         "levels": [
-            {"name": "大成功", "description": "骰出 1", "condition": "roll == 1"},
+            {
+                "name": "大成功",
+                "description": "骰出 1",
+                "condition": "roll == 1"
+            },
             {
                 "name": "大失败",
                 "description": "骰出 100。若技能值小于 50，则大于等于 96 的结果都是大失败",
-                "condition": "roll == 100 or (roll >= 96 and skill < 50)",
+                "condition": "roll == 100 or (roll >= 96 and skill < 50)"
             },
             {
                 "name": "极难成功",
                 "description": "骰值小于等于技能值的五分之一（向下取整）",
-                "condition": "roll <= skill // 5",
+                "condition": "roll <= skill // 5"
             },
-            {"name": "困难成功", "description": "骰值小于等于技能值的一半", "condition": "roll <= skill // 2"},
-            {"name": "成功", "description": "骰值小于等于技能值，也称为一般成功", "condition": "roll <= skill"},
-            {"name": "失败", "description": "骰值大于技能值", "condition": "True"},
-        ],
+            {
+                "name": "困难成功",
+                "description": "骰值小于等于技能值的一半",
+                "condition": "roll <= skill // 2"
+            },
+            {
+                "name": "成功",
+                "description": "骰值小于等于技能值，也称为一般成功",
+                "condition": "roll <= skill"
+            },
+            {
+                "name": "失败",
+                "description": "骰值大于技能值",
+                "condition": "True"
+            }
+        ]
     },
     "simple": {
         "id": "simple",
         "name": "简易检定规则",
         "description": "只区分成功与失败的检定规则",
         "levels": [
-            {"name": "成功", "description": "骰值小于等于技能值", "condition": "roll <= skill"},
-            {"name": "失败", "description": "骰值大于技能值", "condition": "True"},
-        ],
-    },
+            {
+                "name": "成功",
+                "description": "骰值小于等于技能值",
+                "condition": "roll <= skill"
+            },
+            {
+                "name": "失败",
+                "description": "骰值大于技能值",
+                "condition": "True"
+            }
+        ]
+    }
 }
+# fmt: on
 
 
 class _Level(BaseModel):
