@@ -1,22 +1,23 @@
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
 
+# 工具缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# 运行时数据：凭据、数据库与日志均不入库，目录本身以 .gitkeep 占位
 .env
+*.db
 data/*
 !data/.gitkeep
 logs/*
 !logs/.gitkeep
 
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.hypothesis/
-*.db
-data/rules/
-htmlcov/
-.coverage
-
+# 编辑器
 .idea/
 .vscode/
