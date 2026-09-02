@@ -12,8 +12,8 @@
 :class:`ReplySession` 负责计量，:class:`ReplyBuffer` 把一次指令执行期间的多段输出
 合并为一条消息，以减少消耗。
 
-:class:`DirectSession` 是例外：它发出的是不带来源凭据的主动消息，不占上表的配额，
-用于把结果私聊发给发送者本人（如暗骰）。
+:class:`DirectSession` 是例外：它发出的是不带序号与来源凭据的主动消息，不占上表的
+配额，用于把结果私聊发给发送者本人（如暗骰）。
 """
 
 from __future__ import annotations
@@ -144,8 +144,9 @@ class DirectSession:
             ApiError: 平台拒绝投递，例如用户关闭了主动消息。
         """
 
-        # 主动消息没有需要延续的序号。
-        await self._client.send_c2c_message(openid=self._openid, content=content, msg_seq=1)
+        # msg_seq 是被动回复的序号，msg_id 与 event_id 是所回复的来源，主动消息三者皆无，
+        # 一律不传。
+        await self._client.send_c2c_message(openid=self._openid, content=content)
 
         logger.debug("已发送私聊消息")
 

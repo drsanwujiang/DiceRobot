@@ -79,6 +79,17 @@ class TestSend:
         assert body["event_id"] == "EVENT_1"
         assert "msg_id" not in body
 
+    async def test_direct_message_omits_sequence_and_credentials(
+        self, client: QQClient, router: respx.MockRouter
+    ) -> None:
+        """msg_seq 是被动回复的序号，主动消息与来源字段一并省略。"""
+
+        route = router.post(SEND_C2C_URL).mock(return_value=httpx.Response(200, json={}))
+
+        await client.send_c2c_message(openid="U1", content="暗骰结果")
+
+        assert json.loads(route.calls.last.request.read()) == {"msg_type": 0, "content": "暗骰结果"}
+
     async def test_empty_body_is_accepted(self, client: QQClient, router: respx.MockRouter) -> None:
         router.post(SEND_GROUP_URL).mock(return_value=httpx.Response(200))
 

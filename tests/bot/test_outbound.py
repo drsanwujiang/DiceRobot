@@ -11,7 +11,7 @@ from typing import Any, cast
 import pytest
 
 from dicerobot.bot.message import IncomingMessage
-from dicerobot.bot.outbound import QUOTAS, ReplyBuffer, ReplySession
+from dicerobot.bot.outbound import QUOTAS, DirectSession, ReplyBuffer, ReplySession
 from dicerobot.enums import Scene
 from dicerobot.errors import ReplyQuotaExhaustedError, ReplyWindowExpiredError
 from dicerobot.qq.client import QQClient
@@ -170,6 +170,24 @@ class TestReplySession:
         # 重试换用新序号，复用已发出的序号会被平台判为重复。
         await session.send("二")
         assert [call["msg_seq"] for call in client.group_calls] == [1, 2]
+
+
+class TestDirectSession:
+    async def test_sends_neither_sequence_nor_credentials(self, client: RecordingClient) -> None:
+        """主动消息没有所回复的来源，msg_seq 作为被动回复的序号也不应出现。"""
+
+        await DirectSession(client=cast(QQClient, client), openid="USER_1").send("暗骰结果")
+
+        assert client.c2c_calls == [{"openid": "USER_1", "content": "暗骰结果"}]
+
+    async def test_does_not_consume_reply_quota(self, client: RecordingClient, clock: FakeClock) -> None:
+        """暗骰的私聊输出与群内回复各走各的通道，前者不占后者的配额。"""
+
+        session = make_session(client, clock)
+        await session.send("群内回复")
+        await DirectSession(client=cast(QQClient, client), openid="USER_1").send("私聊结果")
+
+        assert session.remaining == 4
 
 
 class TestReplyBuffer:

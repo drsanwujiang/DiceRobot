@@ -50,11 +50,11 @@ class QQClient:
         *,
         group_openid: str,
         content: str,
-        msg_seq: int,
+        msg_seq: int | None = None,
         msg_id: str | None = None,
         event_id: str | None = None,
     ) -> SendMessageResult:
-        """向群发送被动回复。
+        """向群发送消息。
 
         Args:
             group_openid: 目标群标识。
@@ -63,8 +63,8 @@ class QQClient:
             msg_id: 所回复消息的 ID。
             event_id: 所回复事件的 ID，用于消息之外的事件。
 
-        ``msg_id`` 与 ``event_id`` 须提供其一，两者都省略即成为主动消息，配额极其
-        有限，本项目不使用。
+        ``msg_id`` 与 ``event_id`` 须提供其一，两者都省略即成为主动消息。``msg_seq``
+        是被动回复的序号，主动消息一并省略。
         """
 
         return await self._send(
@@ -80,11 +80,11 @@ class QQClient:
         *,
         openid: str,
         content: str,
-        msg_seq: int,
+        msg_seq: int | None = None,
         msg_id: str | None = None,
         event_id: str | None = None,
     ) -> SendMessageResult:
-        """向单聊发送被动回复。参数含义同 :meth:`send_group_message`。"""
+        """向单聊发送消息。参数含义同 :meth:`send_group_message`。"""
 
         return await self._send(
             f"/v2/users/{openid}/messages",
@@ -99,17 +99,20 @@ class QQClient:
         path: str,
         *,
         content: str,
-        msg_seq: int,
+        msg_seq: int | None,
         msg_id: str | None,
         event_id: str | None,
     ) -> SendMessageResult:
         payload: dict[str, Any] = {
             "msg_type": MessageType.TEXT.value,
             "content": content,
-            "msg_seq": msg_seq,
         }
 
-        # 未提供的来源标识不能以 null 出现在请求体中，平台会按主动消息处理。
+        # 未提供的字段不能以 null 出现在请求体中。三者都只属于被动回复：主动消息既没有
+        # 可回复的来源，也没有需要延续的序号，全部省略。
+        if msg_seq is not None:
+            payload["msg_seq"] = msg_seq
+
         if msg_id is not None:
             payload["msg_id"] = msg_id
 
