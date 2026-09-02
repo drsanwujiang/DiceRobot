@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     host: str = Field(default="127.0.0.1", description="监听地址，默认仅监听本机并由反向代理转发")
     port: int = Field(default=8080, gt=0, lt=65536, description="监听端口")
     database_url: str = Field(default=DEFAULT_DATABASE_URL)
+    rules_directory: Path = Field(default=Path("data/rules"), description="检定规则文件所在目录")
     webhook_path: str = Field(default="/qq/webhook", description="Webhook 回调路径，需与平台配置一致")
 
     qq: QQSettings

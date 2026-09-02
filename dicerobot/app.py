@@ -20,6 +20,7 @@ from dicerobot.logging import setup_logging
 from dicerobot.qq.client import QQClient
 from dicerobot.qq.token import AccessTokenProvider
 from dicerobot.qq.webhook import create_webhook_router
+from dicerobot.rules import load_rules
 from dicerobot.storage import Database, upgrade_to_head
 
 __all__ = ["create_app"]
@@ -54,7 +55,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     client = QQClient(app_id=settings.qq.app_id, token_provider=token_provider, client=http_client)
 
     database = Database(settings.database_url, echo=settings.debug)
-    registry = load_registry()
+    registry = load_registry(load_rules(settings.rules_directory))
     pipeline = Pipeline(
         registry=registry,
         client=client,

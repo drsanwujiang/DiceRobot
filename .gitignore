@@ -14,6 +14,7 @@ logs/*
 .ruff_cache/
 .hypothesis/
 *.db
+data/rules/
 htmlcov/
 .coverage
 

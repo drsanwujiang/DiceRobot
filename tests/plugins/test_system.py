@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import pytest
@@ -10,12 +11,13 @@ from dicerobot.bot.loader import load_registry
 from dicerobot.bot.plugin import CommandHandler, Plugin
 from dicerobot.enums import MemberRole
 from dicerobot.errors import CommandError
+from dicerobot.trpg.check import CheckRule
 from tests.conftest import CommandRunner
 
 
 @pytest.fixture
-def registry() -> Any:
-    return load_registry(include_entry_points=False)
+def registry(rules: Mapping[str, CheckRule]) -> Any:
+    return load_registry(rules, include_entry_points=False)
 
 
 @pytest.fixture

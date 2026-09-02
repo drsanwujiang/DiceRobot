@@ -1,80 +1,90 @@
-"""检定规则的测试。"""
+"""判定条件与等级选取的测试。
+
+规则本身不再写死在代码里，此处只覆盖引擎：条件表达式的编译与白名单，以及按顺序取首个
+匹配等级的语义。规则文件的加载与内置规则的行为见 ``tests/test_rules.py``。
+"""
 
 from __future__ import annotations
 
 import pytest
 
-from dicerobot.trpg.check import RULES, check, get_rule
+from dicerobot.trpg.check import CheckLevel, CheckRule, ConditionError, check, compile_condition
 
 
-def level(skill: int, roll: int) -> str:
-    rule = get_rule("coc7")
-    assert rule is not None
+def rule(*levels: tuple[str, str]) -> CheckRule:
+    return CheckRule(
+        id="test",
+        name="测试规则",
+        description="",
+        levels=tuple(
+            CheckLevel(name=name, description="", matches=compile_condition(condition)) for name, condition in levels
+        ),
+    )
 
-    return check(rule, skill=skill, roll=roll).name
 
-
-class TestCoc7:
+class TestCompile:
     @pytest.mark.parametrize(
-        ("skill", "roll", "expected"),
+        ("condition", "skill", "roll", "expected"),
         [
-            (60, 1, "大成功"),
-            (60, 12, "极难成功"),
-            (60, 13, "困难成功"),
-            (60, 30, "困难成功"),
-            (60, 31, "成功"),
-            (60, 60, "成功"),
-            (60, 61, "失败"),
-            (60, 95, "失败"),
-            (60, 100, "大失败"),
+            ("roll == 1", 60, 1, True),
+            ("roll <= skill // 5", 60, 12, True),
+            ("roll <= skill // 5", 60, 13, False),
+            ("roll <= skill / 2", 61, 30, True),
+            ("roll == 100 or (roll >= 96 and skill < 50)", 49, 96, True),
+            ("roll == 100 or (roll >= 96 and skill < 50)", 60, 96, False),
+            ("1 <= roll <= skill", 60, 60, True),
+            ("1 <= roll <= skill", 60, 61, False),
+            ("not roll % 2", 60, 4, True),
+            ("True", 0, 1, True),
         ],
     )
-    def test_levels(self, skill: int, roll: int, expected: str) -> None:
-        assert level(skill, roll) == expected
+    def test_evaluates(self, condition: str, skill: int, roll: int, expected: bool) -> None:
+        assert compile_condition(condition)(skill, roll) is expected
 
-    @pytest.mark.parametrize("roll", [96, 97, 98, 99, 100])
-    def test_low_skill_fumbles_from_96(self, roll: int) -> None:
-        """技能值低于 50 时，96 及以上均为大失败。"""
+    @pytest.mark.parametrize(
+        "condition",
+        [
+            "__import__('os').system('echo')",
+            "skill.__class__",
+            "open('x')",
+            "[roll for roll in (1, 2)]",
+            "'abc' * 3",
+            "bonus + 1",
+            "skill if roll else 0",
+            "lambda: 1",
+        ],
+    )
+    def test_rejects_anything_outside_the_whitelist(self, condition: str) -> None:
+        """规则文件可能来自他处，条件表达式不得成为执行任意代码的入口。"""
 
-        assert level(49, roll) == "大失败"
+        with pytest.raises(ConditionError):
+            compile_condition(condition)
 
-    @pytest.mark.parametrize("roll", [96, 97, 98, 99])
-    def test_high_skill_fumbles_only_on_100(self, roll: int) -> None:
-        assert level(50, roll) == "失败"
-        assert level(50, 100) == "大失败"
+    def test_reports_a_syntax_error(self) -> None:
+        with pytest.raises(ConditionError, match="无法解析"):
+            compile_condition("roll <=")
 
-    def test_hundred_is_a_fumble_even_when_skill_is_maxed(self) -> None:
-        """技能值达到 100 时 100 点仍是大失败，因此大失败须排在成功之前判定。"""
+    def test_variables_are_bound_in_order(self) -> None:
+        """skill 与 roll 不可颠倒，否则整套规则都会静默出错。"""
 
-        assert level(100, 100) == "大失败"
-
-    def test_one_is_a_critical_even_when_skill_is_zero(self) -> None:
-        assert level(0, 1) == "大成功"
+        assert compile_condition("skill == 7 and roll == 9")(7, 9) is True
+        assert compile_condition("skill == 9 and roll == 7")(7, 9) is False
 
 
-class TestSimpleRule:
-    def test_only_distinguishes_success_and_failure(self) -> None:
-        rule = get_rule("simple")
-        assert rule is not None
+class TestCheck:
+    def test_takes_the_first_matching_level(self) -> None:
+        """等级按顺序判定，故特例必须排在通例之前。"""
 
-        assert check(rule, skill=60, roll=1).name == "成功"
-        assert check(rule, skill=60, roll=60).name == "成功"
-        assert check(rule, skill=60, roll=61).name == "失败"
+        checked = rule(("大成功", "roll == 1"), ("成功", "roll <= skill"), ("失败", "True"))
 
+        assert check(checked, skill=60, roll=1).name == "大成功"
+        assert check(checked, skill=60, roll=2).name == "成功"
+        assert check(checked, skill=60, roll=61).name == "失败"
 
-class TestLookup:
-    def test_is_case_insensitive(self) -> None:
-        assert get_rule("COC7") is not None
+    def test_reports_an_uncovered_combination(self) -> None:
+        """规则在加载时已穷举验证，走到这里说明规则未经加载器校验。"""
 
-    def test_unknown_rule_returns_nothing(self) -> None:
-        assert get_rule("nonexistent") is None
+        checked = rule(("成功", "roll <= skill"))
 
-    @pytest.mark.parametrize("rule_id", list(RULES))
-    def test_every_rule_covers_all_inputs(self, rule_id: str) -> None:
-        """最后一级须无条件匹配，否则会有取值组合判不出结果。"""
-
-        rule = RULES[rule_id]
-
-        for skill in (0, 1, 49, 50, 99, 100, 200):
-            for roll in range(1, 101):
-                check(rule, skill=skill, roll=roll)
+        with pytest.raises(ValueError, match="未匹配到任何等级"):
+            check(checked, skill=10, roll=50)

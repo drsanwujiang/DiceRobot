@@ -89,8 +89,9 @@ dicerobot/
 
 插件对象在模块层声明，handler 以装饰器挂载且装饰器原样返回函数，因此测试可以脱离运行时直接调用
 handler。内置插件在 `bot/loader.py` 的 `_BUILTIN_MODULES` 清单中声明，第三方插件经 entry points
-（`dicerobot.plugins` 组）发现；加载失败一律抛出而非静默跳过。`system` 插件需要遍历注册表，故由
-loader 在其余插件之后用 `build_plugin(registry)` 构造。
+（`dicerobot.plugins` 组）发现；加载失败一律抛出而非静默跳过。两个例外由 loader 显式构造：`check`
+需要启动时读入的检定规则，`system` 需要遍历注册表（故排在其余插件之后），它们导出的是
+`build_plugin(...)` 而非 `plugin`。
 
 - **三层开关**：会话总开关（`.bot`）→ 插件全局开关 → 插件在本会话的开关（`.plugin`）。开关类指令
   必须声明 `requires_enabled=False`，否则关闭后无法恢复；群聊中的启停仅限群主与管理员，依据
@@ -102,6 +103,19 @@ loader 在其余插件之后用 `build_plugin(registry)` 构造。
   `save_settings` / `save_chat_settings`。
 - **错误语义**：`CommandError.message` 会原样回复给玩家，措辞需面向用户；其余异常回复通用提示并记
   日志。`DEBUG=true` 时异常向上抛出而非被捕获。
+
+## 检定规则
+
+规则是 `data/rules/*.json`，由机器人所有者编辑；`dicerobot/rules.py` 里的 `DEFAULT_RULES` 只是**种子**，
+每次启动补齐缺失的文件（已存在的一律不动），运行时一律以文件为准。文件内的 `id` 必须与文件名一致。
+
+每个等级的 `condition` 是表达式，变量只有 `skill` 与 `roll`，加载时由 `trpg/check.py::compile_condition`
+编译为闭包——**不用 eval**：经 AST 白名单只放行算术、比较与布尔运算，函数调用、属性访问等一律拒绝，
+因而来路不明的规则文件也无法执行任意代码。运行时不再解析表达式。
+
+加载时穷举 `skill ∈ [0,100] × roll ∈ [1,100]` 全部取值：某组取值无等级匹配即启动失败（否则要等玩家
+掷出那个点数才暴露），某个等级永远匹配不到则记警告（通常是等级顺序有误）。等级按顺序取首个匹配，
+所以特例必须排在通例之前。
 
 ## 数据模型要点
 

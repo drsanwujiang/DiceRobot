@@ -6,7 +6,7 @@ SQLite 文件而非手工构造的模型实例，以免默认值缺失导致测�
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -19,7 +19,9 @@ from dicerobot.bot.outbound import DirectSession, ReplyBuffer, ReplySession
 from dicerobot.bot.plugin import CommandHandler, Plugin
 from dicerobot.enums import MemberRole, Scene
 from dicerobot.qq.client import QQClient
+from dicerobot.rules import load_rules
 from dicerobot.storage import Base, Chat, Database, Member, Store
+from dicerobot.trpg.check import CheckRule
 
 CHAT_OPENID = "G1"
 MEMBER_OPENID = "USER0001"
@@ -110,6 +112,16 @@ class CommandRunner:
         """经私聊发出的内容，按发出顺序排列。"""
 
         return [str(call["content"]) for call in self.client.calls if "openid" in call]
+
+
+@pytest.fixture(scope="session")
+def rules(tmp_path_factory: pytest.TempPathFactory) -> Mapping[str, CheckRule]:
+    """内置规则写入临时目录后加载。
+
+    按会话缓存：加载会穷举验证一万余组取值，没必要每个用例重跑。
+    """
+
+    return load_rules(tmp_path_factory.mktemp("rules"))
 
 
 @pytest.fixture
