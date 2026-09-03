@@ -22,6 +22,10 @@ __all__ = ["Invocation", "Registry"]
 # #0 不构成次数，与 #侦查 一样留在指令体中，否则指令将执行零次却照常消耗一条回复配额。
 _COMMAND_PATTERN = re.compile(r"^[.。]\s*(?P<body>.*?)\s*(?:#(?P<times>[1-9]\d{0,2}))?$", re.DOTALL)
 
+# 次数的另一种写法：紧跟在指令之后，如 .r3#1d100 与 .r 3#1d100。OneDice 系的骰子机器人
+# 用的是这一种，两种都收，玩家不必因换了机器人而改习惯。
+_PREFIX_TIMES_PATTERN = re.compile(r"^(?P<times>[1-9]\d{0,2})#\s*")
+
 
 @dataclass(frozen=True, slots=True)
 class Invocation:
@@ -104,6 +108,9 @@ class Registry:
         指令一律要求 ``.`` 或 ``。`` 前缀：群是否推送全量消息由群主或管理员随时设置，
         机器人无从得知当前模式，因而不能假定收到的每条消息都是发给自己的。
 
+        重复次数写在指令之后（``.r 3#1d100``）或行尾（``.r 1d100#3``）皆可。两处同时写出
+        无法判断以谁为准，与其猜一个，不如按未命中处理——本就无法解析的输入一律丢弃。
+
         Args:
             text: 消息正文，应已去除首尾空白。
 
@@ -126,14 +133,24 @@ class Registry:
         for alias in self._aliases_by_length:
             if lowered.startswith(alias):
                 plugin, command = self._by_alias[alias]
-                raw_times = match.group("times")
+                args = body[len(alias) :].strip()
+                suffix = match.group("times")
+                prefix = _PREFIX_TIMES_PATTERN.match(args)
+
+                if prefix is not None:
+                    if suffix is not None:
+                        return None
+
+                    args = args[prefix.end() :]
+
+                times = prefix.group("times") if prefix is not None else suffix
 
                 return Invocation(
                     plugin=plugin,
                     command=command,
                     name=alias,
-                    args=body[len(alias) :].strip(),
-                    times=int(raw_times) if raw_times else 1,
+                    args=args,
+                    times=int(times) if times else 1,
                 )
 
         return None

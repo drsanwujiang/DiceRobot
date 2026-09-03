@@ -152,6 +152,28 @@ class TestRepetition:
         assert invocation.args == "1d100 #侦查"
         assert invocation.times == 1
 
+    @pytest.mark.parametrize("text", [".r 3#1d100", ".r3#1d100"])
+    def test_parses_a_leading_repetition(self, registry: Registry, text: str) -> None:
+        """OneDice 系写在指令之后，两种写法都收。"""
+
+        invocation = registry.resolve(text)
+
+        assert invocation is not None
+        assert invocation.args == "1d100"
+        assert invocation.times == 3
+
+    def test_rejects_a_repetition_written_twice(self, registry: Registry) -> None:
+        """两处都写无从判断以谁为准，与其猜一个不如按未命中处理。"""
+
+        assert registry.resolve(".r 3#1d100#2") is None
+
+    def test_leading_zero_is_not_a_repetition(self, registry: Registry) -> None:
+        invocation = registry.resolve(".r 0#1d100")
+
+        assert invocation is not None
+        assert invocation.times == 1
+        assert invocation.args == "0#1d100"
+
     @pytest.mark.parametrize("text", [".r 1d100#0", ".r 1d100#00"])
     def test_zero_is_not_a_repetition(self, registry: Registry, text: str) -> None:
         """次数为零时指令一次都不执行，却照常消耗一条回复配额，故 `#0` 不构成次数。"""
