@@ -66,7 +66,7 @@ class TestSkillCheck:
 
 
 class TestModifierCheck:
-    """奖惩检定。取舍本身由 tests/trpg 覆盖，此处只看别名到修饰骰的映射与呈现。"""
+    """奖惩检定。取舍本身由 tests/trpg 覆盖，此处只验证别名到修饰骰的映射与呈现。"""
 
     async def test_bonus_alias_rolls_a_bonus_die(self, checker: CommandRunner, check_plugin: Plugin) -> None:
         content = await checker.run(handler(check_plugin, "rab"), "60", name="rab")
@@ -107,7 +107,7 @@ class TestModifierCheck:
     async def test_a_skill_value_is_not_mistaken_for_a_count(
         self, checker: CommandRunner, check_plugin: Plugin
     ) -> None:
-        """`.rab 60 2` 的 60 是技能值：超出个数范围的数字交回给技能值解析。"""
+        """`.rab 60 2` 的 60 是技能值：超出个数范围的数字按技能值处理。"""
 
         content = await checker.run(handler(check_plugin, "rab"), "60 2", name="rab")
 
@@ -138,7 +138,7 @@ class TestHiddenCheck:
             await checker.run(handler(check_plugin, "rah"), "60", name="rah", scene=Scene.C2C)
 
     async def test_the_group_learns_which_modifier_was_used(self, checker: CommandRunner, check_plugin: Plugin) -> None:
-        """群里看不到结果，但该知道这次检定带了奖励骰。"""
+        """群内看不到结果，但应当能看到本次检定带了奖励骰。"""
 
         reply = await checker.run(handler(check_plugin, "rhab"), "60", name="rhab", username="三无酱")
 

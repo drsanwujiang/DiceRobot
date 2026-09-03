@@ -118,7 +118,7 @@ class CommandRunner:
 def rules(tmp_path_factory: pytest.TempPathFactory) -> Mapping[str, CheckRule]:
     """内置规则写入临时目录后加载。
 
-    按会话缓存：加载会穷举验证一万余组取值，没必要每个用例重跑。
+    按会话缓存：加载会穷举验证一万余组取值，不必每个用例重复执行。
     """
 
     return load_rules(tmp_path_factory.mktemp("rules"))

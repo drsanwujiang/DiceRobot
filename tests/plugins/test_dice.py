@@ -86,12 +86,12 @@ class TestReason:
 
     @pytest.mark.parametrize("reason", ["bomb", "dodge", "pass"])
     async def test_a_word_is_not_split_into_an_expression(self, runner: CommandRunner, reason: str) -> None:
-        """b、d、p 都是骰子算符，但 bomb 显然是理由：切点落在词中间即整段按理由处理。"""
+        """b、d、p 都是骰子算符，但 bomb 是理由：切点落在词中间即整段按理由处理。"""
 
         assert f"由于{reason}，" in await runner.run(roll, reason)
 
     async def test_a_chinese_reason_needs_no_space(self, runner: CommandRunner) -> None:
-        """中文理由不以 ASCII 字符开头，紧跟在表达式后面仍能切开。"""
+        """中文理由不以 ASCII 字符开头，紧跟在表达式之后仍能正确切分。"""
 
         content = await runner.run(roll, "1d100侦查")
 

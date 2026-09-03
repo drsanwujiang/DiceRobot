@@ -154,7 +154,7 @@ class TestRepetition:
 
     @pytest.mark.parametrize("text", [".r 3#1d100", ".r3#1d100"])
     def test_parses_a_leading_repetition(self, registry: Registry, text: str) -> None:
-        """OneDice 系写在指令之后，两种写法都收。"""
+        """OneDice 系写在指令之后，两种写法都接受。"""
 
         invocation = registry.resolve(text)
 
@@ -163,7 +163,7 @@ class TestRepetition:
         assert invocation.times == 3
 
     def test_rejects_a_repetition_written_twice(self, registry: Registry) -> None:
-        """两处都写无从判断以谁为准，与其猜一个不如按未命中处理。"""
+        """两处都写时无法判断以谁为准，按未命中处理。"""
 
         assert registry.resolve(".r 3#1d100#2") is None
 

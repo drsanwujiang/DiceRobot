@@ -181,7 +181,7 @@ class TestDirectSession:
         assert client.c2c_calls == [{"openid": "USER_1", "content": "暗骰结果"}]
 
     async def test_does_not_consume_reply_quota(self, client: RecordingClient, clock: FakeClock) -> None:
-        """暗骰的私聊输出与群内回复各走各的通道，前者不占后者的配额。"""
+        """暗骰的私聊输出与群内回复分属两个通道，前者不占后者的配额。"""
 
         session = make_session(client, clock)
         await session.send("群内回复")

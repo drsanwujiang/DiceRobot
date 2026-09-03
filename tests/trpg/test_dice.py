@@ -89,7 +89,7 @@ class TestKeep:
 
 
 class TestPercentileDice:
-    """奖励骰与惩罚骰。取舍本身在 test_percentile.py 中验证，此处只看文法与呈现。"""
+    """奖励骰与惩罚骰。取舍本身在 test_percentile.py 中验证，此处只验证文法与呈现。"""
 
     def test_bare_b_adds_one_tens_die(self) -> None:
         assert roll("b", seed=7) == "D100B=25[奖励骰:6]=25"
@@ -101,7 +101,7 @@ class TestPercentileDice:
         assert roll("p", seed=7) == "D100P=25[惩罚骰:6]=65"
 
     def test_can_be_attached_to_a_dice_term(self) -> None:
-        """多颗时不展开各自的十位骰，否则一条消息会被塞满。"""
+        """多颗时不展开各自的十位骰，否则回复过长。"""
 
         assert roll("2db3", seed=7) == "2D100B3=(5+8)=13"
 

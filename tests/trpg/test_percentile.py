@@ -1,7 +1,7 @@
 """十位骰与个位骰的测试。
 
 取舍必须在组合成结果之后进行：个位为 0 时十位 0 代表 100，改比十位数字会让奖励骰取到
-最差的结果。这条只在个位恰为 0 时暴露，故用脚本化的随机源逐一钉死。
+最差的结果。这条只在个位恰为 0 时暴露，故用脚本化的随机源逐一验证。
 """
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ class TestSelection:
     def test_bonus_avoids_one_hundred_when_units_are_zero(self) -> None:
         """个位 0、十位掷出 0 与 9：候选是 100 与 90，奖励骰取 90。
 
-        若改比十位数字，0 最小，反而会取到 100——这正是奖励骰最容易写错的地方。
+        若改比十位数字，0 最小，反而会取到 100——奖励骰最容易在此处写错。
         """
 
         roll = roll_percentile(rng=ScriptedRandom([0, 0, 9]), extra=1)

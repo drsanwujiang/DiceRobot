@@ -185,7 +185,7 @@ def _verify(path: Path, rule: CheckRule) -> None:
     """穷举全部取值，确认规则可用。
 
     ``check`` 取首个匹配的等级，若某组取值一个等级都不匹配，故障要等玩家掷出那个点数才会
-    出现。此处提前跑一遍，顺带找出永远匹配不到的等级，那通常是等级顺序有误。
+    出现。此处提前穷举一次，顺带找出永远匹配不到的等级，通常是等级顺序有误。
     """
 
     unreachable = {level.name for level in rule.levels}

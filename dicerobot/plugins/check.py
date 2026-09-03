@@ -35,11 +35,11 @@ _RNG: random.Random = random.SystemRandom()
 _ARGUMENTS_PATTERN = re.compile(r"^(?P<skill>\d{1,4})?\s*(?P<reason>[\s\S]*)$")
 
 # 奖惩骰的个数。`.rab2 60` 剥掉别名后是 `2 60`，与 `.rab 2 60` 同形，两者都表示两个
-# 奖励骰。数字后面还跟着数字才算个数，`.rab 60 侦查` 的 60 仍是技能值。
+# 奖励骰。数字之后紧跟另一个数字时才是个数，`.rab 60 侦查` 的 60 仍是技能值。
 _MODIFIER_COUNT_PATTERN = re.compile(r"^(?P<count>\d{1,2})\s+(?=\d)")
 
-# 奖惩骰由指令别名指定，而非写在参数里：检定吃的是技能值而不是掷骰表达式，参数中再放
-# 一个修饰符会与检定理由争夺开头。别名后缀 b/p 也是 OneDice 系骰子机器人的既有写法。
+# 奖惩骰由指令别名指定，而非写在参数里：检定的参数是技能值而非掷骰表达式，修饰符写在
+# 参数里会与检定理由的位置冲突。别名后缀 b/p 也是 OneDice 系骰子机器人的既有写法。
 _BONUS_ALIASES = frozenset({"rab", "rahb", "rhab"})
 _PENALTY_ALIASES = frozenset({"rap", "rahp", "rhap"})
 
@@ -155,8 +155,8 @@ def _modifier(name: str) -> tuple[int, bool]:
 def _split_modifier_count(args: str, default: int) -> tuple[int, str]:
     """取出写在技能值之前的奖惩骰个数。
 
-    个数取 1 到 :data:`MAX_MODIFIER_DICE`，超出这个范围的数字不当作个数，交回给技能值
-    解析——``.rab 60 2`` 的 60 是技能值，而想掷十几个奖惩骰的写法本就不存在。
+    个数取 1 到 :data:`MAX_MODIFIER_DICE`，超出该范围的数字按技能值处理——``.rab 60 2``
+    的 60 是技能值。
 
     Returns:
         奖惩骰个数与去掉个数之后的参数。
@@ -195,7 +195,7 @@ def _check(context: CommandContext, rule: CheckRule) -> tuple[int, str, list[str
     for _ in range(context.times):
         roll = roll_percentile(rng=_RNG, extra=extra, penalty=penalty)
         level = check(rule, skill=skill, roll=roll.value)
-        # 与掷骰共用一套呈现：无奖惩骰时折叠为 D100=57，有则先展开十位骰再给出结果。
+        # 与掷骰共用一套呈现：无奖惩骰时折叠为 D100=57，带奖惩骰时先展开十位骰再给出结果。
         rendered = render_result(
             expression=expression,
             detailed=str(roll),

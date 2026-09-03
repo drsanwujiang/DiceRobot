@@ -26,10 +26,10 @@ _RNG: random.Random = random.SystemRandom()
 # 掷骰表达式允许出现的字符。据此切出开头的表达式，其余部分视为掷骰理由。
 _ARGUMENTS_PATTERN = re.compile(r"^(?P<expression>[0-9dDkKqQbBpP^+\-*/xX×÷()（）]*)(?P<gap>\s*)(?P<reason>[\s\S]*)$")
 
-# 用于判断切出的"表达式"是否为误匹配，如 `.r 侦查` 切出的空串。
+# 用于判断切出的"表达式"是否为误匹配，如 `.r kick` 切出的 k。
 _LOOKS_LIKE_EXPRESSION = re.compile(r"[0-9dDbBpP]")
 
-# 表达式与理由紧邻时，用于判断是否切在了一个词的中间。
+# 表达式与理由紧邻时，用于判断是否切在词中间。
 _WORD_CHARACTER = re.compile(r"[0-9A-Za-z]")
 
 
@@ -141,10 +141,10 @@ def _split_arguments(args: str) -> tuple[str, str]:
 
     未写表达式时默认掷一个骰子，使 ``.r`` 与 ``.r 侦查`` 均可直接使用。
 
-    理由若以表达式允许的字符开头，会被切出一段并非表达式的开头，两条规则据此排除：
-    切出的部分既无数字也无骰子算符时整段按理由处理；两者之间没有空白且理由以 ASCII
-    字母或数字开头时同理——``.r bomb`` 与 ``.r dodge`` 都会被切在词的中间，而中文理由
-    不以 ASCII 字符开头，``.r 1d100侦查`` 仍照常解析。
+    理由若以表达式允许的字符开头，会被切出一段并非表达式的内容，两条规则据此排除：切出
+    的部分既无数字也无骰子算符时，整段按理由处理；两者之间没有空白且理由以 ASCII 字母或
+    数字开头时同样如此——``.r bomb`` 与 ``.r dodge`` 都会被切在词中间。中文理由不以 ASCII
+    字符开头，``.r 1d100侦查`` 仍照常解析。
     """
 
     match = _ARGUMENTS_PATTERN.fullmatch(args)

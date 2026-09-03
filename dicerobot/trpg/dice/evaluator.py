@@ -26,7 +26,7 @@ from dicerobot.trpg.percentile import roll_percentile
 __all__ = ["Limits", "RollResult", "evaluate"]
 
 _PERCENTILE_SURFACE = 100
-"""奖惩骰的面数。掷法本身以十位骰与个位骰定义，面数不是可选项。"""
+"""奖惩骰的面数。这类骰子以十位骰与个位骰定义，面数不是可选项。"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,8 +152,8 @@ class _Evaluator:
     def _visit_percentile(self, node: Dice, *, count: int, extra: int) -> _Evaluated:
         """求值一组带奖惩骰的 d100。
 
-        面数不接受 100 之外的取值：这类骰子由十位骰与个位骰定义，改面数无从解释，静默
-        忽略只会让人以为 ``2d20b1`` 真的掷了 d20。
+        面数不接受 100 之外的取值：改面数无从解释，而静默忽略会让 ``2d20b1`` 看起来
+        掷的是 d20。
         """
 
         if node.surface is not None and node.surface != _PERCENTILE_SURFACE:
@@ -165,7 +165,7 @@ class _Evaluator:
         kept = self._keep([roll.value for roll in rolls], node)
         total = sum(kept)
 
-        # 只有一颗时展开十位骰，多颗展开会让一条消息塞满整屏。
+        # 只有一颗时展开十位骰，多颗逐一展开会使回复过长。
         detailed = str(rolls[0]) if count == 1 else f"({'+'.join(str(face) for face in kept)})"
 
         return _Evaluated(
@@ -294,8 +294,8 @@ class _Evaluator:
     def _power(self, base: int, exponent: int) -> int:
         """乘方。
 
-        规模必须在计算之前判断：``9^9^9`` 一旦真的算下去会耗尽内存，届时再检查已经太晚。
-        以底数的位数乘指数估算结果位数，估计值偏保守，够用。
+        规模必须在计算之前判断：先算再检查会在 ``9^9^9`` 这类输入上耗尽内存。以底数的
+        位数乘指数估算结果位数，估计偏保守。
         """
 
         if exponent < 0:

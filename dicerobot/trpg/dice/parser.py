@@ -94,7 +94,7 @@ _OPERATORS = {
     ")": TokenKind.RPAREN,
 }
 
-# 文法中用到的字母。取最长别名的写法（如 kl）已不存在，逐字符查表即可。
+# 文法中的字母记号。取低由 kl 改为 q 之后均为单字符，逐字符查表即可。
 _LETTERS = {
     "d": TokenKind.DICE,
     "k": TokenKind.KEEP,
@@ -254,7 +254,7 @@ class _Parser:
             if self._peek().kind is TokenKind.DICE:
                 return self._dice(count=token.value)
 
-            # 2b3 在 OneDice 里左值无意义，与其实现一个没有语义的参数，不如直接指出写法。
+            # 2b3 的左值在 OneDice 中无意义。不实现没有语义的参数，直接指出正确写法。
             if self._peek().kind in {TokenKind.BONUS, TokenKind.PENALTY}:
                 raise DiceSyntaxError("奖惩骰不能写骰数，一次掷多颗请写成 2db3", self._peek().position)
 
@@ -279,7 +279,7 @@ class _Parser:
         return Dice(count=count, surface=surface, keep=keep, keep_lowest=keep_lowest, extra=extra, penalty=penalty)
 
     def _modifier(self) -> tuple[int | None, bool]:
-        """解析行尾的奖惩骰。未写明个数时追加一颗。"""
+        """解析跟在骰子之后的奖惩骰。未写明个数时追加一颗。"""
 
         token = self._accept(TokenKind.BONUS, TokenKind.PENALTY)
 
