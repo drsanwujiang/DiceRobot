@@ -48,10 +48,14 @@ class PipelineHarness:
         self.pipeline = pipeline
 
     async def dispatch(self, payload: Payload = JOIN_PAYLOAD) -> None:
-        """投递一个事件并等待处理完成。"""
+        """投递一个事件并等待其处理完毕。
+
+        用 drain 而非固定时长的等待：后者在机器满载时会提前返回，断言"没有回复"的用例
+        会因此假通过，其余用例则偶发失败。
+        """
 
         self.pipeline.submit(payload)
-        await asyncio.sleep(0.05)
+        await self.pipeline.drain()
 
 
 @pytest.fixture

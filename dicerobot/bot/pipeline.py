@@ -102,6 +102,18 @@ class Pipeline:
 
         logger.info("流水线已启动，{} 个 worker", self._settings.workers)
 
+    async def drain(self, *, timeout: float = 5.0) -> None:
+        """等待已入队的事件全部处理完毕。
+
+        worker 在一条事件走完整条链路（含发出回复）之后才将其标记为完成，因此本方法
+        返回即代表这些事件确已处理结束。
+
+        Raises:
+            TimeoutError: 超时仍有事件未处理完。
+        """
+
+        await asyncio.wait_for(self._queue.join(), timeout=timeout)
+
     async def stop(self, *, drain_timeout: float = 5.0) -> None:
         """停止 worker。
 
@@ -112,7 +124,7 @@ class Pipeline:
             return
 
         try:
-            await asyncio.wait_for(self._queue.join(), timeout=drain_timeout)
+            await self.drain(timeout=drain_timeout)
         except TimeoutError:
             logger.warning("关停时仍有 {} 个事件未处理，不再等待", self._queue.qsize())
 
