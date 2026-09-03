@@ -4,8 +4,6 @@ from __future__ import annotations
 
 __all__ = ["API_BASE_URL"]
 
+# 平台接口域名。V2 已将调用域名统一至此：获取 access token 与调用 OpenAPI 共用，
+# 且不再区分环境。
 API_BASE_URL = "https://api.bot.qq.com"
-"""平台接口域名。
-
-V2 已将调用域名统一至此：获取 access token 与调用 OpenAPI 共用，且不再区分环境。
-"""

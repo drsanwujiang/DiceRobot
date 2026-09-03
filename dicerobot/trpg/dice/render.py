@@ -21,8 +21,8 @@ PRECEDENCE: dict[str, int] = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
 UNARY_PRECEDENCE = 4
 ATOM_PRECEDENCE = 5
 
+# 显示用的运算符，乘除采用全角形式以贴近手写算式。
 SYMBOLS: dict[BinaryOperator, str] = {"+": "+", "-": "-", "*": "×", "/": "÷", "^": "^"}
-"""显示用的运算符，乘除采用全角形式以贴近手写算式。"""
 
 _RIGHT_ASSOCIATIVE = frozenset({"^"})
 _NON_ASSOCIATIVE = frozenset({"-", "/"})

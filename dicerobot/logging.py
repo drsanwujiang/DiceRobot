@@ -26,8 +26,8 @@ if TYPE_CHECKING:
 
 __all__ = ["TRACE_BODY_LIMIT", "InterceptHandler", "preview", "setup_logging"]
 
+# TRACE 报文在日志中的截断长度。报文可能很长，且含用户内容，不宜整条落盘。
 TRACE_BODY_LIMIT = 2000
-"""TRACE 报文在日志中的截断长度。报文可能很长，且含用户内容，不宜整条落盘。"""
 
 # 这些库默认自行安装 handler，需清空后交给 loguru。
 _INTERCEPTED_LOGGERS = (

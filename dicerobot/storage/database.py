@@ -12,8 +12,8 @@ from sqlalchemy.pool import ConnectionPoolEntry
 
 __all__ = ["Database"]
 
+# 写锁被占用时的等待上限，与驱动的默认值一致，此处显式声明。
 _BUSY_TIMEOUT_MS = 5000
-"""写锁被占用时的等待上限，与驱动的默认值一致，此处显式声明。"""
 
 
 class Database:

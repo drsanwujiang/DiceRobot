@@ -27,8 +27,8 @@ class _Section(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+# 数据库地址的默认值。迁移脚本亦引用此常量，避免出现两份来源。
 DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///data/dicerobot.db"
-"""数据库地址的默认值。迁移脚本亦引用此常量，避免出现两份来源。"""
 
 
 class QQSettings(_Section):

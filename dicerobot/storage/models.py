@@ -40,7 +40,11 @@ class TimestampMixin:
 
 
 class Chat(Base, TimestampMixin):
-    """一个会话，即一个群或一条单聊。"""
+    """一个会话，即一个群或一条单聊。
+
+    Attributes:
+        enabled: 机器人是否在本会话中响应指令。插件各自的开关另见 :class:`ChatPluginState`。
+    """
 
     __tablename__ = "chats"
 
@@ -48,13 +52,15 @@ class Chat(Base, TimestampMixin):
     openid: Mapped[str] = mapped_column(String(_OPENID_LENGTH), primary_key=True)
 
     enabled: Mapped[bool] = mapped_column(default=True)
-    """机器人是否在本会话中响应指令。插件各自的开关另见 :class:`ChatPluginState`。"""
 
 
 class Member(Base, TimestampMixin):
     """会话中的一位成员。
 
     单聊场景下 ``openid`` 与所属会话的 ``openid`` 相同，为保持模型统一仍单独存储。
+
+    Attributes:
+        nickname: 自行设置的昵称。平台不提供昵称，此字段是唯一的人类可读标识来源。
     """
 
     __tablename__ = "members"
@@ -71,7 +77,6 @@ class Member(Base, TimestampMixin):
     openid: Mapped[str] = mapped_column(String(_OPENID_LENGTH), primary_key=True)
 
     nickname: Mapped[str | None] = mapped_column(String(32), default=None)
-    """自行设置的昵称。平台不提供昵称，此字段是唯一的人类可读标识来源。"""
 
 
 class PluginState(Base, TimestampMixin):

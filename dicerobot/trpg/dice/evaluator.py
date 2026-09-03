@@ -25,8 +25,8 @@ from dicerobot.trpg.percentile import roll_percentile
 
 __all__ = ["Limits", "RollResult", "evaluate"]
 
+# 奖惩骰的面数。这类骰子以十位骰与个位骰定义，面数不是可选项。
 _PERCENTILE_SURFACE = 100
-"""奖惩骰的面数。这类骰子以十位骰与个位骰定义，面数不是可选项。"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,18 +54,19 @@ class Limits:
 
 @dataclass(frozen=True, slots=True)
 class RollResult:
-    """一次求值的结果。"""
+    """一次求值的结果。
+
+    Attributes:
+        value: 表达式的最终取值。
+        expression: 规范化后的表达式，未写明的面数已填入实际值，如 ``D100``。
+        detailed: 展开到每颗骰子点数的算式，如 ``(4+2+5)+2``。
+        brief: 骰子求和之后的算式，如 ``11+2``。
+    """
 
     value: int
-
     expression: str
-    """规范化后的表达式，未写明的面数已填入实际值，如 ``D100``。"""
-
     detailed: str
-    """展开到每颗骰子点数的算式，如 ``(4+2+5)+2``。"""
-
     brief: str
-    """骰子求和之后的算式，如 ``11+2``。"""
 
     def __str__(self) -> str:
         return render_result(

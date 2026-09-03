@@ -48,16 +48,26 @@ class ValidationResponse(BaseModel):
 
 
 class _Author(BaseModel):
+    """消息发送者的公共字段。
+
+    Attributes:
+        username: 平台侧昵称。群消息中有值，单聊中实测为空串。
+    """
+
     username: str = ""
-    """平台侧昵称。群消息中有值，单聊中实测为空串。"""
 
 
 class _GroupAuthor(_Author):
-    member_openid: str
-    """发送者在该群内的标识。实测与同一用户单聊的 user_openid 取值相同。"""
+    """群消息的发送者。
 
+    Attributes:
+        member_openid: 发送者在该群内的标识。实测与同一用户单聊的 user_openid 取值相同。
+        member_role: 群内身份，取值为 owner / admin / member。保留为 str，平台新增取值时
+            不致解析失败。
+    """
+
+    member_openid: str
     member_role: str | None = None
-    """群内身份，取值为 owner / admin / member。保留为 str，平台新增取值时不致解析失败。"""
 
 
 class _C2CAuthor(_Author):
@@ -65,38 +75,42 @@ class _C2CAuthor(_Author):
 
 
 class _MessageBase(BaseModel):
-    id: str
-    """消息 ID，被动回复时作为 msg_id 传回。"""
+    """消息的公共字段。
 
-    content: str = ""
-
-    timestamp: str | None = None
-    """平台侧时间戳，仅供参考。
-
-    被动回复窗口以本地收到事件的时刻起算，该时刻更晚因而更保守，不会因投递延迟
-    而误判窗口余量。
+    Attributes:
+        id: 消息 ID，被动回复时作为 msg_id 传回。
+        content: 消息正文。
+        timestamp: 平台侧时间戳，仅供参考。被动回复窗口以本地收到事件的时刻起算，该时刻
+            更晚因而更保守，不会因投递延迟而误判窗口余量。
     """
+
+    id: str
+    content: str = ""
+    timestamp: str | None = None
 
 
 class Mention(BaseModel):
-    """正文中被 @ 的一个对象。"""
+    """正文中被 @ 的一个对象。
+
+    Attributes:
+        is_you: 被 @ 的是否为本机器人。同组的 ``bot`` 表示对方是否为开放平台机器人，与
+            「是否为本机器人」无关，故判断只能依据本字段。缺失时留空而非按 ``False``
+            处理：多响应一次只是冗余，静默忽略则难以发现。
+    """
 
     is_you: bool | None = None
-    """被 @ 的是否为本机器人。
-
-    同组的 ``bot`` 表示对方是否为开放平台机器人，与「是否为本机器人」无关，故判断只能依据
-    本字段。缺失时留空而非按 ``False`` 处理：多响应一次只是冗余，静默忽略则难以发现。
-    """
 
 
 class GroupMessage(_MessageBase):
-    """``GROUP_AT_MESSAGE_CREATE`` 与 ``GROUP_MESSAGE_CREATE`` 的事件数据。"""
+    """``GROUP_AT_MESSAGE_CREATE`` 与 ``GROUP_MESSAGE_CREATE`` 的事件数据。
+
+    Attributes:
+        mentions: 被 @ 的对象。仅全量推送模式下有此字段，@ 模式的正文已由平台剥离。
+    """
 
     group_openid: str
     author: _GroupAuthor
-
     mentions: list[Mention] = Field(default_factory=list)
-    """被 @ 的对象。仅全量推送模式下有此字段，@ 模式的正文已由平台剥离。"""
 
 
 class C2CMessage(_MessageBase):
@@ -106,12 +120,14 @@ class C2CMessage(_MessageBase):
 
 
 class GroupRobotEvent(BaseModel):
-    """机器人被加入或移出群聊的事件数据。"""
+    """机器人被加入或移出群聊的事件数据。
+
+    Attributes:
+        op_member_openid: 操作者在该群内的标识。平台未提供时为空。
+    """
 
     group_openid: str
-
     op_member_openid: str | None = None
-    """操作者在该群内的标识。平台未提供时为空。"""
 
 
 class FriendEvent(BaseModel):

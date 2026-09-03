@@ -27,8 +27,8 @@ from dicerobot.trpg.dice.errors import DiceSyntaxError
 
 __all__ = ["MAX_EXPRESSION_LENGTH", "parse"]
 
+# 表达式长度上限，超长输入在解析前即被拒绝。
 MAX_EXPRESSION_LENGTH = 200
-"""表达式长度上限，超长输入在解析前即被拒绝。"""
 
 # 输入端的等价写法统一折算为标准形式：全角字符来自中文输入法，x 作乘号是常见写法。
 # 文法中除 d、k、l 外不使用字母，故 x 不产生歧义。
