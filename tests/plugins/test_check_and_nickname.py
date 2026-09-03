@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from typing import Any
 
@@ -64,6 +65,66 @@ class TestSkillCheck:
             await checker.run(handler(check_plugin, "ra"), "侦查")
 
 
+class TestModifierCheck:
+    """奖惩检定。取舍本身由 tests/trpg 覆盖，此处只看别名到修饰骰的映射与呈现。"""
+
+    async def test_bonus_alias_rolls_a_bonus_die(self, checker: CommandRunner, check_plugin: Plugin) -> None:
+        content = await checker.run(handler(check_plugin, "rab"), "60", name="rab")
+
+        assert "D100B=" in content
+        assert "奖励骰:" in content
+
+    async def test_penalty_alias_rolls_a_penalty_die(self, checker: CommandRunner, check_plugin: Plugin) -> None:
+        content = await checker.run(handler(check_plugin, "rap"), "60", name="rap")
+
+        assert "D100P=" in content
+        assert "惩罚骰:" in content
+
+    async def test_plain_check_is_unchanged(self, checker: CommandRunner, check_plugin: Plugin) -> None:
+        """没有修饰骰时输出与从前一致，不出现方括号。"""
+
+        content = await checker.run(handler(check_plugin, "ra"), "60", name="ra")
+
+        assert re.search(r"D100=\d+/60，", content)
+        assert "[" not in content
+
+    async def test_a_leading_number_is_the_modifier_count(self, checker: CommandRunner, check_plugin: Plugin) -> None:
+        """`.rab2 60` 剥掉别名后是 `2 60`，与 `.rab 2 60` 同形，都表示两个奖励骰。"""
+
+        content = await checker.run(handler(check_plugin, "rab"), "2 60", name="rab")
+
+        assert "D100B2=" in content
+        assert "/60，" in content
+        # 两个奖励骰即三个十位骰，基础骰之外还有两个。
+        assert len(re.search(r"奖励骰:([\d ]+)", content).group(1).split()) == 2  # type: ignore[union-attr]
+
+    async def test_the_count_may_be_followed_by_a_reason(self, checker: CommandRunner, check_plugin: Plugin) -> None:
+        content = await checker.run(handler(check_plugin, "rap"), "3 60 侦查", name="rap")
+
+        assert content.startswith("由于侦查，")
+        assert "D100P3=" in content
+
+    async def test_a_skill_value_is_not_mistaken_for_a_count(
+        self, checker: CommandRunner, check_plugin: Plugin
+    ) -> None:
+        """`.rab 60 2` 的 60 是技能值：超出个数范围的数字交回给技能值解析。"""
+
+        content = await checker.run(handler(check_plugin, "rab"), "60 2", name="rab")
+
+        assert "D100B=" in content
+        assert "/60，" in content
+
+    async def test_a_reason_after_the_skill_is_untouched(self, checker: CommandRunner, check_plugin: Plugin) -> None:
+        content = await checker.run(handler(check_plugin, "rab"), "60 侦查", name="rab")
+
+        assert content.startswith("由于侦查，")
+        assert "D100B=" in content
+
+    @pytest.mark.parametrize("alias", ["rab", "rap", "rah", "rha", "rahb", "rahp", "rhab", "rhap"])
+    def test_every_alias_is_registered(self, check_plugin: Plugin, alias: str) -> None:
+        assert handler(check_plugin, alias) is not None
+
+
 class TestHiddenCheck:
     async def test_result_goes_to_the_sender_privately(self, checker: CommandRunner, check_plugin: Plugin) -> None:
         reply = await checker.run(handler(check_plugin, "rah"), "60 侦查", name="rah", username="三无酱")
@@ -75,6 +136,21 @@ class TestHiddenCheck:
     async def test_is_rejected_in_private_chat(self, checker: CommandRunner, check_plugin: Plugin) -> None:
         with pytest.raises(CommandError, match="只能在群聊"):
             await checker.run(handler(check_plugin, "rah"), "60", name="rah", scene=Scene.C2C)
+
+    async def test_the_group_learns_which_modifier_was_used(self, checker: CommandRunner, check_plugin: Plugin) -> None:
+        """群里看不到结果，但该知道这次检定带了奖励骰。"""
+
+        reply = await checker.run(handler(check_plugin, "rhab"), "60", name="rhab", username="三无酱")
+
+        assert reply == "三无酱进行了一次暗检定（60，奖励骰）"
+        assert "奖励骰:" in checker.private_messages[0]
+
+    async def test_the_group_learns_how_many_modifier_dice_were_used(
+        self, checker: CommandRunner, check_plugin: Plugin
+    ) -> None:
+        reply = await checker.run(handler(check_plugin, "rahp"), "2 60", name="rahp", username="三无酱")
+
+        assert reply == "三无酱进行了一次暗检定（60，2 个惩罚骰）"
 
 
 class TestRule:
