@@ -84,6 +84,35 @@ class TestReason:
         with pytest.raises(CommandError, match="掷骰表达式"):
             await runner.run(roll, "3d6+")
 
+    @pytest.mark.parametrize("reason", ["bomb", "dodge", "pass"])
+    async def test_a_word_is_not_split_into_an_expression(self, runner: CommandRunner, reason: str) -> None:
+        """b、d、p 都是骰子算符，但 bomb 显然是理由：切点落在词中间即整段按理由处理。"""
+
+        assert f"由于{reason}，" in await runner.run(roll, reason)
+
+    async def test_a_chinese_reason_needs_no_space(self, runner: CommandRunner) -> None:
+        """中文理由不以 ASCII 字符开头，紧跟在表达式后面仍能切开。"""
+
+        content = await runner.run(roll, "1d100侦查")
+
+        assert "由于侦查，" in content
+        assert "D100=" in content
+
+
+class TestPercentileDice:
+    async def test_bonus_die(self, runner: CommandRunner) -> None:
+        assert "D100B=" in await runner.run(roll, "b")
+
+    async def test_penalty_die_with_a_reason(self, runner: CommandRunner) -> None:
+        content = await runner.run(roll, "p2 潜行")
+
+        assert content.startswith("由于潜行，")
+        assert "D100P2=" in content
+
+    async def test_surface_other_than_one_hundred_is_reported(self, runner: CommandRunner) -> None:
+        with pytest.raises(CommandError, match="只能是 D100"):
+            await runner.run(roll, "2d20b1")
+
 
 class TestRepetition:
     async def test_each_roll_occupies_its_own_line(self, runner: CommandRunner) -> None:

@@ -24,10 +24,13 @@ MAX_SURFACE = 1000
 _RNG: random.Random = random.SystemRandom()
 
 # 掷骰表达式允许出现的字符。据此切出开头的表达式，其余部分视为掷骰理由。
-_ARGUMENTS_PATTERN = re.compile(r"^(?P<expression>[0-9dDkKlL+\-*/xX×÷()（）]*)\s*(?P<reason>[\s\S]*)$")
+_ARGUMENTS_PATTERN = re.compile(r"^(?P<expression>[0-9dDkKqQbBpP^+\-*/xX×÷()（）]*)(?P<gap>\s*)(?P<reason>[\s\S]*)$")
 
-# 用于判断切出的"表达式"是否为误匹配，如 `.r kick` 的开头 k 实为理由的一部分。
-_LOOKS_LIKE_EXPRESSION = re.compile(r"[0-9dD]")
+# 用于判断切出的"表达式"是否为误匹配，如 `.r 侦查` 切出的空串。
+_LOOKS_LIKE_EXPRESSION = re.compile(r"[0-9dDbBpP]")
+
+# 表达式与理由紧邻时，用于判断是否切在了一个词的中间。
+_WORD_CHARACTER = re.compile(r"[0-9A-Za-z]")
 
 
 class DiceChatSettings(BaseModel):
@@ -138,8 +141,10 @@ def _split_arguments(args: str) -> tuple[str, str]:
 
     未写表达式时默认掷一个骰子，使 ``.r`` 与 ``.r 侦查`` 均可直接使用。
 
-    理由若以表达式允许的字符开头，切出的"表达式"将既无数字也无 d，此时整段按理由
-    处理，避免抛出令人费解的语法错误。
+    理由若以表达式允许的字符开头，会被切出一段并非表达式的开头，两条规则据此排除：
+    切出的部分既无数字也无骰子算符时整段按理由处理；两者之间没有空白且理由以 ASCII
+    字母或数字开头时同理——``.r bomb`` 与 ``.r dodge`` 都会被切在词的中间，而中文理由
+    不以 ASCII 字符开头，``.r 1d100侦查`` 仍照常解析。
     """
 
     match = _ARGUMENTS_PATTERN.fullmatch(args)
@@ -154,6 +159,9 @@ def _split_arguments(args: str) -> tuple[str, str]:
         return "d", reason
 
     if not _LOOKS_LIKE_EXPRESSION.search(expression):
+        return "d", args
+
+    if not match.group("gap") and _WORD_CHARACTER.match(reason):
         return "d", args
 
     return expression, reason
