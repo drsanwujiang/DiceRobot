@@ -17,12 +17,15 @@ __all__ = [
     "render_result",
 ]
 
-PRECEDENCE: dict[str, int] = {"+": 1, "-": 1, "*": 2, "/": 2}
-UNARY_PRECEDENCE = 3
-ATOM_PRECEDENCE = 4
+PRECEDENCE: dict[str, int] = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
+UNARY_PRECEDENCE = 4
+ATOM_PRECEDENCE = 5
 
-SYMBOLS: dict[BinaryOperator, str] = {"+": "+", "-": "-", "*": "×", "/": "÷"}
+SYMBOLS: dict[BinaryOperator, str] = {"+": "+", "-": "-", "*": "×", "/": "÷", "^": "^"}
 """显示用的运算符，乘除采用全角形式以贴近手写算式。"""
+
+_RIGHT_ASSOCIATIVE = frozenset({"^"})
+_NON_ASSOCIATIVE = frozenset({"-", "/"})
 
 
 def parenthesize(
@@ -35,15 +38,20 @@ def parenthesize(
 ) -> str:
     """按运算优先级决定是否给子式加括号。
 
-    左操作数仅在优先级更低时需要括号。右操作数在优先级相同且父运算不满足结合律时
-    也需要，如 ``1-(2-3)`` 与 ``1-2-3`` 不等价。
+    优先级更低时一律需要括号。优先级相同时看结合性：减与除的右操作数需要括号
+    （``1-(2-3)`` 与 ``1-2-3`` 不等价），右结合的乘方则是左操作数需要
+    （``(2^3)^2`` 与 ``2^3^2`` 不等价）。
     """
 
     if precedence < parent:
         return f"({text})"
 
-    if right_operand and precedence == parent and parent_operator in {"-", "/"}:
-        return f"({text})"
+    if precedence == parent:
+        if right_operand and parent_operator in _NON_ASSOCIATIVE:
+            return f"({text})"
+
+        if not right_operand and parent_operator in _RIGHT_ASSOCIATIVE:
+            return f"({text})"
 
     return text
 

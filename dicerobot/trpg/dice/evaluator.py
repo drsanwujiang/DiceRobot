@@ -21,8 +21,12 @@ from dicerobot.trpg.dice.render import (
     parenthesize,
     render_result,
 )
+from dicerobot.trpg.percentile import roll_percentile
 
 __all__ = ["Limits", "RollResult", "evaluate"]
+
+_PERCENTILE_SURFACE = 100
+"""奖惩骰的面数。掷法本身以十位骰与个位骰定义，面数不是可选项。"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,16 +34,22 @@ class Limits:
     """求值时的取值范围。
 
     Attributes:
-        default_surface: 未写明面数时使用的面数。
+        default_surface: 未写明面数时使用的面数。奖惩骰固定 100，不受此项影响。
         max_count: 单组骰子的最大个数。
         max_surface: 骰子的最大面数。
         max_total_dice: 整个表达式中骰子个数的总和上限。
+        max_extra: 单组骰子可追加的奖惩骰个数上限。
+        max_exponent: 乘方的最大指数。
+        max_power_bits: 乘方结果的规模上限，以二进制位数计。
     """
 
     default_surface: int = 100
     max_count: int = 100
     max_surface: int = 1000
     max_total_dice: int = 500
+    max_extra: int = 10
+    max_exponent: int = 64
+    max_power_bits: int = 64
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +131,10 @@ class _Evaluator:
 
     def _visit_dice(self, node: Dice) -> _Evaluated:
         count = node.count if node.count is not None else 1
+
+        if node.extra is not None:
+            return self._visit_percentile(node, count=count, extra=node.extra)
+
         surface = node.surface if node.surface is not None else self._limits.default_surface
 
         self._check(count=count, surface=surface, keep=node.keep)
@@ -129,18 +143,50 @@ class _Evaluator:
         kept = self._keep(faces, node)
         total = sum(kept)
 
-        expression = f"{count if count > 1 else ''}D{surface}"
-
-        if node.keep is not None:
-            expression += f"{'KL' if node.keep_lowest else 'K'}{node.keep}"
-
         # 明细自带括号，可视为原子，拼接时无需再嵌套一层。
         joined = "+".join(str(face) for face in kept)
         detailed = f"({joined})" if len(kept) > 1 else str(total)
 
-        return _Evaluated(total, expression, detailed, str(total), ATOM_PRECEDENCE)
+        return _Evaluated(total, self._expression(node, count, surface), detailed, str(total), ATOM_PRECEDENCE)
 
-    def _check(self, *, count: int, surface: int, keep: int | None) -> None:
+    def _visit_percentile(self, node: Dice, *, count: int, extra: int) -> _Evaluated:
+        """求值一组带奖惩骰的 d100。
+
+        面数不接受 100 之外的取值：这类骰子由十位骰与个位骰定义，改面数无从解释，静默
+        忽略只会让人以为 ``2d20b1`` 真的掷了 d20。
+        """
+
+        if node.surface is not None and node.surface != _PERCENTILE_SURFACE:
+            raise DiceLimitError(f"奖惩骰只能是 D{_PERCENTILE_SURFACE}，面数请留空或写 {_PERCENTILE_SURFACE}")
+
+        self._check(count=count, surface=_PERCENTILE_SURFACE, keep=node.keep, extra=extra)
+
+        rolls = [roll_percentile(rng=self._rng, extra=extra, penalty=node.penalty) for _ in range(count)]
+        kept = self._keep([roll.value for roll in rolls], node)
+        total = sum(kept)
+
+        # 只有一颗时展开十位骰，多颗展开会让一条消息塞满整屏。
+        detailed = str(rolls[0]) if count == 1 else f"({'+'.join(str(face) for face in kept)})"
+
+        return _Evaluated(
+            total, self._expression(node, count, _PERCENTILE_SURFACE), detailed, str(total), ATOM_PRECEDENCE
+        )
+
+    @staticmethod
+    def _expression(node: Dice, count: int, surface: int) -> str:
+        """规范化后的表达式，参数顺序与文法一致。"""
+
+        text = f"{count if count > 1 else ''}D{surface}"
+
+        if node.keep is not None:
+            text += f"{'Q' if node.keep_lowest else 'K'}{node.keep}"
+
+        if node.extra is not None:
+            text += f"{'P' if node.penalty else 'B'}{node.extra if node.extra > 1 else ''}"
+
+        return text
+
+    def _check(self, *, count: int, surface: int, keep: int | None, extra: int | None = None) -> None:
         if count <= 0:
             raise DiceLimitError("骰子个数必须是正数")
 
@@ -165,6 +211,13 @@ class _Evaluator:
 
             if keep > count:
                 raise DiceLimitError("保留的骰子个数不能超过骰子总数")
+
+        if extra is not None:
+            if extra <= 0:
+                raise DiceLimitError("奖惩骰的个数必须是正数")
+
+            if extra > self._limits.max_extra:
+                raise DiceLimitError(f"最多追加 {self._limits.max_extra} 个奖惩骰")
 
     @staticmethod
     def _keep(faces: list[int], node: Dice) -> list[int]:
@@ -197,7 +250,12 @@ class _Evaluator:
         symbol = SYMBOLS[operator]
 
         def render(left_text: str, right_text: str) -> str:
-            rendered_left = parenthesize(left_text, precedence=left_result.precedence, parent=precedence)
+            rendered_left = parenthesize(
+                left_text,
+                precedence=left_result.precedence,
+                parent=precedence,
+                parent_operator=operator,
+            )
             rendered_right = parenthesize(
                 right_text,
                 precedence=right_result.precedence,
@@ -216,8 +274,7 @@ class _Evaluator:
             precedence,
         )
 
-    @staticmethod
-    def _apply(operator: BinaryOperator, left: int, right: int) -> int:
+    def _apply(self, operator: BinaryOperator, left: int, right: int) -> int:
         match operator:
             case "+":
                 return left + right
@@ -231,3 +288,25 @@ class _Evaluator:
 
                 # 全程整数运算，除法向下取整。
                 return left // right
+            case "^":
+                return self._power(left, right)
+
+    def _power(self, base: int, exponent: int) -> int:
+        """乘方。
+
+        规模必须在计算之前判断：``9^9^9`` 一旦真的算下去会耗尽内存，届时再检查已经太晚。
+        以底数的位数乘指数估算结果位数，估计值偏保守，够用。
+        """
+
+        if exponent < 0:
+            # 全程整数运算，负指数得不到整数结果。
+            raise DiceEvaluationError("指数不能是负数")
+
+        if exponent > self._limits.max_exponent:
+            raise DiceLimitError(f"指数最大 {self._limits.max_exponent}")
+
+        if (abs(base).bit_length() - 1) * exponent > self._limits.max_power_bits:
+            raise DiceLimitError("乘方的结果过大")
+
+        # 指数已确认非负，结果必为整数；标准库在指数可能为负时把返回类型标为 Any。
+        return int(base**exponent)

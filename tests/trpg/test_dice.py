@@ -62,10 +62,16 @@ class TestKeep:
         assert result.value == 13
 
     def test_keeps_the_lowest_dice(self) -> None:
-        result = evaluate(parse("4d6kl2"), rng=random.Random(42))
+        result = evaluate(parse("4d6q2"), rng=random.Random(42))
 
-        assert result.expression == "4D6KL2"
+        assert result.expression == "4D6Q2"
         assert result.value == 2
+
+    def test_rejects_the_old_keep_lowest_spelling(self) -> None:
+        """取低改用 OneDice 的 q，kl 在该标准中另有含义，不再接受。"""
+
+        with pytest.raises(DiceSyntaxError, match="无法识别的字符"):
+            value("4d6kl2")
 
     def test_bare_k_keeps_one(self) -> None:
         result = evaluate(parse("4d6k"), rng=random.Random(42))
@@ -80,6 +86,88 @@ class TestKeep:
     def test_rejects_non_positive_keep(self) -> None:
         with pytest.raises(DiceLimitError, match="必须是正数"):
             value("4d6k0")
+
+
+class TestPercentileDice:
+    """奖励骰与惩罚骰。取舍本身在 test_percentile.py 中验证，此处只看文法与呈现。"""
+
+    def test_bare_b_adds_one_tens_die(self) -> None:
+        assert roll("b", seed=7) == "D100B=25[奖励骰:6]=25"
+
+    def test_count_follows_the_letter(self) -> None:
+        assert roll("b3", seed=7) == "D100B3=25[奖励骰:6 0 1]=5"
+
+    def test_penalty_uses_its_own_label(self) -> None:
+        assert roll("p", seed=7) == "D100P=25[惩罚骰:6]=65"
+
+    def test_can_be_attached_to_a_dice_term(self) -> None:
+        """多颗时不展开各自的十位骰，否则一条消息会被塞满。"""
+
+        assert roll("2db3", seed=7) == "2D100B3=(5+8)=13"
+
+    def test_can_appear_inside_an_expression(self) -> None:
+        assert value("10+p", seed=7) == 75
+
+    def test_ignores_the_session_default_surface(self) -> None:
+        """奖惩骰由十位骰与个位骰定义，面数不是可选项。"""
+
+        assert roll("b", seed=7, limits=Limits(default_surface=20)).startswith("D100B=")
+
+    def test_rejects_a_surface_other_than_one_hundred(self) -> None:
+        with pytest.raises(DiceLimitError, match="只能是 D100"):
+            value("2d20b1")
+
+    def test_accepts_an_explicit_hundred(self) -> None:
+        assert value("d100p2", seed=7) == 65
+
+    def test_rejects_a_count_on_the_modifier(self) -> None:
+        with pytest.raises(DiceSyntaxError, match="2db3"):
+            value("2b3")
+
+    def test_rejects_non_positive_count(self) -> None:
+        with pytest.raises(DiceLimitError, match="必须是正数"):
+            value("b0")
+
+    def test_caps_the_number_of_extra_dice(self) -> None:
+        with pytest.raises(DiceLimitError, match="最多追加"):
+            value("b99")
+
+
+class TestPower:
+    def test_computes_the_power(self) -> None:
+        assert roll("2^3") == "2^3=8"
+
+    def test_is_right_associative(self) -> None:
+        assert roll("2^3^2") == "2^3^2=512"
+
+    def test_preserves_parentheses_that_change_the_result(self) -> None:
+        assert roll("(2^3)^2") == "(2^3)^2=64"
+
+    def test_binds_tighter_than_multiplication(self) -> None:
+        assert value("2*3^2") == 18
+
+    def test_unary_minus_applies_to_the_power(self) -> None:
+        assert roll("-2^2") == "-(2^2)=-4"
+
+    def test_rejects_a_negative_exponent(self) -> None:
+        """全程整数运算，负指数得不到整数结果。"""
+
+        with pytest.raises(DiceEvaluationError, match="指数不能是负数"):
+            value("2^-1")
+
+    def test_rejects_an_oversized_exponent(self) -> None:
+        with pytest.raises(DiceLimitError, match="指数最大"):
+            value("2^65")
+
+    def test_rejects_a_result_that_would_be_astronomical(self) -> None:
+        """规模必须在计算之前判断，否则 9^9^9 会先耗尽内存再报错。"""
+
+        with pytest.raises(DiceLimitError):
+            value("9^9^9")
+
+    def test_caps_the_magnitude_of_the_result(self) -> None:
+        with pytest.raises(DiceLimitError, match="结果过大"):
+            value("1000^32")
 
 
 class TestArithmetic:
@@ -235,7 +323,7 @@ class TestProperties:
     )
     def test_keeping_the_highest_never_scores_below_keeping_the_lowest(self, count: int, keep: int, seed: int) -> None:
         node_high = parse(f"{count}d20k{keep}")
-        node_low = parse(f"{count}d20kl{keep}")
+        node_low = parse(f"{count}d20q{keep}")
 
         # 同一个种子让两次掷骰的点数序列一致，差别只来自保留策略。
         high = evaluate(node_high, rng=random.Random(seed)).value

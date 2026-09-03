@@ -16,6 +16,7 @@ from dicerobot.trpg.dice.ast import Binary, Dice, Node, Number, Unary
 from dicerobot.trpg.dice.errors import DiceError, DiceEvaluationError, DiceLimitError, DiceSyntaxError
 from dicerobot.trpg.dice.evaluator import Limits, RollResult, evaluate
 from dicerobot.trpg.dice.parser import MAX_EXPRESSION_LENGTH, parse
+from dicerobot.trpg.dice.render import render_result
 
 __all__ = [
     "MAX_EXPRESSION_LENGTH",
@@ -32,4 +33,5 @@ __all__ = [
     "Unary",
     "evaluate",
     "parse",
+    "render_result",
 ]

@@ -3,13 +3,18 @@
 采用递归下降而非正则切分：正则无法处理 ``(2d6+3)*2`` 这类嵌套，也无法在出错时给出
 位置。
 
-文法::
+文法为 OneDice 标准的子集，不含骰池（``a``）、双重十字（``c``）与命运骰（``f``）::
 
     expression := term (("+" | "-") term)*
-    term       := factor (("*" | "/") factor)*
-    factor     := ("+" | "-") factor | primary
-    primary    := dice | NUMBER | "(" expression ")"
-    dice       := [NUMBER] "d" [NUMBER] [("k" | "kl") [NUMBER]]
+    term       := unary (("*" | "/") unary)*
+    unary      := ("+" | "-") unary | power
+    power      := primary ["^" unary]
+    primary    := dice | percentile | NUMBER | "(" expression ")"
+    dice       := [NUMBER] "d" [NUMBER] [("k" | "q") [NUMBER]] [("b" | "p") [NUMBER]]
+    percentile := ("b" | "p") [NUMBER]
+
+``^`` 右结合且优先级高于乘除，故 ``2^3^2`` 是 ``2^(3^2)``。``b`` 与 ``p`` 追加十位骰，
+不接骰数：一次掷多个奖惩骰要写成 ``2db3``，见 :meth:`_Parser._primary`。
 """
 
 from __future__ import annotations
@@ -47,10 +52,13 @@ class TokenKind(StrEnum):
     DICE = auto()
     KEEP = auto()
     KEEP_LOWEST = auto()
+    BONUS = auto()
+    PENALTY = auto()
     PLUS = auto()
     MINUS = auto()
     STAR = auto()
     SLASH = auto()
+    CARET = auto()
     LPAREN = auto()
     RPAREN = auto()
     END = auto()
@@ -69,6 +77,7 @@ _BINARY_OPERATORS: dict[TokenKind, BinaryOperator] = {
     TokenKind.MINUS: "-",
     TokenKind.STAR: "*",
     TokenKind.SLASH: "/",
+    TokenKind.CARET: "^",
 }
 _UNARY_OPERATORS: dict[TokenKind, UnaryOperator] = {
     TokenKind.PLUS: "+",
@@ -80,8 +89,18 @@ _OPERATORS = {
     "-": TokenKind.MINUS,
     "*": TokenKind.STAR,
     "/": TokenKind.SLASH,
+    "^": TokenKind.CARET,
     "(": TokenKind.LPAREN,
     ")": TokenKind.RPAREN,
+}
+
+# 文法中用到的字母。取最长别名的写法（如 kl）已不存在，逐字符查表即可。
+_LETTERS = {
+    "d": TokenKind.DICE,
+    "k": TokenKind.KEEP,
+    "q": TokenKind.KEEP_LOWEST,
+    "b": TokenKind.BONUS,
+    "p": TokenKind.PENALTY,
 }
 
 
@@ -128,22 +147,9 @@ def _tokenize(expression: str) -> list[Token]:
             tokens.append(Token(TokenKind.NUMBER, start, int(expression[start:index])))
             continue
 
-        lowered = char.lower()
-
-        if lowered == "d":
-            tokens.append(Token(TokenKind.DICE, index))
+        if (kind := _LETTERS.get(char.lower())) is not None:
+            tokens.append(Token(kind, index))
             index += 1
-            continue
-
-        if lowered == "k":
-            # kl 表示保留最低的若干个，需多看一个字符加以区分。
-            if index + 1 < len(expression) and expression[index + 1].lower() == "l":
-                tokens.append(Token(TokenKind.KEEP_LOWEST, index))
-                index += 2
-            else:
-                tokens.append(Token(TokenKind.KEEP, index))
-                index += 1
-
             continue
 
         if (kind := _OPERATORS.get(char)) is not None:
@@ -203,18 +209,27 @@ class _Parser:
         return node
 
     def _term(self) -> Node:
-        node = self._factor()
+        node = self._unary()
 
         while token := self._accept(TokenKind.STAR, TokenKind.SLASH):
-            node = Binary(operator=_BINARY_OPERATORS[token.kind], left=node, right=self._factor())
+            node = Binary(operator=_BINARY_OPERATORS[token.kind], left=node, right=self._unary())
 
         return node
 
-    def _factor(self) -> Node:
+    def _unary(self) -> Node:
         if token := self._accept(TokenKind.PLUS, TokenKind.MINUS):
-            return Unary(operator=_UNARY_OPERATORS[token.kind], operand=self._factor())
+            return Unary(operator=_UNARY_OPERATORS[token.kind], operand=self._unary())
 
-        return self._primary()
+        return self._power()
+
+    def _power(self) -> Node:
+        node = self._primary()
+
+        # 右操作数递归回 _unary，因而 ^ 右结合，且指数可以带正负号。
+        if self._accept(TokenKind.CARET):
+            return Binary(operator="^", left=node, right=self._unary())
+
+        return node
 
     def _primary(self) -> Node:
         if self._accept(TokenKind.LPAREN):
@@ -228,10 +243,20 @@ class _Parser:
         if self._peek().kind is TokenKind.DICE:
             return self._dice(count=None)
 
+        # 独立的 b / p 即一颗带奖惩骰的 d100。
+        if self._peek().kind in {TokenKind.BONUS, TokenKind.PENALTY}:
+            extra, penalty = self._modifier()
+
+            return Dice(count=None, surface=None, keep=None, keep_lowest=False, extra=extra, penalty=penalty)
+
         if token := self._accept(TokenKind.NUMBER):
             # 数字后紧跟 d 才构成骰子，否则为普通字面量。
             if self._peek().kind is TokenKind.DICE:
                 return self._dice(count=token.value)
+
+            # 2b3 在 OneDice 里左值无意义，与其实现一个没有语义的参数，不如直接指出写法。
+            if self._peek().kind in {TokenKind.BONUS, TokenKind.PENALTY}:
+                raise DiceSyntaxError("奖惩骰不能写骰数，一次掷多颗请写成 2db3", self._peek().position)
 
             return Number(value=token.value)
 
@@ -249,4 +274,18 @@ class _Parser:
             # 只写 k 不写数量时保留一颗，与常见掷骰记法一致。
             keep = number.value if (number := self._accept(TokenKind.NUMBER)) else 1
 
-        return Dice(count=count, surface=surface, keep=keep, keep_lowest=keep_lowest)
+        extra, penalty = self._modifier()
+
+        return Dice(count=count, surface=surface, keep=keep, keep_lowest=keep_lowest, extra=extra, penalty=penalty)
+
+    def _modifier(self) -> tuple[int | None, bool]:
+        """解析行尾的奖惩骰。未写明个数时追加一颗。"""
+
+        token = self._accept(TokenKind.BONUS, TokenKind.PENALTY)
+
+        if token is None:
+            return None, False
+
+        number = self._accept(TokenKind.NUMBER)
+
+        return (number.value if number else 1), token.kind is TokenKind.PENALTY
