@@ -6,11 +6,9 @@ on:
     tags: ["*"]
   pull_request:
 
-# 本工作流只读取仓库内容，不签出以外的权限一律不给。
 permissions:
   contents: read
 
-# 同一分支或 PR 连续推送时取消尚未完成的运行。
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -88,7 +86,6 @@ jobs:
               exit 0
             fi
 
-            # 容器已退出时不必等满超时，日志里就有原因。
             if [ "$(docker inspect --format '{{.State.Running}}' dicerobot-ci)" != "true" ]; then
               break
             fi
@@ -109,7 +106,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [check, image]
-    # 只有 main 的推送与版本标签才发布：dev 与 PR 构建同样的镜像，但不对外推送。
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
 
     steps:
@@ -121,8 +117,6 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: drsanwujiang/dicerobot
-          # main 的推送发布 main 标签；5.0.0 这样的版本标签发布 5.0.0、5.0、5，
-          # 并按 latest=auto 的默认行为把 latest 指向最新的正式版本。
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -145,5 +139,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # 各层已由 image job 构建并写入缓存，此处命中后只剩推送。
           cache-from: type=gha
