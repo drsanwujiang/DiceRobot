@@ -30,7 +30,7 @@ packages = [{ include = "dicerobot" }]
 [tool.poetry.group.dev.dependencies]
 pytest = ">=9.1"
 pytest-asyncio = ">=1.4"
-hypothesis = ">=6.165"
+hypothesis = ">=6.167"
 respx = ">=0.23"
 ruff = ">=0.16"
 mypy = ">=2.3"
