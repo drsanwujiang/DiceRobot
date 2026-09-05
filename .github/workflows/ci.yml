@@ -86,6 +86,12 @@ jobs:
             if curl --fail --silent http://127.0.0.1:8080/health; then
               exit 0
             fi
+
+            # 容器已退出时不必等满超时，日志里就有原因。
+            if [ "$(docker inspect --format '{{.State.Running}}' dicerobot-ci)" != "true" ]; then
+              break
+            fi
+
             sleep 1
           done
 
