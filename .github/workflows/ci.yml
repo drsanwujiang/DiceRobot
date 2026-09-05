@@ -5,10 +5,20 @@ on:
     branches: [main, dev]
   pull_request:
 
+# 本工作流只读取仓库内容，不签出以外的权限一律不给。
+permissions:
+  contents: read
+
+# 同一分支或 PR 连续推送时取消尚未完成的运行。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     name: Static check and unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -45,6 +55,7 @@ jobs:
   image:
     name: Image build and smoke test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
