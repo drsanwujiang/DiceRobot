@@ -6,12 +6,14 @@ SQLite 文件而非手工构造的模型实例，以免默认值缺失导致测�
 
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncIterator, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
+from hypothesis import settings
 
 from dicerobot.bot.context import CommandContext
 from dicerobot.bot.message import IncomingMessage
@@ -25,6 +27,11 @@ from dicerobot.trpg.check import CheckRule
 
 CHAT_OPENID = "G1"
 MEMBER_OPENID = "USER0001"
+
+# CI runner 的负载不定，默认 200 毫秒的 deadline 会让性质测试偶发失败。本地保留默认值，
+# 好让真正变慢的实现暴露出来。
+settings.register_profile("ci", deadline=None)
+settings.load_profile("ci" if os.environ.get("CI") else "default")
 
 
 class RecordingClient:
