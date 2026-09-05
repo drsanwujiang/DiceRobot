@@ -7,21 +7,23 @@ on:
 
 jobs:
   check:
-    name: 静态检查与测试
+    name: Static check and unit tests
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - name: 安装 Poetry
+      - name: Install Poetry
         run: pipx install "poetry>=2.0,<3.0"
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: poetry
 
-      - name: 安装依赖
+      - name: Install dependencies
         run: poetry install
 
       - name: Ruff
@@ -29,28 +31,30 @@ jobs:
           poetry run ruff check .
           poetry run ruff format --check .
 
-      - name: mypy
+      - name: Mypy
         run: poetry run mypy
 
-      - name: pytest
+      - name: Pytest
         run: poetry run pytest
 
-      - name: 迁移与模型是否一致
-        # 先在空库上升级到最新，再比对模型：改了模型却忘了写迁移会在此暴露。
+      - name: Alembic
         run: |
           poetry run alembic upgrade head
           poetry run alembic check
 
   image:
-    name: 镜像构建与冒烟测试
+    name: Image build and smoke test
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-      - uses: docker/build-push-action@v6
+      - name: Build Docker image
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -59,7 +63,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: 容器能否启动并通过健康检查
+      - name: Smoke test
         run: |
           docker run --detach --name dicerobot-ci \
             --env QQ__APP_ID=000000 \
@@ -74,10 +78,10 @@ jobs:
             sleep 1
           done
 
-          echo "健康检查未通过，容器日志："
+          echo "Smoke test failed"
           docker logs dicerobot-ci
           exit 1
 
-      - name: 收尾
+      - name: Cleanup
         if: always()
         run: docker rm --force dicerobot-ci || true
