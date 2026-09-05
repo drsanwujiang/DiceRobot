@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main, dev]
+    tags: ["*"]
   pull_request:
 
 # 本工作流只读取仓库内容，不签出以外的权限一律不给。
@@ -102,3 +103,47 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker rm --force dicerobot-ci || true
+
+  publish:
+    name: Publish to Docker Hub
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [check, image]
+    # 只有 main 的推送与版本标签才发布：dev 与 PR 构建同样的镜像，但不对外推送。
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: drsanwujiang/dicerobot
+          # main 的推送发布 main 标签；5.0.0 这样的版本标签发布 5.0.0、5.0、5，
+          # 并按 latest=auto 的默认行为把 latest 指向最新的正式版本。
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # 各层已由 image job 构建并写入缓存，此处命中后只剩推送。
+          cache-from: type=gha
