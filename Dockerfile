@@ -10,12 +10,9 @@ RUN pip install --no-cache-dir "poetry>=2.0,<3.0"
 
 WORKDIR /app
 
-# 依赖先于源码复制，源码变动时不必重装依赖。
 COPY pyproject.toml poetry.lock README.md ./
-# 只装运行期依赖，不装本项目自身：运行时以 python -m dicerobot 从源码目录启动，
-# 无需依赖 editable 安装留下的路径。
-RUN poetry install --only main --no-root
 
+RUN poetry install --only main --no-root
 
 FROM python:3.13-slim
 
@@ -28,8 +25,6 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 COPY --from=builder /app/.venv ./.venv
-# alembic.ini 与 migrations 必须随镜像分发：迁移在应用启动时执行，
-# 且配置文件按工作目录查找。
 COPY alembic.ini ./
 COPY migrations/ ./migrations/
 COPY dicerobot/ ./dicerobot/

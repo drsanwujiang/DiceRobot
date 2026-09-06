@@ -1,12 +1,9 @@
 services:
   dicerobot:
-    build: .
-    image: dicerobot
+    image: drsanwujiang/dicerobot:latest
     restart: unless-stopped
-    # 凭据与配置从 .env 读取，参见 .env.example。
     env_file: .env
     volumes:
-      # 数据库与日志留在宿主机，容器重建不丢数据。
       - ./data:/app/data
       - ./logs:/app/logs
     expose:
@@ -16,7 +13,6 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      # 80 用于 ACME 的 HTTP 质询，443 承载回调。
       - "80:80"
       - "443:443"
     volumes:
