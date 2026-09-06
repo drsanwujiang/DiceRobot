@@ -1,8 +1,19 @@
 services:
+  init:
+    image: drsanwujiang/dicerobot:latest
+    user: root
+    entrypoint: ["chown", "-R", "dicerobot:dicerobot", "/app/data", "/app/logs"]
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+
   dicerobot:
     image: drsanwujiang/dicerobot:latest
     restart: unless-stopped
     env_file: .env
+    depends_on:
+      init:
+        condition: service_completed_successfully
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
