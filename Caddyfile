@@ -1,7 +1,3 @@
-# 把域名换成自己的。Caddy 会自动申请并续期 Let's Encrypt 证书。
-#
-# 平台只允许把回调地址配在 80、443、8080、8443 四个端口上，且必须是 HTTPS，
-# 因此这里监听 443，回调地址填 https://<域名>/qq/webhook。
 bot.example.com {
 	reverse_proxy dicerobot:8080
 }
