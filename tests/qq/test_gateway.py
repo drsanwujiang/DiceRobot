@@ -61,7 +61,7 @@ class FakeGateway:
     """充当平台网关的本地 ws 服务。
 
     每条连接都先走完开场：下发 Hello，收下鉴权帧，op 2 回 READY、op 6 回 RESUMED。之后
-    本方的行为由 script 描述，同时持续记录上行帧并应答心跳。
+    的行为由 script 描述，同时持续记录上行帧并应答心跳。
 
     上行帧按连接分组记入 :attr:`frames`，故断线重连的用例可以分别断言两次连接发出的是
     鉴权还是恢复。
@@ -255,7 +255,7 @@ class TestDispatch:
 
         async with running(FakeGateway(script), sink, router):
             await wait_until(lambda: len(sink.payloads) == 1)
-            # 再等一会儿，READY 若被转发，此时早已到达。
+            # 留出余量：READY 若被转发，此时早已到达。
             await asyncio.sleep(0.05)
 
         assert [payload.t for payload in sink.payloads] == ["GROUP_AT_MESSAGE_CREATE"]

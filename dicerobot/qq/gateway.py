@@ -31,11 +31,11 @@ from dicerobot.qq.token import AccessTokenProvider
 __all__ = ["GatewayClient"]
 
 # 订阅的事件位。群聊与单聊的全部事件都在这一位之内：群内 @ 消息、全量群消息、单聊消息、
-# 机器人进出群与好友增删。频道相关的位另需对应的机器人类型与权限，声明了未获授权的位
-# 平台会以关闭码 4014 拒绝连接，故不一并请求。
+# 机器人进出群与好友增删。频道相关的位另需机器人类型与权限，声明了未获授权的位会被平台以
+# 关闭码 4014 拒绝，故不一并请求。
 _INTENTS = 1 << 25
 
-# 分片。单实例部署不分片，事件全部落在这一片上。
+# 单实例部署不分片，事件全部落在这一片上。
 _SHARD = [0, 1]
 
 # 描述连接自身状态的事件类型，就地消化，不投给运行时。
@@ -129,7 +129,7 @@ class GatewayClient:
         await asyncio.gather(self._task, return_exceptions=True)
         self._task = None
 
-        logger.info("网关连接已断开")
+        logger.debug("网关客户端已停止")
 
     async def _run(self) -> None:
         """连接、断开、重连的主循环。"""
@@ -142,23 +142,23 @@ class GatewayClient:
             try:
                 await self._connect()
             except GatewayRejectedError as e:
-                # 重连不会恢复，继续尝试只是徒然消耗连接配额。机器人自此不再接收事件，
-                # 故以最高级别记录。
+                # 重连不会恢复，继续尝试只会消耗连接配额；机器人自此不再接收事件，故以最高
+                # 级别记录。
                 logger.critical("网关拒绝连接，已停止接收事件：{}", e)
 
                 return
             except (QQError, WebSocketException, OSError, TimeoutError) as e:
-                logger.warning("网关连接中断：{}", e)
+                logger.warning("网关连接失败：{}", e)
             except Exception:
                 # 任务须存活至关停：未预料的异常同样只影响本次连接。
                 logger.exception("网关连接发生未捕获的异常")
 
-            # 活到鉴权完成的连接视为健康，退避重新起算，偶发断线因此不必为先前的失败等待；
-            # 始终等待一次则保证平台持续拒绝时不会密集重试。
+            # 鉴权完成过的连接视为健康，退避重新起算，偶发断线不必为先前的失败等待；但每次
+            # 断开都至少等一轮，避免平台持续拒绝时密集重试。
             if self._authenticated:
                 delay = self._initial_reconnect_delay
 
-            logger.info("{:.0f} 秒后重连网关", delay)
+            logger.info("将在 {:.0f} 秒后重连", delay)
 
             await asyncio.sleep(delay)
 
@@ -171,9 +171,9 @@ class GatewayClient:
 
         logger.debug("正在连接网关 {}", gateway.url)
 
-        # ws 层的保活 ping 关闭：保活由平台的心跳（op 1 / op 11）负责，而平台是否应答 ws
-        # ping 并无文档承诺，若不应答则每过一个 ping_timeout 就会误判一次断线。半开连接
-        # 改由下行帧的静默时长判定，见 :meth:`_heartbeat`。
+        # 关闭 ws 层的保活 ping：保活由平台的心跳（op 1 / op 11）负责，而平台是否应答 ws
+        # ping 并无文档承诺，不应答就会每过一个 ping_timeout 误断一次。半开连接改由下行帧的
+        # 静默时长判定，见 :meth:`_heartbeat`。
         async with connect(gateway.url, ping_interval=None) as connection:
             self._last_received = time.monotonic()
             heartbeat: asyncio.Task[None] | None = None
@@ -182,7 +182,7 @@ class GatewayClient:
                 interval = await self._hello(connection)
                 await self._authenticate(connection)
 
-                # 首个心跳在一个间隔之后才发出，届时鉴权早已完成，不必另等 READY。
+                # 首个心跳在一个间隔之后才发出，那时鉴权早已完成，无须另等 READY。
                 heartbeat = asyncio.create_task(self._heartbeat(connection, interval), name="gateway-heartbeat")
 
                 await self._receive(connection)
@@ -210,7 +210,7 @@ class GatewayClient:
         except ValidationError as e:
             raise GatewayError(f"Hello 的数据无法解析：{e}") from e
 
-        logger.debug("网关心跳间隔 {} 毫秒", hello.heartbeat_interval)
+        logger.debug("心跳间隔 {} 毫秒", hello.heartbeat_interval)
 
         return hello.heartbeat_interval / 1000
 
@@ -224,7 +224,7 @@ class GatewayClient:
         token = f"QQBot {await self._token_provider.get()}"
 
         if self._session_id is not None and self._last_seq is not None:
-            logger.info("正在恢复网关会话，session_id={}，seq={}", self._session_id, self._last_seq)
+            logger.info("正在恢复会话，session_id={}，seq={}", self._session_id, self._last_seq)
 
             await self._send(
                 connection,
@@ -236,7 +236,7 @@ class GatewayClient:
 
             return
 
-        logger.info("正在向网关鉴权，intents={}", _INTENTS)
+        logger.info("正在鉴权，intents={}", _INTENTS)
 
         await self._send(
             connection,
@@ -271,7 +271,7 @@ class GatewayClient:
 
                     return
                 case OpCode.INVALID_SESSION:
-                    logger.warning("网关会话已失效，重连后将重新鉴权")
+                    logger.warning("会话已失效，重连后将重新鉴权")
                     self._forget_session()
 
                     return
@@ -281,9 +281,9 @@ class GatewayClient:
     async def _heartbeat(self, connection: ClientConnection, interval: float) -> None:
         """按平台指定的间隔发送心跳，并据下行帧的静默时长判定连接是否已死。
 
-        ws 层的保活 ping 已关闭，半开连接只能由本方发现：对端静默时 TCP 不会立即报错，
-        不主动断开会让机器人失聪到内核放弃重传为止，那是十几分钟。心跳应答本身即是下行
-        帧，故连续两个间隔没有收到任何帧即视为连接已死。
+        ws 层的保活 ping 已关闭，半开连接只能由本方发现：对端静默时 TCP 不会立即报错，而
+        内核放弃重传要十几分钟，这期间机器人是失聪的。心跳应答本身即是下行帧，故连续两个
+        间隔没有收到任何帧即视为连接已死。
         """
 
         try:
@@ -305,7 +305,7 @@ class GatewayClient:
             # 连接已断，交由接收循环处置。
             pass
         except Exception:
-            logger.exception("发送网关心跳时发生未捕获的异常")
+            logger.exception("发送心跳时发生未捕获的异常")
 
     def _dispatch(self, payload: Payload) -> None:
         """处置一个事件帧。"""
@@ -318,13 +318,13 @@ class GatewayClient:
         if payload.t == _RESUMED:
             self._authenticated = True
 
-            logger.info("网关会话已恢复，平台将补发 seq={} 之后遗漏的事件", self._last_seq)
+            logger.info("会话已恢复，平台将补发 seq={} 之后遗漏的事件", self._last_seq)
 
             return
 
         # 事件 ID 自此进入日志上下文，与后续处理阶段的日志关联。
         with logger.contextualize(event_id=payload.id):
-            logger.debug("收到事件下发：t={}", payload.t)
+            logger.debug("收到事件：t={}", payload.t)
 
             self._sink.submit(payload)
 
@@ -343,7 +343,7 @@ class GatewayClient:
         self._session_id = ready.session_id
         self._authenticated = True
 
-        logger.info("网关鉴权成功，session_id={}", ready.session_id)
+        logger.info("鉴权成功，session_id={}", ready.session_id)
 
     def _on_closed(self, closed: ConnectionClosed) -> None:
         """按关闭码决定后续处置。
@@ -371,10 +371,10 @@ class GatewayClient:
 
         if code == CloseCode.AUTHENTICATION_FAILED:
             # token 可能已被平台吊销，本地记录的有效期不再可信。
-            logger.warning("网关鉴权失败，作废 access token 后重连：{}", reason)
+            logger.warning("鉴权失败（{}），作废 access token 后重连", reason)
             self._token_provider.invalidate()
         elif code in _SESSION_INVALID_CLOSE_CODES:
-            logger.warning("网关会话不可续传（关闭码 {}：{}），重连后将重新鉴权", code, reason)
+            logger.warning("会话不可续传（关闭码 {}：{}），重连后将重新鉴权", code, reason)
             self._forget_session()
         else:
             logger.warning("网关连接被关闭（关闭码 {}）：{}", code, reason)

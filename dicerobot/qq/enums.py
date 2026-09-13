@@ -36,7 +36,7 @@ class OpCode(IntEnum):
 
 
 class CloseCode(IntEnum):
-    """WebSocket 网关的关闭码。只列出需要区别处置的取值，其余一律按可重连处理。
+    """WebSocket 网关的关闭码。未列出的取值一律按可重连处理。
 
     Attributes:
         AUTHENTICATION_FAILED: 鉴权失败，多为 token 已被吊销，作废本地缓存后重连。

@@ -68,7 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         debug=settings.debug,
     )
 
-    # 仅在 WebSocket 模式下建立长连接；webhook 模式改为注册回调路由，见下。
+    # 仅 websocket 模式建立长连接，webhook 模式改在下方注册回调路由。
     gateway = (
         GatewayClient(client=client, token_provider=token_provider, sink=pipeline)
         if settings.qq.transport == "websocket"
