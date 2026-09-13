@@ -371,6 +371,29 @@ class TestDispatch:
         assert route.call_count == 0
 
 
+class TestTransport:
+    async def test_websocket_mode_does_not_expose_the_webhook(
+        self, settings: Settings, router: respx.MockRouter
+    ) -> None:
+        """两种接收方式互斥，取 websocket 时回调路由不应存在。"""
+
+        # 接入点指向必然连不通的地址：本用例只关心路由装配，连接由网关客户端自己的测试覆盖。
+        router.get(f"{API_BASE_URL}/gateway").mock(return_value=httpx.Response(200, json={"url": "ws://127.0.0.1:9"}))
+
+        websocket_settings = settings.model_copy(
+            update={"qq": QQSettings(app_id=APP_ID, secret=SecretStr(SECRET), transport="websocket")}
+        )
+        app = create_app(websocket_settings)
+
+        async with app.router.lifespan_context(app):
+            transport = httpx.ASGITransport(app=app)
+
+            async with httpx.AsyncClient(transport=transport, base_url="http://test") as http_client:
+                response = await post_event(http_client, group_message_payload(".ping"))
+
+        assert response.status_code == httpx.codes.NOT_FOUND
+
+
 class TestHealth:
     async def test_reports_ok(self, client: httpx.AsyncClient) -> None:
         response = await client.get("/health")
