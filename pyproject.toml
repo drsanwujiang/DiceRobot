@@ -18,6 +18,7 @@ dependencies = [
     "alembic>=1.19",
     "loguru>=0.7",
     "cryptography>=50.0",
+    "websockets>=13",
 ]
 
 [project.scripts]

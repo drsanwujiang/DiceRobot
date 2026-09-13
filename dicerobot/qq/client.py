@@ -15,7 +15,7 @@ from dicerobot.errors import ApiError
 from dicerobot.logging import preview
 from dicerobot.qq import API_BASE_URL
 from dicerobot.qq.enums import MessageType
-from dicerobot.qq.schemas import SendMessageResult
+from dicerobot.qq.schemas import Gateway, SendMessageResult
 from dicerobot.qq.token import AccessTokenProvider
 
 __all__ = ["QQClient"]
@@ -44,6 +44,15 @@ class QQClient:
         self._base_url = base_url.rstrip("/")
         self._token_provider = token_provider
         self._client = client
+
+    async def get_gateway(self) -> Gateway:
+        """取 WebSocket 网关的接入点。
+
+        接入点由平台下发而非硬编码：文档要求先调用本接口，取到的地址也可能随平台侧调整
+        而变化。
+        """
+
+        return Gateway.model_validate(await self._request("GET", "/gateway", None))
 
     async def send_group_message(
         self,
@@ -121,7 +130,7 @@ class QQClient:
 
         return SendMessageResult.model_validate(await self._request("POST", path, payload))
 
-    async def _request(self, method: str, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    async def _request(self, method: str, path: str, payload: dict[str, Any] | None) -> dict[str, Any]:
         """发起一次带鉴权的请求。
 
         收到 401 时作废本地 token 并重试一次，以应对平台提前吊销 token 的情况。
@@ -140,7 +149,7 @@ class QQClient:
 
         raise self._to_api_error(response)
 
-    async def _attempt(self, method: str, path: str, payload: dict[str, Any]) -> httpx.Response:
+    async def _attempt(self, method: str, path: str, payload: dict[str, Any] | None) -> httpx.Response:
         """发起单次请求，不做重试。"""
 
         token = await self._token_provider.get()
@@ -150,7 +159,9 @@ class QQClient:
         #
         # 报文只在 TRACE 记录，其中含用户内容；用 lazy 求值，未开启该级别时不做拼装。
         logger.debug("发起请求 {} {}", method, path)
-        logger.opt(lazy=True).trace("请求体 {}", lambda: preview(json.dumps(payload, ensure_ascii=False)))
+
+        if payload is not None:
+            logger.opt(lazy=True).trace("请求体 {}", lambda: preview(json.dumps(payload, ensure_ascii=False)))
 
         try:
             response = await self._client.request(
