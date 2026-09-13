@@ -6,7 +6,7 @@
 
 ```
 dicerobot/
-├── qq/        平台适配：签名校验、access token、OpenAPI 客户端、webhook 入口
+├── qq/        平台适配：签名校验、access token、OpenAPI 客户端、webhook 与 WebSocket 网关
 ├── bot/       运行时：事件归一化、回复配额、插件加载与调度
 ├── plugins/   内置插件：dice / check / nickname / system
 ├── trpg/      领域逻辑：掷骰引擎、检定规则（零 IO，不依赖任何外层包）
@@ -15,8 +15,8 @@ dicerobot/
 
 依赖方向单向：`plugins -> bot -> qq`、`bot -> trpg`、`bot -> storage`。
 
-`qq` 为叶子包，不依赖任何内部模块。webhook 以本地 `Protocol` 声明事件接收方，
-由 `app.py` 负责装配，因此 `bot` 调用客户端发消息不会与 webhook 形成循环依赖。
+`qq` 为叶子包，不依赖任何内部模块。两种事件入口都以包内的 `Protocol` 声明事件接收方，
+由 `app.py` 负责装配，因此 `bot` 调用客户端发消息不会与它们形成循环依赖。
 
 `trpg` 同样不依赖任何其他层，该约束由 `dicerobot/trpg/ruff.toml` 在 CI 中强制。
 
@@ -139,37 +139,49 @@ Windows 下若测试输出中的中文显示为乱码，设置 `PYTHONUTF8=1` �
 
 ## 部署
 
-### 平台侧的硬性约束
+### 两种事件接收方式
 
-- 回调地址必须是 **HTTPS**，端口只能是 **80、443、8080、8443** 之一
-- 需要在开放平台配置 **IP 白名单**，家用宽带的动态 IP 会导致请求被拒
+平台在管理端的「事件订阅与回调地址」处二选一，**互斥**，切换后立即生效。`QQ__TRANSPORT`
+必须与那里的设置一致，不一致则收不到任何事件。
+
+|           | `webhook`                      | `websocket`        |
+| --------- | ------------------------------ | ------------------ |
+| 事件流向  | 平台回调本机                   | 本机主动建立长连接 |
+| 公网入口  | 需要域名与 HTTPS 证书          | 不需要             |
+| 端口      | 只能是 80、443、8080、8443     | 无要求             |
+| IP 白名单 | 需要，家用宽带的动态 IP 会被拒 | 不需要             |
+
+没有固定公网 IP，或不愿维护域名与证书，就用 `websocket`。
 
 ### 步骤
 
 1. 在 [QQ 开放平台](https://bot.q.qq.com/) 创建机器人，取得 AppID 与 AppSecret。
 
-2. 准备一台有公网 IP 的服务器和一个解析到它的域名。
-
-3. 复制配置并填入凭据：
+2. 复制配置，填入凭据，并把 `QQ__TRANSPORT` 设为与管理端一致的取值：
 
    ```bash
    cp .env.example .env
    ```
 
-4. 把 `Caddyfile` 中的 `bot.example.com` 换成自己的域名。
+3. 启动。`websocket` 模式不需要反向代理：
 
-5. 启动：
+   ```bash
+   docker compose up -d dicerobot
+   ```
+
+   `webhook` 模式先把 `Caddyfile` 中的 `bot.example.com` 换成自己的域名，再整套启动，
+   Caddy 会自动申请证书：
 
    ```bash
    docker compose up -d
    ```
 
-   Caddy 会自动申请证书；数据库与日志分别落在 `./data` 与 `./logs`。
+   数据库与日志分别落在 `./data` 与 `./logs`。
 
-6. 在开放平台把回调地址填为 `https://<域名>/qq/webhook`。平台会立即下发一次校验
-   请求（`op = 13`），应用签名回传后地址才会生效。
+4. `webhook` 模式还需在开放平台把回调地址填为 `https://<域名>/qq/webhook`。平台会立即
+   下发一次校验请求（`op = 13`），应用签名回传后地址才会生效。
 
-7. 在群里 `@机器人 .ping`，收到 `pong` 即联通。
+5. 在群里 `@机器人 .ping`，收到 `pong` 即联通。
 
 ### 自定义检定规则
 

@@ -39,7 +39,7 @@ Windows 下若测试输出中文乱码，设置 `PYTHONUTF8=1`。
 
 ```
 dicerobot/
-├── qq/        平台适配：Ed25519 验签、access token、OpenAPI 客户端、webhook 路由
+├── qq/        平台适配：Ed25519 验签、access token、OpenAPI 客户端、webhook 路由、WebSocket 网关
 ├── bot/       运行时：事件归一化、队列调度、回复配额、插件加载与指令解析
 ├── plugins/   内置插件：dice / check / nickname / system
 ├── trpg/      领域逻辑：掷骰引擎、十位/个位骰、检定规则（零 IO）
@@ -55,17 +55,24 @@ dicerobot/
 - `dicerobot/plugins/ruff.toml`：插件不得 import `dicerobot.qq.client`，输出一律经 `context.write`，
   否则回复配额无法统一计量。
 
-`qq` 是叶子包：webhook 以本地 `Protocol`（`EventSink`）声明事件接收方，由 `app.py` 注入 `Pipeline`，
-因此 `bot` 调用客户端发消息不会与 webhook 形成循环依赖。所有组件在 `create_app` 中装配，生命周期
-（HTTP 连接池、token 后台刷新、pipeline worker、数据库引擎）统一由 lifespan 管理。
+`qq` 是叶子包：webhook 与 WebSocket 网关都以包内的 `Protocol`（`EventSink`）声明事件接收方，由
+`app.py` 注入 `Pipeline`，因此 `bot` 调用客户端发消息不会与它们形成循环依赖。所有组件在 `create_app`
+中装配，生命周期（HTTP 连接池、token 后台刷新、网关连接、pipeline worker、数据库引擎）统一由
+lifespan 管理。
 
 ## 一条消息的完整路径
 
-1. `qq/webhook.py` 收到 POST：先用**原始字节**验签（重新序列化会导致校验失败）；`op=13` 签名后回传，
-   完成回调地址校验；`op=0` 交给 sink 后立即返回——平台超时未收到响应会重推同一事件。
+1. 事件到达。两种接收方式互斥，由 `QQ__TRANSPORT` 选定，第 2 步之后完全相同：
+   - **webhook**：`qq/webhook.py` 收到 POST，先用**原始字节**验签（重新序列化会导致校验失败）；
+     `op=13` 签名后回传，完成回调地址校验；`op=0` 交给 sink 后立即返回——平台超时未收到响应会重推
+     同一事件。
+   - **websocket**：`qq/gateway.py` 的接收循环取到 `op=0` 后交给同一个 sink，不必验签——帧来自已鉴权
+     的连接。描述连接自身的帧就地消化：`op=10` 取心跳间隔，`READY` 记下 session_id，`op=7`、`op=9`
+     与各类关闭码决定重连时是恢复会话还是重新鉴权。恢复会话时平台会补发遗漏的事件，其中可能含已
+     处理过的，故去重同样是必需环节。
 2. `bot/pipeline.py::submit` 去重（`bot/dedup.py`，TTL 10 分钟）后入队；队列满时**丢弃并告警**而非
    反压。去重在入队之前，故因队列满而丢弃的事件，其重推同样被拦下：重推的间隔足以让同一条指令
-   执行两次。webhook 处理函数不得阻塞。
+   执行两次。webhook 处理函数与网关的接收循环都不得阻塞——后者阻塞会一并拖住心跳。
 3. worker 取出事件 → `bot/message.py` 归一化为 `IncomingMessage` / `IncomingEvent`（剥离 `<@openid>`
    标记，统一群聊与单聊的字段结构，`ReplyTarget` 统一 `msg_id` 与 `event_id` 两种回复凭据）。
 4. 被 @ 的若不含自己，直接丢弃：群里可能有多个骰子机器人，正文中的 `<@openid>` 标记会被一并剥离，
@@ -167,6 +174,12 @@ ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL �
 
 ## 平台约束（改动相关代码前务必知悉）
 
+- 事件接收方式在管理端二选一，**互斥**且切换后立即生效：配置了回调地址即 webhook 模式，此时
+  WebSocket 收不到任何事件，反之亦然。`QQ__TRANSPORT` 必须与管理端一致，否则机器人静默失聪。
+- WebSocket 的 intents 只声明群/单聊这一位（`1 << 25`），其中已含消息、机器人进出群与好友增删。
+  声明了未获授权的位，平台以关闭码 4014 拒绝连接，且重连不会恢复，只能在平台侧解决。
+- 网关的心跳间隔由 `op=10` 下发，不可自取，`d` 为最后收到的 `s`。平台是否应答 ws 层的 ping 并无
+  文档承诺，故保活只靠这条心跳，ws 层 ping 一律关闭；半开连接另由下行帧的静默时长判定。
 - 群是否推送全量消息由管理员设置，两种模式互斥：开启后 @ 消息也以 `GROUP_MESSAGE_CREATE` 到达，正文
   保留 `<@openid>` 标记并带 `mentions`；关闭后才是 `GROUP_AT_MESSAGE_CREATE`，正文已由平台剥离，且
   没有 `mentions`。判断是否 @ 到自己只能用 `mentions` 中的 `is_you`：同组的 `bot` 表示对方是否为
@@ -179,11 +192,14 @@ ALTER TABLE，迁移使用 `render_as_batch=True`。连接建立时开启 WAL �
   预取 + 后台轮询刷新，401 时 `invalidate()` 后重试一次。
 - Ed25519 密钥由 AppSecret 重复拼接至 32 字节派生；验签内容是 `timestamp + body`，回调校验签名内容
   是 `event_ts + plain_token`，顺序相反。
-- 回调地址必须 HTTPS，端口限 80/443/8080/8443，且需在开放平台配置 IP 白名单。
+- webhook 的回调地址必须 HTTPS，端口限 80/443/8080/8443，且需在开放平台配置 IP 白名单；WebSocket
+  不受这三条约束。
 
 ## 配置
 
 全部来自环境变量或 `.env`，不入库；嵌套字段以双下划线分隔（`QQ__APP_ID`、`LOG__LEVEL`）。
+`QQ__TRANSPORT` 选择事件接收方式，默认 `webhook`；取 `websocket` 时不注册回调路由，改由
+`GatewayClient` 建立长连接，HTTP 服务照常启动，但只提供 `/health`。
 `BOT__WORKERS` 是并发槽位数而非 CPU 并行度：一条指令约 700 ms，几乎全部用于等待平台响应，所需槽位
 约等于指令到达率乘以单条耗时，故默认取 32；出站连接的保活上限在 `app.py` 中与之对齐。各分节继承
 `_Section`（`extra="forbid"`），字段名拼错会直接报错而非静默回退默认值。`get_settings()` 带 lru_cache，

@@ -32,10 +32,14 @@ DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///data/dicerobot.db"
 
 
 class QQSettings(_Section):
-    """开放平台接入凭据。"""
+    """开放平台接入配置。"""
 
     app_id: str = Field(min_length=1, description="AppID，同时用作 X-Union-Appid 请求头")
     secret: SecretStr = Field(description="AppSecret，用于获取 access token 及派生 Ed25519 签名密钥")
+    transport: Literal["webhook", "websocket"] = Field(
+        default="webhook",
+        description="事件接收方式。平台侧两种方式互斥，此处须与开放平台管理端的设置一致",
+    )
     request_timeout: float = Field(default=10.0, gt=0, description="调用 OpenAPI 的超时时间")
     keepalive_expiry: float = Field(default=300.0, gt=0, description="出站连接的空闲存活时间")
 

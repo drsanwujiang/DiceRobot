@@ -2,6 +2,9 @@
 
 各组件在此创建并连接：``qq`` 提供平台能力，``bot`` 提供运行时，两者不直接依赖对方的
 构造过程。
+
+事件接收方式由配置选定，两者互斥：``webhook`` 注册回调路由等平台推送，``websocket``
+另起网关客户端主动建连。两种方式都把事件交给同一条流水线。
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ from dicerobot.bot.pipeline import Pipeline
 from dicerobot.config import Settings, get_settings
 from dicerobot.logging import setup_logging
 from dicerobot.qq.client import QQClient
+from dicerobot.qq.gateway import GatewayClient
 from dicerobot.qq.token import AccessTokenProvider
 from dicerobot.qq.webhook import create_webhook_router
 from dicerobot.rules import load_rules
@@ -25,7 +29,7 @@ from dicerobot.storage import Database, upgrade_to_head
 
 __all__ = ["create_app"]
 
-# worker 之外的出站请求，目前只有 access token 的预取与刷新。
+# worker 之外的出站请求：access token 的预取与刷新，以及 WebSocket 模式下取网关接入点。
 _SPARE_CONNECTIONS = 4
 
 
@@ -64,9 +68,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         debug=settings.debug,
     )
 
+    # 仅在 WebSocket 模式下建立长连接；webhook 模式改为注册回调路由，见下。
+    gateway = (
+        GatewayClient(client=client, token_provider=token_provider, sink=pipeline)
+        if settings.qq.transport == "websocket"
+        else None
+    )
+
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        logger.info("DiceRobot 已启动，监听 {}:{}", settings.host, settings.port)
+        logger.info("DiceRobot 已启动，以 {} 接收事件，监听 {}:{}", settings.qq.transport, settings.host, settings.port)
         logger.debug(
             "生效配置：webhook_path={}，database_url={}，workers={}，queue_size={}，debug={}",
             settings.webhook_path,
@@ -79,9 +90,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         await token_provider.start()
         await pipeline.start()
 
+        if gateway is not None:
+            await gateway.start()
+
         try:
             yield
         finally:
+            # 先断开事件来源，再停流水线，使已入队的事件仍有机会处理完。
+            if gateway is not None:
+                await gateway.stop()
+
             await pipeline.stop()
             await token_provider.stop()
             await http_client.aclose()
@@ -96,7 +114,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
         openapi_url=None,
     )
-    app.include_router(create_webhook_router(path=settings.webhook_path, secret=secret, sink=pipeline))
+    if settings.qq.transport == "webhook":
+        app.include_router(create_webhook_router(path=settings.webhook_path, secret=secret, sink=pipeline))
 
     @app.get("/health", include_in_schema=False)
     async def health() -> dict[str, str]:
