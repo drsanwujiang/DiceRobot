@@ -1,4 +1,4 @@
-"""Webhook payload 与 OpenAPI 请求、响应的数据模型。"""
+"""事件 payload 与 OpenAPI 请求、响应的数据模型。"""
 
 from __future__ import annotations
 
@@ -9,10 +9,13 @@ from pydantic import BaseModel, Field
 __all__ = [
     "C2CMessage",
     "FriendEvent",
+    "Gateway",
     "GroupMessage",
     "GroupRobotEvent",
+    "HelloData",
     "Mention",
     "Payload",
+    "ReadyData",
     "SendMessageResult",
     "ValidationData",
     "ValidationResponse",
@@ -20,10 +23,13 @@ __all__ = [
 
 
 class Payload(BaseModel):
-    """Webhook 推送 payload 的信封。
+    """事件 payload 的信封。Webhook 推送与 WebSocket 下发的形状一致。
 
     ``op`` 保留为 ``int`` 而非枚举，使平台新增操作码时未知取值被安全忽略而非解析失败。
     事件数据 ``d`` 同样延后到确定 ``t`` 之后再解析。
+
+    Attributes:
+        s: 事件序号，仅 WebSocket 下发时有值，恢复会话时须回传最后收到的取值。
     """
 
     op: int
@@ -45,6 +51,28 @@ class ValidationResponse(BaseModel):
 
     plain_token: str
     signature: str
+
+
+class Gateway(BaseModel):
+    """获取 WSS 接入点的响应。"""
+
+    url: str = Field(min_length=1)
+
+
+class HelloData(BaseModel):
+    """``op = 10`` 的下发数据。
+
+    Attributes:
+        heartbeat_interval: 心跳间隔，单位毫秒。间隔由平台指定，不可自行取值。
+    """
+
+    heartbeat_interval: int = Field(gt=0)
+
+
+class ReadyData(BaseModel):
+    """``READY`` 事件的数据。恢复会话需要其中的 ``session_id``。"""
+
+    session_id: str = Field(min_length=1)
 
 
 class _Author(BaseModel):

@@ -12,6 +12,8 @@ __all__ = [
     "CommandError",
     "ConfigurationError",
     "DiceRobotError",
+    "GatewayError",
+    "GatewayRejectedError",
     "QQError",
     "ReplyError",
     "ReplyQuotaExhaustedError",
@@ -42,6 +44,18 @@ class SignatureError(QQError):
 
 class TokenError(QQError):
     """获取或刷新 access token 失败。"""
+
+
+class GatewayError(QQError):
+    """WebSocket 网关连接失败或协议异常。重连即可恢复，退避后重试。"""
+
+
+class GatewayRejectedError(GatewayError):
+    """平台拒绝建立网关连接，且重连不会恢复。
+
+    如声明了未获授权的 intents、分片参数非法，或机器人已下架、已封禁。此类错误只能
+    由所有者在开放平台侧解决，继续重连只会徒然消耗连接配额，故记录后停止接收事件。
+    """
 
 
 class ApiError(QQError):
